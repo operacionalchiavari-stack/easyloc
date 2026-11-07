@@ -497,3 +497,8 @@ html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .fin-gw-dica{marg
 .fpd-linha-tempo li.estornada i{background:#999;box-shadow:0 0 0 4px #eef0f3}
 .fpd-vazio{margin:0;color:#6b6b6b;font-size:13px}
 @media(max-width:720px){.fpd-topo{grid-template-columns:1fr}.fpd-valor{border-left:0;border-top:1px solid #e3e7ec;padding:14px 0 0}.fpd-grade{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Nov/2026: A receber por data mais fino: parcela sob o vencimento, pedido · cliente com mais espaço */
+.fin-receber-data .fin-parcela-venc{display:block;font-size:12px;color:#6b6b6b;margin-top:2px}
+.fin-receber-data td.fin-quem{min-width:300px}
+.fin-receber-data td.num .fin-parcial{display:block;font-size:11.5px;color:#6b6b6b}

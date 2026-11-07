@@ -359,13 +359,14 @@
     const total = linhas.reduce((s, t) => s + Number(t.valor), 0), aberto = linhas.reduce((s, t) => s + Number(t.aberto), 0);
     return '<section class="fin-pedido fin-receber-data"><div class="fin-pedido-topo fin-pedido-linha"><strong>Por data</strong><small>' + linhas.length + " parcela(s)" +
       '</small><div class="fin-pedido-tot">Total <b>' + brl(total) + "</b><span>Em aberto <b>" + brl(aberto) + "</b></span></div></div>" +
-      '<div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Vencimento</th><th>Pedido · cliente</th><th>Parcela</th><th>Divisão</th><th>Conta (CNPJ · PIX)</th><th class="num">Valor</th><th class="num">Recebido</th><th>Recebido em</th><th>Status</th><th class="num">Falta no pedido</th><th></th></tr></thead><tbody>' +
+      '<div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Vencimento</th><th>Pedido · cliente</th><th>Divisão</th><th>Conta (CNPJ · PIX)</th><th class="num">Valor</th><th>Recebido em</th><th>Status</th><th class="num">Falta no pedido</th><th></th></tr></thead><tbody>' +
       linhas.map((t) => {
         const [cls, rot] = statusR(t), ped = t.pedido_id ? S.pedidos[t.pedido_id] : null;
         const quem = (ped ? "<b>Pedido " + esc(ped.numero_pedido || t.pedido_numero) + "</b> · " + esc(ped.cliente_nome || t.cliente_nome || "") : esc(t.descricao || "Lançamento") + (t.cliente_nome ? " · " + esc(t.cliente_nome) : "")) +
           (ped ? '<small class="fin-linha-meta">' + esc(metaPedido(ped).join(" · ")) + "</small>" : "");
-        return "<tr><td><b>" + dataBr(t.vencimento) + "</b>" + alertaVenc(t) + "</td><td>" + quem + "</td><td>" + t.parcela + "/" + t.parcelas + '</td><td><span class="fin-chip ' + t.componente + '">' + DIV[t.componente] + "</span></td><td>" + contaHtml(t.conta_id) +
-          '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.recebido) + "</td>" + recebidoEmHtml(t) + '<td><span class="fin-status ' + cls + '">' + rot + "</span></td>" + faltaNoPedido(t) + acoesR(t) + "</tr>";
+        // Nov/2026: parcela embaixo do vencimento e sem a coluna "Recebido" (linha mais fina, mais espaço para pedido · cliente).
+        return "<tr><td><b>" + dataBr(t.vencimento) + '</b><small class="fin-parcela-venc">Parcela ' + t.parcela + "/" + t.parcelas + "</small>" + alertaVenc(t) + '</td><td class="fin-quem">' + quem + '</td><td><span class="fin-chip ' + t.componente + '">' + DIV[t.componente] + "</span></td><td>" + contaHtml(t.conta_id) +
+          '</td><td class="num">' + brl(t.valor) + (Number(t.recebido) > 0 && Number(t.recebido) < Number(t.valor) ? '<small class="fin-parcial">recebido ' + brl(t.recebido) + "</small>" : "") + "</td>" + recebidoEmHtml(t) + '<td><span class="fin-status ' + cls + '">' + rot + "</span></td>" + faltaNoPedido(t) + acoesR(t) + "</tr>";
       }).join("") + "</tbody></table></div></section>";
   }
   // Pré-reservas como previsão (nov/2026): selo amarelo, sem cobrança, sem link de PIX e sem baixa.

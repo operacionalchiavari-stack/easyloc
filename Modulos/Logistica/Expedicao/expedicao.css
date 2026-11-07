@@ -129,3 +129,13 @@ html:root:is(#acervo-separacao,html) .exp-page .exp-legenda{grid-column:1;grid-r
 
 html:root:is(#acervo-separacao,html) .triagem-compacta .exp-page .separacao-order-card[data-coluna="conferidos"]{column-gap:8px}
 html:root:is(#acervo-separacao,html) .triagem-compacta .exp-page .separacao-order-card[data-coluna="conferidos"] .exp-reabrir{white-space:nowrap;max-width:none}
+
+/* Nov/2026: bolinhas de bloqueio vermelhas + cartão branco com o motivo */
+.exp-pendencia-dot{--exp-dot-cor:#dc2626;cursor:help}
+.exp-dica{position:fixed;z-index:1000;padding:12px 14px;border-radius:12px;background:#fff;border:1px solid #e3e7ec;box-shadow:0 10px 30px rgba(15,23,42,.16);font:13px/1.45 Inter,system-ui,sans-serif;color:#1f2020;pointer-events:none}
+.exp-dica[hidden]{display:none}
+.exp-dica-item+.exp-dica-item{margin-top:10px;padding-top:10px;border-top:1px solid #eef1f5}
+.exp-dica b{display:flex;align-items:center;gap:7px;font-weight:600;font-size:13.5px}
+.exp-dica b .exp-pendencia-dot{animation:none}
+.exp-dica p{margin:4px 0 0;color:#4f4f4f}
+html body .exp-pendencia-dot.exp-dot-caminhao,html body .exp-pendencia-dot.exp-dot-financeiro{--exp-dot-cor:#dc2626}

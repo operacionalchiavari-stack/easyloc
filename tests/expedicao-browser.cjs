@@ -130,7 +130,7 @@ const mock = `(() => {
   console.log('ok - pedido travado pelo Financeiro: aviso pequeno e não abre');
   const semCam = page.locator('[data-pedido=p20][data-tipo=ida]');
   assert.equal(await semCam.locator('.exp-dot-caminhao').getAttribute('aria-label'), 'Sem caminhão programado');
-  assert.ok(/Painel Logístico/.test(await semCam.getAttribute('title')), 'explica onde programar');
+  assert.ok(/Painel Logístico/.test(await semCam.getAttribute('data-motivo')), 'explica onde programar');
   await semCam.click(); await page.waitForTimeout(400);
   assert.match(await page.locator('.el-alert').innerText(),/Painel Logístico/);
   await page.evaluate(()=>window.fecharAlertaGlobal());

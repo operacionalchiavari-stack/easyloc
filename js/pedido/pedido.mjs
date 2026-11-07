@@ -3,14 +3,14 @@ import {instalarProtecaoSaida} from './pedido.saida.mjs?v=20261102-proteger';
 console.log("✅ pedido.mjs carregado");
 
 import { getEls, bindDiasSemana } from "./pedido.utils.mjs";
-import { initAutocompleteClientes } from "./pedido.clientes.mjs?v=20261102-auditoria-identidade";
+import { initAutocompleteClientes } from "./pedido.clientes.mjs?v=20261107-lista-sublocacao";
 import { initEquipePedido } from "./pedido.equipe.mjs?v=20261031-bv";
 import { initBvPedido } from "./pedido.bv.mjs?v=20261031-3colunas3";
-import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261107-teste-usuario";
-import { initItens } from "./pedido.itens.mjs?v=20261107-teste-usuario";
+import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261107-tags-pedido";
+import { initItens } from "./pedido.itens.mjs?v=20261107-lista-sublocacao";
 import { initFrete } from "./pedido.frete.mjs?v=20261107-teste-usuario";
 import { initServicos } from "./pedido.servicos.mjs";
-import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261107-teste-usuario";
+import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261107-lista-sublocacao";
 import { dadosNovoExtra, prepararPedidoExtra } from "./pedido.extra.mjs?v=20261105-extra-botao";
 import { initPagamento } from "./pedido.pagamento.mjs?v=20261107-teste-usuario";
 import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs?v=20261107-teste-usuario";
@@ -852,7 +852,7 @@ async function setupPedidoWorkspace({ supabase }){
     const atualizarIdentidade=cliente=>document.getElementById('clienteInput')?.dispatchEvent(new CustomEvent('cliente-selecionado',{detail:cliente}));
     atualizarIdentidade({nome_razao:pedido.cliente_nome || 'Cliente',telefone:pedido.contato_cliente || ''});
     if(pedido.cliente_id){
-      supabase.from('clientes_empresas').select('nome_razao,telefone,catalogo_logo_url')
+      supabase.from('clientes_empresas').select('id,nome_razao,telefone,catalogo_logo_url,tags')
         .eq('empresa_id',window.__CONTEXT.empresa_id).eq('id',pedido.cliente_id).maybeSingle()
         .then(({data})=>{if(data && document.getElementById('clienteIdHidden')?.value===pedido.cliente_id)atualizarIdentidade(data);})
         .catch(()=>{});
@@ -1501,7 +1501,7 @@ async function setupPedidoWorkspace({ supabase }){
     };
 
     if(projeto.cliente_id){
-      const { data: cliente } = await supabase.from("clientes_empresas").select("id,nome_razao,telefone,catalogo_logo_url")
+      const { data: cliente } = await supabase.from("clientes_empresas").select("id,nome_razao,telefone,catalogo_logo_url,tags")
         .eq("empresa_id", empresaId).eq("id", projeto.cliente_id).maybeSingle();
       if(cliente){
         setInputValue("clienteInput", cliente.nome_razao || "");

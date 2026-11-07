@@ -934,7 +934,7 @@ function infoCadastro(rotulo, valor, icone){
   async function abrirPreviewPedido(pedidoId){
     if(!pedidoId || !state.supabase || !state.empresaId) return;
     try{
-      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261107-teste-usuario"); await carregarAvisosDocumento();
+      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261107-lista-sublocacao"); await carregarAvisosDocumento();
       const { data: pedido, error } = await state.supabase.from("separacoes_pedidos").select("*")
         .eq("empresa_id", state.empresaId).eq("id", pedidoId).single();
       if(error || !pedido) throw error || new Error("Pedido não encontrado.");
@@ -1093,7 +1093,7 @@ function infoCadastro(rotulo, valor, icone){
 
   async function abrirPreviewProjetoCatalogo(pedido){
     try{
-      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261107-teste-usuario"); await carregarAvisosDocumento();
+      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261107-lista-sublocacao"); await carregarAvisosDocumento();
       const { data: projeto, error } = await state.supabase.from("projetos").select("*")
         .eq("empresa_id", state.empresaId).eq("id", pedido.projetoId).single();
       if(error || !projeto) throw error || new Error("Projeto não encontrado.");

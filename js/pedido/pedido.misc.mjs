@@ -97,9 +97,9 @@ export function imprimirPedido() {
   const fimEvento = !document.querySelector(".evento-fim-item")?.hidden ? value("#dataEventoFim", "") : "";
   const dataEvento = dateBR(value("#dataEvento", "")) + (fimEvento ? " a " + dateBR(fimEvento) : "");
   const dataColeta = dateBR(value("#dataColeta", ""));
-  const endereco = text("#localObservacoes", "Endereco e referencia nao informados");
+  const endereco = text("#localObservacoes", "Endereço e referência não informados");
   const observacaoFinanceira = value("#pagamentoObservacaoFinanceira", "");
-  const tags = Array.from(document.querySelectorAll("#localTagsInline *"))
+  const tags = Array.from(document.querySelectorAll("#localTagsInline .local-tag-real"))
     .map((el) => (el.innerText || el.textContent || "").trim())
     .filter(Boolean);
 

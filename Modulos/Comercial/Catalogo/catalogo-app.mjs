@@ -824,10 +824,10 @@ window.catalogAssistenteProjeto = {
   async verPedido(abrir){
     if(!abrir){ S.previaHelena = null; document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close()); return true; }
     if(!S.projeto) return false;
-    for(const href of ["catalogo-projetos.css?v=20261107-teste-usuario", "projeto-apresentacao.css?v=20261030-link-pagamento"]){
+    for(const href of ["catalogo-projetos.css?v=20261107-lista-sublocacao", "projeto-apresentacao.css?v=20261107-lista-sublocacao"]){
       if(!document.querySelector(`link[data-previa="${href}"]`)){ const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; l.dataset.previa = href; document.head.appendChild(l); }
     }
-    const m = await import("./projeto-apresentacao.mjs?v=20261107-teste-usuario");
+    const m = await import("./projeto-apresentacao.mjs?v=20261107-lista-sublocacao");
     await new Promise((r) => setTimeout(r, 360));
     document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close());
     S.previaHelena = m.abrirVisualizacaoPedido({ titulo: S.projeto.noivos || "Pedido", model: m.dadosApresentacao(S.projeto, acharItem),

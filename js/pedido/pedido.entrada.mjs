@@ -294,8 +294,35 @@ export function iniciarEntradaComercial(vitrine){
     }else retrato.textContent=c.nome_razao?.charAt(0) || '?';
     identidade.querySelector('h3').textContent=c.nome_razao;
     identidade.querySelector('p').textContent=(c.telefone && window.EasyLocMascara ? window.EasyLocMascara.formatar('telefone', c.telefone) : c.telefone) || 'Cliente selecionado para este projeto';
+    pintarEtiquetasCliente(c.tags);
   });
+  // Nov/2026: etiquetas do cadastro da cliente (estilo, canal, horário, orçamento, comportamento) ao lado do nome.
+  const etiquetasCli=document.createElement('div');etiquetasCli.className='entrada-cli-tags';etiquetasCli.hidden=true;
+  identidade.querySelector('.entrada-retrato').nextElementSibling.appendChild(etiquetasCli);
+  let gruposCli=null;
+  async function pintarEtiquetasCliente(tags){
+    etiquetasCli.replaceChildren();etiquetasCli.hidden=true;
+    if(!tags||typeof tags!=='object')return;
+    if(!gruposCli){
+      gruposCli=[];
+      try{const sb=window.supabaseClient,emp=sessionStorage.getItem('empresa_id');
+        const {data}=await sb.from('cadastro_etiquetas').select('grupos').eq('empresa_id',emp).eq('cadastro','cliente').maybeSingle();
+        gruposCli=Array.isArray(data?.grupos)?data.grupos:[];}catch(e){console.warn('Etiquetas do cliente:',e);}
+    }
+    const titulo=k=>gruposCli.find(g=>g.chave===k)?.titulo||k.charAt(0).toUpperCase()+k.slice(1);
+    const cor=k=>gruposCli.find(g=>g.chave===k)?.cor||'azul';
+    const ordem=[...gruposCli.map(g=>g.chave),...Object.keys(tags).filter(k=>!gruposCli.some(g=>g.chave===k))];
+    for(const k of ordem){
+      const valores=[].concat(tags[k]??[]).map(v=>String(v||'').trim()).filter(Boolean);
+      if(!valores.length)continue;
+      const chip=document.createElement('span');chip.className='entrada-cli-tag cor-'+cor(k);
+      const r=document.createElement('small');r.textContent=titulo(k);chip.append(r,document.createTextNode(valores.join(' · ')));
+      etiquetasCli.appendChild(chip);
+    }
+    etiquetasCli.hidden=!etiquetasCli.children.length;
+  }
   clienteCampo.addEventListener('input',()=>{
+    etiquetasCli.replaceChildren();etiquetasCli.hidden=true;
     window.__pedidoClienteAtual=null;
     identidade.querySelector('.entrada-retrato').textContent='+';
     identidade.querySelector('h3').textContent='Quem assina este evento?';

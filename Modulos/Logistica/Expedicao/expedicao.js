@@ -123,11 +123,12 @@
       travaFin ? 'Carregamento bloqueado pelo pagamento: o pedido ainda não tem o pagamento mínimo registrado. Peça ao Financeiro para conferir o pagamento (Financeiro › Bancos) e liberar.' : '',
       travaCam ? 'Nenhum caminhão está programado para este pedido. Programe o caminhão no Painel Logístico antes de iniciar o carregamento.' : ''
     ].filter(Boolean).join('\n\n');
-    return '<article class="separacao-order-card exp-card-' + tipo + (bloqueado ? " is-bloqueado-fin" : "") + '" data-coluna="' + col + '" data-tipo="' + tipo + '" data-pedido="' + esc(p.id) + '"' + (bloqueado ? ' data-bloqueado="1" tabindex="0" role="button" aria-label="Consultar bloqueio do pedido" title="' + esc(motivoTrava) + '"' : ' tabindex="0" role="button"') + '>' +
+    return '<article class="separacao-order-card exp-card-' + tipo + (bloqueado ? " is-bloqueado-fin" : "") + '" data-coluna="' + col + '" data-tipo="' + tipo + '" data-pedido="' + esc(p.id) + '"' + (bloqueado ? ' data-bloqueado="1" data-motivo="' + esc(motivoTrava) + '" tabindex="0" role="button" aria-label="' + esc("Pedido bloqueado: " + motivoTrava) + '"' : ' tabindex="0" role="button"') + '>' +
       '<div class="separacao-card-top"><span class="separacao-order-number">Pedido ' + esc(numero.startsWith("#") ? numero : "#" + numero) + "</span>" +
       '<span class="exp-tipo">' + (volta ? "Retorno" : descarga ? "Descarregamento" : "Ida") + "</span>" +
-      (travaFin ? '<span class="exp-pendencia-dot exp-dot-financeiro" role="img" aria-label="Aguardando Financeiro" title="Aguardando Financeiro"></span>' : "") +
-      ((ida && !lista.length) ? '<span class="exp-pendencia-dot exp-dot-caminhao" role="img" aria-label="Sem caminh&#227;o programado" title="Sem caminh&#227;o programado"></span>' : "") +
+      // Nov/2026: bolinhas vermelhas; o motivo aparece num cartão branco ao passar o mouse (data-dica, ver ligarDicas).
+      (travaFin ? '<span class="exp-pendencia-dot exp-dot-financeiro" role="img" aria-label="Aguardando Financeiro" data-dica-titulo="Aguardando o Financeiro" data-dica="O pedido ainda não tem o pagamento mínimo registrado. Peça ao Financeiro para conferir o pagamento (Financeiro › Bancos) e liberar o carregamento."></span>' : "") +
+      ((ida && !lista.length) ? '<span class="exp-pendencia-dot exp-dot-caminhao" role="img" aria-label="Sem caminh&#227;o programado" data-dica-titulo="Sem caminhão programado" data-dica="Nenhum caminhão foi escalado para este pedido. Programe o caminhão no Painel Logístico antes de iniciar o carregamento."></span>' : "") +
       "</div>" +
       '<div class="separacao-card-mainline"><strong>' + esc(p.cliente_nome || "Cliente não informado") + "</strong><span>" +
       esc(p.tipo_evento || "Evento") + " · " + esc(local(p)) + "</span></div>" +
@@ -243,7 +244,7 @@
   function ativarCard(card) {
     if (!card) return;
     if (card.dataset.bloqueado) {
-      const motivo = card.getAttribute('title') || 'Este pedido possui um bloqueio. Consulte o responsável pela operação.';
+      const motivo = card.dataset.motivo || card.getAttribute('title') || 'Este pedido possui um bloqueio. Consulte o responsável pela operação.';
       if (typeof window.alerta === 'function') window.alerta(motivo, {titulo:'Pedido bloqueado', tipo:'aviso', duracao:10000});
       else window.alert(motivo);
       return;
@@ -281,4 +282,24 @@
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciar); else iniciar();
+})();
+
+// Nov/2026: cartão branco com o motivo do bloqueio ao passar o mouse (ou focar) numa bolinha vermelha.
+(function ligarDicas(){
+  let dica = null;
+  const mostrar = (alvo) => {
+    if(!dica){ dica = document.createElement("div"); dica.className = "exp-dica"; dica.setAttribute("role", "tooltip"); document.body.appendChild(dica); }
+    const dots = [...(alvo.closest("article")?.querySelectorAll("[data-dica]") || [alvo])];
+    dica.innerHTML = dots.map((d) => '<div class="exp-dica-item"><b><i class="exp-pendencia-dot" aria-hidden="true"></i>' + d.dataset.dicaTitulo + "</b><p>" + d.dataset.dica + "</p></div>").join("");
+    dica.hidden = false;
+    const r = alvo.getBoundingClientRect(), w = Math.min(320, window.innerWidth - 24);
+    dica.style.width = w + "px";
+    let x = r.left + r.width / 2 - w / 2; x = Math.max(12, Math.min(x, window.innerWidth - w - 12));
+    let y = r.bottom + 10; if(y + dica.offsetHeight > window.innerHeight - 8) y = r.top - dica.offsetHeight - 10;
+    dica.style.left = x + "px"; dica.style.top = y + "px";
+  };
+  const esconder = () => { if(dica) dica.hidden = true; };
+  document.addEventListener("mouseover", (e) => { const d = e.target.closest?.("[data-dica]"); if(d) mostrar(d); else if(!e.target.closest?.(".exp-dica")) esconder(); });
+  document.addEventListener("focusin", (e) => { const c = e.target.closest?.("article[data-bloqueado]"); const d = c?.querySelector("[data-dica]"); if(d) mostrar(d); else esconder(); });
+  window.addEventListener("scroll", esconder, true);
 })();

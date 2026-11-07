@@ -29,7 +29,7 @@ export function initAutocompleteClientes({
 
     const { data, error } = await supabase
       .from("clientes_empresas")
-      .select("id, nome_razao, telefone, catalogo_logo_url")
+      .select("id, nome_razao, telefone, catalogo_logo_url, tags")
       .eq("empresa_id", window.__CONTEXT?.empresa_id)
       .ilike("nome_razao", `%${termo}%`)
       .limit(10);

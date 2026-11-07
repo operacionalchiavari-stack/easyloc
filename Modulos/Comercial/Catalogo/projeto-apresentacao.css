@@ -84,3 +84,8 @@
 .pa-valor-pers{display:block;font-size:11px;color:#6b6b6b;font-weight:500;white-space:normal}
 .catalogo-comercial-pedido .pa-pers-chip{background:#f0e9fa;color:#4f3175}
 .catalogo-comercial-pedido .pa-pers-trocar{color:#6a3c96}
+
+/* Nov/2026: item sublocado (de empresa parceira) junto com os itens do ambiente, em lilás */
+.pa-itens tr.pa-linha-sublocacao>td{background:#f1ecfb!important}
+.pa-itens tr.pa-linha-sublocacao>td:first-child{box-shadow:inset 4px 0 0 #7c5cc4}
+.pa-itens tr.pa-linha-sublocacao .pa-valor-input{width:96px;padding:6px 8px;border:1px solid #d9d2ec;border-radius:8px;text-align:right;font:inherit;background:#fff}

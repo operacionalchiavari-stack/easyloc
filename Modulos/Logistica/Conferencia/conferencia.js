@@ -891,10 +891,8 @@
         ". A divergência foi enviada para Estoque > Gestão do acervo, que faz a contagem geral do item e resolve. Nada mais a fazer aqui."
       : null;
     mostrarAvisoDivergencia();
-    raiz.innerHTML = abertas.length
-      ? '<div class="cf-div-enviada"><span class="cf-div-enviada-icone" aria-hidden="true">!</span><div><b>A contagem não bateu: ' + [faltas ? faltas + " item(ns) faltando" : "", sobras ? sobras + " item(ns) a mais" : ""].filter(Boolean).join(" e ") +
-        '.</b><span>A divergência foi enviada para Estoque &gt; Gestão do acervo, que faz a contagem geral do item e resolve. Nada mais a fazer aqui.</span></div></div>'
-      : '<div class="cf-div-enviada is-ok"><span class="cf-div-enviada-icone" aria-hidden="true">✓</span><div><b>Divergências resolvidas pela Gestão do acervo.</b><span>' + todas.map((o) => esc(textoDiv(o)) + (o.resolucao ? " — " + esc(o.resolucao) : "")).join(" · ") + "</span></div></div>";
+    // Nov/2026 (pedido do usuário): a mensagem fica só no alerta global, não na tela.
+    raiz.hidden = true; raiz.innerHTML = "";
   }
   document.addEventListener("input", (ev) => {
     const campo = ev.target.closest(".cf-div-segunda"); if (!campo) return;

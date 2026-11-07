@@ -111,8 +111,8 @@ async function abrir(browser, regra){
   assert.match(await r.page.textContent(".cf-qtd-linha:nth-child(3) .cf-qtd-valor"), /1 a mais/);
   console.log("ok 3 - segunda contagem dos itens divergentes; ao concluir: faltou em vermelho, veio a mais em amarelo");
   // Out/2026: a Expedição vê que não bateu, mas não resolve: a divergência vai para a Gestão do acervo.
-  await r.page.waitForSelector('#cfDivergencias .cf-div-enviada');
-  assert.match(await r.page.textContent('#cfDivergencias'), /Gestão do acervo/);
+  // Nov/2026: a mensagem fica só no alerta global, nada na tela.
+  assert.equal(await r.page.locator('#cfDivergencias .cf-div-enviada').count(), 0, 'sem mensagem na tela');
   assert.equal(await r.page.locator('.cf-qtd-tabela.com-resolver, .cf-div-segunda, .cf-div-salvar').count(), 0, 'sem colunas nem botão de resolver');
   // Nov/2026: o resultado vai para o alerta global e volta a cada clique na tela (um alerta só, nunca empilhado).
   await r.page.waitForSelector('.el-alert-stack .el-alert');

@@ -31,7 +31,7 @@ import { sinalizarDisponibilidade } from "./pedido-disponibilidade-comercial.mjs
 // mostra ou envia preço: o catálogo nunca teve valores.
 
 import { arquivosDoBucket } from "./catalogo-arquivos.mjs";
-import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, layoutPedido, layoutSeletorHtml, ligarSeletorLayout, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao, moverAmbiente, bindOrdenacaoAmbientes, definirPersonalizacoes, opcoesPersonalizacaoDoItem, textoEscolhas, definirAvisosStatus } from './projeto-apresentacao.mjs?v=20261107-teste-usuario';
+import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, layoutPedido, layoutSeletorHtml, ligarSeletorLayout, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao, moverAmbiente, bindOrdenacaoAmbientes, definirPersonalizacoes, opcoesPersonalizacaoDoItem, textoEscolhas, definirAvisosStatus } from './projeto-apresentacao.mjs?v=20261107-lista-sublocacao';
 
 const temCena = render => Boolean(render?.cena?.url || render?.cena?.snapshot);
 const $ = (id) => document.getElementById(id);
@@ -1797,6 +1797,19 @@ async function carregarEtapasServicos(){
   }catch{} finally { etapasServicosCarregando = false; }
 }
 const servicoOperacional = (s) => Boolean(s.etapa);
+// Nov/2026 (pedido do usuário): a tabela de serviços termina onde terminam as linhas dos itens (antes da coluna da foto).
+function larguraServicos(host){
+  const ajustar = () => {
+    const tab = host.querySelector(".cpj-servicos-tabela"), col = host.querySelector(".pa-itens th.pa-foto-ambiente-col"), itens = host.querySelector("table.pa-itens");
+    if(!tab) return;
+    if(!col || !itens){ tab.style.width = ""; return; }
+    const w = col.getBoundingClientRect().left - itens.getBoundingClientRect().left;
+    tab.style.width = w > 300 ? w + "px" : "";
+  };
+  ajustar();
+  if(!larguraServicos.ligado){ larguraServicos.ligado = true; window.addEventListener("resize", () => { const h = document.querySelector("[data-cpj-panel]"); if(h) larguraServicos.aj?.(); }); }
+  larguraServicos.aj = ajustar;
+}
 function servicosHtml(){
   carregarEtapasServicos();
   const lista = servicosDe();
@@ -1804,11 +1817,10 @@ function servicosHtml(){
   return `<section class="cpj-servicos" aria-label="Serviços adicionais">
     <div class="cpj-block-head cpj-block-head-center"><h4>Serviços adicionais</h4></div>
     ${lista.length ? `<table class="cpj-servicos-tabela"><thead><tr><th>Serviço</th><th>Qtd.</th><th>Valor un.</th><th>Total</th><th><span class="pa-sr">Remover</span></th></tr></thead><tbody>${lista.map((s) => `<tr class="cpj-linha-servico" data-servico-id="${escapeAttr(s.id)}">
-      <td><strong>${escapeHtml(s.nome)}</strong>${servicoOperacional(s) ? `<div class="cpj-servico-agenda${s.data && s.hora ? "" : " is-faltando"}" title="Entra no cronograma como ${escapeAttr(ETAPA_NOME[s.etapa] || "etapa")}">
-        <span>No cronograma · ${escapeHtml(ETAPA_NOME[s.etapa] || "etapa")}</span>
+      <td><div class="cpj-servico-linha${servicoOperacional(s) && !(s.data && s.hora) ? " is-faltando" : ""}"${servicoOperacional(s) ? ` title="Entra no cronograma como ${escapeAttr(ETAPA_NOME[s.etapa] || "etapa")}"` : ""}><strong>${escapeHtml(s.nome)}</strong>${servicoOperacional(s) ? `
         <label>Data<input type="date" value="${escapeAttr(s.data || "")}" data-servico-campo="data" required></label>
         <label>Horário<input type="time" value="${escapeAttr(s.hora || "")}" data-servico-campo="hora" required></label>
-        ${s.data && s.hora ? "" : '<small>Informe a data e o horário: sem eles o pedido não salva.</small>'}</div>` : ""}</td>
+        ${s.data && s.hora ? "" : '<small>Informe data e horário: sem eles o pedido não salva.</small>'}` : ""}</div></td>
       <td><input type="number" min="1" max="999" step="1" value="${escapeAttr(s.quantidade)}" data-servico-campo="quantidade" aria-label="Quantidade de ${escapeAttr(s.nome)}"></td>
       <td><input type="number" min="0" step="0.01" value="${escapeAttr(Number(s.valor || 0).toFixed(2))}" data-servico-campo="valor" aria-label="Valor de ${escapeAttr(s.nome)}"></td>
       <td><b>${dinheiroBR.format((Number(s.quantidade) || 0) * (Number(s.valor) || 0))}</b></td>
@@ -1855,7 +1867,7 @@ async function fluxoAdicionarServico(){
 // codigo, fornecedor_id, fornecedor_nome, ambiente_id, quantidade, valor, custo}]. Não reservam o nosso estoque nem
 // passam pela separação; a quantidade da empresa é só referência (mostra quantos já estão em outros pedidos no período).
 const terceirizadosDe = () => (Array.isArray(S.current?.dados?.terceirizados) ? S.current.dados.terceirizados : (S.current.dados.terceirizados = []));
-let tercCadastro = null, tercOcupacao = {}, tercOcupacaoChave = "";
+let tercCadastro = null, tercEmpresas = [], tercOcupacao = {}, tercOcupacaoChave = "";
 async function carregarTerceirizados(forcar = false){
   if(tercCadastro && !forcar) return tercCadastro;
   const { data, error } = await ctx.supabase.from("terceirizacao_itens").select("*").eq("empresa_id", ctx.getSession()?.empresa_id).eq("ativo", true).order("produto");
@@ -1863,6 +1875,7 @@ async function carregarTerceirizados(forcar = false){
   const { data: emp } = await ctx.supabase.rpc("terceirizacao_empresas", { p_empresa: ctx.getSession()?.empresa_id });
   const nomes = new Map((emp || []).map((e) => [String(e.id), e.nome]));
   tercCadastro = (data || []).map((i) => ({ ...i, fornecedor_nome: nomes.get(String(i.fornecedor_id)) || "Empresa" }));
+  tercEmpresas = (emp || []).filter((e) => e.terceirizacao !== false && (tercCadastro.some((i) => String(i.fornecedor_id) === String(e.id))));
   return tercCadastro;
 }
 function periodoPedidoPai(){
@@ -1921,27 +1934,37 @@ async function fluxoSublocacao(){
   await carregarOcupacaoTerc();
   const ambs = ambientesDe();
   if(!ambs.length){ ctx.notify({ title: "Crie um ambiente primeiro", message: "O item sublocado entra num ambiente do pedido.", status: "error" }); return; }
-  let escolhido = null;
+  // Nov/2026: primeiro a empresa parceira (cartões com foto), depois os itens dela e a pesquisa.
+  let escolhido = null, empresa = tercEmpresas.length === 1 ? String(tercEmpresas[0].id) : "";
+  const iniciais = (n) => String(n || "?").trim().split(/\s+/).map((p) => p[0]).slice(0, 2).join("").toUpperCase();
+  const empresasHtml = () => tercEmpresas.length ? tercEmpresas.map((e) => `<button type="button" class="cpj-terc-emp${empresa === String(e.id) ? " is-escolhida" : ""}" data-terc-empresa="${escapeAttr(e.id)}" aria-pressed="${empresa === String(e.id)}">
+      <span class="cpj-terc-emp-foto">${e.foto_url ? `<img src="${escapeAttr(e.foto_url)}" alt="" loading="lazy">` : escapeHtml(iniciais(e.nome))}</span>
+      <span class="cpj-terc-emp-nome">${escapeHtml(e.nome)}</span><small>${Number(e.itens) || 0} ${Number(e.itens) === 1 ? "item" : "itens"}</small></button>`).join("")
+    : '<p class="cpj-empty">Nenhuma empresa parceira com itens. Cadastre em Comercial > Sublocações.</p>';
   const desenhar = (host, busca) => {
     const b = String(busca || "").trim().toLowerCase();
-    const lista = cadastro.filter((i) => !b || [i.produto, i.descricao, i.categoria, i.codigo, i.material, i.cor, i.fornecedor_nome].join(" ").toLowerCase().includes(b)).slice(0, 60);
+    if(!empresa){ host.innerHTML = '<p class="cpj-empty">Escolha a empresa acima para ver os itens dela.</p>'; return; }
+    const lista = cadastro.filter((i) => String(i.fornecedor_id) === empresa && (!b || [i.produto, i.descricao, i.categoria, i.codigo, i.material, i.cor].join(" ").toLowerCase().includes(b))).slice(0, 80);
     host.innerHTML = lista.length ? lista.map((i) => `<button type="button" class="cpj-comp${escolhido?.id === i.id ? " is-escolhido" : ""}" data-terc-escolher="${escapeAttr(i.id)}">
         <img src="${escapeAttr(i.foto_url || "")}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
-        <span><strong>${escapeHtml(i.produto)}</strong><small>${escapeHtml([i.fornecedor_nome, medidasTerc(i), i.codigo ? "Cód. " + i.codigo : ""].filter(Boolean).join(" · "))}</small><small>${infoTerc(i.id, 0)}</small></span>
+        <span><strong>${escapeHtml(i.produto)}</strong><small>${escapeHtml([medidasTerc(i), i.codigo ? "Cód. " + i.codigo : ""].filter(Boolean).join(" · "))}</small><small>${infoTerc(i.id, 0)}</small></span>
         <b>${dinheiroBR.format(Number(i.valor_locacao) || 0)}</b></button>`).join("")
-      : `<p class="cpj-empty">${cadastro.length ? "Nenhum item com essa pesquisa." : 'Nenhum item de sublocação cadastrado. Cadastre em Comercial > Sublocações.'}</p>`;
+      : `<p class="cpj-empty">${b ? "Nenhum item com essa pesquisa." : "Esta empresa não tem itens ativos."}</p>`;
   };
   const ambAtivo = ambienteAtivo()?.id || ambs[0].id;
   const r = await abrirModal({
-    titulo: "Sublocação", sub: "Itens de empresas parceiras (Comercial > Sublocações). A disponibilidade é confirmada com a empresa.", confirmar: "Adicionar ao pedido", largo: true,
-    corpo: `<label class="cpj-busca-comp"><input type="search" data-terc-busca placeholder="Buscar item de sublocação (nome, código ou empresa)" autocomplete="off" data-lpignore="true"></label>
+    titulo: "Sublocação", sub: "Escolha a empresa parceira e depois o item. A disponibilidade é confirmada com a empresa.", confirmar: "Adicionar ao pedido", largo: true,
+    corpo: `<div class="cpj-terc-emps" data-terc-emps role="group" aria-label="Empresas parceiras">${empresasHtml()}</div>
+      <label class="cpj-busca-comp" data-terc-busca-rotulo${empresa ? "" : " hidden"}><input type="search" data-terc-busca placeholder="Pesquisar nos itens desta empresa (nome ou código)" autocomplete="off" data-lpignore="true"></label>
       <div class="cpj-comp-lista" data-terc-lista></div>
       <div class="cpj-comp-destino cpj-terc-escolha"><label class="cpj-campo-curto"><span>Ambiente</span><select name="ambiente">${ambs.map((a) => `<option value="${escapeAttr(a.id)}"${a.id === ambAtivo ? " selected" : ""}>${escapeHtml(a.nome)}</option>`).join("")}</select></label>
       <label class="cpj-campo-curto"><span>Quantidade</span><input type="number" name="quantidade" min="1" max="9999" value="1"></label></div>
       <p class="cpj-terc-antigo"><button type="button" class="cpj-link" data-terc-antigo>Cobrir a falta de um item do nosso estoque (sublocação antiga)</button></p>`,
     onMount: ({ form }) => {
-      const host = form.querySelector("[data-terc-lista]"), busca = form.querySelector("[data-terc-busca]");
-      desenhar(host, ""); busca.focus();
+      const host = form.querySelector("[data-terc-lista]"), busca = form.querySelector("[data-terc-busca]"), emps = form.querySelector("[data-terc-emps]");
+      desenhar(host, "");
+      emps.addEventListener("click", (e) => { const b = e.target.closest("[data-terc-empresa]"); if(!b) return; empresa = b.dataset.tercEmpresa; escolhido = null; busca.value = "";
+        emps.innerHTML = empresasHtml(); form.querySelector("[data-terc-busca-rotulo]").hidden = false; desenhar(host, ""); busca.focus(); });
       busca.addEventListener("input", () => desenhar(host, busca.value));
       host.addEventListener("click", (e) => { const b = e.target.closest("[data-terc-escolher]"); if(!b) return; escolhido = cadastro.find((i) => String(i.id) === b.dataset.tercEscolher) || null; desenhar(host, busca.value); });
       form.querySelector("[data-terc-antigo]").addEventListener("click", () => { form.closest("dialog")?.close(); window.parent.Sublocacoes?.abrir("atual"); });
@@ -2232,14 +2255,15 @@ function pintarPainel(){
     // Pedido comercial: decorador solicitante, título e os botões (Catálogo, Ambiente, Componente, Serviço) na mesma linha.
     host.innerHTML = (ctx.pedidoComercial ? `<div class="cpj-geral-topo cpj-geral-topo-comercial"><div class="cpj-geral-esq">${solicitante || ""}<button type="button" class="cpj-btn cpj-btn-ghost" data-cpj="novo-ambiente">＋ Ambiente</button></div>${titulo}<div class="cpj-geral-botoes" role="toolbar" aria-label="Ações do pedido">${botoesPedidoComercial()}</div></div>` : solicitante ? `<div class="cpj-geral-topo">${solicitante}${titulo}<span aria-hidden="true"></span></div>` : titulo)
       // Quantidade editável e ambientes que se arrastam inteiros (pedido do usuário, out/2026).
-      + geralHtml(dadosApresentacao(S.current,ctx.findItem), { editar: Boolean(ctx.pedidoComercial), quantidade: true, moverAmbientes: true, ...(ctx.pedidoComercial ? { vazios: true, acoesAmbiente: acoesAmbienteLista, fotoLado: rendersDaLista } : {}) })
+      + geralHtml(dadosApresentacao(S.current,ctx.findItem), { editar: Boolean(ctx.pedidoComercial), quantidade: true, moverAmbientes: true, ...(ctx.pedidoComercial ? { vazios: true, acoesAmbiente: acoesAmbienteLista, fotoLado: rendersDaLista, sublocados: true } : {}) })
 
-      + (ctx.pedidoComercial ? terceirizadosHtml() + servicosHtml() : "")
+      + (ctx.pedidoComercial ? servicosHtml() : "")
       // Pedido comercial: sem rodapé (o Salvar fica no topo do pedido e a prévia/PDF na aba Pedido) — out/2026.
       + (ctx.pedidoComercial ? '' : `<footer class="pa-geral-footer"><button type="button" class="cpj-btn cpj-btn-primary" data-cpj="enviar">${S.current.status === "rascunho" ? "Enviar pedido à Chiavari" : "Reenviar pedido"}</button></footer>`);
 
     vincularOrdemLista(host);
     sinalizarDisponibilidade(host, S.current, ctx);
+    if(ctx.pedidoComercial) larguraServicos(host);
     return;
   }
   if(S.workTab === "apresentacao"){

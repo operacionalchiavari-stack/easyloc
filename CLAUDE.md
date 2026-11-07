@@ -11568,3 +11568,13 @@ Teste feito como funcionário (conta temporária e um pedido de teste no banco r
 - **Painel Logístico**: os números vermelhos contam só o que falta planejar e têm legenda; **Cronograma**: barra lateral visível e botão "Mais dias à direita".
 - Telefones formatados nas listas; Helena escondida na aba Pedido; nome da conta sem cair no e-mail; selo "Bloqueado · em contagem no estoque" explicado.
 - **Pendências do usuário**: cadastro da empresa sem nome e sem CNPJ (aparecem no contrato); assinatura da empresa em Contratos; Geocoding API do Google; regra do frete (caminhão P no frete × G na escala).
+- **Ajustes seguintes (07/11)**:
+  - **Dados do pedido**: etiquetas do cadastro da cliente ao lado do nome, em pílulas discretas com a bolinha da cor do grupo (`pintarEtiquetasCliente`, `cadastro_etiquetas`). As condições do local (baldeação, escada…) ficam em pílulas laranja logo abaixo do endereço, sem quadro em volta.
+  - **Catálogo**: 10 andares e bases de estante e aparador, que estavam como Item, viraram Componente. A migration `…001100` guarda o tipo anterior em `itens_tipo_backup_20261107`.
+  - **Lista Completa**:
+    - Itens sublocados ficam junto dos itens do ambiente, em linha lilás, com "Nome - Sublocação" (sem o nome da empresa): `geralHtml(..., {sublocados:true})` e `linhaTerc`. A seção "Itens sublocados" saiu.
+    - Os serviços ficam numa linha só (nome, data e horário) e terminam onde terminam os itens (`larguraServicos`).
+    - A janela Sublocação mostra primeiro as empresas em cartões com foto, depois os itens da escolhida e a pesquisa.
+  - **Expedição**: bolinhas de bloqueio vermelhas, com cartão branco explicando o motivo ao passar o mouse (`ligarDicas`, `data-dica`). O clique mostra `data-motivo`.
+  - **Financeiro › A receber › por data**: a parcela fica embaixo do vencimento e a coluna "Recebido" saiu.
+  - **Conferência**: o resultado da divergência fica só no alerta global. O Painel Logístico ficou sem a legenda dos números.

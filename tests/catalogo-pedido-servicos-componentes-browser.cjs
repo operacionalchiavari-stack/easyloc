@@ -58,11 +58,16 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     // Sublocação: busca os itens terceirizados (Comercial > Terceirizações) e o escolhido vira linha do pedido
     await cat.locator('[data-cpj="sublocacao"]').click();
     const sdlg = cat.locator('dialog.cpj-modal');
-    await sdlg.locator('[data-terc-escolher]').first().waitFor({ timeout: 8000 });
-    assert.equal(await sdlg.locator('[data-terc-escolher]').count(), 2, 'lista os itens terceirizados');
-    await sdlg.locator('[data-terc-busca]').fill('tenda');
-    assert.equal(await sdlg.locator('[data-terc-escolher]').count(), 1, 'a busca filtra');
-    assert.match(await sdlg.locator('[data-terc-escolher]').innerText(), /Tendas Brasil[\s\S]*A empresa tem 3/);
+    // Nov/2026: primeiro as empresas parceiras em cartões; depois os itens da escolhida e a pesquisa.
+    await sdlg.locator('[data-terc-empresa]').first().waitFor({ timeout: 8000 });
+    assert.equal(await sdlg.locator('[data-terc-empresa]').count(), 2, 'uma empresa por cartão');
+    assert.equal(await sdlg.locator('[data-terc-escolher]').count(), 0, 'sem empresa escolhida, sem itens');
+    await sdlg.locator('[data-terc-empresa]', { hasText: 'Tendas Brasil' }).click();
+    assert.equal(await sdlg.locator('[data-terc-escolher]').count(), 1, 'só os itens da empresa escolhida');
+    assert.match(await sdlg.locator('[data-terc-escolher]').innerText(), /Tenda.*A empresa tem 3/s);
+    await sdlg.locator('[data-terc-busca]').fill('xyz');
+    assert.equal(await sdlg.locator('[data-terc-escolher]').count(), 0, 'a pesquisa filtra');
+    await sdlg.locator('[data-terc-busca]').fill('');
     await sdlg.locator('button[type=submit]').click();
     assert.equal(await sdlg.isVisible(), true, 'sem escolher um item não adiciona');
     await sdlg.locator('[data-terc-escolher]').first().click();
@@ -72,9 +77,10 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     await page.waitForFunction(() => (window.__sincronizados.at(-1)?.dados?.terceirizados || []).length === 1, null, { timeout: 8000 });
     const tl = (await ultimo()).dados.terceirizados[0];
     assert.deepEqual({ id: tl.terceirizado_id, amb: tl.ambiente_id, q: tl.quantidade, v: tl.valor, c: tl.custo, emp: tl.fornecedor_nome }, { id: 't1', amb: 'a2', q: 2, v: 3000, c: 1500, emp: 'Tendas Brasil' });
-    const secTerc = await cat.locator('.cpj-terceirizados').innerText();
-    assert.match(secTerc, /Tenda Cristal 10x10[\s\S]*Sublocado · Tendas Brasil/);
-    assert.match(secTerc, /A empresa tem 3 · 2 em outros pedidos no período · confirme com a empresa/, 'passa do que a empresa tem: avisa');
+    // Nov/2026: o item sublocado fica junto dos itens do ambiente, em lilás, com " - Sublocação" (sem nome da empresa).
+    const linhaTerc = await cat.locator('.pa-linha-sublocacao').innerText();
+    assert.match(linhaTerc, /Tenda Cristal 10x10 - Sublocação/);
+    assert.ok(!/Tendas Brasil|A empresa tem/.test(linhaTerc), 'sem empresa nem quantidade da empresa na linha');
     await cat.locator('[data-terc-campo="quantidade"]').fill('1'); await cat.locator('[data-terc-campo="quantidade"]').dispatchEvent('change');
     await page.waitForFunction(() => window.__sincronizados.at(-1)?.dados?.terceirizados?.[0]?.quantidade === 1, null, { timeout: 8000 });
     await cat.locator('[data-cpj="sublocacao"]').click();
@@ -99,7 +105,7 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     await page.waitForFunction(() => (window.__sincronizados.at(-1)?.dados?.servicos || []).length === 1, null, { timeout: 8000 });
     let s = (await ultimo()).dados.servicos[0];
     assert.deepEqual({ nome: s.nome, q: s.quantidade, v: s.valor, etapa: s.etapa, data: s.data, hora: s.hora }, { nome: 'Montagem especial', q: 2, v: 400, etapa: 'montagem', data: '2026-11-10', hora: '14:30' });
-    assert.match(await cat.locator('.cpj-servico-agenda').innerText(), /No cronograma · Montagem/);
+    assert.match(await cat.locator('.cpj-servico-linha').getAttribute('title'), /cronograma como Montagem/);
     await cat.locator('[data-servico-campo="hora"]').fill('16:00'); await cat.locator('[data-servico-campo="hora"]').dispatchEvent('change');
     await page.waitForFunction(() => window.__sincronizados.at(-1)?.dados?.servicos?.[0]?.hora === '16:00', null, { timeout: 8000 });
     await cat.locator('[data-servico-campo="valor"]').fill('350');
@@ -117,7 +123,7 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     assert.equal(linha, true, 'solicitante, Lista Completa e botões na mesma linha');
     if (process.env.FOTO_TOPO) await cat.locator('.cpj-geral-topo').screenshot({ path: process.env.FOTO_TOPO });
     assert.equal(await cat.locator('[data-cpj-amb], [data-cpj-worktab]').count(), 0, 'sem abas de ambiente');
-    assert.equal(await cat.locator('[data-pa-grupo="a2"] .pa-ambiente-vazio').count(), 1, 'ambiente vazio aparece na lista');
+    assert.equal(await cat.locator('[data-pa-grupo="a2"] .pa-linha-sublocacao').count(), 1, 'o item sublocado aparece dentro do seu ambiente');
     assert.equal(await cat.locator('[data-pa-grupo="a2"] .pa-ambiente-renders [data-cpj-render="r1"]').count(), 1, 'renderização dentro da lista, no ambiente');
     assert.equal(await cat.locator('[data-pa-grupo="a1"] [data-cpj="renomear"]').count(), 1, 'renomear no título do ambiente');
     if (process.env.FOTO) { await page.setViewportSize({ width: 1900, height: 900 }); await page.waitForTimeout(400); await page.screenshot({ path: process.env.FOTO }); await page.setViewportSize({ width: 1440, height: 900 }); }

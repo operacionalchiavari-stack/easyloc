@@ -7269,3 +7269,21 @@ html:is(#pedido-extra,html) .entrada-identidade small{display:block}
 
 /* Nov/2026: a tabela de parcelas rola de lado em vez de cortar a última coluna */
 html:is(#pedido-parcelas,html) body .pedido-screen .pagamento-table-wrap{overflow-x:auto !important;max-width:100%}
+
+/* Nov/2026: condições do local e etiquetas da cliente, discretas (só as pílulas, sem quadro em volta) */
+html:is(#pedido-local-tags,html) body .pedido-screen .location-address-body{grid-template-columns:minmax(0,1fr);align-items:start}
+html:is(#pedido-local-tags,html) body .pedido-screen .local-indicadores{width:100%;margin-top:4px}
+html:is(#pedido-local-tags,html) body .pedido-screen .local-tags-operacionais{justify-content:flex-start;gap:6px;padding:0;border:0;background:none}
+html:is(#pedido-local-tags,html) body .pedido-screen .local-tags-operacionais:empty{display:none}
+html:is(#pedido-local-tags,html) body .pedido-screen .local-tag-real{min-height:26px;padding:4px 10px;border:1px solid #f3c79b;background:#fff7ed;color:#9a3d07;font-size:12.5px;font-weight:600;border-radius:999px}
+.pedido-screen .entrada-cli-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;max-width:560px}
+.pedido-screen .entrada-cli-tags[hidden]{display:none}
+.pedido-screen .entrada-cli-tag{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:500;border:1px solid #e3e7ec;background:#fff;color:#1f2020}
+.pedido-screen .entrada-cli-tag small{font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#6b6b6b}
+.pedido-screen .entrada-cli-tag::before{content:"";width:7px;height:7px;border-radius:50%;background:#94a3b8;flex:none}
+.pedido-screen .entrada-cli-tag.cor-azul::before{background:#3b82f6}
+.pedido-screen .entrada-cli-tag.cor-verde::before{background:#16a34a}
+.pedido-screen .entrada-cli-tag.cor-amarelo::before{background:#eab308}
+.pedido-screen .entrada-cli-tag.cor-laranja::before{background:#f97316}
+.pedido-screen .entrada-cli-tag.cor-vermelho::before{background:#dc2626}
+.pedido-screen .entrada-cli-tag.cor-roxo::before{background:#7c3aed}

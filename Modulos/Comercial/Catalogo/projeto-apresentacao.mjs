@@ -66,7 +66,7 @@ export function dadosApresentacao(project, findItem){
     }),
     // Itens terceirizados do pedido comercial (nov/2026): entram no documento dentro do ambiente escolhido, como itens
     // comuns (sem o nome da empresa parceira nem o custo). Só o documento do pedido mostra (pedidoPreviewHtml).
-    terceirizados: (Array.isArray(project.dados?.terceirizados) ? project.dados.terceirizados : []).map(t => ({ ambienteId: t.ambiente_id || '', id: 't:' + (t.id || t.terceirizado_id || ''),
+    terceirizados: (Array.isArray(project.dados?.terceirizados) ? project.dados.terceirizados : []).map(t => ({ ambienteId: t.ambiente_id || '', id: 't:' + (t.id || t.terceirizado_id || ''), tercId: t.id || '',
       quantidade: Math.max(1, Number(t.quantidade) || 1), nome: t.nome || 'Item', nomeCompleto: t.nome || 'Item', observacao: '', foto: t.foto || '', referencia: t.codigo || '',
       categoria: '', tipo: '', personalizable: false, medidas: t.medidas || '', preco: Number.isFinite(Number(t.valor)) ? Number(t.valor) : null, reposicao: null,
       personalizacaoId: '', personalizacaoNome: '', personalizacaoEscolhas: {}, personalizacaoValor: null, opcoesPersonalizacao: [], terceirizado: true })),
@@ -159,6 +159,17 @@ function linhas(amb, ordenar = false, editar = false, qtdEditavel = editar){
       ${ordenar ? '' : quantidade}</tr>`;
   }).join('');
 }
+// Item sublocado (nov/2026): na Lista Completa fica junto dos itens do ambiente, com cor própria e " - Sublocação" no nome
+// (sem o nome da empresa parceira). Quantidade e valor editáveis; os campos usam data-terc-* (tratados em catalogo-projetos).
+function linhaTerc(item, amb, editavel){
+  const nome = (item.nomeCompleto || item.nome) + ' - Sublocação';
+  const total = (Number(item.preco) || 0) * item.quantidade;
+  return `<tr class="pa-linha-sublocacao" data-terc-id="${esc(item.tercId)}" data-pa-amb="${esc(amb.id)}">
+    <td class="pa-ordem"></td>
+    <td class="pa-quantidade">${editavel ? `<input class="pa-qtd-input" type="number" min="1" max="9999" value="${item.quantidade}" data-terc-campo="quantidade" aria-label="Quantidade de ${esc(nome)}"><button type="button" class="cpj-icon-btn pa-remover" data-cpj="terc-remover" aria-label="Excluir ${esc(nome)}" title="Excluir item">×</button>` : `<b>${item.quantidade}</b>`}</td>
+    <td class="pa-miniatura">${foto(item.foto)}</td><td class="pa-descricao"><strong>${esc(nome)}</strong>${item.medidas ? `<small class="pa-medidas">${esc(item.medidas)}</small>` : ''}${item.referencia ? `<small>Cód. ${esc(item.referencia)}</small>` : ''}</td>
+    <td class="pa-valor">${moeda(null)}</td><td class="pa-valor">${editavel ? `<input class="pa-valor-input" type="number" min="0" step="0.01" value="${(Number(item.preco) || 0).toFixed(2)}" data-terc-campo="valor" aria-label="Valor de ${esc(nome)}">` : moeda(item.preco)}</td><td class="pa-valor pa-valor-total"><b>${dinheiro.format(total)}</b></td></tr>`;
+}
 function tabela(amb, ordenar = false){
   return amb.itens.length ? `<table class="pa-itens" aria-label="Itens de ${esc(amb.nome)}"><thead><tr>${ordenar?'<th scope="col"><span class="pa-sr">Ordenar</span></th><th scope="col" class="pa-quantidade">Qtd.</th>':''}<th scope="col"><span class="pa-sr">Foto</span></th><th scope="col">Item</th>${valoresTh()}${ordenar?'':'<th scope="col">Qtd.</th>'}</tr></thead><tbody>${linhas(amb,ordenar)}</tbody></table>` : '<p class="pa-vazio">Nenhum item neste ambiente.</p>';
 }
@@ -168,8 +179,10 @@ const COLHEAD_GERAL = `<tr class="pa-colhead" aria-hidden="true"><td></td><td cl
 // quantidade: campo de quantidade editável; moverAmbientes: alça no título pra arrastar o ambiente inteiro (aba Geral).
 // vazios / acoesAmbiente / depoisTitulo: só no pedido comercial, que não tem mais as abas de ambiente — ambiente sem
 // itens continua aparecendo, o título ganha renomear/excluir e as renderizações vêm depois dos itens (centralizadas).
-export function geralHtml(model, { editar = false, titulos = true, quantidade = false, moverAmbientes = false, vazios = false, acoesAmbiente = null, depoisTitulo = null, fotoLado = null } = {}){
-  const ambientes = model.ambientes.filter(amb=>vazios || amb.itens.length > 0);
+export function geralHtml(model, { editar = false, titulos = true, quantidade = false, moverAmbientes = false, vazios = false, acoesAmbiente = null, depoisTitulo = null, fotoLado = null, sublocados = false } = {}){
+  const terc = sublocados ? (model.terceirizados || []) : [];
+  const tercDe = amb => terc.filter(t => t.ambienteId === amb.id);
+  const ambientes = model.ambientes.filter(amb=>vazios || amb.itens.length > 0 || tercDe(amb).length > 0);
   // fotoLado: foto (renderizações) do ambiente numa coluna à direita dos itens, na altura deles (pedido comercial).
   const COLS = 4 + VALOR_COLS + (fotoLado ? 1 : 0);
   const foto = (amb, linhas) => { if(!fotoLado) return ''; const h = fotoLado(amb); return `<td class="pa-foto-ambiente" rowspan="${linhas}">${h || '<span class="pa-foto-ambiente-vazia">Sem renderização deste ambiente</span>'}</td>`; };
@@ -177,7 +190,7 @@ export function geralHtml(model, { editar = false, titulos = true, quantidade = 
   return `<div class="pa-geral">
     ${!ambientes.length ? '<p class="pa-vazio">Este projeto ainda não possui itens adicionados.</p>' : `<table class="pa-itens" aria-label="Itens do projeto por ambiente">
       <thead><tr><th scope="col"><span class="pa-sr">Ordenar</span></th><th scope="col" class="pa-quantidade">Qtd.</th><th scope="col"><span class="pa-sr">Foto</span></th><th scope="col">Item</th>${valoresTh()}${fotoLado ? '<th scope="col" class="pa-foto-ambiente-col"><span class="pa-sr">Foto do ambiente</span></th>' : ''}</tr></thead>
-      ${ambientes.map(amb=>`<tbody class="pa-grupo" aria-label="${esc(amb.nome)}" data-pa-grupo="${esc(amb.id)}">${titulos ? `<tr><td colspan="${fotoLado ? COLS - 1 : COLS}" class="pa-ambiente-titulo${moverAmbientes ? ' pa-ambiente-movel' : ''}">${moverAmbientes ? `<button type="button" class="pa-ambiente-alca" data-pa-drag-amb aria-label="Mover o ambiente ${esc(amb.nome)} com todos os itens. Use as setas para cima e para baixo." title="Arraste para mudar a ordem dos ambientes (ou use ↑ e ↓)">⠿</button>` : ''}<h3>${esc(amb.nome)}</h3>${acoesAmbiente ? acoesAmbiente(amb) : ''}</td>${fotoLado ? '<td class="pa-foto-ambiente-topo" aria-hidden="true"></td>' : ''}</tr>` : ''}${amb.itens.length ? (fotoLado ? COLHEAD_GERAL.replace(' aria-hidden="true">', '>').replace(/<td/g, '<td aria-hidden="true"').replace('</tr>', foto(amb, amb.itens.length + 1) + '</tr>') : COLHEAD_GERAL) + linhas(amb,true,editar,editar || quantidade) : `<tr class="pa-ambiente-vazio"><td colspan="${4 + VALOR_COLS}">Nenhum móvel neste ambiente ainda. Use o Catálogo (F2) ou ＋ Componente.</td>${foto(amb, 1)}</tr>`}${extra(amb)}</tbody>`).join('')}
+      ${ambientes.map(amb=>`<tbody class="pa-grupo" aria-label="${esc(amb.nome)}" data-pa-grupo="${esc(amb.id)}">${titulos ? `<tr><td colspan="${fotoLado ? COLS - 1 : COLS}" class="pa-ambiente-titulo${moverAmbientes ? ' pa-ambiente-movel' : ''}">${moverAmbientes ? `<button type="button" class="pa-ambiente-alca" data-pa-drag-amb aria-label="Mover o ambiente ${esc(amb.nome)} com todos os itens. Use as setas para cima e para baixo." title="Arraste para mudar a ordem dos ambientes (ou use ↑ e ↓)">⠿</button>` : ''}<h3>${esc(amb.nome)}</h3>${acoesAmbiente ? acoesAmbiente(amb) : ''}</td>${fotoLado ? '<td class="pa-foto-ambiente-topo" aria-hidden="true"></td>' : ''}</tr>` : ''}${amb.itens.length || tercDe(amb).length ? (fotoLado ? COLHEAD_GERAL.replace(' aria-hidden="true">', '>').replace(/<td/g, '<td aria-hidden="true"').replace('</tr>', foto(amb, amb.itens.length + tercDe(amb).length + 1) + '</tr>') : COLHEAD_GERAL) + linhas(amb,true,editar,editar || quantidade) + tercDe(amb).map(t => linhaTerc(t, amb, editar || quantidade)).join('') : `<tr class="pa-ambiente-vazio"><td colspan="${4 + VALOR_COLS}">Nenhum móvel neste ambiente ainda. Use o Catálogo (F2) ou ＋ Componente.</td>${foto(amb, 1)}</tr>`}${extra(amb)}</tbody>`).join('')}
     </table>`}
     <p class="pa-sr" data-pa-anuncio role="status" aria-live="polite"></p></div>`;
 }
@@ -340,7 +353,7 @@ export function estilosImpressaoPedido(horizontal=false){
   return `@page{size:A4 portrait;margin:0 0 12mm}.cpj-order-table thead.pa-sr{position:static;width:auto;height:auto;overflow:visible;clip-path:none}.cpj-order-table thead.pa-sr th{height:10mm;padding:0;border:0;font-size:0;line-height:0}.cpj-order-render-group,.cpj-order-financeiro{padding-top:6mm}@page plantaDeitada{size:A4 landscape;margin:6mm 0}@page plantaEmPe{size:A4 portrait;margin:6mm 0}.cpj-order-planta.is-deitada{page:plantaDeitada}.cpj-order-planta.is-em-pe{page:plantaEmPe}.cpj-order-paper .cpj-order-planta{margin:0 -6mm;padding:0;break-after:page}.cpj-order-planta h2{margin:0 0 3mm;font-size:13pt}.cpj-order-planta-folha{zoom:var(--zp)!important;box-shadow:none!important}body{margin:0;font-family:Arial,sans-serif;color:#34352f}.cpj-order-paper{padding:0 14mm;box-shadow:none}.cpj-order-paper .cpj-order-letterhead{margin:0 -14mm;padding:9mm 14mm}.cpj-order-notes{padding:0 14mm}.cpj-order-table thead{display:table-header-group}.cpj-order-table tr,figure,.cpj-order-requester{break-inside:avoid}.cpj-order-render-group{break-inside:auto}.cpj-order-render-group>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5mm}.cpj-order-render-group figure{margin:0}.cpj-order-render-group figure:first-child{grid-column:auto}.cpj-order-renders{break-before:auto}.cpj-order-renders>h2,.cpj-order-render-group h3{break-after:avoid}.cpj-order-notes{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:24px;font-size:12px;line-height:1.6}.pa-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}*{print-color-adjust:exact}${estilosHorizontal}`;
 }
 export async function imprimirPedido(model, { decorador = null, empresa = null, observacao = '', layout = null } = {}){
-  const css = new URL('./catalogo-projetos.css?v=20261107-teste-usuario',import.meta.url).href;
+  const css = new URL('./catalogo-projetos.css?v=20261107-lista-sublocacao',import.meta.url).href;
   // Decorador com os valores ocultos (botão do olho no catálogo): o PDF sai sem as colunas de valores.
   const semValores = document.documentElement.classList.contains('catalogo-sem-valores');
   const horizontal = (layout || layoutPedido()) === 'horizontal';
