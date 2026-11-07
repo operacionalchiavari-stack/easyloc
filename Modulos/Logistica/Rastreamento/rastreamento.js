@@ -11,19 +11,21 @@
   for(const [id,m] of marcadores){if(!ids.has(id)){m.setMap(null);marcadores.delete(id);}}
   $('usuarios').innerHTML=visiveis.map(l=>{
    const antiga=Date.now()-Date.parse(l.atualizado_em)>120000;
-   const pos={lat:l.latitude,lng:l.longitude};let m=marcadores.get(l.usuario_id);
-   if(!m){m=new google.maps.Marker({map:mapa,position:pos});marcadores.set(l.usuario_id,m);}
-   m.setPosition(pos);m.setTitle(l.nome);m.setOpacity(antiga?0.5:1);
-   return '<button type="button" class="'+(antiga?'antiga':'recente')+'" data-usuario="'+esc(l.usuario_id)+'"><b>'+esc(l.nome)+'</b><small>'+(antiga?'última posição · ':'Atualizada · ')+esc(new Date(l.atualizado_em).toLocaleString('pt-BR'))+'</small><small>Precisão aproximada: '+Math.round(l.precisao)+' m</small></button>';
+   let m=marcadores.get(l.usuario_id);
+   if(!m){m=window.RastreamentoFotos.criarMarcador(mapa,l,()=>{mapa.panTo(marcadores.get(l.usuario_id).getPosition());mapa.setZoom(16);});marcadores.set(l.usuario_id,m);}
+   m.atualizar(l);m.setOpacity(antiga?0.65:1);
+   return '<button type="button" class="rt-usuario '+(antiga?'antiga':'recente')+'" data-usuario="'+esc(l.usuario_id)+'"><span data-foto></span><span class="rt-dados"><b>'+esc(l.nome)+'</b><small>'+(antiga?'Última posição · ':'Atualizada · ')+esc(new Date(l.atualizado_em).toLocaleString('pt-BR'))+'</small><small>Precisão aproximada: '+Math.round(l.precisao)+' m</small></span></button>';
   }).join('');
+  $('usuarios').querySelectorAll('[data-usuario]').forEach((el,i)=>el.querySelector('[data-foto]').append(window.RastreamentoFotos.avatar(visiveis[i].nome,visiveis[i].foto)));
   $('estado').classList.remove('erro');
   $('estado').textContent=linhas.length?visiveis.length+' usuário(s) no mapa.':'Nenhum usuário compartilhando localização. Ative o compartilhamento no app da equipe.';
  }
  async function atualizar(){
   if(carregando)return;carregando=true;
   try{
-   const {data,error}=await window.supabaseClient.from('rastreamento_posicoes').select('usuario_id,nome,latitude,longitude,precisao,atualizado_em').eq('empresa_id',contexto.empresa_id).order('nome');
+   const {data,error}=await window.supabaseClient.rpc('rastreamento_listar',{p_empresa:contexto.empresa_id});
    if(error)throw error;
+   await window.RastreamentoFotos.resolver(window.supabaseClient,data||[]);
    const primeira=!linhas.length;linhas=data||[];pintar();if(primeira)enquadrar();
   }catch(_){marcadores.forEach(m=>m.setOpacity(0.4));$('estado').classList.add('erro');$('estado').textContent='Falha ao atualizar as posições. As posições exibidas podem estar desatualizadas. Tentaremos novamente.';}
   finally{carregando=false;}
