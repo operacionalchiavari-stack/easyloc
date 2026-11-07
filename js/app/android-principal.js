@@ -2,6 +2,8 @@
 (async function(){
  'use strict';
  if(!/android/i.test(navigator.userAgent||'')||window.top!==window)return;
+ // O catálogo público dos clientes não é o aplicativo interno da equipe.
+ if(/\/Catalogo\/catalogo-app\.html$/i.test(location.pathname)&&new URLSearchParams(location.search).get('app')!=='1')return;
  const script=document.currentScript?.src;if(!script)return;
  const base=new URL('../../',script);
  try{
