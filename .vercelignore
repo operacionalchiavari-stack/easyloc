@@ -16,4 +16,5 @@ outputs
 
 # (out/2026) anotacoes e docs internas nao vao ao ar
 docs
+android
 *.md

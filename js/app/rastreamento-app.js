@@ -3,6 +3,9 @@
  'use strict';
  let empresa, usuario, watch = null, consulta = null, geracao = 0, enviando = false, ultimo = 0, painel;
  const sb = () => window.supabaseClient;
+ const android = () => Boolean(window.AcervoAndroid?.postMessage);
+ let tokenPendente=null, nativoAtivo=false, registrando=false;
+ const enviarAndroid = dados => window.AcervoAndroid.postMessage(JSON.stringify(dados));
  const chave = () => `rastreamento:${empresa}:${usuario}`;
  function mensagem(texto) { painel?.querySelector('[role="status"]') && (painel.querySelector('[role="status"]').textContent = texto); }
  function erroEnvio(erro) {
@@ -21,9 +24,11 @@
   (document.getElementById('apInicio') || document.body).append(painel);
   painel.querySelector('[data-ativar]').onclick = ativar;
   painel.querySelector('[data-parar]').onclick = parar;
+  if(android())painel.querySelector('details > p').textContent='Ao ativar, o Android compartilhará sua localização com a Logística mesmo ao sair do app ou apagar a tela. Uma notificação indicará o rastreamento; você pode pausar a qualquer momento.';
  }
  function limpar() { geracao++; clearInterval(consulta); consulta=null; if (watch !== null) navigator.geolocation.clearWatch(watch); watch=null; ultimo=0; }
  async function ativar() {
+  if(android()){await ativarAndroid();return;}
   if (!navigator.geolocation || !window.isSecureContext) { mensagem('Localização indisponível. Use HTTPS e um navegador compatível.'); return; }
   limpar(); const atual=geracao;
   localStorage.setItem(chave(),'1'); mensagem('Aguardando permissão e sinal de localização...');
@@ -43,7 +48,36 @@
   watch=navigator.geolocation.watchPosition(transmitir,falha,opcoes);
   consulta=setInterval(()=>{if(atual===geracao)navigator.geolocation.getCurrentPosition(transmitir,falha,opcoes);},30000);
  }
+ async function ativarAndroid(){
+  if(registrando)return;
+  if(nativoAtivo){enviarAndroid({action:'status'});return;}
+  registrando=true;
+  try{
+   limpar();const atual=geracao;mensagem('Preparando compartilhamento no Android…');
+   const bytes=crypto.getRandomValues(new Uint8Array(32));
+   const token=btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+   const key='rastreamento:android:dispositivo:'+usuario;
+   const dispositivo=localStorage.getItem(key)||crypto.randomUUID();localStorage.setItem(key,dispositivo);
+   const {error}=await sb().rpc('rastreamento_dispositivo_registrar',{p_empresa:empresa,p_dispositivo:dispositivo,p_token:token});
+   if(error)throw error;
+   if(atual!==geracao){await sb().rpc('rastreamento_dispositivo_encerrar',{p_token:token});return;}
+   tokenPendente=token;mensagem('Confirme o compartilhamento e as permissões na janela do Android.');
+   enviarAndroid({action:'start',token});
+  }catch(erro){mensagem(erroEnvio(erro));}
+  finally{registrando=false;}
+ }
+ window.addEventListener('acervo:android',async event=>{
+  if(!android()||!painel)return;
+  const {type,message}=event.detail||{};
+  if(type==='started'){nativoAtivo=true;tokenPendente=null;localStorage.setItem(chave(),'1');mensagem(message);}
+  else if(type==='stopped'){nativoAtivo=false;localStorage.removeItem(chave());mensagem('Compartilhamento Android pausado. Toque em Compartilhar localização para ativar.');}
+  else if(type==='error'){
+   const token=tokenPendente;tokenPendente=null;nativoAtivo=false;localStorage.removeItem(chave());mensagem(message);
+   if(token)try{await sb().rpc('rastreamento_dispositivo_encerrar',{p_token:token});}catch(_){}
+  }
+ });
  async function parar() {
+  if(android()){enviarAndroid({action:'stop'});nativoAtivo=false;}
   limpar(); localStorage.removeItem(chave()); mensagem('Coleta pausada. Removendo última posição...');
   // Aguarda eventual envio iniciado antes da pausa, evitando recriar a posição após a remoção.
   while(enviando) await new Promise(resolve=>setTimeout(resolve,100));
@@ -57,13 +91,14 @@
   if(empresa===id && usuario===novoUsuario)return;
   limpar(); empresa=id; usuario=novoUsuario; montar();
   mensagem('Compartilhamento desativado.');
-  if(localStorage.getItem(chave())==='1') ativar();
+  if(android())enviarAndroid({action:'status'});
+  else if(localStorage.getItem(chave())==='1') ativar();
  }
  window.AppRastreador={iniciar};
  window.addEventListener('storage',event=>{if(empresa&&usuario&&event.key===chave()&&event.newValue!=='1'){limpar();mensagem('Compartilhamento pausado em outra tela.');}});
- sb()?.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){limpar();if(empresa&&usuario)localStorage.removeItem(chave());painel?.remove();painel=null;empresa=null;usuario=null;}});
+ sb()?.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){if(android())enviarAndroid({action:'stop'});limpar();if(empresa&&usuario)localStorage.removeItem(chave());painel?.remove();painel=null;empresa=null;usuario=null;}});
  window.addEventListener('pagehide',limpar);
- window.addEventListener('pageshow',()=>{if(empresa&&usuario&&localStorage.getItem(chave())==='1'&&watch===null)ativar();});
+ window.addEventListener('pageshow',()=>{if(android()){if(empresa)enviarAndroid({action:'status'});return;}if(empresa&&usuario&&localStorage.getItem(chave())==='1'&&watch===null)ativar();});
  if(!/\/app\.html$/.test(location.pathname)) {
   const id=sessionStorage.getItem('empresa_id'); if(id)iniciar(id);
  }

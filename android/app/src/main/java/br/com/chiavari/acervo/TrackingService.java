@@ -64,7 +64,9 @@ public final class TrackingService extends Service {
  private void stopTracking(){
   getSharedPreferences("rastreamento",0).edit().putBoolean("ativo",false).commit();
   stopped=true;if(callback!=null)locations.removeLocationUpdates(callback);
-  worker.execute(()->{try{String value=SecureStore.read(this);if(value!=null){int code=TrackingApi.call("rastreamento_dispositivo_encerrar",new JSONObject().put("p_token",value));if(code>=200&&code<300)SecureStore.clear(this);}}catch(Exception ignored){}finally{stopForeground(STOP_FOREGROUND_REMOVE);stopSelf();}});
+  final String value;try{value=SecureStore.read(this);}catch(Exception e){stopForeground(STOP_FOREGROUND_REMOVE);stopSelf();return;}
+  worker.execute(()->{try{if(value!=null){int code=TrackingApi.call("rastreamento_dispositivo_encerrar",new JSONObject().put("p_token",value));if(code>=200&&code<300&&value.equals(SecureStore.read(this)))SecureStore.clear(this);}}catch(Exception ignored){}});
+  stopForeground(STOP_FOREGROUND_REMOVE);stopSelf();
  }
  @Override public void onDestroy(){running=false;stopped=true;if(callback!=null)locations.removeLocationUpdates(callback);worker.shutdown();super.onDestroy();}
  @Override public IBinder onBind(Intent intent){return null;}

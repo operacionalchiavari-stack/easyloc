@@ -37,3 +37,19 @@ test('falhas do servidor, sessao e rede mostram orientacoes diferentes',async()=
   assert.match(a.elementos.get('[role="status"]').textContent,esperado);
  }
 });
+test('Android usa serviço nativo, mantém rastreamento ao sair da página e para no logout',async()=>{
+ const a=ambiente(),mensagens=[];
+ a.ctx.crypto=require('node:crypto').webcrypto;a.ctx.Uint8Array=Uint8Array;a.ctx.btoa=s=>Buffer.from(s,'binary').toString('base64');
+ a.ctx.AcervoAndroid={postMessage:s=>mensagens.push(JSON.parse(s))};
+ a.storage.set('rastreamento:empresa:pessoa','1');
+ await a.ctx.AppRastreador.iniciar('empresa');
+ assert.equal(mensagens[0].action,'status');assert.equal(a.calls.length,0);
+ await a.elementos.get('[data-ativar]').onclick();
+ assert.equal(a.success,undefined);assert.equal(a.calls[0].name,'rastreamento_dispositivo_registrar');
+ assert.match(a.calls[0].args.p_token,/^[A-Za-z0-9_-]{43}$/);
+ assert.equal(mensagens[1].action,'start');
+ assert.ok(![...a.storage.values()].includes(mensagens[1].token));
+ a.listeners['acervo:android']({detail:{type:'started',message:'Ativo'}});
+ a.listeners.pagehide();assert.equal(mensagens.length,2);
+ a.logout();assert.equal(mensagens.at(-1).action,'stop');
+});

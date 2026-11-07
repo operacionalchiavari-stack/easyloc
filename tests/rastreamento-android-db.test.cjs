@@ -1,0 +1,42 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+const {PGlite}=require('@electric-sql/pglite');
+const id=n=>'00000000-0000-0000-0000-'+String(n).padStart(12,'0');
+test('Android: autorização limitada, rotacionada, revogável e com vínculo ativo',async()=>{
+ const db=new PGlite(),token='A'.repeat(43),novo='B'.repeat(43);
+ try{
+  await db.exec(`create role anon;create role authenticated;create schema auth;
+   create table auth.users(id uuid primary key,raw_user_meta_data jsonb);
+   create function auth.uid() returns uuid language sql as $$select nullif(current_setting('test.uid',true),'')::uuid$$;
+   create table empresas(id uuid primary key);create table usuarios(id uuid,nome text);
+   create table usuarios_empresas(user_id uuid,empresa_id uuid);
+   create table funcionarios_acesso(id uuid,empresa_id uuid,nome text,ativo boolean);
+   create function funcionario_contexto(uuid) returns jsonb language sql as $$select jsonb_build_object('ativo',exists(select 1 from usuarios_empresas where user_id=auth.uid() and empresa_id=$1))$$;
+   create function eh_membro_empresa(uuid) returns boolean language sql as $$select false$$;
+   create function funcionario_pode(uuid,uuid,text) returns boolean language sql as $$select false$$;
+   grant usage on schema public,auth to authenticated,anon;
+   insert into empresas values('${id(1)}'),('${id(2)}');insert into auth.users values('${id(10)}','{}');
+   insert into usuarios values('${id(10)}','Pessoa');insert into usuarios_empresas values('${id(10)}','${id(1)}');
+   insert into funcionarios_acesso values('${id(10)}','${id(1)}','Pessoa',true);`);
+  for(const file of ['20261107000100_rastreamento_equipe.sql','20261107000400_rastreamento_android.sql'])await db.exec(fs.readFileSync('supabase/migrations/'+file,'utf8'));
+  const register=t=>db.query('select rastreamento_dispositivo_registrar($1,$2,$3)',[id(1),id(20),t]);
+  const send=(t=token,lat=-23)=>db.query('select rastreamento_dispositivo_enviar($1,$2,-46,10)',[t,lat]);
+  await db.exec(`select set_config('test.uid','${id(10)}',false);set role authenticated;`);
+  await assert.rejects(db.query('select rastreamento_dispositivo_registrar($1,$2,$3)',[id(2),id(20),token]),/autorizado/);
+  await register(token);await db.exec('reset role');
+  const stored=(await db.query('select token_hash from rastreamento_dispositivos')).rows[0].token_hash;
+  assert.notEqual(stored,token);assert.equal(stored.length,64);
+  await db.exec('set role anon');await send();
+  await assert.rejects(register(token),/permission denied/);
+  await assert.rejects(db.query('select * from rastreamento_dispositivos'),/permission denied/);
+  await assert.rejects(send('C'.repeat(43)),/encerrada/);
+  await assert.rejects(send(token,100),/check constraint/);
+  await db.exec('reset role;set role authenticated');await register(novo);await db.exec('reset role;set role anon');
+  await assert.rejects(send(token),/encerrada/);await send(novo);
+  await db.exec('reset role');await db.query("update rastreamento_dispositivos set expira_em=now()-interval '1 second'");await db.exec('set role anon');await assert.rejects(send(novo),/encerrada/);
+  await db.exec('reset role;set role authenticated');await register(novo);await db.exec('reset role');await db.query('update funcionarios_acesso set ativo=false');await db.exec('set role anon');await assert.rejects(send(novo),/encerrada/);
+  await db.exec('reset role');await db.query('update funcionarios_acesso set ativo=true');await db.exec('set role anon');
+  await db.query('select rastreamento_dispositivo_encerrar($1)',[novo]);await assert.rejects(send(novo),/encerrada/);
+  await db.exec('reset role');assert.equal((await db.query('select count(*)::int n from rastreamento_posicoes')).rows[0].n,0);
+  await db.exec('set role authenticated');await register(token);await send();await db.query('select rastreamento_parar($1)',[id(1)]);await db.exec('reset role;set role anon');await assert.rejects(send(),/encerrada/);
+ }finally{await db.close();}
+});

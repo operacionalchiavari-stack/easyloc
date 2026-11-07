@@ -43,7 +43,7 @@ jobs:
       # (out/2026) O site só precisa das telas: código do servidor, banco, testes e anotações não vão ao ar
       - name: Remove server-only files
         run: |
-          rm -rf api server supabase tests Scripts docs outputs .tmp .backups .github
+          rm -rf api server supabase tests Scripts docs outputs .tmp .backups .github android
           rm -f ./*.md ./tmp-* package.json package-lock.json deno.lock vercel.json .vercelignore .env.example
 
       - name: Upload artifact

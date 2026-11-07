@@ -16,6 +16,10 @@ public final class MainActivity extends Activity {
  private static final String ORIGIN="https://easyloc-zeta.vercel.app";
  private WebView web;
  private String pendingToken;
+ private AlertDialog consent;
+ private GeolocationPermissions.Callback geoCallback;
+ private String geoOrigin;
+ private ValueCallback<Uri[]> fileCallback;
  private boolean visible;
  @Override public void onCreate(Bundle state){
   super.onCreate(state);web=new WebView(this);setContentView(web);
@@ -28,7 +32,19 @@ public final class MainActivity extends Activity {
     return true;
    }
   });
-  web.setWebChromeClient(new WebChromeClient(){@Override public void onGeolocationPermissionsShowPrompt(String origin,GeolocationPermissions.Callback callback){callback.invoke(origin,false,false);}});
+  web.setWebChromeClient(new WebChromeClient(){
+   @Override public void onGeolocationPermissionsShowPrompt(String origin,GeolocationPermissions.Callback callback){
+    Uri u=Uri.parse(origin);
+    if(!visible||!ORIGIN.equals(u.getScheme()+"://"+u.getAuthority())){callback.invoke(origin,false,false);return;}
+    if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED||checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED){callback.invoke(origin,true,false);return;}
+    if(geoCallback!=null)geoCallback.invoke(geoOrigin,false,false);
+    geoCallback=callback;geoOrigin=origin;requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION,Manifest.permission.ACCESS_COARSE_LOCATION},8);
+   }
+   @Override public boolean onShowFileChooser(WebView view,ValueCallback<Uri[]> callback,FileChooserParams params){
+    if(fileCallback!=null)fileCallback.onReceiveValue(null);fileCallback=callback;
+    try{startActivityForResult(params.createIntent(),9);return true;}catch(Exception e){fileCallback=null;return false;}
+   }
+  });
   if(!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)){
    new AlertDialog.Builder(this).setMessage("Atualize o Android System WebView e abra o app novamente.").setPositiveButton("Fechar",(d,w)->finish()).show();return;
   }
@@ -37,11 +53,11 @@ public final class MainActivity extends Activity {
    try{
     JSONObject data=new JSONObject(message.getData());String action=data.optString("action");
     if("status".equals(action)){sendStatus();return;}
-    if("stop".equals(action)){startService(new Intent(this,TrackingService.class).setAction(TrackingService.STOP));send("stopped","Compartilhamento pausado.");return;}
+    if("stop".equals(action)){pendingToken=null;if(consent!=null)consent.dismiss();startService(new Intent(this,TrackingService.class).setAction(TrackingService.STOP));send("stopped","Compartilhamento pausado.");return;}
     if(!"start".equals(action)||!visible)return;
     String token=data.getString("token");if(!token.matches("[A-Za-z0-9_-]{43}"))return;
     pendingToken=token;
-    new AlertDialog.Builder(this).setTitle("Compartilhar localização com a Logística?").setMessage("O Acervo enviará sua localização enquanto o rastreamento estiver ativo, inclusive ao sair do app ou apagar a tela. Uma notificação permanecerá visível. Você pode pausar pelo app ou pela notificação.")
+    consent=new AlertDialog.Builder(this).setTitle("Compartilhar localização com a Logística?").setMessage("O Acervo enviará sua localização enquanto o rastreamento estiver ativo, inclusive ao sair do app ou apagar a tela. Uma notificação permanecerá visível. Você pode pausar pelo app ou pela notificação.")
      .setPositiveButton("Ativar",(d,w)->permissions()).setNegativeButton("Cancelar",(d,w)->{pendingToken=null;send("error","Compartilhamento cancelado.");}).setOnCancelListener(d->{pendingToken=null;send("error","Compartilhamento cancelado.");}).show();
    }catch(Exception e){send("error","Não foi possível iniciar. Tente novamente.");}
   });
@@ -53,7 +69,11 @@ public final class MainActivity extends Activity {
   if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED)required.add(Manifest.permission.POST_NOTIFICATIONS);
   if(required.isEmpty())startTracking();else requestPermissions(required.toArray(new String[0]),7);
  }
- @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] grants){super.onRequestPermissionsResult(request,permissions,grants);if(request==7)startTracking();}
+ @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] grants){
+  super.onRequestPermissionsResult(request,permissions,grants);if(request==7)startTracking();
+  if(request==8&&geoCallback!=null){boolean ok=checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED||checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED;geoCallback.invoke(geoOrigin,ok,false);geoCallback=null;}
+ }
+ @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==9&&fileCallback!=null){fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result,data));fileCallback=null;}}
  private void startTracking(){
   boolean location=checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED||checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED;
   boolean notifications=Build.VERSION.SDK_INT<33||checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)==PackageManager.PERMISSION_GRANTED;
