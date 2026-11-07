@@ -68,6 +68,8 @@
     if (!host()) return;
     if (!suporta || (iphone && !instalado)) { pintar(); return; }
     let ligado = false;
+    // Confere se há versão nova do app-sw.js (ex.: troca do ícone da notificação) sempre que a Início abre.
+    navigator.serviceWorker.getRegistration("./").then((r) => r && r.update()).catch(() => {});
     try {
       const s = Notification.permission === "granted" ? await assinaturaAtual() : null;
       if (s) {

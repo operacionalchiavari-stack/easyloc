@@ -9,8 +9,9 @@ self.addEventListener("push", (event) => {
   const titulo = d.titulo || "Acervo";
   event.waitUntil(self.registration.showNotification(titulo, {
     body: d.corpo || "",
-    icon: "Modulos/Comercial/Catalogo/app-icone-192.png",
-    badge: "Modulos/Comercial/Catalogo/app-icone-192.png",
+    // Sem "icon": a imagem grande à direita repetia o ícone do app. "badge" é o ícone da barra de cima do Android: precisa
+    // ser só o desenho em branco sobre fundo transparente (o ícone inteiro virava um quadrado branco).
+    badge: "Modulos/Comercial/Catalogo/app-badge-96.png",
     tag: d.tag || undefined,
     renotify: Boolean(d.tag),
     vibrate: [120, 60, 120],
