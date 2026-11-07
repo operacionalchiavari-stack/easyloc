@@ -1,0 +1,61 @@
+name: Android assinado
+on:
+ workflow_dispatch:
+  inputs:
+   candidate:
+    description: 'Compilar candidata sem Firebase (não promover para distribuição)'
+    type: boolean
+    default: false
+permissions:
+ contents: read
+jobs:
+ release:
+  runs-on: ubuntu-latest
+  timeout-minutes: 25
+  steps:
+   - uses: actions/checkout@v4
+   - uses: actions/setup-java@v4
+     with:
+      distribution: temurin
+      java-version: '17'
+   - uses: android-actions/setup-android@v3
+     with:
+      packages: 'platform-tools'
+      log-accepted-android-sdk-licenses: false
+   - uses: gradle/actions/setup-gradle@v4
+     with:
+      gradle-version: '8.11.1'
+   - name: Preparar assinatura e Firebase
+     env:
+      KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+      GOOGLE_SERVICES_B64: ${{ secrets.ANDROID_GOOGLE_SERVICES_B64 }}
+      CANDIDATE: ${{ inputs.candidate }}
+     run: |
+      test -n "$KEYSTORE_B64" || { echo 'Assinatura não configurada'; exit 1; }
+      printf '%s' "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/chiavari.p12"
+      if [ -n "$GOOGLE_SERVICES_B64" ]; then
+        printf '%s' "$GOOGLE_SERVICES_B64" | base64 --decode > android/app/google-services.json
+      elif [ "$CANDIDATE" != 'true' ]; then
+        echo 'Firebase pendente; distribuição definitiva bloqueada.'; exit 1
+      fi
+   - name: Compilar e verificar versão assinada
+     working-directory: android
+     env:
+      ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/chiavari.p12
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+     run: gradle assembleRelease lintRelease --no-daemon
+   - name: Conferir assinatura permanente
+     run: |
+      "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs android/app/build/outputs/apk/release/app-release.apk
+      EXPECTED=$(tr -d '\r\n' < android/signing-fingerprint.txt | tr '[:upper:]' '[:lower:]')
+      ACTUAL=$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs android/app/build/outputs/apk/release/app-release.apk | sed -n 's/Signer #1 certificate SHA-256 digest: //p')
+      test "$EXPECTED" = "$ACTUAL"
+   - uses: actions/upload-artifact@v4
+     with:
+      name: chiavari-android-assinado
+      path: android/app/build/outputs/apk/release/app-release.apk
+      retention-days: 30
+   - name: Limpar arquivos de assinatura
+     if: always()
+     run: rm -f "$RUNNER_TEMP/chiavari.p12" android/app/google-services.json

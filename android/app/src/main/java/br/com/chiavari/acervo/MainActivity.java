@@ -15,6 +15,7 @@ import org.json.JSONObject;
 public final class MainActivity extends Activity {
  private static final String ORIGIN="https://easyloc-zeta.vercel.app";
  private WebView web;
+ private NativePush push;
  private String pendingToken;
  private AlertDialog consent;
  private GeolocationPermissions.Callback geoCallback;
@@ -24,6 +25,7 @@ public final class MainActivity extends Activity {
  private boolean visible;
  @Override public void onCreate(Bundle state){
   super.onCreate(state);web=new WebView(this);setContentView(web);
+  push=new NativePush(this,web);
   getWindow().getDecorView().setOnApplyWindowInsetsListener((v,insets)->{v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets;});
   WebSettings settings=web.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
   web.setWebViewClient(new WebViewClient(){
@@ -53,6 +55,7 @@ public final class MainActivity extends Activity {
    if(!isMainFrame||!ORIGIN.equals(source.getScheme()+"://"+source.getAuthority()))return;
    try{
     JSONObject data=new JSONObject(message.getData());String action=data.optString("action");
+    if(push.handle(data))return;
     if("status".equals(action)){sendStatus();return;}
     if("stop".equals(action)){pendingToken=null;if(consent!=null)consent.dismiss();startService(new Intent(this,TrackingService.class).setAction(TrackingService.STOP));send("stopped","Compartilhamento pausado.");return;}
     if(!"start".equals(action)||!visible)return;
@@ -62,8 +65,13 @@ public final class MainActivity extends Activity {
      .setPositiveButton("Ativar",(d,w)->permissions()).setNegativeButton("Cancelar",(d,w)->{pendingToken=null;send("error","Compartilhamento cancelado.");}).setOnCancelListener(d->{pendingToken=null;send("error","Compartilhamento cancelado.");}).show();
    }catch(Exception e){send("error","Não foi possível iniciar. Tente novamente.");}
   });
-  web.loadUrl(ORIGIN+"/app.html");
+  web.loadUrl(launchUrl(getIntent()));
  }
+ private String launchUrl(Intent intent){
+  try{java.net.URI url=new java.net.URI(ORIGIN+"/").resolve(intent.getStringExtra("url")==null?"app.html":intent.getStringExtra("url"));if(ORIGIN.equals(url.getScheme()+"://"+url.getRawAuthority()))return url.toString();}catch(Exception ignored){}
+  return ORIGIN+"/app.html";
+ }
+ @Override protected void onNewIntent(Intent intent){super.onNewIntent(intent);setIntent(intent);web.loadUrl(launchUrl(intent));}
  private void permissions(){
   java.util.ArrayList<String> required=new java.util.ArrayList<>();
   if(checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED&&checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)!=PackageManager.PERMISSION_GRANTED){required.add(Manifest.permission.ACCESS_FINE_LOCATION);required.add(Manifest.permission.ACCESS_COARSE_LOCATION);}
@@ -72,6 +80,7 @@ public final class MainActivity extends Activity {
  }
  @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] grants){
   super.onRequestPermissionsResult(request,permissions,grants);if(request==7){if(visible)startTracking();else permissionResultReady=true;}
+  if(request==11)push.enable();
   if(request==8&&geoCallback!=null){boolean ok=checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED||checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED;geoCallback.invoke(geoOrigin,ok,false);geoCallback=null;}
  }
  @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==9&&fileCallback!=null){fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result,data));fileCallback=null;}}
