@@ -11484,3 +11484,38 @@ Pedido / evento: …
 - **Fotos na conversa** (botão da câmera, até 12, JPEG ≤1600px): bucket público `solicitacoes-evidencias`, `<empresa>/<usuário>/<uuid>.jpg` (só membro da empresa, só na própria pasta). A Edge Function manda as 6 fotos mais recentes para a IA (`image_url`, só links do bucket da própria empresa) — ela comenta o que vê e pede outra se a foto não mostra o problema. Ao registrar, `solicitacao_evidencias_salvar(empresa, tipo, id, fotos)` (só quem criou) liga as fotos: compra em `compras_registros.dados.evidencias` (+ os links no fim da observação, que Compras já vê), manutenção em `manutencao_predial_solicitacoes.evidencias` (aparecem no "Ver solicitação" e "📷 N" na lista). Migration `20261106000600` (aplicada e registrada).
 - Testes: `tests/solicitacao-assistente-browser.cjs` (telas, Supabase simulado) e `RUN_SOLIC_LIVE=1 node tests/solicitacao-assistente-live.cjs` (IA real, empresa e usuário temporários).
 
+## Pós-venda por WhatsApp: central de conversas (06/11/2026, etapa 1)
+Pedido: a IA vai fazer o pós-venda pelo WhatsApp (Z-API) quando o pedido sair da Posição final; a equipe precisa ver
+para quem ela está falando, o que o decorador responde (com foto), as conversas de agora e o resultado das anteriores
+(elogio, crítica). O usuário vai resolver a conexão do Z-API; esta etapa preparou a tela, o banco e o webhook.
+- **Tela**: Comercial > Pós-venda, aba **Conversas** (bolinha = conversas acontecendo agora; `?aba=conversas` abre
+  direto; `?exemplo=1` mostra 3 conversas de exemplo só na tela, nada gravado). `posvenda-conversas.js` (`PosvendaConversas`),
+  chamado pelo `posvenda.js` quando a aba é escolhida. Três colunas: lista (Agora = ativa/aguardando · Anteriores, busca,
+  prévia da última mensagem, situação, nota e ponto de sentimento) | mensagens no estilo WhatsApp (IA em azul, equipe em
+  verde, decorador em branco; foto, áudio, vídeo, documento; ✓/✓✓/lido/falha) | **Resultado** (nota /10, sentimento,
+  resumo, Elogios, Críticas, Sugestões, "quer retorno", eventos do contato). A equipe pode **Assumir conversa** (pausa a
+  IA) e responder (envia por `zapi-integration` send-message com origem `posvenda` e registra), **Devolver para a IA**,
+  e marcar **Concluída** / **Sem resposta**. Atualiza a cada 8 s com a aba aberta.
+- **Banco** (migration `20261106000700`, aplicada e registrada): `posvenda_conversas` (contato_id do pós-venda,
+  telefone com DDI, status ativa/aguardando/concluida/sem_resposta/encerrada, `ia_ativa`, assumida_por, `resultado` jsonb
+  {resumo, nota, sentimento, elogios[], criticas[], sugestoes[], quer_retorno}) e `posvenda_mensagens` (direcao
+  entrada/saida, autor ia/cliente/equipe, tipo, texto, midia_url, zapi_message_id único, status). Leitura com
+  `comercial.pedidos.visualizar` + 2FA; escrita só por funções: `posvenda_conversa_assumir`, `posvenda_mensagem_equipe`,
+  `posvenda_conversa_resultado` (`comercial.pedidos.editar`). Bucket público `posvenda-midia`.
+- **Webhook** `zapi-webhook` (publicado): mensagem recebida (ou enviada pelo próprio celular, `fromMe`) de um número com
+  conversa ativa/aguardando entra em `posvenda_mensagens` (casa o número por DDD + 8 últimos dígitos, por causa do 9º
+  dígito); foto/áudio/vídeo/documento são copiados para `posvenda-midia` (o link do Z-API expira); resposta tira a conversa
+  de "aguardando"; os status de entrega/leitura também atualizam `posvenda_mensagens`.
+- **Falta (próxima etapa, a combinar)**: o motor da IA — abrir a conversa quando o pós-venda é gerado (Posição final
+  confirmada), mandar a 1ª mensagem, responder cada mensagem recebida (só com `ia_ativa`), preencher o `resultado` e
+  encerrar; ligar com o formulário de Parâmetros > Comercial (perguntas do pós-venda) e com `posvenda_contatos`.
+- **Z-API hoje (investigado em 06/11)**: o código existe e está completo — Gestão > Integrações > WhatsApp
+  (`Modulos/Configuracoes/Integracoes/WhatsApp/`, criar instância pelo token de parceiro, QR Code, status, envio de teste),
+  Edge Functions `zapi-integration` (status, QR, salvar credenciais, enviar texto/imagem/áudio/documento, configura os
+  4 webhooks) e `zapi-webhook`, `js/core/zapiMessaging.js` (envio usado pela Central de Pedidos), credenciais cifradas no
+  cofre. Os segredos ZAPI_* (instância, tokens, parceiro, URL do webhook) estão no Supabase. **Mas as tabelas
+  `zapi_integracoes`, `zapi_credenciais`, `zapi_mensagens` e `zapi_eventos` estão vazias** (zeradas na limpeza de 26/10):
+  nenhuma conexão registrada. Para voltar a funcionar: abrir Gestão > Integrações > WhatsApp e conectar (QR Code); o
+  histórico antigo apontava "client-token is not configured" (token de segurança da conta Z-API).
+- Teste: `tests/posvenda-conversas-browser.cjs`.
+

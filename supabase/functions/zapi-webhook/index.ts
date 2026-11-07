@@ -45,6 +45,51 @@ function mapMessageStatus(status: string) {
   return null;
 }
 
+// Pós-venda (nov/2026): mensagens recebidas (e as enviadas pelo próprio celular) entram na conversa de pós-venda em
+// aberto com aquele número. Foto/áudio/vídeo/documento são copiados para o bucket posvenda-midia (o link do Z-API expira).
+const so = (v: unknown) => String(v ?? "").replace(/\D/g, "");
+const chaveFone = (v: unknown) => { const d = so(v).replace(/^55(?=\d{10,11}$)/, ""); return d.length >= 10 ? d.slice(0, 2) + d.slice(-8) : d; };
+
+async function copiarMidia(supabase: any, empresaId: string, url: string, tipo: string) {
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(20000) });
+    if (!r.ok) return url;
+    const ct = r.headers.get("content-type") || "";
+    const ext = ct.includes("jpeg") || ct.includes("jpg") ? "jpg" : ct.includes("png") ? "png" : ct.includes("webp") ? "webp" : ct.includes("ogg") ? "ogg" : ct.includes("mpeg") ? "mp3" : ct.includes("mp4") ? "mp4" : ct.includes("pdf") ? "pdf" : tipo === "imagem" ? "jpg" : tipo === "audio" ? "ogg" : "bin";
+    const caminho = `${empresaId}/${new Date().toISOString().slice(0, 7)}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("posvenda-midia").upload(caminho, new Uint8Array(await r.arrayBuffer()), { contentType: ct || undefined });
+    if (error) return url;
+    return supabase.storage.from("posvenda-midia").getPublicUrl(caminho).data.publicUrl;
+  } catch { return url; }
+}
+
+async function registrarPosvenda(supabase: any, empresaId: string, p: Record<string, any>) {
+  if (p.isGroup || p.isNewsletter || !p.phone) return;
+  const tipoEvento = String(p.type || "");
+  if (tipoEvento && !/Received/i.test(tipoEvento)) return;
+  const chave = chaveFone(p.phone);
+  const { data: conversas } = await supabase.from("posvenda_conversas").select("id,telefone,status")
+    .eq("empresa_id", empresaId).in("status", ["ativa", "aguardando"]).order("iniciada_em", { ascending: false }).limit(200);
+  const conversa = (conversas || []).find((c: any) => chaveFone(c.telefone) === chave);
+  if (!conversa) return;
+  const fromMe = Boolean(p.fromMe);
+  let tipo = "texto", texto = p.text?.message ?? null, midia: string | null = null;
+  if (p.image) { tipo = "imagem"; midia = p.image.imageUrl; texto = p.image.caption || null; }
+  else if (p.audio) { tipo = "audio"; midia = p.audio.audioUrl; }
+  else if (p.video) { tipo = "video"; midia = p.video.videoUrl; texto = p.video.caption || null; }
+  else if (p.document) { tipo = "documento"; midia = p.document.documentUrl; texto = p.document.fileName || p.document.title || null; }
+  if (!texto && !midia) return;
+  if (midia) midia = await copiarMidia(supabase, empresaId, midia, tipo);
+  const quando = p.momment ? new Date(Number(p.momment)).toISOString() : new Date().toISOString();
+  const { error } = await supabase.from("posvenda_mensagens").insert({
+    empresa_id: empresaId, conversa_id: conversa.id, direcao: fromMe ? "saida" : "entrada", autor: fromMe ? "equipe" : "cliente",
+    autor_nome: fromMe ? "Pelo celular" : (p.senderName || p.chatName || null), tipo, texto, midia_url: midia,
+    zapi_message_id: p.messageId || null, status: fromMe ? "enviado" : "recebido", created_at: quando,
+  });
+  if (error && !String(error.message).includes("duplicate")) { console.warn("posvenda mensagem:", error.message); return; }
+  await supabase.from("posvenda_conversas").update({ ultima_mensagem_em: quando, ...(conversa.status === "aguardando" && !fromMe ? { status: "ativa" } : {}) }).eq("id", conversa.id);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -90,6 +135,10 @@ serve(async (req) => {
         .eq("empresa_id", credentials.empresa_id);
     }
 
+    if (payload.phone && ("text" in payload || "image" in payload || "audio" in payload || "video" in payload || "document" in payload)) {
+      await registrarPosvenda(supabase, credentials.empresa_id, payload as Record<string, any>);
+    }
+
     const status = mapMessageStatus(String(payload.status || ""));
     const ids = Array.isArray(payload.ids)
       ? payload.ids.map(String)
@@ -106,6 +155,10 @@ serve(async (req) => {
         })
         .eq("empresa_id", credentials.empresa_id)
         .or(ids.map((id) => `zapi_message_id.eq.${id},zapi_zaap_id.eq.${id}`).join(","));
+    }
+
+    if (status && ids.length) {
+      await supabase.from("posvenda_mensagens").update({ status }).eq("empresa_id", credentials.empresa_id).eq("direcao", "saida").in("zapi_message_id", ids);
     }
 
     return jsonResponse({ ok: true });

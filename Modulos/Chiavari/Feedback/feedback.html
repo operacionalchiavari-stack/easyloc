@@ -8,7 +8,7 @@
   <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="posvenda.css?v=20261103-titulo-centro">
+  <link rel="stylesheet" href="posvenda.css?v=20261106-conversas">
 </head>
 <body>
 <!-- Pós-venda do Comercial (out/2026, no banco): pedido com a Posição final confirmada pelo Financeiro vira uma ligação
@@ -21,10 +21,21 @@
       <button type="button" role="tab" data-aba="ligacoes" aria-selected="true">Ligações <span class="tab-badge" id="pvContHoje"></span></button>
       <button type="button" role="tab" data-aba="atencao" aria-selected="false">Precisam de atenção <span class="tab-badge" id="pvContAtencao"></span></button>
       <button type="button" role="tab" data-aba="feitas" aria-selected="false">Concluídas</button>
+      <button type="button" role="tab" data-aba="conversas" aria-selected="false" title="Conversas da IA com os decoradores pelo WhatsApp">Conversas <span class="tab-badge" id="pvContConversas"></span></button>
     </nav>
     <label class="pv-busca"><input id="pvBusca" type="search" placeholder="Buscar cliente ou pedido" autocomplete="off"></label>
   </header>
   <div id="pvLista" class="pv-lista"><div class="pv-vazio">Carregando…</div></div>
+  <!-- Nov/2026: central das conversas da IA com os decoradores pelo WhatsApp (posvenda-conversas.js). -->
+  <section id="pvConversas" class="pvc" hidden>
+    <aside class="pvc-col-lista">
+      <div class="pvc-filtros" role="group" aria-label="Conversas"><button type="button" data-pvc-filtro="agora" id="pvcFiltroAgora" aria-pressed="true">Agora</button><button type="button" data-pvc-filtro="anteriores" id="pvcFiltroAnt" aria-pressed="false">Anteriores</button></div>
+      <input id="pvcBusca" type="search" placeholder="Buscar decorador ou telefone" autocomplete="off" aria-label="Buscar conversa">
+      <div id="pvcLista" class="pvc-lista"><p class="pvc-vazio-lista">Carregando…</p></div>
+    </aside>
+    <div id="pvcConversa" class="pvc-col-conversa"></div>
+    <aside id="pvcResultado" class="pvc-col-resultado"></aside>
+  </section>
 </main>
 
 <dialog class="pv-dialog" id="pvForm">
@@ -42,7 +53,8 @@
 <script src="../../../js/core/companyTheme.js?v=20260913m"></script>
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
-<script src="posvenda.js?v=20261029-tabela"></script>
+<script src="posvenda-conversas.js?v=20261106-conversas"></script>
+<script src="posvenda.js?v=20261106-conversas"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>
 </html>

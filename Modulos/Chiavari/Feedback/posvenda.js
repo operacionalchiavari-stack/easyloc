@@ -69,6 +69,10 @@
     $("pvContHoje").textContent = todos.filter((c) => c.status === "pendente" && c.disponivel_em <= hoje).length || "";
     $("pvContAtencao").textContent = todos.filter((c) => grupo(c) === "atencao").length || "";
     document.querySelectorAll("#pvAbas [data-aba]").forEach((b) => { const ativa = b.dataset.aba === S.aba; b.classList.toggle("ativa", ativa); b.setAttribute("aria-selected", String(ativa)); });
+    // Nov/2026: aba "Conversas no WhatsApp" (posvenda-conversas.js) troca a tabela pela central de conversas.
+    const conversas = S.aba === "conversas";
+    $("pvLista").hidden = conversas; $("pvConversas").hidden = !conversas; $("pvBusca").closest(".pv-busca").hidden = conversas;
+    if (conversas) { window.PosvendaConversas?.mostrar({ sb: S.sb, emp: S.emp, contatos: S.dados.contatos }); return; }
     const lista = todos.filter((c) => grupo(c) === S.aba && (!q || [c.cliente_nome, ...(c.pedidos || []).map((p) => p.numero)].some((x) => String(x || "").toLowerCase().includes(q))));
     if (S.aba === "ligacoes") lista.sort((a, b) => String(a.disponivel_em).localeCompare(String(b.disponivel_em)) || String(a.prazo).localeCompare(String(b.prazo)));
     else lista.sort((a, b) => String(b.concluido_em || "").localeCompare(String(a.concluido_em || "")));
@@ -146,7 +150,9 @@
     const ctx = await window.aguardarContexto?.();
     S.sb = window.supabaseClient; S.emp = ctx?.empresa_id || window.__CONTEXT?.empresa_id;
     ligar();
-    try { await carregar(); } catch (e) { $("pvLista").innerHTML = '<div class="pv-vazio">' + esc(e.message) + "</div>"; }
+    if (new URLSearchParams(location.search).get("aba") === "conversas" || new URLSearchParams(location.search).get("exemplo") === "1") S.aba = "conversas";
+    try { await carregar(); } catch (e) { $("pvLista").innerHTML = '<div class="pv-vazio">' + esc(e.message) + "</div>"; if (S.aba === "conversas") pintar(); }
+    if (S.aba !== "conversas") window.PosvendaConversas?.contar({ sb: S.sb, emp: S.emp });
   }
   iniciar();
 })();
