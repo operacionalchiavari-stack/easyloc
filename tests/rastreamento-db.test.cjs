@@ -22,6 +22,9 @@ test('rastreamento: acesso por empresa, identidade no servidor, limites e pausa'
  insert into funcionarios_acesso values('${id(10)}','${id(1)}','Ana');
  insert into vinculos values('${id(10)}','${id(1)}',false,true),('${id(11)}','${id(1)}',true,true),('${id(12)}','${id(2)}',true,true);`);
  await db.exec(fs.readFileSync('supabase/migrations/20261107000100_rastreamento_equipe.sql','utf8'));
+ // Em produção esta função é interna e não pode ser executada pelo cliente.
+ await db.exec('revoke all on function funcionario_pode(uuid,uuid,text) from public,anon,authenticated');
+ await db.exec(fs.readFileSync('supabase/migrations/20261107000200_rastreamento_leitura.sql','utf8'));
  await db.exec(`select set_config('test.uid','${id(10)}',false);set role authenticated;`);
  const enviar=(empresa=id(1),lat=-23)=>db.query('select rastreamento_enviar($1,$2,-46,10)',[empresa,lat]);
  await enviar();
