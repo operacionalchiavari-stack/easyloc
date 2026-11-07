@@ -12,6 +12,8 @@
       icone: '<svg viewBox="0 0 24 24"><path d="M3 9V3h6m6 0h6v6m0 6v6h-6M9 21H3v-6M7 7h3v3H7zm7 0h3v3h-3zM7 14h3v3H7zm7 0h3v3h-3z"/></svg>' },
     { chave: "montagem", nome: "Montagem", texto: "Suas montagens e desmontagens do dia.", href: "Modulos/Chiavari/Cronograma/montador.html?app=1",
       icone: '<svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.2L3 17.8V21h3.2l6.3-6.3a4 4 0 0 0 5.2-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>' },
+    { chave: "catalogo", nome: "Catálogo", texto: "O acervo completo, com fotos, medidas e disponibilidade.", href: "Modulos/Comercial/Catalogo/catalogo-app.html?app=1",
+      icone: '<svg viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5zM13 4h5.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H13z"/><path d="M7 8h1.5M7 11h1.5M16 8h-1M16 11h-1"/></svg>' },
     { chave: "bonus", nome: "Meu bônus", texto: "Seu bônus, extrato e prêmios.", href: "Modulos/Chiavari/Cronograma/montador.html?app=1&tela=bonus",
       icone: '<svg viewBox="0 0 24 24"><path d="M3 8h18v4H3zm2 4v9h14v-9M12 8v13"/><path d="M12 8H8a3 3 0 1 1 3-3Zm0 0h4a3 3 0 1 0-3-3Z"/></svg>' },
   ];
@@ -105,7 +107,7 @@
     $("apModulos").innerHTML = disponiveis.length ? disponiveis.map((m, i) =>
       '<a class="ap-modulo" href="' + m.href + '" style="--i:' + i + '"><span class="ap-modulo-icone" aria-hidden="true">' + m.icone + '</span>' +
       '<span class="ap-modulo-texto"><b class="ap-modulo-titulo">' + m.nome + '</b><small>' + m.texto + '</small></span><span class="ap-seta" aria-hidden="true">›</span></a>').join("")
-      : '<p class="ap-vazio">Seu usuário ainda não tem acesso à Triagem nem à Montagem. Fale com o administrador.</p>';
+      : '<p class="ap-vazio">Seu usuário ainda não tem acesso a nenhum módulo do app. Fale com o administrador.</p>';
     tela("apInicio");
   }
 

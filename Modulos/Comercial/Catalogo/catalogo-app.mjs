@@ -48,6 +48,10 @@ const dataLonga = (d) => d ? new Date(String(d).slice(0, 10) + "T00:00:00").toLo
 
 // ---------------------------------------------------------------------------------------------------------------
 // Estado
+// Nov/2026: aberto pelo app da equipe (app.html, módulo Catálogo): mostra a volta para o início do app.
+try{ if(new URLSearchParams(location.search).get("app") === "1") sessionStorage.setItem("catalogo_do_app", "1"); }catch(e){}
+const DO_APP = (() => { try{ return sessionStorage.getItem("catalogo_do_app") === "1"; }catch(e){ return false; } })();
+const irAppEquipe = () => { location.href = "../../../app.html"; };
 const S = {
   sessao: null, empresa: null, decorador: null, itens: [], capas: {},
   aba: "inicio", pilha: [], projeto: null, projetos: [], ambAtivo: null,
@@ -266,7 +270,7 @@ function telaInicio(){
   const p = S.projeto;
   const el = novaTela(`<div class="tela-rolagem">
     <section class="inicio-hero"${S.capas.portal || S.capas.catalogo ? ` style="background-image:url('${esc(otimizar(S.capas.portal || S.capas.catalogo, 1100))}')"` : ""}>
-      <div class="inicio-hero-topo">${S.empresa?.logo_url ? `<img class="inicio-logo" src="${esc(S.empresa.logo_url)}" alt="${esc(S.empresa?.nome || "")}">` : `<span class="inicio-logo" style="font:600 1.4rem var(--serif)">${esc(S.empresa?.nome || "Chiavari")}</span>`}
+      <div class="inicio-hero-topo">${DO_APP && equipe() ? `<button type="button" class="avatar inicio-app-voltar" data-app-inicio aria-label="Voltar ao início do app">←</button>` : ""}${S.empresa?.logo_url ? `<img class="inicio-logo" src="${esc(S.empresa.logo_url)}" alt="${esc(S.empresa?.nome || "")}">` : `<span class="inicio-logo" style="font:600 1.4rem var(--serif)">${esc(S.empresa?.nome || "Chiavari")}</span>`}
         <button type="button" class="avatar" data-ir-aba="conta" aria-label="Minha conta">${S.decorador?.logo_url ? `<img src="${esc(S.decorador.logo_url)}" alt="">` : esc((nome || "?")[0])}</button></div>
       <h1 class="inicio-ola">${esc(saudacao())}${nome ? `, <em>${esc(nome)}</em>` : ""}</h1>
       <p class="inicio-sub">Transite por vários estilos e encontre o seu.</p>
@@ -345,6 +349,7 @@ function cardProduto(i){
     <strong>${esc(i.name)}</strong>${i.dims ? `<small>${esc(i.dims)}</small>` : ""}${!visitante() || i.rentalPrice !== null ? `<b>${i.rentalPrice === null ? "Sob consulta" : dinheiro.format(i.rentalPrice)}</b>` : ""}<span class="produto-estoque" data-stock-item="${esc(i.id)}" hidden></span>${cores}</button>`;
 }
 function aoClicarComum(e){
+  if(e.target.closest("[data-app-inicio]")){ salvarAgora().finally(irAppEquipe); return; }
   const aba = e.target.closest("[data-ir-aba]"); if(aba){ irParaAba(aba.dataset.irAba); return; }
   if(e.target.closest("[data-helena]")){ abrirHelena(); return; }
   const cat = e.target.closest("[data-cat]"); if(cat){ empurrar(telaCategoria(cat.dataset.cat)); return; }
@@ -736,11 +741,13 @@ function telaConta(){
       ${visitante() ? `<button type="button" class="opcao" data-entrar>${ico("conta")}<span>Entrar com acesso exclusivo</span>${ico("seta")}</button>` : ""}
       <button type="button" class="opcao" data-instalar>${ico("instalar")}<span>Instalar o app no celular</span>${ico("seta")}</button>
       <button type="button" class="opcao" data-site>${ico("site")}<span>Abrir a versão completa</span>${ico("seta")}</button>
+      ${DO_APP && equipe() ? `<button type="button" class="opcao" data-app-inicio>${ico("site")}<span>Voltar ao início do app</span>${ico("seta")}</button>` : ""}
       ${!visitante() ? `<button type="button" class="opcao perigo" data-sair>${ico("sair")}<span>Sair</span></button>` : `<button type="button" class="opcao perigo" data-sair>${ico("sair")}<span>Voltar à entrada</span></button>`}
     </div></div>`);
   if(!visitante()) setTimeout(() => window.CatalogCredits?.refresh?.().catch(() => {}), 0);
   el.addEventListener("click", async (e) => {
     if(e.target.closest("[data-site]")){ await salvarAgora(); sessionStorage.setItem("catalogo_versao", "site"); location.href = "catalogo.html" + location.search; return; }
+    if(e.target.closest("[data-app-inicio]")){ await salvarAgora(); irAppEquipe(); return; }
     if(e.target.closest("[data-instalar]")){ instalar(); return; }
     if(e.target.closest("[data-entrar]")){ sessionStorage.removeItem("catalogo_visitante"); location.reload(); return; }
     if(e.target.closest("[data-sair]")){

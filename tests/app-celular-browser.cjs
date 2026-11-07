@@ -36,7 +36,7 @@ async function abrir(browser,celular,opts){
 }
 (async()=>{const browser=await chromium.launch({channel:'msedge'});try{
  // 1) Celular: o link do sistema abre o app, com o login e os móveis.
- let {ctx,page,erros}=await abrir(browser,true,{modulos:{triagem:true,montagem:true,bonus:true}});
+ let {ctx,page,erros}=await abrir(browser,true,{modulos:{triagem:true,montagem:true,catalogo:true,bonus:true}});
  await page.goto(BASE+'index.html');await page.waitForURL(/app\.html/);
  await page.waitForSelector('#apLogin:not([hidden])');
  await page.waitForFunction(()=>document.querySelectorAll('#apVitrine .ap-peca.is-visivel').length>=3);
@@ -49,7 +49,7 @@ async function abrir(browser,celular,opts){
  await page.waitForSelector('#apInicio:not([hidden])');
  assert.equal(await page.locator('#apOla').textContent(),'Olá, Jonatan');
  const mods=await page.locator('.ap-modulo').evaluateAll(a=>a.map(x=>[x.querySelector('.ap-modulo-titulo').textContent,x.getAttribute('href')]));
- assert.deepEqual(mods,[['Triagem','Modulos/Estoque/TriagemApp/triagem.html?app=1'],['Montagem','Modulos/Chiavari/Cronograma/montador.html?app=1'],['Meu bônus','Modulos/Chiavari/Cronograma/montador.html?app=1&tela=bonus']]);
+ assert.deepEqual(mods,[['Triagem','Modulos/Estoque/TriagemApp/triagem.html?app=1'],['Montagem','Modulos/Chiavari/Cronograma/montador.html?app=1'],['Catálogo','Modulos/Comercial/Catalogo/catalogo-app.html?app=1'],['Meu bônus','Modulos/Chiavari/Cronograma/montador.html?app=1&tela=bonus']]);
  assert.equal(await page.evaluate(()=>sessionStorage.getItem('login_ok')),'1');
  await page.waitForTimeout(900);await page.screenshot({path:'.tmp/app-inicio.png'});
  // recarregar com a sessão: vai direto para o Início
