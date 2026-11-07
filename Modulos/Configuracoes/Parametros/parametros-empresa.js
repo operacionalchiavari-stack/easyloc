@@ -100,6 +100,8 @@
         payload.pagamento_trava_etapa = root.querySelector('[name=finPagamentoEtapa]:checked')?.value === 'triagem' ? 'triagem' : 'carregamento';
         payload.pagamento_percent = numero('financeiroPagamentoPercent');
         payload.producao_pagamento_exige = root.querySelector('#financeiroProducaoExige')?.checked === true;
+        payload.baixa_manual_receber = root.querySelector('#financeiroBaixaReceber')?.checked === true;
+        payload.baixa_manual_pagar = root.querySelector('#financeiroBaixaPagar')?.checked === true;
         payload.producao_pagamento_percent = numero('financeiroProducaoPercent');
         if (!(payload.producao_pagamento_percent >= 1 && payload.producao_pagamento_percent <= 100) || !Number.isInteger(payload.producao_pagamento_percent)) throw Error('Producao: use um percentual inteiro de 1 a 100%.');
         if (!(payload.pagamento_percent > 0 && payload.pagamento_percent <= 100)) throw Error('Pagamento mínimo: use de 1 a 100%.');

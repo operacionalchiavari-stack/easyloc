@@ -64,6 +64,8 @@
       todos("clientes_empresas", "id,nome_razao,cpf_cnpj", (q) => q.order("nome_razao")).catch(() => [])
     ]);
     S.contas = contas; S.cfg = cfg; S.cats = cats; S.ccs = ccs; S.receber = receber; S.pagar = pagar;
+    // Baixa manual (Parâmetros > Financeiro, nov/2026): sem ela, recebimento e pagamento só pela conciliação em Bancos.
+    S.baixaManual = await S.sb.from("empresa_financeiro").select("baixa_manual_receber,baixa_manual_pagar").eq("empresa_id", S.emp).maybeSingle().then((r) => r.data || {}).catch(() => ({}));
     S.fornecedores = forn; S.clientes = cli;
     // pré-reservas (nov/2026): parcelas programadas no pedido, só como previsão (não são contas a receber)
     S.previsoes = await rpc("fin_previsao_pre_reservas", { p_empresa: S.emp }).catch(() => []) || [];
@@ -317,6 +319,7 @@
   function acoesR(t) {
     // receber: só pela conciliação em Bancos (ou lançando no caixa, se foi em dinheiro)
     return '<td><div class="acoes">' +
+      (S.baixaManual?.baixa_manual_receber && Number(t.aberto) > 0.005 && t.status !== "cancelado" ? '<button class="fin-btn peq verde" data-r-baixar="' + t.id + '">Recebido</button>' : "") +
       '<button class="fin-btn peq claro" data-r-editar="' + t.id + '">Editar</button><button class="fin-btn peq claro" data-r-ver="' + t.id + '">Detalhes</button></div></td>';
   }
   // Situação do pedido inteiro (todas as parcelas, sem olhar os filtros): quanto já entrou e quanto falta para quitar.
@@ -464,6 +467,7 @@
           return '<tr class="fin-linha-click" data-p-linha="' + t.id + '" tabindex="0" title="Ver detalhes"><td>' + esc(t.fornecedor_nome || "-") + "</td><td>" + esc(t.descricao) + (bloqueadoServico ? '<small class="text-danger" style="display:block;margin-top:5px">Pagar somente após confirmação do serviço em Compras → Serviços.</small>' : t.manutencao_confirmada === true ? '<small style="display:block;margin-top:5px">Serviço confirmado em Compras.</small>' : '') + (t.parcelas > 1 ? " <small>(" + t.parcela + "/" + t.parcelas + ")</small>" : "") + "</td><td>" + esc(c?.nome || "-") +
             "</td><td>" + dataBr(t.vencimento) + "</td><td>" + contaHtml(t.conta_id) + '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.aberto) + '</td><td><span class="fin-status ' + cls + '">' + esc(rot) + "</span></td>" +
             '<td><div class="acoes">' + (aguard ? '<button class="fin-btn peq" data-p-aprovar="' + t.id + '">Aprovar</button><button class="fin-btn peq verm" data-p-reprovar="' + t.id + '">Reprovar</button>' : "") +
+            (S.baixaManual?.baixa_manual_pagar && aberto && !aguard && !bloqueadoServico && t.aprovacao !== "reprovada" && Number(t.aberto) > 0.005 ? '<button class="fin-btn peq verde" data-p-baixar="' + t.id + '">Pago</button>' : "") +
             "</div></td></tr>";
         }).join("") + "</tbody></table></div></section>" : '<div class="fin-vazio">Nenhuma conta a pagar com esses filtros.</div>');
     $("finConteudo").querySelectorAll("[data-p-linha]").forEach((tr) => tr.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target === tr) { e.preventDefault(); detalhesPagar(tr.dataset.pLinha); } }));
@@ -668,6 +672,7 @@
       aguard ? { rotulo: "Reprovar", classe: "verm", acao: () => { fecharModal(); aprovar(id, false); } } : null,
       aguard ? { rotulo: "Aprovar", acao: () => { fecharModal(); aprovar(id, true); } } : null,
       aberto && !aguard && !bloqueado && t.aprovacao !== "reprovada" ? { rotulo: "Programar pagamento", classe: "claro", acao: () => programar(id) } : null,
+      S.baixaManual?.baixa_manual_pagar && aberto && !aguard && !bloqueado && t.aprovacao !== "reprovada" ? { rotulo: "Marcar como pago", classe: "verde", acao: () => { fecharModal(); baixar("pagar", id); } } : null,
       t.status !== "cancelado" ? { rotulo: "Editar", classe: "claro", acao: () => editarTitulo("pagar", id) } : null,
       { rotulo: "Fechar", classe: "claro", acao: fecharModal }
     ].filter(Boolean);
@@ -678,6 +683,30 @@
       await executar(() => rpc("fin_estornar_baixa", { p_empresa: S.emp, p_baixa: b.dataset.estornar, p_motivo: motivo }), "Baixa estornada.");
     }));
     $("finModal").classList.add("fin-modal-detalhe");
+  }
+  // Baixa manual (nov/2026): só aparece com a opção ligada em Parâmetros > Financeiro; o banco confere de novo (fin_baixar).
+  function baixar(tipo, id) {
+    const t = (tipo === "receber" ? S.receber : S.pagar).find((x) => x.id === id);
+    if (!t) return;
+    const rec = tipo === "receber";
+    modal(rec ? "Marcar como recebido" : "Marcar como pago",
+      '<div class="fin-form"><p class="fin-info">' + esc(rec ? (t.pedido_numero ? "Pedido " + t.pedido_numero + " · " : "") + (DIV[t.componente] || "") + " · " + (t.cliente_nome || "") : (t.fornecedor_nome || "") + " · " + t.descricao) + " — em aberto <b>" + brl(t.aberto) + "</b></p>" +
+      '<p class="fin-info fin-aviso-baixa">Baixa manual, sem a conciliação: quando o extrato do banco chegar, ignore a linha deste valor na conciliação para não contar duas vezes.</p>' +
+      '<label>Data<input type="date" name="data" max="' + hoje() + '" value="' + hoje() + '"></label>' +
+      '<label>Valor<input name="valor" inputmode="decimal" value="' + String(t.aberto).replace(".", ",") + '"></label>' +
+      '<label>Juros<input name="juros" inputmode="decimal" placeholder="0,00"></label>' +
+      '<label>Multa<input name="multa" inputmode="decimal" placeholder="0,00"></label>' +
+      '<label>Desconto<input name="desconto" inputmode="decimal" placeholder="0,00"></label>' +
+      '<label>Tarifa<input name="tarifa" inputmode="decimal" placeholder="0,00"></label>' +
+      '<label class="inteiro">Conta<select name="conta">' + opcoesContas(t.conta_id, "Escolha a conta") + "</select></label>" +
+      '<label>Forma<select name="forma">' + opcoesFormas(t.forma) + "</select></label>" +
+      '<label>Observação<input name="obs"></label></div>',
+      [{ rotulo: "Cancelar", classe: "claro", acao: fecharModal }, { rotulo: rec ? "Confirmar recebimento" : "Confirmar pagamento", classe: "verde", acao: async () => {
+        const d = campos($("finModalCorpo"));
+        if (!d.conta) return erroModal("Escolha a conta.");
+        if (!(num(d.valor) > 0)) return erroModal("Informe o valor.");
+        await executar(() => rpc("fin_baixar", { p_empresa: S.emp, p_tipo: tipo, p_id: id, p_data: d.data, p_valor: num(d.valor), p_juros: num(d.juros), p_multa: num(d.multa), p_desconto: num(d.desconto), p_tarifa: num(d.tarifa), p_conta: d.conta, p_forma: d.forma || null, p_obs: d.obs || null }), rec ? "Recebimento registrado." : "Pagamento registrado.");
+      } }]);
   }
   async function cancelar(tipo, id) {
     const motivo = prompt("Motivo do cancelamento:"); if (!motivo) return;
@@ -962,6 +991,8 @@
       const b = e.target.closest("button"); if (!b) return;
       const d = b.dataset;
       if (d.linkPag) { const p = S.pedidos[d.linkPag] || {}; window.EasyLocLinkPagamento?.abrir({ empresaId: S.emp, pedidoId: d.linkPag, numero: p.numero_pedido || "", cliente: p.cliente_nome || "", telefone: p.telefone || "" }); }
+      else if (d.rBaixar) baixar("receber", d.rBaixar);
+      else if (d.pBaixar) baixar("pagar", d.pBaixar);
       else if (d.rEditar) editarTitulo("receber", d.rEditar);
       else if (d.rVer) detalhes("receber", d.rVer);
       else if (d.pEditar) editarTitulo("pagar", d.pEditar);

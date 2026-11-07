@@ -400,3 +400,21 @@ html:root .cf-escolha-caminhao .cf-escolha-item small{margin:0;font-size:9px;let
 
 /* Nov/2026: nome do decorador não é mais cortado no topo (quebra em até 2 linhas) */
 html body .cf-cliente-nome{white-space:normal;overflow-wrap:anywhere;line-height:1.25}
+
+/* Nov/2026: QR com foto do item e material de proteção na mesma linha */
+.cf-item-linha{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:14px;align-items:center}
+.cf-item-foto{width:72px;height:72px;border-radius:10px;background:#f3f5f7;overflow:hidden;display:block}
+.cf-item-foto img{width:100%;height:100%;object-fit:contain;background:#fff}
+.cf-item-meio{min-width:0}
+.cf-item-capa{min-width:220px;max-width:280px}
+@media(max-width:760px){.cf-item-linha{grid-template-columns:56px minmax(0,1fr)}.cf-item-foto{width:56px;height:56px}.cf-item-capa{grid-column:1/-1;max-width:none}}
+/* Nov/2026: "Só o que falta" virou um botão de alternar (pílula), sem a caixinha de marcar */
+html:root:is(#cf-so,html) .cf-so-faltando{position:relative;display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 10px;border:1px solid #d6dbe1;border-radius:999px;background:#fff;color:#1f2020;font-size:13px;font-weight:600;cursor:pointer;user-select:none;transition:background .15s,border-color .15s,color .15s}
+html:root:is(#cf-so,html) .cf-so-faltando:hover{border-color:#123f86}
+html:root:is(#cf-so,html) .cf-so-faltando input{position:absolute;opacity:0;width:1px;height:1px;margin:0}
+html:root:is(#cf-so,html) .cf-so-faltando::before{content:"";width:30px;height:18px;border-radius:999px;background:#d6dbe1;box-shadow:inset 0 0 0 0 #123f86;transition:background .15s}
+html:root:is(#cf-so,html) .cf-so-faltando::after{content:"";position:absolute;left:13px;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.3);transition:transform .15s}
+html:root:is(#cf-so,html) .cf-so-faltando:has(input:checked){background:#eaf0fa;border-color:#123f86;color:#123f86}
+html:root:is(#cf-so,html) .cf-so-faltando:has(input:checked)::before{background:#123f86}
+html:root:is(#cf-so,html) .cf-so-faltando:has(input:checked)::after{transform:translateX(12px)}
+html:root:is(#cf-so,html) .cf-so-faltando:has(input:focus-visible){outline:2px solid #123f86;outline-offset:2px}

@@ -85,6 +85,11 @@
         <div class="pr-campo" style="margin-top:16px"><span>Onde travar</span><div class="pr-opcoes" role="radiogroup" aria-label="Onde travar"><label class="pr-check"><input type="radio" name="finPagamentoEtapa" value="triagem"><span>Na Triagem (a separação não começa)</span></label><label class="pr-check"><input type="radio" name="finPagamentoEtapa" value="carregamento"><span>No Carregamento (separa, mas não carrega)</span></label></div></div>
         <label class="pr-campo fin-pagamento-perc" style="margin-top:16px"><span>Pagamento mínimo</span><div><input id="financeiroPagamentoPercent" type="number" min="1" max="100" step="1" inputmode="numeric"><small>% do valor do pedido</small></div></label>
       </section>
+      <section class="pr-card" data-fin-card="baixa-manual">
+        <h3>Baixa manual de recebimentos e pagamentos</h3>
+        <p class="pr-ajuda">O caminho normal &#233; a concilia&#231;&#227;o em Financeiro &#8250; Bancos. Ligado, quem pode editar contas a receber ou a pagar tamb&#233;m consegue marcar uma parcela como recebida ou paga direto na lista, informando data, valor e conta. Aten&#231;&#227;o: quando o extrato do banco chegar, a linha desse valor deve ser ignorada na concilia&#231;&#227;o para n&#227;o contar duas vezes.</p>
+        <div class="pr-opcoes"><label class="pr-check"><input type="checkbox" id="financeiroBaixaReceber"><span>Permitir marcar como recebido manualmente (Contas a receber)</span></label><label class="pr-check"><input type="checkbox" id="financeiroBaixaPagar"><span>Permitir marcar como pago manualmente (Contas a pagar)</span></label></div>
+      </section>
       <section class="pr-card" data-fin-card="producao">
         <h3>Libera&#231;&#227;o financeira da Produ&#231;&#227;o</h3>
         <p class="pr-ajuda">Regra independente da Triagem e do Carregamento. Sem o pagamento confirmado, a produ&#231;&#227;o n&#227;o pode iniciar nem retomar uma etapa.</p>
@@ -103,6 +108,8 @@
 
     const f = state.financeiro || null;
     const prodExige=container.querySelector('#financeiroProducaoExige'),prodPercent=container.querySelector('#financeiroProducaoPercent');
+    const bxR=container.querySelector('#financeiroBaixaReceber'),bxP=container.querySelector('#financeiroBaixaPagar');
+    if(bxR)bxR.checked=f?.baixa_manual_receber===true; if(bxP)bxP.checked=f?.baixa_manual_pagar===true;
     prodExige.checked=f?.producao_pagamento_exige===true;
     prodPercent.value=f?.producao_pagamento_percent??100;
     const atualizarProducao=()=>{prodPercent.disabled=!prodExige.checked;};

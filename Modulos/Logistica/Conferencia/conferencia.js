@@ -136,10 +136,15 @@
     if(cab){const th=document.createElement('span');th.className='cp-coluna';th.textContent='Material de proteção';cab.insertBefore(th,cab.lastElementChild);}
     caixa.querySelectorAll('.cf-qtd-linha:not(.cf-qtd-cabeca)').forEach((linha,i)=>{const p=lista[i];if(!p)return;const quantidade=linha.children[3];if(quantidade){const grupo=document.createElement('label');grupo.className='cp-pecas-coluna';const rotulo=document.createElement('span');rotulo.className='cp-mobile-label';rotulo.textContent='Quantidade de peças';grupo.append(rotulo);linha.replaceChild(grupo,quantidade);grupo.append(quantidade);}const div=document.createElement('div');div.innerHTML=s.capas.celula(p,editavel);linha.insertBefore(div.firstElementChild,linha.lastElementChild);});
   }
+  // Nov/2026 (pedido do usuário): no QR, foto e a contagem do material de proteção na MESMA linha do item (uma lista só).
+  function fotoEtqHtml(e){ const u = s.fotoEtq?.get(String(e.item_id)); return '<span class="cf-item-foto">' + (/^(https?:|data:)/i.test(u || "") ? '<img src="' + esc(u) + '" alt="" loading="lazy">' : "") + "</span>"; }
+  function capaDoGrupo(e){ const r = s.capas?.rows?.find((x) => String(x.item_id) === String(e.item_id)); return r ? '<div class="cf-item-capa">' + s.capas.celula(r) + "</div>" : ""; }
   function pintarCapasBipe(){
     if(!s.capas||!s.capas.rows.length||!$('cfCorpo')||$('cfCorpo').hidden)return;
     let box=$('cfCapasBipe');if(!box){box=document.createElement('section');box.id='cfCapasBipe';box.className='cf-capas-bipe';document.querySelector('.cf-lista').append(box);}
-    box.innerHTML='<h3>Peças e materiais de proteção</h3><p>Conte todas as capas deste modelo, inclusive as que estão nas sacolas.</p><div class="cp-bipe-cab"><span>Item</span><span>Qtd. lida</span><span>Material de proteção</span></div>'+s.capas.rows.map(r=>{
+    const naLista=new Set(s.etiquetas.map(e=>String(e.item_id)));const resto=s.capas.rows.filter(r=>!naLista.has(String(r.item_id)));
+    if(!resto.length){box.remove();return;}
+    box.innerHTML='<h3>Materiais de proteção de itens sem etiqueta</h3><p>Conte todas as capas deste modelo, inclusive as que estão nas sacolas.</p><div class="cp-bipe-cab"><span>Item</span><span>Qtd. lida</span><span>Material de proteção</span></div>'+resto.map(r=>{
       const n=s.etiquetas.filter(e=>String(e.item_id)===String(r.item_id)&&e[cfg.campo]).length;
       return '<div class="cp-bipe-linha"><strong>'+esc(r.nome)+'</strong><span>'+n+'</span>'+s.capas.celula(r)+'</div>';
     }).join('');
@@ -155,8 +160,8 @@
     $("cfRodape").classList.remove("is-completo"); $("cfRodape").classList.add("is-cega");
     const grupos = new Map();
     lidas.forEach((e) => { const k = e.separacao_item_id + "|" + e.item_id; if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(e); });
-    $("cfItens").innerHTML = [...grupos.values()].map((lista) => '<article class="cf-item"><div class="cf-item-topo"><strong>' + esc(nomeItem(lista[0])) +
-      '</strong><span>' + lista.length + '</span></div><div class="cf-etiquetas">' + lista.map((e) => '<span class="cf-etq is-ok">' + esc(e.codigo) + "</span>").join("") + "</div></article>").join("")
+    $("cfItens").innerHTML = [...grupos.values()].map((lista) => '<article class="cf-item"><div class="cf-item-linha">' + fotoEtqHtml(lista[0]) + '<div class="cf-item-meio"><div class="cf-item-topo"><strong>' + esc(nomeItem(lista[0])) +
+      '</strong><span>' + lista.length + '</span></div><div class="cf-etiquetas">' + lista.map((e) => '<span class="cf-etq is-ok">' + esc(e.codigo) + "</span>").join("") + "</div></div>" + capaDoGrupo(lista[0]) + "</div></article>").join("")
       || '<p class="cf-vazio">Bipe cada peça que ' + voltaOuChegou() + '. O sistema compara com o que saiu quando você concluir.</p>';
   }
 
@@ -180,9 +185,9 @@
     $("cfItens").innerHTML = [...grupos.entries()].map(([, lista]) => {
       const ok = lista.filter((e) => e[cfg.campo]).length;
       if (soFaltando && ok === lista.length) return "";
-      return '<article class="cf-item' + (ok === lista.length ? " is-ok" : "") + '"><div class="cf-item-topo"><strong>' + esc(nomeItem(lista[0])) +
+      return '<article class="cf-item' + (ok === lista.length ? " is-ok" : "") + '"><div class="cf-item-linha">' + fotoEtqHtml(lista[0]) + '<div class="cf-item-meio"><div class="cf-item-topo"><strong>' + esc(nomeItem(lista[0])) +
         '</strong><span>' + ok + " / " + lista.length + '</span></div><div class="cf-etiquetas">' +
-        lista.map((e) => '<span class="cf-etq' + (e[cfg.campo] ? " is-ok" : "") + '" title="' + esc(e.codigo) + '">' + esc(e.codigo) + "</span>").join("") + "</div></article>";
+        lista.map((e) => '<span class="cf-etq' + (e[cfg.campo] ? " is-ok" : "") + '" title="' + esc(e.codigo) + '">' + esc(e.codigo) + "</span>").join("") + "</div></div>" + capaDoGrupo(lista[0]) + "</div></article>";
     }).join("") || '<p class="cf-vazio">Nada faltando.</p>';
   }
 
@@ -478,6 +483,9 @@
     const {data:assumido,error:erroInicio}=await s.sb.rpc('operacao_iniciar_conferencia',{p_pedido:pedidoId,p_etapa:etapa});
     if(erroInicio){mostrarAviso(erroInicio.message);return;}
     s.pedido = assumido?.id?assumido:pedido; s.itens = itens || []; s.etiquetas = etiquetas || [];
+    // Nov/2026: foto do item em cada linha da conferência por QR.
+    s.fotoEtq = new Map();
+    try { const idsF = [...new Set(s.etiquetas.map((e) => e.item_id).filter(Boolean))]; for (let i = 0; i < idsF.length; i += 200) { const { data: fs } = await s.sb.from("itens").select("id,foto_url").in("id", idsF.slice(i, i + 200)); (fs || []).forEach((c) => s.fotoEtq.set(String(c.id), c.foto_url || "")); } } catch (e) { console.warn(e); }
     if(window.CapasOperacao){s.capas=window.CapasOperacao.criar({sb:s.sb,pedido:pedido.id,etapa,cega});try{await s.capas.pronto;}catch(e){mostrarAviso('Não foi possível carregar as materiais de proteção: '+e.message);return;}}
     if(etapa==='carregamento'&&!s.pedido.operacao?.carregamento?.concluido_em){
       const liberar=document.createElement('button');liberar.id='cfLiberarTriagem';liberar.type='button';liberar.className='btn secondary cf-liberar';liberar.textContent='Devolver para a Triagem';liberar.title='O pedido volta para a separação (Triagem) para ser revisado';$('cfImprimir').before(liberar);

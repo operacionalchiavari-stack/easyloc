@@ -40,10 +40,10 @@ function mock(){
   assert.equal((await page.evaluate(()=>__capasWrites.find(x=>x.n==='capas_contagem_salvar'))).args.p_etapa,'triagem');
   assert.equal(await page.locator('#separacaoManualItens [data-capas-campo=quantidade]').inputValue(),'2');await page.screenshot({path:path.join(os.tmpdir(),`capas-triagem-${width}.png`)});
   await page.goto(BASE+'Modulos/Logistica/Conferencia/conferencia.html?pedido=p1&etapa=carregamento&qr=1');
-  await page.locator('#cfCapasBipe [data-capas-campo=quantidade]').waitFor();
+  await page.locator('#cfItens .cf-item-capa [data-capas-campo=quantidade]').waitFor();
   await page.locator('#cfEntrada').fill('ACERVO:ENV:12-001');await page.locator('#cfEntrada').press('Enter');await page.waitForFunction(()=>document.getElementById('cfContagem').textContent.startsWith('1 de'));
-  assert.equal(await page.locator('#cfCapasBipe [data-capas-campo=quantidade]').inputValue(),'');
-  await page.locator('#cfCapasBipe [data-capas-campo=quantidade]').fill('2');await page.locator('#cfEntrada').click();await page.waitForFunction(()=>__capasWrites.some(x=>x.n==='capas_contagem_salvar'));assert.equal((await page.evaluate(()=>__capasWrites.find(x=>x.n==='capas_contagem_salvar'))).args.p_contagens[0].quantidade,2);
+  assert.equal(await page.locator('#cfItens .cf-item-capa [data-capas-campo=quantidade]').inputValue(),'');
+  await page.locator('#cfItens .cf-item-capa [data-capas-campo=quantidade]').fill('2');await page.locator('#cfEntrada').click();await page.waitForFunction(()=>__capasWrites.some(x=>x.n==='capas_contagem_salvar'));assert.equal((await page.evaluate(()=>__capasWrites.find(x=>x.n==='capas_contagem_salvar'))).args.p_contagens[0].quantidade,2);
   for(const etapa of ['carregamento','descarregamento','retorno']){
    await page.goto(BASE+'Modulos/Logistica/Conferencia/conferencia.html?pedido=p1&etapa='+etapa);await page.locator('#cfQtd .cp-cell input[data-capas-campo=quantidade]').waitFor({timeout:10000}).catch(async e=>{console.error({etapa,width,erros,conteudo:(await page.locator('body').innerText()).slice(0,1800)});throw e;});
    assert.equal(await page.locator('#cfQtd .cp-sem').textContent().then(t=>t.includes('Sem material')),true);
@@ -53,7 +53,7 @@ function mock(){
    if(etapa==='retorno'){await page.locator('#cfQtd .cp-cell summary').click();await page.locator('#cfQtd [data-capas-campo=danificadas]').fill('1');}
    await page.locator('#cfQtdConfirmar').click();
    if(etapa==='carregamento'){await page.locator('dialog.cf-escolha-caminhao[open]').waitFor();await page.locator('dialog.cf-escolha-caminhao input[value=c1]').check();await page.locator('dialog.cf-escolha-caminhao [data-ok]').click();}
-   await page.locator('dialog.cf-confirmacao[open] [type=submit]').click();
+   if(etapa!=='carregamento')await page.locator('dialog.cf-confirmacao[open] [type=submit]').click(); // nov/2026: o carregamento conclui na escolha do caminhão
    await page.waitForFunction(()=>!document.getElementById('cfQtdConfirmar'));
    assert.equal(await page.locator('#cfQtd [data-capas-campo=quantidade]').isDisabled(),true);
    const gravado=await page.evaluate(()=>__capasWrites.find(x=>x.n==='capas_contagem_salvar'));assert.equal(gravado.args.p_etapa,etapa);assert.equal(gravado.args.p_contagens[0].quantidade,etapa==='carregamento'?2:1);

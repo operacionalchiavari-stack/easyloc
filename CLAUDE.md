@@ -11579,3 +11579,10 @@ Teste feito como funcionário (conta temporária e um pedido de teste no banco r
   - **Financeiro › A receber › por data**: a parcela fica embaixo do vencimento e a coluna "Recebido" saiu.
   - **Conferência**: o resultado da divergência fica só no alerta global. O Painel Logístico ficou sem a legenda dos números.
 - **Títulos das telas padronizados (07/11, pedido do usuário)**: todos no tamanho da Central de Pedidos, `clamp(19px,1.9vw,30px)` com `.16em` de espaçamento (30px em tela larga). A regra comum fica em `tema-chiavari.css`, que antes usava 38px; as telas com regra própria também foram trocadas: Costura, Pós-venda, Financeiro, Painel Logístico, Gestão do acervo e Almoxarifado (`almoxarifado-compacto.css`). **Tela nova: não defina outro tamanho de título.** O Rastreamento ficou de fora de propósito: é um mapa com o título dentro de um cartão flutuante.
+- **Baixa manual (07/11, pedido do usuário)**: em Parâmetros > Financeiro, o card "Baixa manual de recebimentos e pagamentos" tem duas opções, `empresa_financeiro.baixa_manual_receber` e `baixa_manual_pagar`. Nascem desligadas.
+  - **Ligadas**: A receber ganha o botão "Recebido" na linha, e A pagar ganha "Pago" na linha e "Marcar como pago" nos detalhes. A janela pede data (nunca no futuro), valor, juros, multa, desconto, tarifa, conta, forma e observação.
+  - **Banco** (migration `…001200`, aplicada): `fin_baixar` deixa de recusar sempre e passa a conferir a opção e a permissão `financeiro.contas_receber/contas_pagar.editar`. Depois chama `fin_baixar_` com origem `manual`, então dá para estornar nos detalhes.
+  - **Atenção**: a linha desse valor no extrato do banco precisa ser ignorada na conciliação; a janela e o card avisam.
+- **Conferência por QR (07/11)**:
+  - Cada linha mostra a foto do item e a contagem do material de proteção na mesma linha, numa lista só (`fotoEtqHtml`, `capaDoGrupo`). O quadro de baixo (`#cfCapasBipe`) só aparece para materiais de itens sem etiqueta.
+  - "Só o que falta" virou um botão de liga/desliga em pílula, só no CSS.
