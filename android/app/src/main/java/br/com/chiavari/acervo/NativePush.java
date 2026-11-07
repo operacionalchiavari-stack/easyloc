@@ -60,14 +60,18 @@ final class NativePush {
   }).addOnFailureListener(e->event("error","Não foi possível conectar ao serviço de notificações. Tente novamente.",null));
  }
  private void status() throws Exception {
-  boolean enabled=SecureStore.read(activity,"push")!=null&&allowed();
+  String saved=SecureStore.read(activity,"push");boolean enabled=saved!=null&&allowed();
   event("status",enabled?"Notificações Android ativadas.":"Ative os avisos para receber suas escalas.",new JSONObject().put("configured",BuildConfig.FIREBASE_CONFIGURED).put("enabled",enabled).put("permission",allowed()));
+  if(enabled&&initialize(activity)){
+   String oldToken=new JSONObject(saved).optString("token");
+   FirebaseMessaging.getInstance().getToken().addOnSuccessListener(token->{if(!token.equals(oldToken))enable();});
+  }
  }
  static void disable(Context context){
   final Context c=context.getApplicationContext();
   try{
    String value=SecureStore.read(c,"push");SecureStore.clear(c,"push");
-   if(initialize(c))FirebaseMessaging.getInstance().deleteToken();
+   if(initialize(c)){FirebaseMessaging.getInstance().setAutoInitEnabled(false);FirebaseMessaging.getInstance().deleteToken();}
    if(value!=null)new Thread(()->{try{JSONObject payload=new JSONObject(value);TrackingApi.call("app_android_push_encerrar",new JSONObject().put("p_binding",payload.getString("binding")));}catch(Exception ignored){}},"chiavari-push-revoke").start();
   }catch(Exception ignored){}
  }

@@ -64,6 +64,7 @@
   }
 
   async function iniciar(empresaId) {
+    if(window.AcervoAndroid?.postMessage && window.AppAvisosAndroid){window.AppAvisosAndroid.iniciar(empresaId);return;}
     empresa = empresaId;
     if (!host()) return;
     if (!suporta || (iphone && !instalado)) { pintar(); return; }

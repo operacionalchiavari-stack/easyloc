@@ -49,10 +49,21 @@ while edges:
         contour.append(current)
     area = abs(sum(contour[i][0]*contour[(i+1)%len(contour)][1]-contour[(i+1)%len(contour)][0]*contour[i][1] for i in range(len(contour))))/2
     if area < 8: continue
+    # Suaviza a amostragem dos pixels antes de ajustar curvas vetoriais.
+    weights = [(d, math.exp(-.5*(d/2.5)**2)) for d in range(-5,6)]
+    total = sum(w for d,w in weights)
+    contour = [tuple(sum(contour[(i+d)%len(contour)][axis]*w for d,w in weights)/total for axis in [0,1]) for i in range(len(contour))]
+    start = contour[0]
     middle = max(range(len(contour)), key=lambda i: math.dist(start, contour[i]))
     contour = simplify(contour[:middle+1])[:-1] + simplify(contour[middle:]+[start])[:-1]
     points = [(offset_x+(x-left)*scale, offset_y+(y-top)*scale) for x, y in contour]
-    paths.append('M'+'L'.join(f'{x:.3f},{y:.3f}' for x, y in points)+'Z')
+    curve = f'M{points[0][0]:.3f},{points[0][1]:.3f}'
+    for i,p in enumerate(points):
+        before,after,next_after=points[(i-1)%len(points)],points[(i+1)%len(points)],points[(i+2)%len(points)]
+        a=(p[0]+(after[0]-before[0])/6,p[1]+(after[1]-before[1])/6)
+        b=(after[0]-(next_after[0]-p[0])/6,after[1]-(next_after[1]-p[1])/6)
+        curve+=f'C{a[0]:.3f},{a[1]:.3f} {b[0]:.3f},{b[1]:.3f} {after[0]:.3f},{after[1]:.3f}'
+    paths.append(curve+'Z')
 path = ''.join(paths)
 res = root/'android/app/src/main/res'
 def vector(background=False):

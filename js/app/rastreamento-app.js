@@ -26,7 +26,7 @@
   painel.querySelector('[data-parar]').onclick = parar;
   if(android())painel.querySelector('details > p').textContent='Ao ativar, o Android compartilhará sua localização com a Logística mesmo ao sair do app ou apagar a tela. Uma notificação indicará o rastreamento; você pode pausar a qualquer momento.';
   else if(/android/i.test(navigator.userAgent||'')){
-   const link=document.createElement('a');link.href='https://easyloc-zeta.vercel.app/downloads/acervo-android-teste.apk';link.textContent='Instalar versão Android para rastrear ao sair do app';link.style.cssText='display:block;margin-top:10px';painel.querySelector('details').append(link);
+   const link=document.createElement('a');link.href='https://easyloc-zeta.vercel.app/instalar.html';link.textContent='Aplicativo Chiavari para Android';link.style.cssText='display:block;margin-top:10px';painel.querySelector('details').append(link);
   }
  }
  function limpar() { geracao++; clearInterval(consulta); consulta=null; if (watch !== null) navigator.geolocation.clearWatch(watch); watch=null; ultimo=0; }
@@ -99,7 +99,7 @@
  }
  window.AppRastreador={iniciar};
  window.addEventListener('storage',event=>{if(empresa&&usuario&&event.key===chave()&&event.newValue!=='1'){limpar();mensagem('Compartilhamento pausado em outra tela.');}});
- sb()?.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){if(android())enviarAndroid({action:'stop'});limpar();if(empresa&&usuario)localStorage.removeItem(chave());painel?.remove();painel=null;empresa=null;usuario=null;}});
+ sb()?.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){if(android()){enviarAndroid({action:'stop'});enviarAndroid({action:'push:disable'});}limpar();if(empresa&&usuario)localStorage.removeItem(chave());painel?.remove();painel=null;empresa=null;usuario=null;}});
  window.addEventListener('pagehide',limpar);
  window.addEventListener('pageshow',()=>{if(android()){if(empresa)enviarAndroid({action:'status'});return;}if(empresa&&usuario&&localStorage.getItem(chave())==='1'&&watch===null)ativar();});
  if(!/\/app\.html$/.test(location.pathname)) {

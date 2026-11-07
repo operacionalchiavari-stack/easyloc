@@ -51,5 +51,5 @@ test('Android usa serviço nativo, mantém rastreamento ao sair da página e par
  assert.ok(![...a.storage.values()].includes(mensagens[1].token));
  a.listeners['acervo:android']({detail:{type:'started',message:'Ativo'}});
  a.listeners.pagehide();assert.equal(mensagens.length,2);
- a.logout();assert.equal(mensagens.at(-1).action,'stop');
+ a.logout();assert.equal(mensagens.at(-2).action,'stop');assert.equal(mensagens.at(-1).action,'push:disable');
 });

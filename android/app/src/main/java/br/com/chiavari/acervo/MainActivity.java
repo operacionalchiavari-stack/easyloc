@@ -21,13 +21,16 @@ public final class MainActivity extends Activity {
  private GeolocationPermissions.Callback geoCallback;
  private String geoOrigin;
  private ValueCallback<Uri[]> fileCallback;
+ private PermissionRequest cameraRequest;
  private boolean permissionResultReady;
  private boolean visible;
  @Override public void onCreate(Bundle state){
   super.onCreate(state);web=new WebView(this);setContentView(web);
   push=new NativePush(this,web);
+  if(Build.VERSION.SDK_INT>=33)getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,()->back());
   getWindow().getDecorView().setOnApplyWindowInsetsListener((v,insets)->{v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets;});
   WebSettings settings=web.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+  web.setDownloadListener((url,userAgent,disposition,mimetype,size)->{try{Uri u=Uri.parse(url);if("https".equals(u.getScheme()))startActivity(new Intent(Intent.ACTION_VIEW,u));}catch(Exception ignored){}});
   web.setWebViewClient(new WebViewClient(){
    @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest req){
     Uri u=req.getUrl();if(ORIGIN.equals(u.getScheme()+"://"+u.getAuthority()))return false;
@@ -36,6 +39,13 @@ public final class MainActivity extends Activity {
    }
   });
   web.setWebChromeClient(new WebChromeClient(){
+   @Override public void onPermissionRequest(PermissionRequest request){
+    Uri u=request.getOrigin();boolean video=java.util.Arrays.asList(request.getResources()).contains(PermissionRequest.RESOURCE_VIDEO_CAPTURE);
+    if(!visible||!ORIGIN.equals(u.getScheme()+"://"+u.getAuthority())||!video){request.deny();return;}
+    if(checkSelfPermission(Manifest.permission.CAMERA)==PackageManager.PERMISSION_GRANTED){request.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE});return;}
+    if(cameraRequest!=null)cameraRequest.deny();cameraRequest=request;requestPermissions(new String[]{Manifest.permission.CAMERA},12);
+   }
+   @Override public void onPermissionRequestCanceled(PermissionRequest request){if(cameraRequest==request)cameraRequest=null;}
    @Override public void onGeolocationPermissionsShowPrompt(String origin,GeolocationPermissions.Callback callback){
     Uri u=Uri.parse(origin);
     if(!visible||!ORIGIN.equals(u.getScheme()+"://"+u.getAuthority())){callback.invoke(origin,false,false);return;}
@@ -55,13 +65,14 @@ public final class MainActivity extends Activity {
    if(!isMainFrame||!ORIGIN.equals(source.getScheme()+"://"+source.getAuthority()))return;
    try{
     JSONObject data=new JSONObject(message.getData());String action=data.optString("action");
+    if("app:info".equals(action)){JSONObject info=new JSONObject().put("versionCode",BuildConfig.VERSION_CODE).put("versionName",BuildConfig.VERSION_NAME);web.evaluateJavascript("window.dispatchEvent(new CustomEvent('acervo:app',{detail:"+info+"}))",null);return;}
     if(push.handle(data))return;
     if("status".equals(action)){sendStatus();return;}
     if("stop".equals(action)){pendingToken=null;if(consent!=null)consent.dismiss();startService(new Intent(this,TrackingService.class).setAction(TrackingService.STOP));send("stopped","Compartilhamento pausado.");return;}
     if(!"start".equals(action)||!visible)return;
     String token=data.getString("token");if(!token.matches("[A-Za-z0-9_-]{43}"))return;
     pendingToken=token;
-    consent=new AlertDialog.Builder(this).setTitle("Compartilhar localização com a Logística?").setMessage("O Acervo enviará sua localização enquanto o rastreamento estiver ativo, inclusive ao sair do app ou apagar a tela. Uma notificação permanecerá visível. Você pode pausar pelo app ou pela notificação.")
+    consent=new AlertDialog.Builder(this).setTitle("Compartilhar localização com a Logística?").setMessage("O Chiavari enviará sua localização enquanto o rastreamento estiver ativo, inclusive ao sair do app ou apagar a tela. Uma notificação permanecerá visível. Você pode pausar pelo app ou pela notificação.")
      .setPositiveButton("Ativar",(d,w)->permissions()).setNegativeButton("Cancelar",(d,w)->{pendingToken=null;send("error","Compartilhamento cancelado.");}).setOnCancelListener(d->{pendingToken=null;send("error","Compartilhamento cancelado.");}).show();
    }catch(Exception e){send("error","Não foi possível iniciar. Tente novamente.");}
   });
@@ -81,6 +92,7 @@ public final class MainActivity extends Activity {
  @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] grants){
   super.onRequestPermissionsResult(request,permissions,grants);if(request==7){if(visible)startTracking();else permissionResultReady=true;}
   if(request==11)push.enable();
+  if(request==12&&cameraRequest!=null){if(checkSelfPermission(Manifest.permission.CAMERA)==PackageManager.PERMISSION_GRANTED)cameraRequest.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE});else cameraRequest.deny();cameraRequest=null;}
   if(request==8&&geoCallback!=null){boolean ok=checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED||checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED;geoCallback.invoke(geoOrigin,ok,false);geoCallback=null;}
  }
  @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==9&&fileCallback!=null){fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result,data));fileCallback=null;}}
@@ -100,6 +112,7 @@ public final class MainActivity extends Activity {
  }
  @Override public void onResume(){super.onResume();visible=true;if(web!=null)web.onResume();if(permissionResultReady){permissionResultReady=false;startTracking();}}
  @Override public void onPause(){visible=false;if(web!=null)web.onPause();super.onPause();}
- @Override public void onBackPressed(){if(web.canGoBack())web.goBack();else moveTaskToBack(true);}
- @Override public void onDestroy(){if(web!=null)web.destroy();super.onDestroy();}
+ private void back(){if(web.canGoBack())web.goBack();else moveTaskToBack(true);}
+ @Override public void onBackPressed(){back();}
+ @Override public void onDestroy(){if(cameraRequest!=null)cameraRequest.deny();if(geoCallback!=null)geoCallback.invoke(geoOrigin,false,false);if(fileCallback!=null)fileCallback.onReceiveValue(null);if(web!=null)web.destroy();super.onDestroy();}
 }

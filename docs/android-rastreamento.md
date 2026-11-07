@@ -1,5 +1,7 @@
 # Acervo Android — versão de teste
 
+Esta é a documentação da primeira versão de teste. A preparação do aplicativo principal, a assinatura permanente e as notificações FCM estão em [android-principal.md](android-principal.md).
+
 O projeto `android/` gera um APK com o sistema aberto em WebView e um serviço Android de localização em primeiro plano. O usuário inicia o serviço enquanto o app está visível; o serviço pode continuar ao sair da tela, remover a tarefa dos recentes ou bloquear a tela. Ele mantém notificação com botão Pausar. Forçar parada, revogar permissões, reiniciar o aparelho, restrições do fabricante e falta de sinal/conexão podem interromper as atualizações. Não há inicialização automática após reiniciar o celular.
 
 ## Instalar e testar

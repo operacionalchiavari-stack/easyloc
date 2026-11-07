@@ -1,0 +1,40 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+const {PGlite}=require('@electric-sql/pglite');
+const id=n=>'00000000-0000-0000-0000-'+String(n).padStart(12,'0');
+test('push Android isola empresas, protege vínculos e substitui avisos antigos só na migração',async()=>{
+ const db=new PGlite(),token='fcm-'.repeat(25),binding='A'.repeat(43),newBinding='B'.repeat(43);
+ try{
+  await db.exec(`create role anon;create role authenticated;create role service_role;create schema auth;
+   create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql as $$select nullif(current_setting('test.uid',true),'')::uuid$$;
+   create table empresas(id uuid primary key);create table usuarios_empresas(user_id uuid,empresa_id uuid);
+   create table funcionarios_acesso(id uuid,empresa_id uuid,ativo boolean);
+   create function funcionario_contexto(uuid) returns jsonb language sql as $$select jsonb_build_object('ativo',exists(select 1 from usuarios_empresas where user_id=auth.uid() and empresa_id=$1))$$;
+   create table app_push_assinaturas(user_id uuid,empresa_id uuid);
+   create table operacao_etapas(id uuid,empresa_id uuid,pedido_id uuid,tipo text,data date,hora time);
+   create table separacoes_pedidos(id uuid,numero_pedido text,cliente_nome text,local_nome text);
+   create table operacao_etapa_pessoas(funcionario_id uuid,etapa_id uuid,papel text);
+   create table app_push_fila(user_id uuid,empresa_id uuid,titulo text,corpo text,url text,chave text unique);
+   create function app_push_disparar() returns void language sql as $$select null::void$$;
+   grant usage on schema public,auth to anon,authenticated;
+   insert into empresas values('${id(1)}'),('${id(2)}');insert into auth.users values('${id(10)}'),('${id(11)}');
+   insert into usuarios_empresas values('${id(10)}','${id(1)}'),('${id(11)}','${id(1)}');
+   insert into funcionarios_acesso values('${id(10)}','${id(1)}',true);
+   insert into app_push_assinaturas values('${id(10)}','${id(1)}'),('${id(10)}','${id(2)}');`);
+  await db.exec(fs.readFileSync('supabase/migrations/20261107000500_android_push.sql','utf8'));
+  await db.exec('create trigger escala after insert on operacao_etapa_pessoas for each row execute function app_push_escala()');
+  const register=(b=binding)=>db.query('select app_android_push_registrar($1,$2,$3,$4)',[id(1),id(20),token,b]);
+  const rotate=b=>db.query('select app_android_push_atualizar($1,$2)',[b,token+'new']);
+  await db.exec(`select set_config('test.uid','${id(10)}',false);set role authenticated`);
+  await assert.rejects(db.query('select app_android_push_registrar($1,$2,$3,$4)',[id(2),id(20),token,binding]),/Sem acesso/);
+  await register();await assert.rejects(db.query('select * from app_android_push_dispositivos'),/permission denied/);
+  await db.exec('reset role');assert.equal((await db.query('select count(*)::int n from app_push_assinaturas')).rows[0].n,1);
+  const device=(await db.query('select binding_hash from app_android_push_dispositivos')).rows[0];assert.notEqual(device.binding_hash,binding);assert.equal(device.binding_hash.length,64);
+  await db.exec(`insert into operacao_etapas values('${id(30)}','${id(1)}','${id(40)}','montagem',(now() at time zone 'America/Sao_Paulo')::date,'09:00');insert into separacoes_pedidos values('${id(40)}','10','Cliente','Local');insert into operacao_etapa_pessoas values('${id(10)}','${id(30)}','responsavel');`);
+  assert.equal((await db.query('select count(*)::int n from app_push_fila')).rows[0].n,1);
+  await db.exec('set role anon');await assert.rejects(register(),/permission denied/);await rotate(binding);await assert.rejects(rotate('C'.repeat(43)),/encerrada/);
+  await db.exec('reset role;set role authenticated');await register(newBinding);await db.exec('reset role;set role anon');await assert.rejects(rotate(binding),/encerrada/);
+  await db.exec('reset role');await db.query('update funcionarios_acesso set ativo=false');await db.exec('set role anon');await assert.rejects(rotate(newBinding),/encerrada/);
+  await db.query('select app_android_push_encerrar($1)',[newBinding]);await assert.rejects(rotate(newBinding),/encerrada/);
+  await db.exec('reset role');assert.equal((await db.query('select count(*)::int n from app_android_push_dispositivos')).rows[0].n,0);
+ }finally{await db.close();}
+});

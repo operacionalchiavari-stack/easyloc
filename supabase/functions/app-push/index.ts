@@ -5,6 +5,7 @@
 // Assinatura que o serviço de push diz que não existe mais (404/410) é apagada.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
+import { enviarFcm } from './fcm.ts';
 import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
 
 const corsHeaders = {
@@ -18,8 +19,32 @@ const service = () => createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("
 webpush.setVapidDetails(Deno.env.get("VAPID_SUBJECT") || "https://operacionalchiavari-stack.github.io/easyloc/",
   Deno.env.get("VAPID_PUBLIC_KEY")!, Deno.env.get("VAPID_PRIVATE_KEY")!);
 
-async function enviarPara(sb: any, userId: string, aviso: { titulo: string; corpo: string; url?: string | null; tag?: string }) {
-  const { data: subs } = await sb.from("app_push_assinaturas").select("id,endpoint,p256dh,auth").eq("user_id", userId);
+async function enviarPara(sb: any, userId: string, empresaId: string, aviso: { titulo: string; corpo: string; url?: string | null; tag?: string }) {
+  const [member, employee] = await Promise.all([
+    sb.from('usuarios_empresas').select('empresa_id').eq('user_id',userId).eq('empresa_id',empresaId).maybeSingle(),
+    sb.from('funcionarios_acesso').select('ativo,empresa_id').eq('id',userId).maybeSingle(),
+  ]);
+  if(member.error || employee.error) return {ok:0,total:1,erros:['Não foi possível validar o acesso do destinatário.']};
+  if(!member.data || (employee.data && (!employee.data.ativo || employee.data.empresa_id!==empresaId))) {
+    await sb.from('app_android_push_dispositivos').delete().eq('user_id',userId).eq('empresa_id',empresaId);
+    await sb.from('app_push_assinaturas').delete().eq('user_id',userId).eq('empresa_id',empresaId);
+    return {ok:0,total:0,erros:[]};
+  }
+  const native = await sb.from('app_android_push_dispositivos').select('dispositivo_id,token').eq('user_id', userId).eq('empresa_id', empresaId);
+  if (native.error) return { ok: 0, total: 1, erros: ['Não foi possível consultar os aparelhos Android.'] };
+  if (native.data?.length) {
+    let ok = 0; const erros: string[] = [];
+    for (const device of native.data) {
+      const result = await enviarFcm(device.token, { ...aviso, user_id: userId, empresa_id: empresaId });
+      if (result.ok) { ok++; await sb.from('app_android_push_dispositivos').update({ ultimo_envio_em: new Date().toISOString() }).eq('empresa_id', empresaId).eq('user_id', userId).eq('dispositivo_id', device.dispositivo_id); }
+      else {
+        erros.push(result.erro);
+        if (result.invalid) await sb.from('app_android_push_dispositivos').delete().eq('empresa_id', empresaId).eq('user_id', userId).eq('dispositivo_id', device.dispositivo_id).eq('token', device.token);
+      }
+    }
+    return { ok, total: native.data.length, erros };
+  }
+  const { data: subs } = await sb.from("app_push_assinaturas").select("id,endpoint,p256dh,auth").eq("user_id", userId).eq('empresa_id', empresaId);
   let ok = 0; const erros: string[] = [];
   for (const s of subs || []) {
     try {
@@ -42,7 +67,7 @@ async function processar() {
   const { data: fila } = await sb.from("app_push_fila").select("*").is("enviado_em", null).lt("tentativas", 5).order("criado_em").limit(50);
   let enviados = 0;
   for (const a of fila || []) {
-    const r = await enviarPara(sb, a.user_id, { titulo: a.titulo, corpo: a.corpo, url: a.url, tag: a.chave || a.id });
+    const r = await enviarPara(sb, a.user_id, a.empresa_id, { titulo: a.titulo, corpo: a.corpo, url: a.url, tag: a.chave || a.id });
     if (r.ok > 0 || r.total === 0) {
       await sb.from("app_push_fila").update({ enviado_em: new Date().toISOString(), erro: r.total === 0 ? "sem celular com avisos ligados" : null }).eq("id", a.id);
       enviados += r.ok > 0 ? 1 : 0;
@@ -64,7 +89,7 @@ async function teste(req: Request, body: any) {
   const { data: v } = await sb.from("usuarios_empresas").select("empresa_id").eq("user_id", user.id).eq("empresa_id", String(body?.empresa_id || "")).maybeSingle();
   if (!v) return json({ erro: "Sem acesso a esta empresa." }, 403);
   const amanha = new Date(Date.now() + 864e5);
-  const r = await enviarPara(sb, user.id, {
+  const r = await enviarPara(sb, user.id, v.empresa_id, {
     titulo: "Você foi escalado",
     corpo: "Montagem · Pedido 12 · amanhã às 07:00\nAna Decorações – Villa Bisutti\n(Esta é uma notificação de teste.)",
     url: "Modulos/Chiavari/Cronograma/montador.html?app=1",
