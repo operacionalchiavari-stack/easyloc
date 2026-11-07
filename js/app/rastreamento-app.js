@@ -25,6 +25,9 @@
   painel.querySelector('[data-ativar]').onclick = ativar;
   painel.querySelector('[data-parar]').onclick = parar;
   if(android())painel.querySelector('details > p').textContent='Ao ativar, o Android compartilhará sua localização com a Logística mesmo ao sair do app ou apagar a tela. Uma notificação indicará o rastreamento; você pode pausar a qualquer momento.';
+  else if(/android/i.test(navigator.userAgent||'')){
+   const link=document.createElement('a');link.href='https://easyloc-zeta.vercel.app/downloads/acervo-android-teste.apk';link.textContent='Instalar versão Android para rastrear ao sair do app';link.style.cssText='display:block;margin-top:10px';painel.querySelector('details').append(link);
+  }
  }
  function limpar() { geracao++; clearInterval(consulta); consulta=null; if (watch !== null) navigator.geolocation.clearWatch(watch); watch=null; ultimo=0; }
  async function ativar() {

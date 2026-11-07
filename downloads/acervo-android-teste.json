@@ -1,0 +1,8 @@
+{
+  "arquivo": "acervo-android-teste.apk",
+  "sha256": "266b2fa5b19251b6046808cb5c8668061ed8f6d76e28299169c2d3a0492b300f",
+  "source_commit": "1e5227b",
+  "workflow": "https://github.com/operacionalchiavari-stack/easyloc/actions/runs/42338132553",
+  "tipo": "APK de teste; assinatura de desenvolvimento",
+  "validacao_em_aparelho_real": "pendente"
+}
