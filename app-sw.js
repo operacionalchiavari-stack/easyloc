@@ -9,8 +9,10 @@ self.addEventListener("push", (event) => {
   const titulo = d.titulo || "Acervo";
   event.waitUntil(self.registration.showNotification(titulo, {
     body: d.corpo || "",
-    // Sem "icon": a imagem grande à direita repetia o ícone do app. "badge" é o ícone da barra de cima do Android: precisa
-    // ser só o desenho em branco sobre fundo transparente (o ícone inteiro virava um quadrado branco).
+    // "icon" transparente: com o ícone do app ele aparecia repetido à direita; sem nenhum, o Chrome punha a letra "E" do
+    // endereço do site. "badge" é o ícone da barra de cima do Android: só o desenho em branco sobre fundo transparente
+    // (o ícone inteiro virava um quadrado branco).
+    icon: "Modulos/Comercial/Catalogo/app-notificacao-vazio.png",
     badge: "Modulos/Comercial/Catalogo/app-badge-96.png",
     tag: d.tag || undefined,
     renotify: Boolean(d.tag),

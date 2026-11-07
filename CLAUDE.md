@@ -11529,8 +11529,8 @@ Pedido: "coloque algo pra montagem por enquanto, esse de você foi escalado… q
   "Ativar avisos" (pede a permissão, registra o service worker `app-sw.js` na raiz, escopo `./`, e grava o celular por
   `app_push_registrar`), **"Enviar notificação de teste"** (exemplo de "Você foi escalado" para os próprios celulares) e
   "Desligar". iPhone só com o app na Tela de Início (iOS 16.4+); o bloco explica. `app-sw.js` mostra a notificação
-  (vibração) e o toque abre a URL do aviso (foca uma janela aberta do app ou abre outra). **Sem `icon`** (no Android a
-  imagem grande à direita repetia o ícone do app) e com `badge` = `Modulos/Comercial/Catalogo/app-badge-96.png`, só o "Ch"
+  (vibração) e o toque abre a URL do aviso (foca uma janela aberta do app ou abre outra). **`icon` transparente** (`app-notificacao-vazio.png`; com o
+  ícone do app ele aparecia repetido à direita, e sem `icon` o Chrome desenhava a letra "E" do endereço) e com `badge` = `Modulos/Comercial/Catalogo/app-badge-96.png`, só o "Ch"
   branco em fundo transparente (o ícone inteiro aparecia como um quadrado branco na barra de status). O endereço do site
   ("easyloc-zeta.v…") que o Android mostra ao lado do nome é do Chrome (notificação de site) e não sai por código; sairia
   publicando o app na Play Store (TWA). O `avisos-app.js` pede `registration.update()` ao abrir a Início, para o celular
