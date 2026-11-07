@@ -20,6 +20,7 @@ public final class MainActivity extends Activity {
  private GeolocationPermissions.Callback geoCallback;
  private String geoOrigin;
  private ValueCallback<Uri[]> fileCallback;
+ private boolean permissionResultReady;
  private boolean visible;
  @Override public void onCreate(Bundle state){
   super.onCreate(state);web=new WebView(this);setContentView(web);
@@ -70,7 +71,7 @@ public final class MainActivity extends Activity {
   if(required.isEmpty())startTracking();else requestPermissions(required.toArray(new String[0]),7);
  }
  @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] grants){
-  super.onRequestPermissionsResult(request,permissions,grants);if(request==7)startTracking();
+  super.onRequestPermissionsResult(request,permissions,grants);if(request==7){if(visible)startTracking();else permissionResultReady=true;}
   if(request==8&&geoCallback!=null){boolean ok=checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED||checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED;geoCallback.invoke(geoOrigin,ok,false);geoCallback=null;}
  }
  @Override protected void onActivityResult(int request,int result,Intent data){super.onActivityResult(request,result,data);if(request==9&&fileCallback!=null){fileCallback.onReceiveValue(WebChromeClient.FileChooserParams.parseResult(result,data));fileCallback=null;}}
@@ -88,7 +89,7 @@ public final class MainActivity extends Activity {
   if(web==null||!ORIGIN.equals(Uri.parse(web.getUrl()==null?"":web.getUrl()).getScheme()+"://"+Uri.parse(web.getUrl()==null?"":web.getUrl()).getAuthority()))return;
   try{JSONObject detail=new JSONObject().put("type",type).put("message",text);web.evaluateJavascript("window.dispatchEvent(new CustomEvent('acervo:android',{detail:"+detail+"}))",null);}catch(Exception ignored){}
  }
- @Override public void onResume(){super.onResume();visible=true;if(web!=null)web.onResume();}
+ @Override public void onResume(){super.onResume();visible=true;if(web!=null)web.onResume();if(permissionResultReady){permissionResultReady=false;startTracking();}}
  @Override public void onPause(){visible=false;if(web!=null)web.onPause();super.onPause();}
  @Override public void onBackPressed(){if(web.canGoBack())web.goBack();else moveTaskToBack(true);}
  @Override public void onDestroy(){if(web!=null)web.destroy();super.onDestroy();}
