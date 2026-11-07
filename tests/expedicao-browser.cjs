@@ -120,7 +120,7 @@ const mock = `(() => {
   const linhaTopo = await travado.locator('.separacao-card-top').boundingBox(), aviso = await travado.locator('.exp-dot-financeiro').boundingBox();
   assert.ok(aviso.y >= linhaTopo.y - 1 && aviso.y + aviso.height <= linhaTopo.y + linhaTopo.height + 1, 'aviso na mesma linha do Ida');
   await travado.click(); await page.waitForTimeout(500);
-  assert.match(await page.locator('.el-alert').innerText(),/Financeiro.*carregamento/s);
+  assert.match(await page.locator('.el-alert').innerText(),/pagamento.*Financeiro/s);
   await page.evaluate(()=>window.fecharAlertaGlobal());
   await travado.focus();await page.keyboard.press('Enter');
   assert.match(await page.locator('.el-alert').innerText(),/Pedido bloqueado/);

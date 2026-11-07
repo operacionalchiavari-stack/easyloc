@@ -61,7 +61,7 @@
     </select>
 
     <select class="el-select" id="locaisBudgetFilter" onchange="Locais_aplicarFiltros()">
-      <option value="">Todos os orçamentos</option>
+      <option value="">Orçamento: todos</option>
       <option value="Econômico">Econômico</option>
       <option value="Intermediário">Intermediário</option>
       <option value="Premium">Premium</option>
@@ -109,12 +109,13 @@
         <p>Cadastre ou edite as informações do local do evento. A distância do galpão é calculada automaticamente e salva.</p>
       </div>
       <button class="edit-btn btn-icon" type="button" onclick="Locais_enableEdit()"><i data-lucide="pencil"></i></button>
+      <button class="btn-save btn primary" type="button" onclick="Locais_salvar()">Salvar</button>
     </div>
 
     <div class="form-grid four-cols">
 
       <div class="form-group el-field local-field-person-type">
-        <label>Tipo de Pessoa *</label>
+        <label>Tipo de pessoa</label>
         <select class="el-select" id="locaisTipoPessoa" disabled>
           <option>Pessoa Física</option>
           <option>Pessoa Jurídica</option>
@@ -127,7 +128,7 @@
       </div>
 
       <div class="form-group el-field local-field-document">
-        <label>CPF / CNPJ *</label>
+        <label>CPF / CNPJ</label>
         <input class="el-input" id="locaisCpfCnpj" data-mascara="cpfcnpj" data-mascara-pj="#locaisTipoPessoa" readonly>
       </div>
 
@@ -137,12 +138,12 @@
       </div>
 
       <div class="form-group el-field local-field-phone">
-        <label>Telefone *</label>
+        <label>Telefone</label>
         <input class="el-input" id="locaisTelefone" data-mascara="telefone" readonly>
       </div>
 
       <div class="form-group el-field local-field-email">
-        <label>Email *</label>
+        <label>E-mail</label>
         <input class="el-input" id="locaisEmail" readonly>
       </div>
 
@@ -152,7 +153,7 @@
 </div>
 
 <div class="form-group el-field local-field-number">
-  <label>Número *</label>
+  <label>Número</label>
   <input class="el-input" id="locaisNumeroEndereco" readonly>
 </div>
 
@@ -160,7 +161,7 @@
   <label>KM do galpão</label>
   <div class="local-distance-input" aria-live="polite">
     <span id="locaisDistanciaTexto">-</span>
-    <em id="locaisDistanciaBadge" class="hidden">Salvo</em>
+    <em id="locaisDistanciaBadge" class="hidden">Calculado</em>
   </div>
   <p id="locaisDistanciaHint" class="local-distance-inline-hint">Selecione um endereço ou marque o ponto no mapa para calcular.</p>
   <div class="local-coordinate-values" aria-hidden="true">
@@ -170,12 +171,12 @@
 </div>
 
 <div class="form-group el-field local-field-reference">
-  <label>Ponto de referência *</label>
+  <label>Ponto de referência</label>
   <input class="el-input" id="locaisPontoReferencia" readonly>
 </div>
 
 <div class="form-group el-field local-field-status">
-  <label>Status do Local *</label>
+  <label>Status do local</label>
   <select class="el-select" id="locaisStatus" disabled>
     <option>Ativo</option>
     <option>Morno</option>
@@ -256,9 +257,6 @@
       </div>
     </div>
 
-    <div class="modal-actions">
-      <button class="btn-save btn primary" type="button" onclick="Locais_salvar()">Salvar</button>
-    </div>
 
   </div>
 </div>
@@ -337,8 +335,8 @@
 <script src="../../../js/core/google.js"></script>
 <script src="../../../js/core/campoProtegido.js?v=20261023-cofre-doc"></script>
 <script src="../../../js/core/etiquetasCadastro.js?v=20261026"></script>
-<script src="../../../js/ui/complexidade-cadastros.js?v=20261031"></script>
-<script src="cadastro-locais.js?v=20261031-complexidade"></script>
+<script src="../../../js/ui/complexidade-cadastros.js?v=20261107-teste-usuario"></script>
+<script src="cadastro-locais.js?v=20261107-teste-usuario"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>

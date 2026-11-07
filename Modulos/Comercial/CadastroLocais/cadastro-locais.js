@@ -122,53 +122,35 @@ window.__locaisModuleLoaded = true;
   }
 
   /* ---------- VALIDAÇÃO COMPLETA DO LOCAL ---------- */
+// Baldeação e escada são perguntadas uma vez só, nas etiquetas de Observações (nov/2026);
+// a complexidade dos pedidos lê daqui.
+function complexidadeDoLocal() {
+  const base = window.CXCadastro?.ler('local') || {};
+  const marcadas = [...document.querySelectorAll('.tag-group[data-group="observacoes"] .tag.selected')].map((t) => t.textContent.toLowerCase());
+  return { ...base, baldeacao: marcadas.some((t) => t.includes("baldea")) ? true : null, escada: marcadas.some((t) => t.includes("escada")) ? true : null };
+}
+
 function validarLocalCompleto() {
+  // Só nome e endereço são obrigatórios (nov/2026); o resto, se preenchido, precisa estar certo.
   const nome = document.getElementById("locaisNome");
   const cpfCnpj = document.getElementById("locaisCpfCnpj");
   const email = document.getElementById("locaisEmail");
   const telefone = document.getElementById("locaisTelefone");
-  const numeroEndereco = document.getElementById("locaisNumeroEndereco");
-  const pontoReferencia = document.getElementById("locaisPontoReferencia");
-  const status = document.getElementById("locaisStatus");
-
-  if (!nome.value.trim()) {
-    mostrarAlerta("Nome / Razão Social é obrigatório");
-    nome.focus();
-    return false;
-  }
-
+  const faltas = [];
+  let primeiro = null;
+  const marcar = (campo, texto) => { faltas.push(texto); if (!primeiro) primeiro = campo; };
+  if (!nome.value.trim()) marcar(nome, "Nome do local");
+  const enderecoInput = document.getElementById("locais-endereco");
+  if (!window.enderecoSelecionadoGoogle) marcar(enderecoInput, "Endereço (escolha na lista do Google)");
   const docGuardado = cpfCnpj.dataset.cofreProtegido === "1" && cpfCnpj.dataset.cofreAlterado !== "1";
-  if (!docGuardado && !cpfCnpj.value.trim()) {
-    mostrarAlerta("CPF / CNPJ é obrigatório");
-    cpfCnpj.focus();
+  if (!docGuardado && cpfCnpj.value.trim() && locaisTipoPessoa.value === "Pessoa Física" && !validarCPF(cpfCnpj.value)) marcar(cpfCnpj, "CPF válido (ou deixe em branco)");
+  if (email.value.trim() && !validarEmail(email.value)) marcar(email, "E-mail válido (ou deixe em branco)");
+  if (telefone.value.trim() && !validarTelefoneBR(telefone.value)) marcar(telefone, "Telefone válido (ou deixe em branco)");
+  if (faltas.length) {
+    mostrarAlerta((faltas.length === 1 ? "Falta preencher: " : "Faltam preencher: ") + faltas.join(", ") + ".");
+    primeiro?.focus?.();
     return false;
   }
-
-  if (
-    !docGuardado && locaisTipoPessoa.value === "Pessoa Física" &&
-    !validarCPF(cpfCnpj.value)
-  ) {
-    mostrarAlerta("CPF inválido. Verifique os números.");
-    cpfCnpj.focus();
-    return false;
-  }
-
-  if (!validarEmail(email.value)) {
-    mostrarAlerta("Email inválido. Verifique e tente novamente.");
-    email.focus();
-    return false;
-  }
-
-  if (!validarTelefoneBR(telefone.value)) {
-    mostrarAlerta("Telefone inválido. Use DDD + número.");
-    telefone.focus();
-    return false;
-  }
-
-if (!window.enderecoSelecionadoGoogle) {
-  mostrarAlerta("Selecione um endereço válido da lista do Google.");
-  return false;
-}
 
   if (localGeoState.lat === null || localGeoState.lng === null) {
     mostrarAlerta("Selecione um endereço do Google ou marque o ponto correto no mapa.");
@@ -185,24 +167,6 @@ if (!window.enderecoSelecionadoGoogle) {
     return false;
   }
 
-
-  if (!numeroEndereco.value.trim()) {
-    mostrarAlerta("Número do endereço é obrigatório.");
-    numeroEndereco.focus();
-    return false;
-  }
-
-  if (!pontoReferencia.value.trim()) {
-    mostrarAlerta("Ponto de referência é obrigatório.");
-    pontoReferencia.focus();
-    return false;
-  }
-
-  if (!status.value) {
-    mostrarAlerta("Status do local é obrigatório.");
-    status.focus();
-    return false;
-  }
 
   return true;
 }
@@ -346,8 +310,8 @@ function renderLocalGeoCard() {
 
   if (distanciaHint) {
     distanciaHint.textContent = localGeoState.distanciaKm !== null
-      ? "Distancia calculada automaticamente e salva para uso nos pedidos."
-      : "Selecione um endereco ou marque o ponto no mapa para calcular.";
+      ? "Distância calculada automaticamente; fica gravada ao salvar o local."
+      : "Selecione um endereço ou marque o ponto no mapa para calcular.";
   }
 
   if (distanciaBadge) {
@@ -802,7 +766,7 @@ const payload = {
   google_place_id: localGeoState.placeId || null,
   empresa_id: empresaId,
   tags: coletarTagsSelecionadas(),
-  complexidade: window.CXCadastro?.ler('local')
+  complexidade: complexidadeDoLocal()
 };
 if (doc) {
   const atual = (locaisCache || []).find((x) => x.id === localAtualId);
@@ -1144,7 +1108,7 @@ function renderizarTabelaLocais(locais) {
     tr.innerHTML = `
       <td>${esc(l.nome_razao || "-")}</td>
       <td>${esc(window.EasyLocCofre.visivel(l, "cpf_cnpj") || "-")}</td>
-      <td>${esc(l.telefone || "-")}</td>
+      <td>${esc(l.telefone ? (window.EasyLocMascara ? window.EasyLocMascara.formatar("telefone", l.telefone) : l.telefone) : "-")}</td>
       <td>${esc(l.email || "-")}</td>
 
       <td>${renderizarTagsComoCards(l.tags, "tipo", "tag-tipo")}</td>
@@ -1405,7 +1369,7 @@ function initEnderecoAutocomplete() {
   window.enderecoAutocomplete =
     new google.maps.places.Autocomplete(input, {
       componentRestrictions: { country: "br" },
-      fields: ["formatted_address", "geometry", "place_id", "name"]
+      fields: ["formatted_address", "geometry", "place_id", "name", "address_components", "types"]
     });
 
   window.enderecoAutocomplete.addListener(
@@ -1420,6 +1384,13 @@ function initEnderecoAutocomplete() {
       }
 
       input.value = place.formatted_address;
+      // Preenche o nome (quando é um estabelecimento) e o número, se ainda estiverem vazios.
+      const campoNome = document.getElementById("locaisNome");
+      const ehLugar = (place.types || []).some((t) => ["establishment", "point_of_interest", "premise"].includes(t));
+      if (campoNome && !campoNome.value.trim() && ehLugar && place.name && !place.formatted_address.startsWith(place.name)) campoNome.value = place.name;
+      const numero = (place.address_components || []).find((c) => (c.types || []).includes("street_number"))?.long_name;
+      const campoNumero = document.getElementById("locaisNumeroEndereco");
+      if (campoNumero && numero && !campoNumero.value.trim()) campoNumero.value = numero;
       const location = place.geometry?.location;
 
       if (location) {
@@ -1608,7 +1579,7 @@ function Locais_linha_impressao(l) {
     <tr>
       <td>${l.nome_razao || "-"}</td>
       <td>${esc(window.EasyLocCofre.visivel(l, "cpf_cnpj") || "-")}</td>
-      <td>${l.telefone || "-"}</td>
+      <td>${l.telefone ? (window.EasyLocMascara ? window.EasyLocMascara.formatar("telefone", l.telefone) : l.telefone) : "-"}</td>
       <td>${l.email || "-"}</td>
       <td>${l.endereco || ""} ${l.numero_endereco || ""}</td>
       <td class="status">${calcularStatusAutomatico(l)}</td>
@@ -1726,7 +1697,7 @@ function Locais_card_impressao(l) {
     <tr>
       <td>${l.nome_razao || "-"}</td>
       <td>${esc(window.EasyLocCofre.visivel(l, "cpf_cnpj") || "-")}</td>
-      <td>${l.telefone || "-"}</td>
+      <td>${l.telefone ? (window.EasyLocMascara ? window.EasyLocMascara.formatar("telefone", l.telefone) : l.telefone) : "-"}</td>
       <td>${l.email || "-"}</td>
       <td>${l.endereco || ""} ${l.numero_endereco || ""}</td>
       <td class="status">${calcularStatusAutomatico(l)}</td>

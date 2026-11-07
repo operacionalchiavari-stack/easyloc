@@ -290,7 +290,7 @@
     if (regs.posicionamento) { r.posicionamento = { observacao: regs.posicionamento.observacao || "", fotos: regs.posicionamento.fotos || [] }; }
     if (regs.observacoes) { r.observacoesGerais = { texto: regs.observacoes.observacao || "", observacao: regs.observacoes.observacao || "", responsavel: regs.observacoes.responsavel || "" }; }
     if (regs.lista_assinada) { r.listaAssinada = { recebedor: regs.lista_assinada.nome || "", nome: regs.lista_assinada.nome || "", foto: regs.lista_assinada.foto || "" }; }
-    var total = (r.equipeTerceirizada ? 1 : 0) + (r.sacolas && r.sacolas.length ? 1 : 0) + (r.conferenciaEntrega || r.posicionamento ? 1 : 0) + (r.listaAssinada ? 1 : 0);
+    var total = (r.equipeTerceirizada ? 1 : 0) + (r.sacolas ? 1 : 0) + (r.conferenciaEntrega || r.posicionamento ? 1 : 0) + (r.listaAssinada ? 1 : 0);
     r.totalRegistros = total; r.totalEsperado = 4; r.completo = total === 4;
     return r;
   }

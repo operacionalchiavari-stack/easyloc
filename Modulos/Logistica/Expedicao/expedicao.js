@@ -81,7 +81,7 @@
     const descarga = tipo === "descarregamento";
     const numero = String(p.numero_pedido || "-");
     const feito = p.operacao?.[volta ? "retorno" : descarga ? "descarregamento" : "carregamento"];
-    let nota = p.fluxo_etapa==='retorno_simultaneo' ? 'Retorno simultâneo com a Triagem' : '';
+    let nota = p.fluxo_etapa==='retorno_simultaneo' ? 'Descarregamento e triagem da volta acontecem juntos' : '';
     if ((col === "conferidos" || col === "pendencias") && feito) {
       const falta = faltas(p,tipo).length;
       nota = col === "conferidos" ? "" : (volta ? "Retorno conferido " : descarga ? "Descarregado " : "Carregado ") + dataHoraBr(feito.concluido_em) + (feito.por ? " por " + feito.por : "") +
@@ -112,7 +112,7 @@
       lista.map((c) => '<b title="' + esc([c.placa, c.modelo].filter(Boolean).join(" · ")) + '">' + esc(c.codigo || c.placa || "Caminhão") + (c.codigo && c.placa && !/^SEM PLACA/i.test(c.placa) ? "<small>" + esc(c.placa) + "</small>" : "") + "</b>").join("") + "</div>";
     const meta = (volta || descarga)
       ? "Coleta " + esc(dataBr(p.data_coleta || p.data_evento))
-      : "Entrega " + esc(dataBr(p.data_entrega || p.data_evento)) + " · " + v.total + " volume" + (v.total === 1 ? "" : "s");
+      : "Entrega " + esc(dataBr(p.data_entrega || p.data_evento)) + (v.total ? " · " + v.total + " volume" + (v.total === 1 ? "" : "s") : ""); // nov/2026: sem etiquetas não mostra "0 volumes"
     // Pagamento mínimo (Parâmetros > Financeiro) travando o carregamento: aviso pequeno e o cartão não abre.
     const ida = !volta && !descarga && col !== "conferidos" && col !== "pendencias";
     const travaFin = ida && s.bloqueados?.has(String(p.id));
@@ -120,7 +120,7 @@
     const travaCam = ida && s.semCaminhao?.has(String(p.id));
     const bloqueado = travaFin || travaCam;
     const motivoTrava = [
-      travaFin ? 'O Financeiro ainda não liberou o carregamento deste pedido. Solicite a conferência do pagamento e a liberação ao responsável financeiro.' : '',
+      travaFin ? 'Carregamento bloqueado pelo pagamento: o pedido ainda não tem o pagamento mínimo registrado. Peça ao Financeiro para conferir o pagamento (Financeiro › Bancos) e liberar.' : '',
       travaCam ? 'Nenhum caminhão está programado para este pedido. Programe o caminhão no Painel Logístico antes de iniciar o carregamento.' : ''
     ].filter(Boolean).join('\n\n');
     return '<article class="separacao-order-card exp-card-' + tipo + (bloqueado ? " is-bloqueado-fin" : "") + '" data-coluna="' + col + '" data-tipo="' + tipo + '" data-pedido="' + esc(p.id) + '"' + (bloqueado ? ' data-bloqueado="1" tabindex="0" role="button" aria-label="Consultar bloqueio do pedido" title="' + esc(motivoTrava) + '"' : ' tabindex="0" role="button"') + '>' +

@@ -79,9 +79,11 @@ const mock = `(() => {
   await page.evaluate(() => { window.__CONTEXT = { empresa_id: "e1", usuario_id: "u1", usuario_nome: "Teste" }; });
   await page.waitForSelector("#separacaoModoModal:not(.hidden)", { timeout: 15000 });
   console.log("ok 1 - link do cronograma abre o pedido e a escolha do modo");
-  assert.ok(await page.evaluate(() => window.__gravados.some((g) => g.t === "separacoes_pedidos" && g.p.status === "em_separacao")), "pedido passa a em separação");
+  // Nov/2026: só vira "em separação" depois de escolher a forma de separar.
+  assert.ok(!(await page.evaluate(() => window.__gravados.some((g) => g.t === "separacoes_pedidos" && g.p.status === "em_separacao"))), "abrir não muda a situação");
 
   await page.click('[data-separacao-modo="qr"]');
+  await page.waitForFunction(() => window.__gravados.some((g) => g.t === "separacoes_pedidos" && g.p.status === "em_separacao"), null, { timeout: 8000 });
   await page.click("#btnCameraSeparacao");
   await page.waitForFunction(() => !document.getElementById("scannerCamera").hidden);
   await page.evaluate(() => { window.__qr = "ACERVO:ITEM:CAD1"; });

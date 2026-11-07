@@ -31,7 +31,7 @@ import { sinalizarDisponibilidade } from "./pedido-disponibilidade-comercial.mjs
 // mostra ou envia preço: o catálogo nunca teve valores.
 
 import { arquivosDoBucket } from "./catalogo-arquivos.mjs";
-import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, layoutPedido, layoutSeletorHtml, ligarSeletorLayout, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao, moverAmbiente, bindOrdenacaoAmbientes, definirPersonalizacoes, opcoesPersonalizacaoDoItem, textoEscolhas, definirAvisosStatus } from './projeto-apresentacao.mjs?v=20261105-terceirizacoes';
+import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, layoutPedido, layoutSeletorHtml, ligarSeletorLayout, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, bindOrdenacao, moverAmbiente, bindOrdenacaoAmbientes, definirPersonalizacoes, opcoesPersonalizacaoDoItem, textoEscolhas, definirAvisosStatus } from './projeto-apresentacao.mjs?v=20261107-teste-usuario';
 
 const temCena = render => Boolean(render?.cena?.url || render?.cena?.snapshot);
 const $ = (id) => document.getElementById(id);

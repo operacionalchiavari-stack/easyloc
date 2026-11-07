@@ -6,7 +6,7 @@
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261106-bonus-admin"></script>
+  <script src="../operacao-sem-motor.js?v=20261107-teste-usuario"></script>
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <meta charset="UTF-8" />
 <meta
@@ -18313,6 +18313,31 @@ function avisoRapido(msg){
   document.addEventListener("visibilitychange", function(){ if(document.visibilityState === "visible") atualizar(true); });
   setInterval(function(){ if(document.visibilityState === "visible") atualizar(true); }, 60000);
   atualizar(true);
+})();
+</script>
+<style id="cronograma-rolagem-visivel">
+/* Nov/2026 (teste de usuário): a barra lateral aparece e um aviso mostra que há mais dias à direita. */
+html body .board-wrap{scrollbar-width:thin !important;scrollbar-color:#9e9e9e transparent}
+html body .board-wrap::-webkit-scrollbar{height:9px !important}
+.crono-mais-dias{position:fixed;z-index:30;display:flex;align-items:center;gap:6px;padding:8px 14px;border:0;border-radius:999px;background:#123f86;color:#fff;font:600 13px Inter,system-ui,sans-serif;box-shadow:0 4px 14px rgba(15,23,42,.25);cursor:pointer}
+.crono-mais-dias[hidden]{display:none}
+</style>
+<script>
+(function(){
+  var wrap=document.querySelector('.board-wrap');if(!wrap)return;
+  var b=document.createElement('button');b.type='button';b.className='crono-mais-dias';b.hidden=true;
+  b.textContent='Mais dias à direita →';b.title='Arraste a tabela para o lado (ou use a barra embaixo) para ver os outros dias, como sábado e domingo.';
+  document.body.appendChild(b);
+  b.addEventListener('click',function(){wrap.scrollBy({left:Math.max(260,wrap.clientWidth*.6),behavior:'smooth'});});
+  function ver(){
+    var r=wrap.getBoundingClientRect();
+    var falta=wrap.scrollWidth-wrap.clientWidth-wrap.scrollLeft>40;
+    b.hidden=!falta||r.width<200||window.innerWidth<900;
+    if(!b.hidden){b.style.top=Math.max(r.top+8,8)+'px';b.style.left=(r.right-b.offsetWidth-18)+'px';}
+  }
+  wrap.addEventListener('scroll',ver,{passive:true});window.addEventListener('resize',ver);
+  new MutationObserver(function(){requestAnimationFrame(ver);}).observe(wrap,{childList:true,subtree:true});
+  setTimeout(ver,800);
 })();
 </script>
 </body>

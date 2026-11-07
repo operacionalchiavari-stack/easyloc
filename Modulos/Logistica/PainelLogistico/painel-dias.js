@@ -41,7 +41,9 @@
       const itens = (fonte || []).filter(e => (modulo==='equipe'||(!e.somente_consulta&&e.fluxo_etapa===modulo)) && String((modulo === 'equipe' ? e.data : modulo === 'entrega' ? e.data_entrega : e.data_coleta) || '').slice(0, 10) === dia);
       const total=itens.length;
       const completo=modulo==='equipe' && total>0 && itens.every(e=>e.planejamento_completo===true);
-      return `<button type="button" id="plTab-${dia}" role="tab" data-dia="${dia}" aria-selected="${selecionado}" aria-controls="plModuloEquipe plModuloEntregas" tabindex="${dia === data ? 0 : -1}"><span>${nome}</span><strong>${dia.slice(8, 10)}/${dia.slice(5, 7)}</strong>${total > 0 ? `<span class="pl-pendencia-dia${completo?' is-completo':''}" aria-hidden="true" title="${completo?'Dia completo · ':''}${total} operações neste dia">${total}</span>` : ''}</button>`;
+      const pend=modulo==='equipe'?itens.filter(e=>e.planejamento_completo!==true).length:total;
+      const dica=modulo==='equipe'?(completo?`Dia completo: ${total} montagem(ns)/desmontagem(ns) com equipe e caminhão`:`${pend} de ${total} montagem(ns)/desmontagem(ns) ainda sem equipe ou caminhão completos`):`${total} ${modulo==='entrega'?'entrega(s)':'coleta(s)'} neste dia`;
+      return `<button type="button" id="plTab-${dia}" role="tab" data-dia="${dia}" aria-selected="${selecionado}" aria-controls="plModuloEquipe plModuloEntregas" tabindex="${dia === data ? 0 : -1}"><span>${nome}</span><strong>${dia.slice(8, 10)}/${dia.slice(5, 7)}</strong>${total > 0 ? `<span class="pl-pendencia-dia${completo?' is-completo':''}" aria-hidden="true" title="${dica}">${completo?total:pend}</span>` : ''}</button>`;
     }).join('') + (carregando ? '<span class="pl-dias-carregando" role="status">Carregando mais dias…</span>' : '');
     const referencia=ancora&&document.getElementById(ancora.id);
     if(referencia){const delta=referencia.getBoundingClientRect().left-anterior;nav.scrollLeft+=delta;if(arrasto)arrasto.esquerda+=delta;}

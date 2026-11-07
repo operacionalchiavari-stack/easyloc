@@ -160,7 +160,7 @@ export async function atualizarMontagemSugerida(empresaId, caminhoesLista){
       renderMontagemSugerida({
         qtd: null,
         custoFmt: "—",
-        info: `Combinação: ${combNorm} • Nenhuma regra encontrada`
+        info: `Sem regra de montagem para os caminhões do frete (${combNorm}). Cadastre em Parâmetros › Logística e operação › Frete e montagem.`
       });
       return;
     }
@@ -197,7 +197,7 @@ window.atualizarResumoGlobal?.();
 renderMontagemSugerida({
   qtd,
   custoFmt: custoFinal.toLocaleString("pt-BR", { style:"currency", currency:"BRL" }),
-  info: `Combinação: ${combNorm} • Match: ${sugestao.match === "exato" ? "exato" : "fallback"}`,
+  info: `Pelos caminhões do frete (${combNorm})${sugestao.match === "exato" ? "" : " · regra mais próxima"}`,
   custoBruto: custoBruto,
   valorAbsorcao: valorAbsorcaoMontagem,
   percent: percentMontagem

@@ -35,7 +35,7 @@
     return new Promise(resolve=>{
       const d=document.createElement('dialog');d.className='cf-confirmacao';
       const pendente=!oculto&&faltas.length>0;
-      d.innerHTML='<form><header><span class="cf-confirmacao-icone" aria-hidden="true">'+(pendente?'!':'✓')+'</span><div><small>'+esc(cfg.rotulo)+' · Pedido '+esc(s.pedido.numero_pedido||'')+'</small><h2>'+(oculto?(etapa==='retorno'?'Concluir conferência de retorno?':'Concluir conferência do descarregamento?'):pendente?'Concluir com pendências?':'Concluir conferência?')+'</h2></div></header><div class="cf-confirmacao-corpo"><p>'+(oculto?'O sistema vai comparar as quantidades conferidas com o que saiu no carregamento. Caso falte alguma peça, ela aparecerá na coluna Pendências da Expedição.':pendente?'Alguns itens estão com a quantidade menor que a esperada. Você pode voltar para revisar ou concluir e acompanhar as diferenças na coluna Pendências da Expedição.':'Todos os itens informados estão conferidos. Deseja concluir esta etapa?')+'</p>'+
+      d.innerHTML='<form><header><span class="cf-confirmacao-icone" aria-hidden="true">'+(pendente?'!':'✓')+'</span><div><small>'+esc(cfg.rotulo)+' · Pedido '+esc(s.pedido.numero_pedido||'')+'</small><h2>'+(oculto?(etapa==='retorno'?'Concluir conferência de retorno?':'Concluir conferência do descarregamento?'):pendente?'Concluir com pendências?':'Concluir conferência?')+'</h2></div></header><div class="cf-confirmacao-corpo"><p>'+(oculto?'O sistema vai comparar as quantidades conferidas com o que saiu no carregamento. Se faltar ou sobrar alguma peça, a diferença vai para Estoque › Gestão do acervo, que faz a contagem geral e resolve.':pendente?'Alguns itens estão com a quantidade menor que a esperada. Você pode voltar para revisar ou concluir; as diferenças vão para Estoque › Gestão do acervo, que faz a contagem geral e resolve.':'Todos os itens informados estão conferidos. Deseja concluir esta etapa?')+'</p>'+
         (pendente?'<div class="cf-confirmacao-resumo"><b>'+faltas.length+' item(ns) com pendência</b><ul>'+faltas.map(f=>'<li><span>'+esc(f.nome||'Item')+'</span>'+(f.faltam!=null?'<strong>'+esc(f.faltam)+' faltante(s)</strong>':'')+'</li>').join('')+'</ul></div>':'')+'</div><footer><button type="button" class="btn btn-secondary" data-voltar>Revisar conferência</button><button type="submit" class="btn btn-primary">'+(pendente?'Concluir com pendências':'Concluir conferência')+'</button></footer></form>';
       let aceito=false;d.querySelector('[data-voltar]').onclick=()=>d.close();d.querySelector('form').onsubmit=e=>{e.preventDefault();aceito=true;d.close();};d.addEventListener('close',()=>{d.remove();resolve(aceito);},{once:true});document.body.append(d);d.showModal();d.querySelector('[data-voltar]').focus();
     });
@@ -370,7 +370,7 @@
       for(const c of s.pedido.operacao?.carga_por_veiculo||[])programados.add(String(c.caminhao_id));
       const lista = (frota || []).slice().sort((a, b) => (programados.has(String(b.id)) - programados.has(String(a.id))));
       const dlg = document.createElement("dialog"); dlg.className = "cf-escolha-caminhao";
-      dlg.innerHTML = '<h3>Confirme o caminhão carregado</h3><div class="cf-escolha-lista"></div><div class="cf-escolha-acoes"><button type="button" class="btn secondary" data-v>Voltar</button><button type="button" class="btn primary" data-ok>Confirmar caminhão</button></div>';
+      dlg.innerHTML = '<h3>Em qual caminhão o pedido foi carregado?</h3><p class="cf-escolha-dica">Ao concluir, o carregamento fica registrado e o pedido segue para a entrega.</p><div class="cf-escolha-lista"></div><div class="cf-escolha-acoes"><button type="button" class="btn secondary" data-v>Voltar</button><button type="button" class="btn primary" data-ok>Concluir carregamento</button></div>';
       const box = dlg.querySelector(".cf-escolha-lista");
       if (!lista.length) box.innerHTML = "<p>Nenhum caminhão cadastrado em Logística > Caminhões.</p>";
       lista.forEach((c) => {
@@ -450,7 +450,7 @@
     const pedidoId = params.get("pedido");
     if (!s.empresa || !pedidoId) { mostrarAviso("Abra a conferência pelo cronograma, na etapa do pedido."); return; }
     const [{ data: pedido }, { data: itens }, { data: etiquetas, error }] = await Promise.all([
-      s.sb.from("separacoes_pedidos").select("id,numero_pedido,cliente_nome,local_nome,data_entrega,data_evento,status,status_operacional,operacao,modo_separacao,cliente_id,pedido_origem_id").eq("empresa_id", s.empresa).eq("id", pedidoId).maybeSingle(),
+      s.sb.from("separacoes_pedidos").select("id,numero_pedido,cliente_nome,local_nome,data_entrega,data_coleta,data_evento,status,status_operacional,operacao,modo_separacao,cliente_id,pedido_origem_id").eq("empresa_id", s.empresa).eq("id", pedidoId).maybeSingle(),
       s.sb.from("separacoes_itens").select("id,item_id,item_nome").eq("empresa_id", s.empresa).eq("separacao_pedido_id", pedidoId),
       s.sb.from("separacoes_etiquetas").select("*").eq("empresa_id", s.empresa).eq("separacao_pedido_id", pedidoId).order("codigo")
     ]);
@@ -480,8 +480,8 @@
     s.pedido = assumido?.id?assumido:pedido; s.itens = itens || []; s.etiquetas = etiquetas || [];
     if(window.CapasOperacao){s.capas=window.CapasOperacao.criar({sb:s.sb,pedido:pedido.id,etapa,cega});try{await s.capas.pronto;}catch(e){mostrarAviso('Não foi possível carregar as materiais de proteção: '+e.message);return;}}
     if(etapa==='carregamento'&&!s.pedido.operacao?.carregamento?.concluido_em){
-      const liberar=document.createElement('button');liberar.id='cfLiberarTriagem';liberar.type='button';liberar.className='btn secondary cf-liberar';liberar.textContent='Liberar para a Triagem';$('cfImprimir').before(liberar);
-      liberar.onclick=async()=>{const certo=typeof window.confirmarGlobal==='function'?await window.confirmarGlobal('O pedido volta para a Triagem. Tem certeza?','Liberar para a Triagem',{confirmarTexto:'Liberar',cancelarTexto:'Voltar',tipo:'warning'}):confirm('O pedido volta para a Triagem. Tem certeza?');if(!certo)return;const motivo='Liberado pela Expedição para a Triagem';liberar.disabled=true;try{const {error}=await s.sb.rpc('operacao_transferir_pedido',{p_pedido:pedidoId,p_acao:'devolver_triagem',p_motivo:motivo});if(error)throw error;leitor?.desligar();if(typeof window.top.shellNavigate==='function')window.top.shellNavigate('Modulos/Logistica/Expedicao/expedicao.html');else location.href='../Expedicao/expedicao.html';}catch(e){avisar(e.message,'Devolver para a Triagem','aviso');liberar.disabled=false;}};
+      const liberar=document.createElement('button');liberar.id='cfLiberarTriagem';liberar.type='button';liberar.className='btn secondary cf-liberar';liberar.textContent='Devolver para a Triagem';liberar.title='O pedido volta para a separação (Triagem) para ser revisado';$('cfImprimir').before(liberar);
+      liberar.onclick=async()=>{const certo=typeof window.confirmarGlobal==='function'?await window.confirmarGlobal('O pedido volta para a separação (Triagem) e sai da Expedição. Tem certeza?','Devolver para a Triagem',{confirmarTexto:'Devolver',cancelarTexto:'Voltar',tipo:'warning'}):confirm('O pedido volta para a Triagem. Tem certeza?');if(!certo)return;const motivo='Liberado pela Expedição para a Triagem';liberar.disabled=true;try{const {error}=await s.sb.rpc('operacao_transferir_pedido',{p_pedido:pedidoId,p_acao:'devolver_triagem',p_motivo:motivo});if(error)throw error;leitor?.desligar();if(typeof window.top.shellNavigate==='function')window.top.shellNavigate('Modulos/Logistica/Expedicao/expedicao.html');else location.href='../Expedicao/expedicao.html';}catch(e){avisar(e.message,'Devolver para a Triagem','aviso');liberar.disabled=false;}};
     }
     // Triagem da volta: registrar item danificado (nov/2026), em conferencia-avarias.js
 
@@ -495,7 +495,7 @@
     }
     $("cfPedido").hidden = false;
     $("cfPedidoNumero").textContent = "Pedido " + (pedido.numero_pedido || "-") + (s.grupo ? " + " + s.extras.map((x) => x.numero_pedido).join(", ") : "");
-    const data = pedido.data_entrega || pedido.data_evento;
+    const data = (etapaVolta ? pedido.data_coleta : pedido.data_entrega) || pedido.data_evento; // Nov/2026: na volta, a data da coleta
     pintarCliente(pedido, data ? new Date(data + "T12:00:00").toLocaleDateString("pt-BR") : "");
     mostrarCaminhoes().catch((e) => console.error(e));
     // Sem etiquetas de envio, ou separado no modo manual / 1 clique (out/2026): não há bipe, a conferência é por quantidade.
@@ -543,7 +543,7 @@
   function imprimirLista(lista, foto, feitos) {
     const verbo = { carregamento: "Carregado", descarregamento: "Descarregado", retorno: "Voltou" }[etapa];
     const mostrarEsperado = !cega || !!feitos;
-    const data = s.pedido.data_entrega || s.pedido.data_evento;
+    const data = (etapaVolta ? s.pedido.data_coleta : s.pedido.data_entrega) || s.pedido.data_evento;
     const linhas = lista.map((p, i) => {
       const r = feitos?.get(p.chave);
       return "<tr><td class='n'>" + (i + 1) + "</td><td class='f'>" + foto(p) + "</td><td>" + esc(p.nome) + (p.kit_nome ? "<br><small>Parte do kit: " + esc(String(p.kit_nome).replace(/s+/g, " ").trim()) + (Number(p.por_kit) ? " (" + esc(p.por_kit) + " por kit)" : "") + "</small>" : "") + "</td>" +
@@ -606,7 +606,9 @@
     const atualizarProgresso = (total, conferido) => {
       const pct = total ? Math.min(100, Math.round((conferido / total) * 100)) : 0;
       $("cfPercent").textContent = pct + "%"; $("cfBarra").style.width = pct + "%";
-      $("cfContagem").textContent = conferido + " de " + total + " peças";
+      // Nov/2026: 100% preenchido não é concluído; até concluir, a contagem avisa que falta confirmar.
+      const concluida = !!s.pedido?.operacao?.[etapa]?.concluido_em;
+      $("cfContagem").textContent = conferido + " de " + total + " peças" + (!concluida && total && conferido >= total ? " · falta concluir" : "");
     };
     const totalEsperado = lista.reduce((t, p) => t + p.esperado, 0);
 
@@ -682,7 +684,7 @@
     $("cfQtdConfirmar").addEventListener("click", async (ev) => {
       const botao=ev.currentTarget;
       const vazio = inputs.find((inp) => inp.value === "" || Number(inp.value) < 0 || !Number.isInteger(Number(inp.value)));
-      if (vazio) { avisar("Informe a quantidade de todos os itens (número inteiro, 0 se não foi " + verbo.toLowerCase() + ").", cfg.rotulo); vazio.focus(); return; }
+      if (vazio) { avisar("Informe a quantidade de todos os itens (número inteiro; 0 se nada " + (etapa === "retorno" ? "voltou" : "foi " + verbo.toLowerCase()) + ").", cfg.rotulo); vazio.focus(); return; }
       const quantidades = {};
       inputs.forEach((inp) => { quantidades[inp.dataset.chave] = Number(inp.value); });
       if (etapaVolta && !s.primeira) {
@@ -716,7 +718,8 @@
       } else if (itensFalta.length || cega) {
         const ok = await confirmarConclusao(itensFalta,cega);
         if (!ok) return;
-      } else {
+      } else if (etapa !== "carregamento") {
+        // Nov/2026: no carregamento a escolha do caminhão já é a confirmação final (eram três perguntas seguidas)
         const ok = await confirmarConclusao([],false);
         if (!ok) return;
       }
@@ -734,6 +737,7 @@
       await s.capas?.carregar().catch(console.error);
       $("cfLiberarTriagem")?.remove();
       $("cfPercent").hidden = false; $("cfBarra").parentElement.hidden = false;
+      $("cfContagem").textContent = $("cfContagem").textContent.replace(" · falta concluir", "");
       await mostrarSemEtiquetas();
       if (cega) await carregarOcorrencias();
       if (etapaVolta) await carregarDivergencias();

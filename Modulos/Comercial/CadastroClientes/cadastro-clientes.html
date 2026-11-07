@@ -57,7 +57,7 @@
   </select>
 
   <select class="el-select" id="budgetFilter" onchange="aplicarFiltros()">
-    <option value="">Todos os orçamentos</option>
+    <option value="">Orçamento: todos</option>
     <option value="Econômico">Econômico</option>
     <option value="Intermediário">Intermediário</option>
     <option value="Premium">Premium</option>
@@ -132,7 +132,7 @@
       </div>
 
       <div class="form-group el-field" style="grid-column:span 3;">
-        <label>CPF / CNPJ *</label>
+        <label>CPF / CNPJ</label>
         <input class="el-input" id="cpfCnpj" data-mascara="cpfcnpj" data-mascara-pj="#tipoPessoa" readonly>
       </div>
 
@@ -147,7 +147,7 @@
       </div>
 
       <div class="form-group el-field" style="grid-column:span 4;">
-        <label>Email *</label>
+        <label>E-mail *</label>
         <input class="el-input" id="email" readonly>
       </div>
 
@@ -161,8 +161,8 @@
       </div>
 
       <div class="form-group el-field" style="grid-column:span 2;">
-        <label>Última locação</label>
-<input class="el-input" id="ultimaLocacao" type="date">
+        <label>Última locação <small style="font-weight:400;color:#6b6b6b">(pelos pedidos)</small></label>
+<input class="el-input" id="ultimaLocacao" type="date" readonly tabindex="-1">
       </div>
 
       <div class="form-group el-field" style="grid-column:span 2;">
@@ -195,19 +195,19 @@
       <section class="cliente-equipes" id="clienteEquipesBloco" aria-label="Equipes"></section>
       <!-- ENDEREÇO COM GOOGLE PLACES -->
 <div class="form-group el-field" style="grid-column:span 6;">
-  <label>Endereço completo *</label>
+  <label>Endereço completo</label>
 
   <!-- Wrapper para input dinâmico do Google -->
   <div id="endereco-wrapper"></div>
 </div>
 
       <div class="form-group el-field" style="grid-column:span 2;">
-        <label>Número *</label>
+        <label>Número</label>
         <input class="el-input" id="numeroEndereco" readonly>
       </div>
 
       <div class="form-group el-field" style="grid-column:span 4;">
-        <label>Ponto de referência *</label>
+        <label>Ponto de referência</label>
         <input class="el-input" id="pontoReferencia" readonly>
       </div>
 
@@ -305,8 +305,8 @@
 <script src="../../../js/core/google.js"></script>
 <script src="../../../js/core/campoProtegido.js?v=20261023-cofre-doc"></script>
 <script src="../../../js/core/etiquetasCadastro.js?v=20261026"></script>
-<script src="../../../js/ui/complexidade-cadastros.js?v=20261031"></script>
-<script src="cadastro-clientes.js?v=20261031-complexidade"></script>
+<script src="../../../js/ui/complexidade-cadastros.js?v=20261107-teste-usuario"></script>
+<script src="cadastro-clientes.js?v=20261107-teste-usuario"></script>
 <script src="clientes-equipes.js?v=20261031-equipes"></script>
 <script>
   // Dentro do dashboard abre pelo shell (histórico + permissão); aberta sozinha, navega direto.

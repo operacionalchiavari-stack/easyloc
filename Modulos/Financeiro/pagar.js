@@ -67,7 +67,7 @@
   }
 
   const SITUACAO = { pago: ["Pago", "ok"], vencido: ["Vencido", "venc"], parcial: ["Pago em parte", "parc"], aberto: ["Em aberto", "aberto"] };
-  const MODULO = "../Comercial/Catalogo/projeto-apresentacao.mjs?v=20261105-terceirizacoes";
+  const MODULO = "../Comercial/Catalogo/projeto-apresentacao.mjs?v=20261107-teste-usuario";
   let docMod = null;
 
   function marca() {

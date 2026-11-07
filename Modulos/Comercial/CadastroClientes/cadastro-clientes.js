@@ -114,75 +114,25 @@ root.dataset.initialized = "true";
 
   /* ---------- VALIDAÇÃO COMPLETA DO CLIENTE ---------- */
   function validarClienteCompleto() {
-
-    const enderecoInput = document.getElementById("endereco");
-
-    if (!nome.value.trim()) {
-      mostrarAlerta("Nome / Razão Social é obrigatório");
-      nome.focus();
-      return false;
-    }
-
+    // Só nome, telefone e e-mail são obrigatórios (nov/2026). O resto é opcional,
+    // mas, se for preenchido, precisa estar certo. O aviso lista tudo de uma vez.
+    const faltas = [];
+    let primeiro = null;
+    const marcar = (campo, texto) => { faltas.push(texto); if (!primeiro) primeiro = campo; };
+    if (!nome.value.trim()) marcar(nome, "Nome / Razão Social");
+    if (!telefone.value.trim()) marcar(telefone, "Telefone");
+    else if (!validarTelefoneBR(telefone.value)) marcar(telefone, "Telefone válido (DDD + número)");
+    if (!email.value.trim()) marcar(email, "E-mail");
+    else if (!validarEmail(email.value)) marcar(email, "E-mail válido");
     const docGuardado = cpfCnpj.dataset.cofreProtegido === "1" && cpfCnpj.dataset.cofreAlterado !== "1";
-    if (!docGuardado && !cpfCnpj.value.trim()) {
-      mostrarAlerta("CPF / CNPJ é obrigatório");
-      cpfCnpj.focus();
+    if (!docGuardado && cpfCnpj.value.trim() && (tipoPessoa.value === "PF" || tipoPessoa.value === "Pessoa Física") && !validarCPF(cpfCnpj.value)) {
+      marcar(cpfCnpj, "CPF válido (ou deixe em branco)");
+    }
+    if (faltas.length) {
+      mostrarAlerta((faltas.length === 1 ? "Falta preencher: " : "Faltam preencher: ") + faltas.join(", ") + ".");
+      primeiro?.focus();
       return false;
     }
-
-    if (
-      !docGuardado && (tipoPessoa.value === "PF" ||
-      tipoPessoa.value === "Pessoa Física")
-    ) {
-      if (!validarCPF(cpfCnpj.value)) {
-        mostrarAlerta("CPF inválido. Verifique os números.");
-        cpfCnpj.focus();
-        return false;
-      }
-    }
-
-    if (!validarEmail(email.value)) {
-      mostrarAlerta("Email inválido. Verifique e tente novamente.");
-      email.focus();
-      return false;
-    }
-
-    if (!validarTelefoneBR(telefone.value)) {
-      mostrarAlerta("Telefone inválido. Use DDD + número.");
-      telefone.focus();
-      return false;
-    }
-
-    if (!enderecoInput || !enderecoInput.value.trim()) {
-      mostrarAlerta("Endereço é obrigatório.");
-      enderecoInput?.focus();
-      return false;
-    }
-
-    if (!numeroEndereco.value.trim()) {
-      mostrarAlerta("Número do endereço é obrigatório.");
-      numeroEndereco.focus();
-      return false;
-    }
-
-    if (!pontoReferencia.value.trim()) {
-      mostrarAlerta("Ponto de referência é obrigatório.");
-      pontoReferencia.focus();
-      return false;
-    }
-
-    if (!statusCliente.value) {
-      mostrarAlerta("Status do cliente é obrigatório.");
-      statusCliente.focus();
-      return false;
-    }
-
-    if (!window.enderecoSelecionadoGoogle) {
-      mostrarAlerta("Selecione um endereço válido da lista do Google.");
-      enderecoInput?.focus();
-      return false;
-    }
-
     return true;
   }
 /* =====================================================
@@ -298,6 +248,7 @@ document.getElementById("catalogoSenha")?.addEventListener("input", event => {
 ===================================================== */
 function clientes_openAdd() {
   clienteAtualId = null;
+  const tituloCad = document.querySelector("#modal .modal-header h3"); if (tituloCad) tituloCad.textContent = "Novo cliente";
   window.CXCadastro?.preencher('cliente',{});
   window.ClientesEquipes?.mostrarDoCliente(null);
   clienteTinhaAcessoCatalogo = false;
@@ -315,7 +266,7 @@ function clientes_openAdd() {
     .querySelectorAll("#modal input, #modal textarea")
     .forEach(e => {
       e.value = "";
-      e.readOnly = false;
+      e.readOnly = e.id === "ultimaLocacao";
       e.disabled = false;
     });
 
@@ -367,7 +318,7 @@ function setReadOnly(v) {
 
   document
     .querySelectorAll("#modal input, #modal textarea")
-    .forEach(e => (e.readOnly = v));
+    .forEach(e => (e.readOnly = v || e.id === "ultimaLocacao"));
 
   document
     .querySelectorAll("#modal select")
@@ -531,7 +482,6 @@ async function clientes_salvar() {
     if (falta) { mostrarAlerta('Para dar BV, informe ' + falta[1] + (falta[0] === bvObs ? ' (pelo menos 10 letras).' : '.')); falta[0].focus(); return; }
   }
   if (!validarClienteCompleto()) return;
-  if (!validarTagsObrigatorias()) return;
 
   const senhaDigitada = document.getElementById("catalogoSenha")?.value || "";
   const acessoAtivo = document.getElementById("catalogoAtivo")?.value === "true" || senhaDigitada.length > 0;
@@ -702,6 +652,13 @@ async function abrirDetalhesCliente(cliente) {
   numeroEndereco.value = cliente.numero_endereco || "";
   pontoReferencia.value = cliente.ponto_referencia || "";
   ultimaLocacao.value = cliente.ultima_locacao || "";
+  const tituloCad = document.querySelector("#modal .modal-header h3"); if (tituloCad) tituloCad.textContent = "Detalhes do cliente";
+  // Última locação vem dos pedidos (o evento mais recente que não foi cancelado).
+  try {
+    supabase.from("separacoes_pedidos").select("data_evento").eq("cliente_id", cliente.id).neq("status_comercial", "cancelado")
+    .not("data_evento", "is", null).lte("data_evento", new Date().toLocaleDateString("en-CA")).order("data_evento", { ascending: false }).limit(1)
+    .then(({ data } = {}) => { if (data?.[0]?.data_evento && clienteAtualId === cliente.id) ultimaLocacao.value = data[0].data_evento; });
+  } catch (e) { console.warn("Última locação:", e); }
   statusCliente.value = cliente.status || "";
 
   // =============================
@@ -959,7 +916,7 @@ paginaClientes.forEach(c => {
   tr.innerHTML = `
     <td><span class="cliente-linha-nome">${clienteAvatarHtml(c)}<span>${esc(c.nome_razao)}</span></span></td>
     <td>${esc(window.EasyLocCofre.visivel(c, "cpf_cnpj"))}</td>
-    <td>${esc(c.telefone)}</td>
+    <td>${esc(c.telefone ? (window.EasyLocMascara ? window.EasyLocMascara.formatar("telefone", c.telefone) : c.telefone) : "")}</td>
     <td>${esc(c.email)}</td>
 
     <td>${renderizarTagsComoCards(c.tags,"Estilo","tag-estilo")}</td>
@@ -1312,7 +1269,7 @@ function clientes_card_impressao(c) {
     <tr>
 <td>${esc(c.nome_razao)}</td>
 <td>${esc(window.EasyLocCofre.visivel(c, "cpf_cnpj"))}</td>
-<td>${esc(c.telefone)}</td>
+<td>${esc(c.telefone ? (window.EasyLocMascara ? window.EasyLocMascara.formatar("telefone", c.telefone) : c.telefone) : "")}</td>
 <td>${esc(c.email)}</td>
       <td>${c.endereco || ""} ${c.numero_endereco || ""}</td>
       <td class="status">${calcularStatusAutomatico(c)}</td>

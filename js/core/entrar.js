@@ -44,7 +44,7 @@
     const nome = acesso.data?.nome || usuario?.nome || "Usuário";
     sessionStorage.setItem("login_ok", "1");
     sessionStorage.setItem("empresa_id", empresaId);
-    sessionStorage.setItem("usuario_nome", usuario?.nome || "Usuário");
+    sessionStorage.setItem("usuario_nome", nome);
     return { empresaId, nome, userId };
   }
   window.EasyLocEntrar = { entrar };

@@ -15,7 +15,11 @@
   const D=g.contado==null?null:Number(g.contado)-Number(g.esperado);
   const res=new Map();if(D==null)return {D,res};
   let perda=Math.max(0,-D),extra=Math.max(0,D);
-  divs.filter(d=>d.tipo==='falta').sort((a,b)=>String(a.criado_em).localeCompare(String(b.criado_em))).forEach(d=>{const p=Math.min(Number(d.quantidade||0),perda);perda-=p;res.set(d.id,{final:Number(d.esperado)-p,perda:p});});
+  // Nov/2026 (teste do usuário final, item 6): a mesma peça que faltou no descarregamento e na triagem da volta do mesmo
+  // pedido é UMA falta só. A perda é distribuída por pedido; as divergências do mesmo pedido recebem o mesmo resultado.
+  const porPedido=new Map();
+  divs.filter(d=>d.tipo==='falta').sort((a,b)=>String(a.criado_em).localeCompare(String(b.criado_em))).forEach(d=>{const k=String(d.pedido?.id||d.pedido?.numero||d.id);const l=porPedido.get(k)||[];l.push(d);porPedido.set(k,l);});
+  porPedido.forEach(l=>{const q=Math.max(...l.map(d=>Number(d.quantidade||0)));const p=Math.min(q,perda);perda-=p;l.forEach((d,i)=>res.set(d.id,{final:Number(d.esperado)-p,perda:p,mesma:i>0}));});
   divs.filter(d=>d.tipo==='sobra').forEach(d=>{const a=Number(d.conferido)-Number(d.esperado),e=Math.min(a,extra);extra-=e;res.set(d.id,{final:Number(d.esperado)+e});});
   return {D,res,perdaSobrando:perda};
  }
@@ -30,7 +34,7 @@
   return [...grupos.values()];
  }
  function resultadoTexto(d,s){if(!s)return '';const fin=Number(s.final);
-  if(d.tipo==='falta'){const perda=Number(d.esperado)-fin;return perda>0?'Perda de '+fmt(perda):'Peças no galpão';}
+  if(d.tipo==='falta'){if(s.mesma)return 'Mesma peça da outra contagem deste pedido';const perda=Number(d.esperado)-fin;return perda>0?'Perda de '+fmt(perda):'Peças no galpão';}
   const a=fin-Number(d.esperado);return a>0?fmt(a)+' a mais confirmada(s)':'Erro de contagem';}
  function opcoesMotivo(d,final,esc){const sit=situacao(d,final);return '<option value="">Escolha o motivo</option>'+(motivos||[]).filter(m=>m.etapa==='divergencia_'+d.tipo&&(!m.situacao||m.situacao===sit)).map(m=>'<option value="'+esc(m.id)+'">'+esc(m.nome)+'</option>').join('');}
 
@@ -69,7 +73,7 @@
      ?'<form class="dv-contar" data-contar="'+esc(g.id)+'"><label><span>Quantas há no galpão?</span><input type="number" min="0" step="1" inputmode="numeric" required title="Conte tudo que está no galpão, inclusive o que acabou de voltar" aria-label="Quantas unidades deste item há no galpão agora"></label><button class="btn primary">Registrar</button></form>'
      :'<div class="dv-conta"><div class="dv-conta-num"><span><small>Deveria ter</small><b class="dv-deveria">'+fmt(g.esperado)+'</b></span><span><small>Contado</small><b class="dv-contado'+(D<0?' is-perda':D>0?' is-sobra':' is-ok')+'">'+fmt(g.contado)+'</b></span></div><small class="dv-conta-conta">Estoque '+fmt(g.estoque)+' − manutenção '+fmt(g.manutencao)+' − fora '+fmt(g.fora)+(g.contado_por?' · contado por '+esc(g.contado_por):'')+'</small></div>'+
       '<p class="dv-sugestao '+(D<0?'is-perda':'is-ok')+'">'+(D===0?'Bateu: as peças estão no galpão.':D<0?'Faltam <b>'+fmt(-D)+'</b> no galpão.':'<b>'+fmt(D)+'</b> a mais no galpão.')+
-      (D<0&&divs.some(d=>d.tipo==='falta')?' Pode ter ficado em: '+divs.filter(d=>d.tipo==='falta').map(d=>'<b>'+esc(d.pedido.local||'local não informado')+'</b> (Pedido '+esc(d.pedido.numero)+')').join(', ')+'.':'')+
+      (D<0&&divs.some(d=>d.tipo==='falta')?' Pode ter ficado em: '+[...new Map(divs.filter(d=>d.tipo==='falta').map(d=>[String(d.pedido.numero),d])).values()].map(d=>'<b>'+esc(d.pedido.local||'local não informado')+'</b> (Pedido '+esc(d.pedido.numero)+')').join(', ')+'.':'')+
       (perdaSobrando>0?' '+fmt(perdaSobrando)+' sem divergência que explique: confira o estoque.':'')+'</p>')+'</td>';
     const confirmarTd='<td class="dv-c-confirmar" rowspan="'+span+'">'+(!contado?'<small class="dv-espera">Faça a contagem geral primeiro</small>':!divs.length?'':
      '<form class="dv-confirmar" data-confirmar-item="'+esc(g.item_id)+'">'+gruposMotivo(divs,res).map(gr=>'<label><span>'+esc(gr.rotulo)+(gr.divs.length>1?' · '+gr.divs.length+' pedidos':'')+'</span><select data-motivo-grupo="'+esc(gr.chave)+'">'+opcoesMotivo(gr.d,gr.fin,esc)+'</select></label>').join('')+'<button class="btn primary">Confirmar'+(divs.length>1?' as '+divs.length:'')+'</button></form>')+'</td>';
@@ -92,7 +96,7 @@
     const g=pend.find(x=>x.item_id===form.dataset.confirmarItem);const divs=abertas.filter(d=>d.item_id===g.item_id);const {res}=sugestoes(g,divs);
     const grupos=gruposMotivo(divs,res),motivo=new Map();
     for(const gr of grupos){const v=form.querySelector('[data-motivo-grupo="'+CSS.escape(gr.chave)+'"]').value;if(!v){msg('Escolha o motivo: '+gr.rotulo+'.',true);return;}gr.divs.forEach(d=>motivo.set(d.id,v));}
-    const perdas=divs.filter(d=>d.tipo==='falta').map(d=>({d,p:Number(d.esperado)-Number(res.get(d.id)?.final)})).filter(x=>x.p>0);
+    const perdas=divs.filter(d=>d.tipo==='falta'&&!res.get(d.id)?.mesma).map(d=>({d,p:Number(d.esperado)-Number(res.get(d.id)?.final)})).filter(x=>x.p>0);
     if(perdas.length&&window.confirmarGlobal&&!(await window.confirmarGlobal('Confirmar a perda de '+perdas.map(x=>x.p+' peça(s) no Pedido '+x.d.pedido.numero).join(', ')+'? Dá baixa no estoque.','Confirmar perda')))return;
     const btn=form.querySelector('button');btn.disabled=true;
     try{for(const d of divs)await rpc('acervo_divergencia_fechar',{p_id:d.id,p_contagem:Number(res.get(d.id)?.final),p_motivo:motivo.get(d.id)});msg(divs.length>1?'Divergências resolvidas.':'Divergência resolvida.');await recarregar();}

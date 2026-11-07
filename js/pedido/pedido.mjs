@@ -6,14 +6,14 @@ import { getEls, bindDiasSemana } from "./pedido.utils.mjs";
 import { initAutocompleteClientes } from "./pedido.clientes.mjs?v=20261102-auditoria-identidade";
 import { initEquipePedido } from "./pedido.equipe.mjs?v=20261031-bv";
 import { initBvPedido } from "./pedido.bv.mjs?v=20261031-3colunas3";
-import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261102-auditoria-identidade";
-import { initItens } from "./pedido.itens.mjs?v=20261105-terceirizacoes";
-import { initFrete } from "./pedido.frete.mjs?v=20261031-km-chip";
+import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261107-teste-usuario";
+import { initItens } from "./pedido.itens.mjs?v=20261107-teste-usuario";
+import { initFrete } from "./pedido.frete.mjs?v=20261107-teste-usuario";
 import { initServicos } from "./pedido.servicos.mjs";
-import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261026-acentos";
+import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261107-teste-usuario";
 import { dadosNovoExtra, prepararPedidoExtra } from "./pedido.extra.mjs?v=20261105-extra-botao";
-import { initPagamento } from "./pedido.pagamento.mjs?v=20261101-condicao";
-import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs?v=20261105-terceirizacoes";
+import { initPagamento } from "./pedido.pagamento.mjs?v=20261107-teste-usuario";
+import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs?v=20261107-teste-usuario";
 
 /* =====================================================
    ESTADO VINDO DA URL (documento proprio / navegacao real)
@@ -897,7 +897,7 @@ async function setupPedidoWorkspace({ supabase }){
         }else{
           if(!observacoesPedido.local_html && document.getElementById("localObservacoes")){
             document.getElementById("localObservacoes").innerHTML = `
-              ${localSalvo.endereco ? `<div style="margin-bottom:4px;"><strong>Endereco:</strong> <span>${localSalvo.endereco}${localSalvo.numero_endereco ? ", " + localSalvo.numero_endereco : ""}</span></div>` : ""}
+              ${localSalvo.endereco ? `<div style="margin-bottom:4px;"><strong>Endereço:</strong> <span>${localSalvo.endereco}${localSalvo.numero_endereco && !new RegExp(`(^|[^0-9])${String(localSalvo.numero_endereco).trim()}([^0-9]|$)`).test(localSalvo.endereco) ? ", " + localSalvo.numero_endereco : ""}</span></div>` : ""}
               ${localSalvo.ponto_referencia ? `<div style="margin-bottom:4px;"><strong>Referencia:</strong> <span>${localSalvo.ponto_referencia}</span></div>` : ""}
             `;
           }
@@ -1139,11 +1139,22 @@ async function setupPedidoWorkspace({ supabase }){
       return;
     }
     if(!supabase || !window.__CONTEXT?.empresa_id){
-      avisar("Sessao ou empresa nao encontrada para salvar o pedido.", "Salvar pedido", "erro");
+      avisar("Sessão ou empresa não encontrada para salvar o pedido.", "Salvar pedido", "erro");
       return;
     }
 
     const statusComercial = statusComercialAtual();
+    // Nov/2026 (teste do usuário final, item 2): sem a distância o frete sai R$ 0,00. Para reservar, o frete precisa
+    // estar calculado ou ajustado à mão (com observação), por exemplo quando o cliente retira no galpão.
+    if(["pre_reserva", "aprovado", "finalizado", "enviado"].includes(statusComercial)){
+      const temItens = Number(window.volumeTotalPedido || 0) > 0;
+      const freteManual = window.__PEDIDO_LOGISTICA_MANUAL?.frete != null;
+      if(temItens && !freteManual && !(Number(window.kmPedido || 0) > 0)){
+        avisar("O frete não foi calculado porque a distância do local é desconhecida. No card Frete, clique em \"Distância\" e informe os km, ou use \"Ajustar\" se o frete for outro valor.", "Frete não calculado", "aviso");
+        window.__pedidoIrPara?.("financeiro");
+        return;
+      }
+    }
     if(["aprovado", "finalizado", "enviado"].includes(statusComercial)){
       await window.__pedidoContratoInitPromise?.catch?.(() => null);
       if(typeof window.__pedidoContratoPodeSalvarStatus === "function"){
@@ -1298,7 +1309,7 @@ async function setupPedidoWorkspace({ supabase }){
         ? await window.__pedidoSalvarContratoFinal(pedidoId, statusComercial)
         : false;
       if(!contratoSalvo){
-        avisar("Pedido salvo, mas o contrato final nao foi gravado. Revise o modelo padrao e tente salvar novamente.", "Contrato", "aviso");
+        avisar("Pedido salvo, mas o contrato final não foi gravado. Revise o modelo padrão e tente salvar novamente.", "Contrato", "aviso");
         return;
       }
     }else if(await window.__pedidoSalvarContratoRascunho?.(pedidoId) === false){
@@ -1311,7 +1322,7 @@ async function setupPedidoWorkspace({ supabase }){
     avisar(
       (deveReservar
         ? "Pedido salvo e disponibilidade atualizada."
-        : "Orcamento salvo sem reservar estoque.")
+        : "Orçamento salvo sem reservar estoque.")
         + (cronograma?.noCronograma ? " Cronograma atualizado." : cronograma?.removidas ? " Etapas retiradas do cronograma." : ""),
       "Salvar pedido",
       "sucesso"

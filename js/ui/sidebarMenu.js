@@ -87,7 +87,7 @@
             rotulo: "Disponibilidade de Itens",
             legado: {
               html: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.html?v=20261031-filtros-titulo",
-              js: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.js?v=20261101-arraste-horizontal",
+              js: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.js?v=20261107-teste-usuario",
               css: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.css?v=20261101-arraste-horizontal",
             },
           },

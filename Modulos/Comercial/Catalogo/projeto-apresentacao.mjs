@@ -121,7 +121,7 @@ function valoresTd(item, classe = 'pa-valor'){
   const total = unitario === null ? null : unitario * item.quantidade;
   return `<td class="${classe}">${moeda(item.reposicao)}</td><td class="${classe}">${moeda(unitario)}${pers ? `<small class="pa-valor-pers">inclui ${dinheiro.format(pers)} de personalização</small>` : ''}</td><td class="${classe} pa-valor-total">${total === null ? '<span class="pa-sob-consulta">Sob consulta</span>' : `<b>${dinheiro.format(total)}</b>`}</td>`;
 }
-const valoresTh = (classe = 'pa-valor') => `<th scope="col" class="${classe}">Reposição</th><th scope="col" class="${classe}">Valor un.</th><th scope="col" class="${classe}">Total</th>`;
+const valoresTh = (classe = 'pa-valor') => `<th scope="col" class="${classe}">Reposição (un.)</th><th scope="col" class="${classe}">Valor un.</th><th scope="col" class="${classe}">Total</th>`;
 const foto = (url, classe = '') => {
   if(!url) return '<span class="pa-sem-foto" aria-label="Sem foto">—</span>';
   // Miniaturas seguem a transformação já usada pelo catálogo; a mídia original permanece intacta.
@@ -164,7 +164,7 @@ function tabela(amb, ordenar = false){
 }
 // Títulos das colunas logo abaixo do nome de cada ambiente, em cima da 1ª linha (o <thead> fica só pra largura das colunas e
 // leitores de tela — ver .pa-geral thead no CSS).
-const COLHEAD_GERAL = `<tr class="pa-colhead" aria-hidden="true"><td></td><td class="pa-quantidade">Qtd.</td><td></td><td>Item</td><td class="pa-valor">Reposição</td><td class="pa-valor">Valor un.</td><td class="pa-valor">Total</td></tr>`;
+const COLHEAD_GERAL = `<tr class="pa-colhead" aria-hidden="true"><td></td><td class="pa-quantidade">Qtd.</td><td></td><td>Item</td><td class="pa-valor">Reposição (un.)</td><td class="pa-valor">Valor un.</td><td class="pa-valor">Total</td></tr>`;
 // quantidade: campo de quantidade editável; moverAmbientes: alça no título pra arrastar o ambiente inteiro (aba Geral).
 // vazios / acoesAmbiente / depoisTitulo: só no pedido comercial, que não tem mais as abas de ambiente — ambiente sem
 // itens continua aparecendo, o título ganha renomear/excluir e as renderizações vêm depois dos itens (centralizadas).
@@ -234,7 +234,7 @@ const layoutSeletorHtml = (atual) => `<div class="cpj-order-layout" role="radiog
 const identidadeItemPedido = item => `<strong>${esc(item.nomeCompleto || item.nome)}</strong>${item.medidas ? `<small class="pa-medidas">${esc(item.medidas)}</small>` : ""}${personalizacaoHtml(item, false)}${item.referencia ? `<small>Cód. ${esc(item.referencia)}</small>` : ''}${item.observacao ? `<p class="pa-item-observacao-texto">${esc(item.observacao)}</p>` : ''}`;
 const linhaItemPedido = item => `<tr><td class="cpj-order-qty">${item.quantidade}</td><td class="cpj-order-photo">${foto(item.foto)}</td><td>${identidadeItemPedido(item)}</td>${valoresTd(item,'cpj-order-valor')}</tr>`;
 const COLGROUP_PEDIDO = '<colgroup><col class="cpj-order-col-qty"><col class="cpj-order-col-photo"><col><col class="cpj-order-col-valor"><col class="cpj-order-col-valor"><col class="cpj-order-col-valor"></colgroup>';
-const COLHEAD_PEDIDO = '<tr class="cpj-order-colhead" aria-hidden="true"><td>Qtd.</td><td></td><td>Item</td><td class="cpj-order-valor">Reposição</td><td class="cpj-order-valor">Valor un.</td><td class="cpj-order-valor">Total</td></tr>';
+const COLHEAD_PEDIDO = '<tr class="cpj-order-colhead" aria-hidden="true"><td>Qtd.</td><td></td><td>Item</td><td class="cpj-order-valor">Reposição (un.)</td><td class="cpj-order-valor">Valor un.</td><td class="cpj-order-valor">Total</td></tr>';
 const fotoAmbientePedido = (amb, r) => `<figure><img src="${esc(r.url)}" alt="Renderização de ${esc(amb.nome)}" loading="lazy" decoding="async"><figcaption>${esc(r.nome)}${r.jogos > 1 ? ` · <b>${r.jogos} jogos</b>` : ''}</figcaption></figure>`;
 // Horizontal: um bloco por ambiente — título em cima, tabela à esquerda e a(s) renderização(ões) à direita.
 function configuracaoTabelaPedido(conferencia){
@@ -340,7 +340,7 @@ export function estilosImpressaoPedido(horizontal=false){
   return `@page{size:A4 portrait;margin:0 0 12mm}.cpj-order-table thead.pa-sr{position:static;width:auto;height:auto;overflow:visible;clip-path:none}.cpj-order-table thead.pa-sr th{height:10mm;padding:0;border:0;font-size:0;line-height:0}.cpj-order-render-group,.cpj-order-financeiro{padding-top:6mm}@page plantaDeitada{size:A4 landscape;margin:6mm 0}@page plantaEmPe{size:A4 portrait;margin:6mm 0}.cpj-order-planta.is-deitada{page:plantaDeitada}.cpj-order-planta.is-em-pe{page:plantaEmPe}.cpj-order-paper .cpj-order-planta{margin:0 -6mm;padding:0;break-after:page}.cpj-order-planta h2{margin:0 0 3mm;font-size:13pt}.cpj-order-planta-folha{zoom:var(--zp)!important;box-shadow:none!important}body{margin:0;font-family:Arial,sans-serif;color:#34352f}.cpj-order-paper{padding:0 14mm;box-shadow:none}.cpj-order-paper .cpj-order-letterhead{margin:0 -14mm;padding:9mm 14mm}.cpj-order-notes{padding:0 14mm}.cpj-order-table thead{display:table-header-group}.cpj-order-table tr,figure,.cpj-order-requester{break-inside:avoid}.cpj-order-render-group{break-inside:auto}.cpj-order-render-group>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5mm}.cpj-order-render-group figure{margin:0}.cpj-order-render-group figure:first-child{grid-column:auto}.cpj-order-renders{break-before:auto}.cpj-order-renders>h2,.cpj-order-render-group h3{break-after:avoid}.cpj-order-notes{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:24px;font-size:12px;line-height:1.6}.pa-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}*{print-color-adjust:exact}${estilosHorizontal}`;
 }
 export async function imprimirPedido(model, { decorador = null, empresa = null, observacao = '', layout = null } = {}){
-  const css = new URL('./catalogo-projetos.css?v=20261105-terceirizacoes',import.meta.url).href;
+  const css = new URL('./catalogo-projetos.css?v=20261107-teste-usuario',import.meta.url).href;
   // Decorador com os valores ocultos (botão do olho no catálogo): o PDF sai sem as colunas de valores.
   const semValores = document.documentElement.classList.contains('catalogo-sem-valores');
   const horizontal = (layout || layoutPedido()) === 'horizontal';

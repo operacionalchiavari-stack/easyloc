@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <script src="../../Chiavari/gas-cliente.js?v=20261019-sem-motor" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../../Chiavari/operacao-sem-motor.js?v=20261106-bonus-admin"></script>
+  <script src="../../Chiavari/operacao-sem-motor.js?v=20261107-teste-usuario"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Painel Logístico</title>
@@ -17,7 +17,8 @@
   <link rel="stylesheet" href="painel-logistico.css?v=20261103-coluna-pedidos">
 <script src="../../../js/core/pedidoFluxo.js?v=20261024-fluxo"></script>
 <link rel="stylesheet" href="../../Comercial/Catalogo/projeto-apresentacao.css?v=20261103-kit-agrupado">
-<link rel="stylesheet" href="../../Comercial/Catalogo/catalogo-projetos.css?v=20261103-kit-agrupado">
+<link rel="stylesheet" href="../../Comercial/Catalogo/catalogo-projetos.css?v=20261107-teste-usuario">
+<style>.pl-legenda-dias{margin:2px 0 8px;font-size:12px;color:#6b6b6b}</style>
 </head>
 <body>
 <section class="el-page pl-page" data-module-root>
@@ -32,6 +33,7 @@
   <section id="plModuloEquipe" role="tabpanel" aria-labelledby="plTabEquipe">
   <div id="plErro" class="pl-erro" hidden></div>
   <div id="plDias" class="pl-dias" role="tabpanel"><div class="pl-vazio">Carregando…</div></div>
+  <p class="pl-legenda-dias">Número vermelho no dia: o que ainda falta planejar (equipe ou caminhão). Verde: dia completo. Passe o mouse no número para ver.</p>
   </section>
   <section id="plModuloEntregas" class="ec-page" role="tabpanel" aria-labelledby="plTabEntrega" hidden>
   <div id="ecMensagem" class="ec-mensagem" role="status" hidden></div>
@@ -59,15 +61,15 @@
 <script src="../../../js/core/operacaoOffline.js?v=20261103-reparar-lojas"></script>
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261024-offline"></script>
-<script src="painel-dias.js?v=20261103-dias-anteriores"></script>
-<script src="painel-logistico.js?v=20261103-recursos-fluidos"></script>
+<script src="painel-dias.js?v=20261107-teste-usuario"></script>
+<script src="painel-logistico.js?v=20261107-teste-usuario"></script>
 <script src="../../../js/core/google.config.js"></script>
 <script src="../../../js/core/google.js"></script>
 <script src="painel-uber.js?v=20261029-autocomplete"></script>
 <script src="../../../js/core/evidenciasOperacao.js?v=20261024"></script>
-<script src="../EntregasColetas/montagem-registros.js?v=20261103-conferencia-colunas"></script>
-<script src="../../../js/logistica/pedido-conferencia.js?v=20261103-pedido-extra-coleta"></script>
-<script src="../EntregasColetas/entregas-coletas.js?v=20261103-coleta-mesmo-layout"></script>
+<script src="../EntregasColetas/montagem-registros.js?v=20261107-teste-usuario"></script>
+<script src="../../../js/logistica/pedido-conferencia.js?v=20261107-teste-usuario"></script>
+<script src="../EntregasColetas/entregas-coletas.js?v=20261107-teste-usuario"></script>
 <script src="../../../js/logistica/uber-parametros.js?v=20261103-automacao"></script>
 <script src="../../../js/logistica/escala-parametros.js?v=20261103-uber"></script>
 <script src="painel-modulos.js?v=20261103-uber"></script>

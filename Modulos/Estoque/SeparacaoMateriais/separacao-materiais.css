@@ -1432,3 +1432,5 @@ html:root .triagem-compacta .card-divergencia .card-divergencia-resumo{display:i
 /* A bolinha vai para cima da foto do decorador (js/ui/decorador-cards.js calcula a posição). */
 .separacao-card-mainline.com-foto-decorador{position:relative}
 .separacao-card-mainline.com-foto-decorador>.sep-problema-dot{top:0;left:44px;right:auto;box-shadow:0 0 0 2px #fff}
+
+.separacao-modo-trava{margin:4px 0 12px;padding:8px 12px;border-radius:8px;background:#fdf6dd;color:#5c4a12;font-size:13px}

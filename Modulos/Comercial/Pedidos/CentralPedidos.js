@@ -111,7 +111,10 @@
 
   function formatDate(value){
     if(!value) return "-";
-    const date = new Date(value);
+    // Nov/2026: "2026-11-28" (só o dia) era lido como meia-noite UTC e aparecia um dia antes no Brasil.
+    const texto = String(value);
+    const soDia = /^\d{4}-\d{2}-\d{2}$/.test(texto.slice(0, 10)) && (texto.length === 10 || /T00:00(:00)?(\.0+)?(Z|\+00:?00)?$/.test(texto));
+    const date = soDia ? new Date(`${texto.slice(0, 10)}T00:00:00`) : new Date(texto);
     if(Number.isNaN(date.getTime())) return "-";
     return date.toLocaleDateString("pt-BR");
   }
@@ -303,7 +306,7 @@
     else if(atrasado) estado = "overdue";
     else if(percentual > 0) estado = "partial";
 
-    const label = `${percentual}% pago${atrasado ? " (atrasado)" : ""}`;
+    const label = `${percentual}% pago`;
 
     return {
       total,
@@ -931,7 +934,7 @@ function infoCadastro(rotulo, valor, icone){
   async function abrirPreviewPedido(pedidoId){
     if(!pedidoId || !state.supabase || !state.empresaId) return;
     try{
-      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261105-terceirizacoes"); await carregarAvisosDocumento();
+      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261107-teste-usuario"); await carregarAvisosDocumento();
       const { data: pedido, error } = await state.supabase.from("separacoes_pedidos").select("*")
         .eq("empresa_id", state.empresaId).eq("id", pedidoId).single();
       if(error || !pedido) throw error || new Error("Pedido não encontrado.");
@@ -1006,7 +1009,7 @@ function infoCadastro(rotulo, valor, icone){
       });
     }catch(error){
       console.error("Visualizar pedido:", error);
-      avisar("Nao foi possivel abrir a visualizacao do pedido.", "Visualizar", "erro");
+      avisar("Não foi possível abrir a visualização do pedido.", "Visualizar", "erro");
     }
   }
 
@@ -1090,7 +1093,7 @@ function infoCadastro(rotulo, valor, icone){
 
   async function abrirPreviewProjetoCatalogo(pedido){
     try{
-      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261105-terceirizacoes"); await carregarAvisosDocumento();
+      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261107-teste-usuario"); await carregarAvisosDocumento();
       const { data: projeto, error } = await state.supabase.from("projetos").select("*")
         .eq("empresa_id", state.empresaId).eq("id", pedido.projetoId).single();
       if(error || !projeto) throw error || new Error("Projeto não encontrado.");
@@ -1129,7 +1132,7 @@ function infoCadastro(rotulo, valor, icone){
       });
     }catch(error){
       console.error("Visualizar projeto do catálogo:", error);
-      avisar("Nao foi possivel abrir o projeto do catalogo.", "Visualizar", "erro");
+      avisar("Não foi possível abrir o projeto do catálogo.", "Visualizar", "erro");
     }
   }
 
@@ -1324,6 +1327,8 @@ function infoCadastro(rotulo, valor, icone){
   function renderFluxoPedido(pedido){
     // fluxo completo (out/2026): depois da coleta vêm o descarregamento e a triagem da volta; depois da posição final, o pós-venda
     const etapas=['Comercial','Triagem','Carregamento','Entrega','Coleta','Descarregamento','Triagem (volta)','Posição final','Pós-venda','Finalizado'];
+    // Nov/2026: palavras longas quebram com hífen (antes saía "Carregame / nto").
+    const rotulos=etapas.map(n=>n.replace('Carregamento','Carrega­mento').replace('Descarregamento','Descarre­gamento'));
     const etapa=pedido.origemCatalogo?'comercial':pedido.fluxo?.etapa;
     const f=pedido.fluxo||{};
     const indice=f.finalizado?9:f.posicao_final?8:({comercial:0,pre_reserva:0,triagem:1,expedicao:2,entrega:3,coleta:4,retorno_simultaneo:5,descarregamento:5,triagem_retorno:6,posicao_final:7})[etapa];
@@ -1332,7 +1337,7 @@ function infoCadastro(rotulo, valor, icone){
     const corComercial=cancelado?'vermelho':indice===0?(pedido.status==='pre_reserva'?'amarelo':['aprovado','enviado','finalizado'].includes(pedido.status)?'verde':'azul'):'';
     const notaExtra=f.unificado?'<small class="central-fluxo-descricao">Da coleta em diante: junto com o pedido '+escapeHtml(String(pedido.numero).split('/')[0])+'</small>':'';
     const nota=notaExtra||(f.posicao_final&&f.posvenda_feita&&f.financeiro_pendente?'<small class="central-fluxo-descricao">Pós-venda feito · financeiro pendente</small>':f.operacao_concluida&&f.financeiro_pendente&&!f.posicao_final?'<small class="central-fluxo-descricao">Operação concluída · financeiro pendente</small>':(!cancelado&&indice==null)||etapa==='retorno_simultaneo'?'<small class="central-fluxo-descricao">'+escapeHtml(descricao)+'</small>':'');
-    return '<div class="central-fluxo'+(cancelado?' is-cancelado':'')+(corComercial?' comercial-'+corComercial:'')+'" title="'+escapeHtml(descricao)+'" aria-label="'+escapeHtml('Etapa atual: '+descricao)+'"><ol>'+etapas.map((nome,i)=>'<li class="'+(!cancelado&&indice!=null?(i<indice?'is-concluida':i===indice?'is-atual':''):'')+'"'+(!cancelado&&i===indice?' aria-current="step"':'')+'><span class="central-fluxo-ponto" aria-hidden="true">'+(!cancelado&&indice!=null&&i<indice?'✓':i+1)+'</span><span>'+nome+'</span></li>').join('')+'</ol>'+nota+'</div>';
+    return '<div class="central-fluxo'+(cancelado?' is-cancelado':'')+(corComercial?' comercial-'+corComercial:'')+'" title="'+escapeHtml(descricao)+'" aria-label="'+escapeHtml('Etapa atual: '+descricao)+'"><ol>'+etapas.map((nome,i)=>'<li class="'+(!cancelado&&indice!=null?(i<indice?'is-concluida':i===indice?'is-atual':''):'')+'"'+(!cancelado&&i===indice?' aria-current="step"':'')+'><span class="central-fluxo-ponto" aria-hidden="true">'+(!cancelado&&indice!=null&&i<indice?'✓':i+1)+'</span><span>'+rotulos[i]+'</span></li>').join('')+'</ol>'+nota+'</div>';
   }
 
   async function enriquecerFluxoPedidos(pedidos){

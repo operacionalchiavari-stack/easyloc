@@ -146,3 +146,7 @@ html:root:is(#pvc#pvc,html) .pvc-escrever textarea{flex:1;resize:none;min-height
 @media(max-width:760px){.pvc{grid-template-columns:1fr}.pvc-col-lista{height:auto;max-height:50vh}}
 @media(prefers-reduced-motion:reduce){.pvc-pulso{animation:none}}
 .pv-lista[hidden],.pv-busca[hidden]{display:none!important}
+
+/* Nov/2026: retorno de feedback que precisa de atenção */
+.pv-trat{display:flex;flex-direction:column;align-items:flex-start;gap:4px;margin-top:6px}.pv-trat small{display:block}.pv-trat .btn{padding:4px 10px;font-size:13px}
+.pv-trat-sem{color:#b42318;font-weight:600}

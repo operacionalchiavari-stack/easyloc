@@ -21,7 +21,7 @@
   // Abas (out/2026): Ligações (para ligar hoje + as próximas, numa lista só) · Precisam de atenção · Concluídas.
   function grupo(c) {
     if (c.status === "pendente") return "ligacoes";
-    if (c.status === "concluido" && c.atencao) return "atencao";
+    if (c.status === "concluido" && c.atencao && !c.tratativa_concluida_em) return "atencao";
     return "feitas";
   }
 
@@ -51,7 +51,11 @@
     const resp = Array.isArray(c.respostas) ? c.respostas.filter((r) => r.respostas?.length) : [];
     const ruins = resp.filter((r) => r.ruim);
     const resumo = (ruins.length ? ruins : resp.slice(0, 2)).map((r) => '<div class="' + (r.ruim ? "pv-ruim" : "") + '"><small>' + esc(r.pergunta) + "</small> " + r.respostas.map(esc).join(", ") + "</div>").join("") + (c.observacao ? '<div class="pv-obs-l">“' + esc(c.observacao) + "”</div>" : "");
-    return "<tr" + (c.atencao ? ' class="is-atencao"' : "") + "><td>" + clienteHtml(c) + "</td><td>" + eventosHtml(c) + "</td><td>" + sit + "</td><td>" + (resumo || "—") + "</td><td>" + esc(c.feito_por_nome || "") + "<small>" + dataHora(c.concluido_em || c.ultima_tentativa_em) + "</small></td><td>" +
+    // Nov/2026: feedback que precisa de atenção tem um responsável pelo retorno e é marcado como resolvido.
+    const trat = c.atencao ? (c.tratativa_concluida_em
+        ? '<div class="pv-trat ok"><span class="pv-selo novo">Resolvido</span><small>' + esc(c.tratativa_responsavel || "") + " · " + dataHora(c.tratativa_concluida_em) + "</small>" + (c.tratativa_obs ? "<small>" + esc(c.tratativa_obs) + "</small>" : "") + "</div>"
+        : '<div class="pv-trat">' + (c.tratativa_responsavel ? "<small>Retorno com <b>" + esc(c.tratativa_responsavel) + "</b></small>" : '<small class="pv-trat-sem">Sem responsável pelo retorno</small>') + '<button type="button" class="btn primary" data-tratativa="' + c.id + '">' + (c.tratativa_responsavel ? "Atualizar retorno" : "Definir responsável") + "</button></div>") : "";
+    return "<tr" + (c.atencao && !c.tratativa_concluida_em ? ' class="is-atencao"' : "") + "><td>" + clienteHtml(c) + "</td><td>" + eventosHtml(c) + "</td><td>" + sit + trat + "</td><td>" + (resumo || "—") + "</td><td>" + esc(c.feito_por_nome || "") + "<small>" + dataHora(c.concluido_em || c.ultima_tentativa_em) + "</small></td><td>" +
       (resp.length ? '<button type="button" class="btn" data-ver="' + c.id + '">Ver respostas</button>' : "") + "</td></tr>";
   }
 
@@ -84,6 +88,20 @@
     $("pvLista").innerHTML = '<div class="pv-rolar"><table class="pv-tabela"><thead><tr>' + cab + "</tr></thead><tbody>" + lista.map(S.aba === "ligacoes" ? linhaLigacao : linhaFeita).join("") + "</tbody></table></div>";
   }
 
+  async function abrirTratativa(c) {
+    S.atual = c; S.modo = "tratativa"; $("pvFormulario").querySelector("button[type=submit]").hidden = false;
+    $("pvFormTitulo").textContent = "Retorno ao cliente · " + (c.cliente_nome || "");
+    $("pvFormErro").textContent = "";
+    if (!S.pessoas) { const { data } = await S.sb.from("funcionarios_acesso").select("nome").eq("empresa_id", S.emp).eq("ativo", true).order("nome"); S.pessoas = (data || []).map((x) => x.nome).filter(Boolean); }
+    const ruins = (c.respostas || []).filter((r) => r.ruim && r.respostas?.length);
+    $("pvFormCorpo").innerHTML = (ruins.length ? '<dl class="pv-resp">' + ruins.map((r) => "<dt>" + esc(r.pergunta) + '</dt><dd class="ruim">' + r.respostas.map(esc).join(", ") + "</dd>").join("") + "</dl>" : "") +
+      (c.observacao ? '<p class="pv-obs">' + esc(c.observacao) + "</p>" : "") +
+      '<label class="pv-obs-campo">Quem vai cuidar do retorno?<input name="__resp" list="pvPessoas" required minlength="2" value="' + esc(c.tratativa_responsavel || "") + '" placeholder="Nome da pessoa"></label><datalist id="pvPessoas">' + S.pessoas.map((n) => '<option value="' + esc(n) + '">').join("") + "</datalist>" +
+      '<label class="pv-obs-campo">O que foi feito (preencha ao resolver)<textarea name="__trat" rows="3" placeholder="Ex.: liguei, pedimos desculpas e demos 10% no próximo pedido">' + esc(c.tratativa_obs || "") + "</textarea></label>" +
+      '<label class="pv-opcao"><input type="checkbox" name="__concluir"><span>Retorno feito: marcar como resolvido</span></label>';
+    $("pvForm").showModal();
+  }
+
   function abrirDispensar(c) {
     S.atual = c; S.modo = "dispensar"; $("pvFormulario").querySelector("button[type=submit]").hidden = false;
     $("pvFormTitulo").textContent = "Não ligar · " + (c.cliente_nome || "");
@@ -108,6 +126,11 @@
     e.preventDefault();
     const f = $("pvFormulario"), cfg = S.dados.config || {}, respostas = {};
     if (S.modo === "ver") { $("pvForm").close(); return; }
+    if (S.modo === "tratativa") {
+      try { await rpc("posvenda_tratativa", { p_empresa: S.emp, p_contato: S.atual.id, p_responsavel: f.querySelector('[name="__resp"]').value, p_obs: f.querySelector('[name="__trat"]').value, p_concluir: f.querySelector('[name="__concluir"]').checked });
+        $("pvForm").close(); avisar("Retorno ao cliente atualizado.", "Pós-venda", "sucesso"); await carregar(); } catch (err) { $("pvFormErro").textContent = err.message; }
+      return;
+    }
     if (S.modo === "dispensar") {
       try { await rpc("posvenda_registrar", { p_empresa: S.emp, p_contato: S.atual.id, p_acao: "dispensar", p_respostas: null, p_observacao: null, p_motivo: f.querySelector('[name="__motivo"]').value });
         $("pvForm").close(); await carregar(); } catch (err) { $("pvFormErro").textContent = err.message; }
@@ -137,6 +160,7 @@
     $("pvAbas").addEventListener("click", (e) => { const b = e.target.closest("[data-aba]"); if (b) { S.aba = b.dataset.aba; pintar(); } });
     $("pvBusca").addEventListener("input", pintar);
     document.addEventListener("click", (e) => {
+      const tr = e.target.closest("[data-tratativa]"); if (tr) return abrirTratativa(S.dados.contatos.find((c) => c.id === tr.dataset.tratativa));
       const r = e.target.closest("[data-registrar]"); if (r) return abrirFormulario(S.dados.contatos.find((c) => c.id === r.dataset.registrar));
       const n = e.target.closest("[data-naoatendeu]"); if (n) return acao(n.dataset.naoatendeu, "nao_atendeu");
       const v = e.target.closest("[data-ver]"); if (v) return verRespostas(S.dados.contatos.find((c) => c.id === v.dataset.ver));

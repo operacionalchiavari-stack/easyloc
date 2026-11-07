@@ -71,10 +71,19 @@
    detalhe.querySelector('.pf-resumo').innerHTML=[['Pedido',b.pedido.valor_total,''],['Pagamentos registrados',pago,''],['Em aberto nos títulos',aberto,''],['Crédito de locação',cre,'credito'],['Reposição a cobrar',cob,'custo'],[liquido>=0?'Saldo líquido a receber':'Saldo líquido a favor do cliente',Math.abs(liquido),liquido<0?'credito':'custo']].map(([t,v,c])=>'<div class="'+c+'"><small>'+t+'</small><strong>'+brl(v)+'</strong></div>').join('');
   }
   async function salvar(confirmar){
+   // Nov/2026 (teste do usuário final, item 11): confirmar é definitivo; pergunta antes, mostrando o que falta receber.
+   if(confirmar){
+    const cartao=[...detalhe.querySelectorAll('.pf-resumo *')].find(el=>el.childElementCount===0&&/saldo líquido/i.test(el.textContent));
+    const saldo=(cartao?.parentElement?.innerText||'').replace(/saldo líquido a receber/i,'').trim();
+    const texto='Confirmar a posição final do pedido #'+(b.pedido.numero_pedido||'')+'? A cobrança e o crédito são lançados agora e não podem ser refeitos.'+(saldo&&!/^R\$\s*0,00$/.test(saldo)?' Ainda falta receber '+saldo+'.':'');
+    const ok=typeof window.confirmarGlobal==='function'?await window.confirmarGlobal(texto,'Confirmar posição final',{confirmarTexto:'Confirmar',cancelarTexto:'Voltar'}):confirm(texto);
+    if(!ok)return;
+   }
    const erro=detalhe.querySelector('[role=alert]'),botoes=detalhe.querySelectorAll('.pf-acoes button'),req=abertura,analisado=b;erro.hidden=true;botoes.forEach(x=>x.disabled=true);
    try{
     const salvo=await rpc('fin_posicao_final_salvar',{p_empresa:S.emp,p_pedido:analisado.pedido.id,p_fonte:analisado.fonte,p_versao:analisado.salvo?.versao||0,p_decisoes:linhas.map(x=>({chave:x.chave,decisao:x.decisao,justificativa:x.justificativa})),p_confirmar:confirmar});
     estados.set(salvo.pedido.id,salvo.salvo.status);if(salvo.salvo.status==='confirmado')aba='concluidos';
+    if(confirmar)window.alerta?.('Posição final do pedido #'+(salvo.pedido?.numero_pedido||analisado.pedido.numero_pedido||'')+' confirmada.','Posição final','sucesso');
     if(confirmar&&ctx.recarregar){await ctx.recarregar();return;}
     if(!ativo()||req!==abertura)return;b={...salvo,evidencias:analisado.evidencias,evidenciasErro:analisado.evidenciasErro};listar();montar();
    }catch(e){if(ativo()&&req===abertura){erro.textContent=e.message;erro.hidden=false;botoes.forEach(x=>x.disabled=false);if(!b.coleta_confirmada||!b.entrega_confirmada)detalhe.querySelector('[data-confirmar]')?.setAttribute('disabled','');}}

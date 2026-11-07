@@ -1,5 +1,5 @@
 import { renderizarFreteCard } from "./pedido.ui-frete.mjs?v=20261031-ajuste-compacto";
-import { atualizarMontagemSugerida } from "./pedido.montagem.mjs?v=20261031-ajuste-compacto";
+import { atualizarMontagemSugerida } from "./pedido.montagem.mjs?v=20261107-teste-usuario";
 
 export function initFrete(ctx){
 

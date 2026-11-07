@@ -106,9 +106,10 @@
   function desenhar() {
     const planejamento=dados.etapas.filter(e=>['montagem','desmontagem'].includes(e.tipo)).map(e=>({...e,planejamento_completo:escalaCompleta(e)}));
     const indicador=$('plTabEquipe').querySelector('.pl-alerta-aba');
-    indicador.textContent=String(planejamento.length);
-    indicador.hidden=planejamento.length===0;
-    $('plTabEquipe').title=planejamento.length+' opera??es de montagem de equipe';
+    const faltam=planejamento.filter(e=>!e.planejamento_completo).length;
+    indicador.textContent=String(faltam);
+    indicador.hidden=faltam===0;
+    $('plTabEquipe').title=faltam?faltam+' montagem(ns)/desmontagem(ns) ainda sem equipe ou caminhão completos':'Todas as montagens e desmontagens estão com equipe e caminhão';
     window.PainelLogisticoDias.atualizar(dados.inicio,dados.hoje,planejamento,totalDias);
     diaSelecionado=window.PainelLogisticoDias.data;
     const dias=Array.from({length:totalDias},(_,i)=>somar(dados.inicio,i));

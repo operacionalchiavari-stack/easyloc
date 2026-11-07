@@ -1,7 +1,7 @@
 /* Condições reutilizáveis; vazio significa não informado, nunca Não. */
 (function(){
  'use strict';
- const campos={cliente:[['reclamacao','Há reclamação operacional registrada?','bool'],['exclusivo','Cliente possui exclusividade?','bool']],local:[['baldeacao','O transporte exige baldeação?','bool'],['escada','O transporte das peças exige escada?','bool'],['distancia_manual_m','Distância do caminhão até a montagem (metros)','numero']],item:[['fragil','Peça frágil?','bool'],['volumoso','Exige manuseio de carga volumosa?','bool'],['sob_medida','Peça sob medida?','bool'],['grupo','Grupo utilizado na complexidade','grupo']]};
+ const campos={cliente:[['reclamacao','Há reclamação operacional registrada?','bool'],['exclusivo','Cliente possui exclusividade?','bool']],local:[['distancia_manual_m','Distância do caminhão até a montagem (metros)','numero']],item:[['fragil','Peça frágil?','bool'],['volumoso','Exige manuseio de carga volumosa?','bool'],['sob_medida','Peça sob medida?','bool'],['grupo','Grupo utilizado na complexidade','grupo']]};
  const grupos=[['sofa','Sofá'],['cadeira_puff','Cadeira, poltrona ou puff'],['bar','Bar'],['mesa','Mesa'],['aparador_estante','Aparador ou estante'],['painel','Painel'],['outro','Outro']];
  campos.kit=campos.item;
  const bases={},hosts={};

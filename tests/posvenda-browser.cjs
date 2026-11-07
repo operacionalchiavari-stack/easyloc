@@ -64,7 +64,7 @@ const mock = `(() => {
   assert.strictEqual(await page.locator("#pvContHoje").innerText(), "1");
   assert.strictEqual(await page.locator("#pvContAtencao").innerText(), "1");
   assert.strictEqual(await page.locator("#pvRegras").count(), 0, "sem a frase de regras");
-  assert.strictEqual(await page.locator("#pvAbas.el-tabs [role=tab]").count(), 3, "abas globais");
+  assert.strictEqual(await page.locator("#pvAbas.el-tabs [role=tab]").count(), 4, "abas globais (com Conversas)");
   const topo = await page.evaluate(() => { const h = document.querySelector(".pv-topo h1").getBoundingClientRect(), a = document.querySelector("#pvAbas").getBoundingClientRect(); return Math.abs((h.top + h.bottom) / 2 - (a.top + a.bottom) / 2); });
   assert.ok(topo < 20, "abas na linha do título: " + topo);
   await page.click('[data-aba="atencao"]');

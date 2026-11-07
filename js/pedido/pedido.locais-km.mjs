@@ -1,5 +1,15 @@
 import { debounce } from "./pedido.utils.mjs";
 
+
+// Nov/2026: o endereço do Google já traz o número; só acrescenta quando ele não aparece.
+function numeroSeFalta(local = {}){
+  const n = String(local?.numero_endereco || "").trim();
+  if(!n || ["s/n","sn"].includes(n.toLowerCase())) return "";
+  const end = String(local?.endereco || "");
+  const ja = /^[0-9]+$/.test(n) ? end.split(/[^0-9]+/).includes(n) : end.includes(n);
+  return ja ? "" : n;
+}
+
 const GALPAO_ORIGEM_PADRAO = "Chiavari Eventos, Estrada Uniao e Industria, Itaipava, Petropolis - RJ, Brasil";
 const MINI_MAP_CENTER_PADRAO = { lat: -22.3928, lng: -43.1348 };
 const pedidoMiniMapState = {
@@ -157,21 +167,30 @@ export function initAutocompleteLocaisEKm({
     localLista.innerHTML = "";
 
     if(!data?.length){
-      localLista.innerHTML = `<div class="autocomplete-empty">Local nao cadastrado</div>`;
-      localLista.style.display = "block";
-      return;
+      localLista.innerHTML = `<div class="autocomplete-empty">Local não cadastrado.</div>`;
     }
 
-    data.forEach((local) => {
+    (data || []).forEach((local) => {
       const item = document.createElement("div");
       item.classList.add("autocomplete-item");
       const nome=document.createElement('strong');nome.textContent=local.nome_razao;
       const endereco=document.createElement('div');endereco.style.cssText='font-size:12px;color:#64748b';
-      endereco.textContent=[local.endereco,local.numero_endereco].filter(Boolean).join(', ');
+      endereco.textContent=[local.endereco,numeroSeFalta(local)].filter(Boolean).join(', ');
       item.append(nome,endereco);
       item.addEventListener("click", () => selecionarLocal(local));
       localLista.appendChild(item);
     });
+
+    // Nov/2026 (teste do usuário final, item 3): cadastrar o salão sem sair do pedido.
+    const novo = document.createElement("button");
+    novo.type = "button";
+    novo.className = "autocomplete-item autocomplete-novo-local";
+    novo.textContent = `+ Cadastrar "${termo}" como novo local`;
+    novo.addEventListener("click", () => {
+      localLista.style.display = "none";
+      abrirCadastroRapidoLocal({ supabase, nome: termo, aoSalvar: selecionarLocal });
+    });
+    localLista.appendChild(novo);
 
     localLista.style.display = "block";
   }, 300);
@@ -208,7 +227,7 @@ function renderizarObservacoesLocal({ local, obsDiv }){
 
   const endereco = [
     local.endereco,
-    local.numero_endereco ? String(local.numero_endereco).trim() : ""
+    numeroSeFalta(local)
   ].filter(Boolean).join(", ");
   const referencia = local.ponto_referencia || "-";
 
@@ -233,7 +252,7 @@ function renderizarObservacoesLocal({ local, obsDiv }){
 function enderecoCompletoLocal(local = {}){
   return [
     local.endereco || "",
-    local.numero_endereco ? String(local.numero_endereco).trim() : "",
+    numeroSeFalta(local),
     "Brasil"
   ].filter(Boolean).join(", ");
 }
@@ -708,7 +727,7 @@ async function calcularKmAutomatico({ supabase, local, forcarRecalculo = false }
         origemFinal,
         destinoFinal
       });
-      aplicarIndisponivelSeAtual("Nao calculado");
+      aplicarIndisponivelSeAtual("Não calculado");
       return;
     }
 
@@ -755,7 +774,7 @@ async function calcularKmAutomatico({ supabase, local, forcarRecalculo = false }
         body,
         payloadDistancia
       });
-      aplicarIndisponivelSeAtual("Nao calculado");
+      aplicarIndisponivelSeAtual("Não calculado");
       return;
     }
 
@@ -778,7 +797,7 @@ async function calcularKmAutomatico({ supabase, local, forcarRecalculo = false }
         destino: result?.destino || payloadDistancia.destino
       });
       aplicarIndisponivelSeAtual(
-        result?.statusGoogle === "REQUEST_DENIED" ? "Google bloqueado" : "Nao calculado"
+        result?.statusGoogle === "REQUEST_DENIED" ? "Google bloqueado" : "Não calculado"
       );
       return;
     }
@@ -797,7 +816,7 @@ async function calcularKmAutomatico({ supabase, local, forcarRecalculo = false }
   }
 }
 
-function aplicarDistanciaIndisponivel(label = "Nao calculado"){
+function aplicarDistanciaIndisponivel(label = "Não calculado"){
   const elKm = document.getElementById("freteDistanciaKm");
   if(elKm) elKm.innerText = label;
 
@@ -843,4 +862,120 @@ async function invocarDistanciaComFallback({ supabase, payloadDistancia, debugBa
           message: data?.error || "Erro ao calcular distancia"
         }
       };
+}
+
+/* Nov/2026 (teste do usuário final, item 3): cadastro rápido do local do evento dentro do pedido.
+   Pede só nome, endereço (pesquisado no Google) e número. CPF/CNPJ, telefone e e-mail ficam para o
+   Cadastro de Locais. A lista de endereços é própria (a do Google fica atrás de janelas). */
+function abrirCadastroRapidoLocal({ supabase, nome = "", aoSalvar }){
+  document.getElementById("pedidoLocalRapido")?.remove();
+  const fundo = document.createElement("div");
+  fundo.id = "pedidoLocalRapido";
+  fundo.className = "local-rapido-fundo";
+  fundo.innerHTML = `
+    <form class="local-rapido" role="dialog" aria-modal="true" aria-labelledby="localRapidoTitulo" novalidate>
+      <header><h2 id="localRapidoTitulo">Novo local do evento</h2>
+        <button type="button" class="local-rapido-fechar" aria-label="Fechar">×</button></header>
+      <label>Nome do local<input id="localRapidoNome" type="text" autocomplete="off" required></label>
+      <label>Endereço<input id="localRapidoEndereco" type="text" autocomplete="off" placeholder="Pesquise o salão, a rua ou o bairro" required></label>
+      <ul class="local-rapido-sugestoes" hidden></ul>
+      <label>Número<input id="localRapidoNumero" type="text" autocomplete="off" placeholder="Ex.: 4462 ou s/n"></label>
+      <p class="local-rapido-dica">Os outros dados (CNPJ, telefone, condições do local) podem ser completados depois em Comercial › Locais.</p>
+      <p class="local-rapido-erro" role="alert" hidden></p>
+      <footer><button type="button" class="btn btn-secondary local-rapido-cancelar">Cancelar</button>
+        <button type="submit" class="btn btn-primary">Salvar e usar no pedido</button></footer>
+    </form>`;
+  document.body.appendChild(fundo);
+  const form = fundo.querySelector("form");
+  const $ = (id) => fundo.querySelector("#" + id);
+  const lista = fundo.querySelector(".local-rapido-sugestoes");
+  const erro = fundo.querySelector(".local-rapido-erro");
+  $("localRapidoNome").value = nome;
+  let escolhido = null;
+  let servico = null, detalhes = null, sessao = null;
+  const fechar = () => { fundo.remove(); document.removeEventListener("keydown", esc); };
+  const esc = (e) => { if(e.key === "Escape") fechar(); };
+  document.addEventListener("keydown", esc);
+  fundo.querySelector(".local-rapido-fechar").onclick = fechar;
+  fundo.querySelector(".local-rapido-cancelar").onclick = fechar;
+  fundo.addEventListener("mousedown", (e) => { if(e.target === fundo) fechar(); });
+  const mostrarErro = (texto) => { erro.textContent = texto; erro.hidden = !texto; };
+
+  const prontoGoogle = (window.carregarGooglePlaces ? window.carregarGooglePlaces() : Promise.reject(new Error("sem Google")))
+    .then(() => {
+      servico = new google.maps.places.AutocompleteService();
+      detalhes = new google.maps.places.PlacesService(document.createElement("div"));
+      sessao = new google.maps.places.AutocompleteSessionToken();
+    }).catch(() => mostrarErro("A pesquisa de endereço do Google não carregou. Digite o endereço completo."));
+
+  const buscar = debounce(async () => {
+    const termo = $("localRapidoEndereco").value.trim();
+    escolhido = null;
+    if(termo.length < 3){ lista.hidden = true; return; }
+    await prontoGoogle;
+    if(!servico) return;
+    servico.getPlacePredictions({ input: termo, sessionToken: sessao, componentRestrictions: { country: "br" } }, (res) => {
+      lista.innerHTML = "";
+      (res || []).slice(0, 6).forEach((p) => {
+        const li = document.createElement("li");
+        const b = document.createElement("button"); b.type = "button";
+        const t = document.createElement("strong"); t.textContent = p.structured_formatting?.main_text || p.description;
+        const s = document.createElement("small"); s.textContent = p.structured_formatting?.secondary_text || "";
+        b.append(t, s);
+        b.onclick = () => escolher(p);
+        li.appendChild(b); lista.appendChild(li);
+      });
+      lista.hidden = !lista.children.length;
+    });
+  }, 300);
+  $("localRapidoEndereco").addEventListener("input", buscar);
+
+  function escolher(p){
+    lista.hidden = true;
+    detalhes.getDetails({ placeId: p.place_id, sessionToken: sessao, fields: ["formatted_address", "geometry", "name", "address_components", "types"] }, (place, status) => {
+      sessao = new google.maps.places.AutocompleteSessionToken();
+      if(status !== google.maps.places.PlacesServiceStatus.OK || !place){ mostrarErro("Não foi possível ler este endereço. Escolha outro."); return; }
+      escolhido = {
+        endereco: place.formatted_address || p.description,
+        latitude: place.geometry?.location?.lat?.() ?? null,
+        longitude: place.geometry?.location?.lng?.() ?? null,
+        google_place_id: p.place_id
+      };
+      $("localRapidoEndereco").value = escolhido.endereco;
+      const numero = (place.address_components || []).find((c) => c.types.includes("street_number"))?.long_name;
+      if(numero && !$("localRapidoNumero").value) $("localRapidoNumero").value = numero;
+      const ehEstabelecimento = (place.types || []).some((t) => ["establishment", "point_of_interest"].includes(t));
+      if(ehEstabelecimento && place.name && !$("localRapidoNome").value.trim()) $("localRapidoNome").value = place.name;
+      mostrarErro("");
+    });
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const nomeLocal = $("localRapidoNome").value.trim();
+    const endereco = $("localRapidoEndereco").value.trim();
+    if(nomeLocal.length < 3){ mostrarErro("Informe o nome do local."); $("localRapidoNome").focus(); return; }
+    if(endereco.length < 8){ mostrarErro("Informe o endereço do local."); $("localRapidoEndereco").focus(); return; }
+    const empresaId = window.__CONTEXT?.empresa_id;
+    if(!empresaId){ mostrarErro("Empresa não identificada. Recarregue a página."); return; }
+    const botao = form.querySelector('button[type="submit"]');
+    botao.disabled = true; mostrarErro("");
+    const linha = {
+      empresa_id: empresaId, tipo_pessoa: "PJ", nome_razao: nomeLocal,
+      cpf_cnpj: "", telefone: "", email: "", ponto_referencia: "",
+      endereco: escolhido?.endereco || endereco,
+      numero_endereco: $("localRapidoNumero").value.trim() || "s/n",
+      latitude: escolhido?.latitude ?? null, longitude: escolhido?.longitude ?? null,
+      google_place_id: escolhido?.google_place_id || null,
+      status: "Ativo", tags: {}
+    };
+    const { data, error } = await supabase.from("locais_empresas").insert(linha)
+      .select("id,nome_razao,endereco,numero_endereco,ponto_referencia,latitude,longitude,distancia_galpao_km,distancia_galpao_texto,distancia_calculada_em,google_place_id,tags")
+      .single();
+    if(error){ botao.disabled = false; mostrarErro("Não foi possível salvar o local: " + error.message); return; }
+    fechar();
+    await aoSalvar?.(data);
+    if(typeof window.alerta === "function") window.alerta("Local cadastrado e escolhido no pedido.", "Local do evento", "sucesso");
+  });
+  setTimeout(() => (nome ? $("localRapidoEndereco") : $("localRapidoNome")).focus(), 30);
 }

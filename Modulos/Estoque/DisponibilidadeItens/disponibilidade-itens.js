@@ -81,9 +81,9 @@
 
   function statusLabel(status) {
     return {
-      disponivel: "Disponivel",
-      atencao: "Atencao",
-      indisponivel: "Indisponivel"
+      disponivel: "Disponível",
+      atencao: "Atenção",
+      indisponivel: "Indisponível"
     }[status] || status;
   }
 

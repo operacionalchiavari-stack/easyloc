@@ -7241,3 +7241,31 @@ html:is(#pedido-extra,html) .pedido-extra-mini .pedido-extra-botao{height:28px;p
 html:is(#pedido-extra,html) .pedido-extra-mini .pedido-extra-botao:hover{background:#eaf0fa}
 html:is(#pedido-extra,html) .pedido-extra-mini .pedido-extra-chip{height:24px;display:inline-flex;align-items:center;padding:0 9px;border:1px solid #c9d6ec;border-radius:999px;background:#fff;color:#123f86;font:600 11.5px Inter,system-ui,sans-serif;text-decoration:none}
 html:is(#pedido-extra,html) .entrada-identidade small{display:block}
+
+/* Nov/2026 (teste do usuário final, item 3): cadastro rápido do local do evento dentro do pedido */
+.autocomplete-novo-local{display:block;width:100%;text-align:left;border:0;border-top:1px solid #e3e7ec;background:#f7f9fb;color:#123f86;font:600 13px/1.4 Inter,system-ui,sans-serif;padding:11px 14px;cursor:pointer}
+.autocomplete-novo-local:hover,.autocomplete-novo-local:focus-visible{background:#eaf0fa}
+.local-rapido-fundo{position:fixed;inset:0;z-index:10050;background:rgba(15,23,42,.42);display:grid;place-items:center;padding:16px}
+.local-rapido{width:min(520px,100%);max-height:calc(100vh - 32px);overflow:auto;background:#fff;border-radius:14px;box-shadow:0 24px 60px rgba(15,23,42,.28);padding:22px 24px;display:flex;flex-direction:column;gap:14px;font-family:Inter,system-ui,sans-serif}
+.local-rapido header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.local-rapido h2{margin:0;font:600 20px/1.2 Inter,system-ui,sans-serif;color:#1f2020}
+.local-rapido-fechar{border:0;background:none;font-size:24px;line-height:1;color:#6b6b6b;cursor:pointer;padding:4px 8px}
+.local-rapido label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#4f4f4f}
+.local-rapido input{min-height:42px;border:1px solid #d6dce4;border-radius:8px;padding:9px 12px;font:400 15px Inter,system-ui,sans-serif;color:#1f2020;text-transform:none;letter-spacing:normal}
+.local-rapido input:focus{outline:2px solid #123f86;outline-offset:1px}
+.local-rapido-sugestoes{list-style:none;margin:-8px 0 0;padding:4px;border:1px solid #d6dce4;border-radius:8px;max-height:220px;overflow:auto}
+.local-rapido-sugestoes button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;border:0;background:none;text-align:left;padding:8px 10px;border-radius:6px;cursor:pointer;font-family:Inter,system-ui,sans-serif}
+.local-rapido-sugestoes button:hover,.local-rapido-sugestoes button:focus-visible{background:#eaf0fa}
+.local-rapido-sugestoes strong{font-size:14px;color:#1f2020}.local-rapido-sugestoes small{font-size:12px;color:#6b6b6b}
+.local-rapido-dica{margin:0;font-size:13px;color:#6b6b6b}
+.local-rapido-erro{margin:0;font-size:13px;color:#b42318;background:#fdecea;border-radius:8px;padding:8px 10px}
+.local-rapido footer{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+
+/* Nov/2026: a etapa clicada mostra que está abrindo */
+.pedido-screen .comercial-trilha.is-ocupado{cursor:wait}
+.pedido-screen .comercial-trilha .is-abrindo{position:relative;opacity:.75;cursor:wait}
+.pedido-screen .comercial-trilha .is-abrindo::after{content:"";display:inline-block;width:11px;height:11px;margin-left:6px;vertical-align:-1px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:ct-gira .7s linear infinite}
+@keyframes ct-gira{to{transform:rotate(360deg)}}
+
+/* Nov/2026: a tabela de parcelas rola de lado em vez de cortar a última coluna */
+html:is(#pedido-parcelas,html) body .pedido-screen .pagamento-table-wrap{overflow-x:auto !important;max-width:100%}

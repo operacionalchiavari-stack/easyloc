@@ -9,6 +9,6 @@
   const registros=(resposta.data||[]).filter(e=>e.tipo===(etapa==='entrega'?'montagem':'desmontagem')).flatMap(e=>e.registros||[]).filter(r=>r.origem!=='sistema'&&tipos.includes(r.tipo)).sort((a,b)=>String(b.atualizado_em||b.criado_em).localeCompare(String(a.atualizado_em||a.criado_em)));
   if(!registros.length)return;
   const r=registros[0];host.hidden=false;host.classList.add('ec-app-registrado');
-  host.innerHTML='<strong>✓ Conferência registrada pelo app</strong><span>'+esc(r.autor||'Equipe')+' · '+esc(new Date(r.atualizado_em||r.criado_em).toLocaleString('pt-BR'))+'</span>';
+  host.innerHTML='<strong>✓ Conferência registrada pelo app</strong><span>'+esc(r.autor||'Equipe')+' · '+esc(new Date(r.atualizado_em||r.criado_em).toLocaleString('pt-BR'))+'</span>'+(etapa==='entrega'?'<small>As quantidades abaixo vieram do app. Confira e confirme a entrega.</small>':'');
  },url:document.currentScript.src};
 })();

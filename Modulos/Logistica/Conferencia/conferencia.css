@@ -394,3 +394,9 @@ html:root .cf-escolha-caminhao .cf-escolha-item small{margin:0;font-size:9px;let
 @media(hover:hover){.cf-escolha-item:hover .cf-escolha-foto{transform:translateY(-3px) scale(1.07);box-shadow:0 0 0 2px #8db79d,0 12px 28px #264c3424}.cf-escolha-item:hover .cf-escolha-foto img{transform:scale(1.14)}}
 @media(max-width:480px){html:root dialog.cf-escolha-caminhao{padding:20px 16px}.cf-escolha-caminhao h3{font-size:18px}html:root .cf-escolha-caminhao .cf-escolha-lista{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.cf-escolha-acoes{flex-wrap:wrap}.cf-escolha-acoes .btn{flex:1;white-space:nowrap;font-size:12px!important;padding:10px 12px!important}}
 @media(prefers-reduced-motion:reduce){.cf-escolha-caminhao .cf-escolha-foto,.cf-escolha-caminhao .cf-escolha-foto img{transition:none!important;transform:none!important}}
+
+/* Nov/2026: frase explicando que escolher o caminhão conclui o carregamento */
+.cf-escolha-dica{margin:-6px 0 14px;color:#6b6b6b;font-size:14px}
+
+/* Nov/2026: nome do decorador não é mais cortado no topo (quebra em até 2 linhas) */
+html body .cf-cliente-nome{white-space:normal;overflow-wrap:anywhere;line-height:1.25}

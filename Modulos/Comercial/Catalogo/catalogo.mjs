@@ -4,7 +4,7 @@ import { iniciarVitrineLogin } from "./catalogo-login-vitrine.mjs?v=20260926-log
 import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261102-3d-persistente";
 import { initCatalogAssistente } from "./catalogo-assistente.mjs?v=20261102-planta-desativada";
 import { initCatalogBiblioteca, openCatalogBiblioteca, backCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20261021-subpastas";
-import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos, personalizacoesDoItem, abrirPersonalizarItem } from "./catalogo-projetos.mjs?v=20261105-sublocacoes";
+import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos, personalizacoesDoItem, abrirPersonalizarItem } from "./catalogo-projetos.mjs?v=20261107-teste-usuario";
 
 const supabase = window.supabaseClient;
 const modoPedido = new URLSearchParams(location.search).get('comercial') === 'pedido' && window.parent !== window;
@@ -1322,7 +1322,7 @@ function manterCursorNaPesquisa(){
 }
 function bindAtalhosTeclado(){
   const busca = $("catalogSearch");
-  if(busca){ busca.placeholder = "Pesquisar (F4 · Esc limpa)"; busca.setAttribute("aria-keyshortcuts", "F4 Escape"); busca.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.querySelector('dialog[open]')){e.preventDefault();e.stopPropagation();busca.value='';busca.dispatchEvent(new Event('input',{bubbles:true}));}}); }
+  if(busca){ busca.placeholder = "Pesquisar (F4)"; busca.title = "F4 vai para a pesquisa · Esc limpa"; busca.setAttribute("aria-keyshortcuts", "F4 Escape"); busca.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.querySelector('dialog[open]')){e.preventDefault();e.stopPropagation();busca.value='';busca.dispatchEvent(new Event('input',{bubbles:true}));}}); }
   // digitando fora de um campo, a letra vai para a pesquisa
   document.addEventListener("keydown", (event) => {
     if(event.key.length !== 1 || event.key === " " || event.ctrlKey || event.metaKey || event.altKey) return;
@@ -2004,7 +2004,7 @@ function estoqueHtml(d, consulta){
   const quando = periodo && periodo.fim !== periodo.ini ? "no período"
     : data === hojeSP() ? "hoje" : "em " + data.slice(8, 10) + "/" + data.slice(5, 7);
   return (total != null ? `<span class="is-estoque">Estoque <b>${total}</b></span>` : "") +
-    (bloqueado ? `<span class="is-esgotado is-bloqueado-contagem" title="Teve divergência de contagem num evento e aguarda a contagem geral em Estoque > Gestão do acervo. Enquanto isso não entra em novas reservas (Parâmetros > Divergências de contagem).">Bloqueado · aguardando contagem</span>`
+    (bloqueado ? `<span class="is-esgotado is-bloqueado-contagem" title="Peça em contagem no estoque: faltou ou sobrou numa volta de evento. Enquanto o estoque não conta o item no galpão, ele não entra em novos pedidos. Fale com o estoque para liberar.">Bloqueado · em contagem no estoque</span>`
     : livre != null ? `<span class="${livre ? "is-livre" : "is-esgotado"}">${livre ? `Disponível ${quando} <b>${livre}</b>` : `Esgotado ${quando}`}</span>` : "");
 }
 let estoquePintando = null;

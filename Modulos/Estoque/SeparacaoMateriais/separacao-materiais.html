@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261024-abas-globais">
-  <link rel="stylesheet" href="separacao-materiais.css?v=20261105-problema-foto">
+  <link rel="stylesheet" href="separacao-materiais.css?v=20261107-teste-usuario">
 <script src="../../../js/core/pedidoFluxo.js?v=20261024-fluxo"></script>
 <link rel="stylesheet" href="../../../styles/separacao-ocorrencias.css?v=20261105-acompanhar">
 <script src="../../../js/ui/separacao-ocorrencias.js?v=20261105-acompanhar"></script>
@@ -87,6 +87,7 @@
       <span class="pedido-label">Escolha o modo</span>
       <h2 id="separacaoModoTitulo">Pedido selecionado</h2>
       <p id="separacaoModoMeta">Como deseja separar este pedido?</p>
+      <p class="separacao-modo-trava">A forma escolhida vale até o fim da separação deste pedido.</p>
       <p data-sem-modos hidden>Nenhum modo de separação liberado para você. Solicite a liberação em Parâmetros.</p>
       <div class="separacao-mode-options">
         <button type="button" class="separacao-mode-option" data-separacao-modo="manual">
@@ -97,7 +98,7 @@
         <button type="button" class="separacao-mode-option" data-separacao-modo="qr">
           <i data-lucide="scan-barcode"></i>
           <strong>QR Code</strong>
-          <span>Ler codigos e acompanhar progresso.</span>
+          <span>Ler códigos e acompanhar progresso.</span>
         </button>
         <button type="button" class="separacao-mode-option" data-separacao-modo="um-clique">
           <i data-lucide="check-check"></i>
@@ -123,7 +124,7 @@
     <section class="separacao-modal-dialog separacao-manual-dialog" role="dialog" aria-modal="true" aria-labelledby="separacaoManualTitulo">
       <header class="separacao-modal-header">
         <div>
-          <span class="pedido-label">Separacao manual</span>
+          <span class="pedido-label">Separação manual</span>
           <h2 id="separacaoManualTitulo">Pedido selecionado</h2>
           <p id="separacaoManualMeta">Ajuste as quantidades separadas de cada item.</p>
         </div>
@@ -294,7 +295,7 @@
 <link rel="stylesheet" href="../../../styles/capas-operacao.css?v=20261101-ocorrencias-auto">
 <script src="../../../js/ui/capas-operacao.js?v=20261101-ocorrencias-auto"></script>
 <script src="../../../js/ui/decorador-cards.js?v=20261105-problema-foto"></script>
-<script src="separacao-materiais.js?v=20261105-problema-dot"></script>
+<script src="separacao-materiais.js?v=20261107-teste-usuario"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
 </body>

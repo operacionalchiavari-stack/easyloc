@@ -293,8 +293,11 @@ export function initPagamento(){
       grupo.closest('.pg-componente-card').querySelector('.pg-card-vazio').hidden=linhasParcela(comp).length>0;
       if(valorEl) valorEl.textContent = formatCurrency(valores[comp] || 0);
       if(faltaEl){
-        faltaEl.textContent = Math.abs(dif) < 0.01 ? "Distribuído" : dif > 0 ? `Falta distribuir ${formatCurrency(dif)}` : `Passou ${formatCurrency(-dif)}`;
-        faltaEl.className = "pg-grupo-falta " + (Math.abs(dif) < 0.01 ? "ok" : "pendente");
+        // Nov/2026: frete zerado por falta de distância não é "Distribuído" (teste do usuário final, item 2).
+        const freteSemCalculo = comp === "frete" && !(Number(valores.frete) > 0) && Number(window.volumeTotalPedido || 0) > 0
+          && !(Number(window.kmPedido || 0) > 0) && window.__PEDIDO_LOGISTICA_MANUAL?.frete == null;
+        faltaEl.textContent = freteSemCalculo ? "Frete não calculado" : Math.abs(dif) < 0.01 ? "Distribuído" : dif > 0 ? `Falta distribuir ${formatCurrency(dif)}` : `Passou ${formatCurrency(-dif)}`;
+        faltaEl.className = "pg-grupo-falta " + (!freteSemCalculo && Math.abs(dif) < 0.01 ? "ok" : "pendente");
       }
     });
   };
@@ -552,7 +555,7 @@ export function initPagamento(){
   };
 
   // "+ Parcela" numa divisão: entra com o que falta distribuir dela, um mês depois da última.
-  const adicionarParcela = (comp) => {
+  const adicionarParcela = (comp, { focar = true } = {}) => {
     cronogramaManual = true;
     garantirGrupos();
     const grupo = tbody.querySelector(`.pg-grupo[data-componente="${comp}"]`);
@@ -567,7 +570,7 @@ export function initPagamento(){
     atualizarSequencia();
     atualizarResumo();
     refreshIcons();
-    nova.querySelector(".pg-vencimento")?.focus();
+    if(focar) nova.querySelector(".pg-vencimento")?.focus();
   };
 
   const limparProgramacao = () => {
@@ -660,6 +663,10 @@ export function initPagamento(){
   const atualizarPagamentoPorTotal = () => {
     if(cronogramaManual && tbody.querySelector("tr.pg-linha")){
       garantirGrupos();
+      // Nov/2026 (teste do usuário final, item 21): divisão que passou a ter valor (ex.: o frete, depois de escolher
+      // o local) e não tem nenhuma parcela ganha uma, com o valor todo, como as outras divisões já têm.
+      const valores = valoresPorComponente();
+      COMPONENTES.forEach(([comp]) => { if(valores[comp] > 0 && !linhasParcela(comp).length) adicionarParcela(comp, { focar: false }); });
       atualizarResumo();
       refreshIcons();
       return;

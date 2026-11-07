@@ -11552,3 +11552,19 @@ Pedido: "coloque algo pra montagem por enquanto, esse de você foi escalado… q
   desfeita (um aviso só, com o texto certo). Não testado no celular físico.
 - Próximos avisos possíveis (o usuário ainda vai decidir): Triagem liberada, ocorrências, lembrete do dia seguinte.
 
+
+## Teste de usuário de ponta a ponta e correções (07/11/2026)
+Teste feito como funcionário (conta temporária e um pedido de teste no banco real, do pedido ao pós-venda); relatório com 38 itens, todos aprovados. Correções:
+- **Datas sem hora** ("AAAA-MM-DD") lidas como dia local na Central e na Triagem (apareciam um dia antes).
+- **Triagem**: o pedido só vira "Em triagem" depois de escolher a forma de separar; aviso "a forma escolhida vale até o fim" na janela; "N peças". "Liberar pedido" virou **Devolver ao Comercial** (e na conferência, **Devolver para a Triagem**).
+- **Conferência**: o carregamento por quantidade conclui só na escolha do caminhão ("Concluir carregamento", sem confirmação em dobro); "· falta concluir" no progresso até concluir; data da volta = coleta.
+- **Entregas e Coletas**: motivos padrão de entrega e coleta (migration `…000600`); a entrega abre com as quantidades lidas do App do Montador para conferir.
+- **Pedido**: local só da lista ("+ Cadastrar como novo local" abre um cadastro rápido com o Google); pré-reserva/reservado não salva com frete não calculado; divisão com valor ganha parcela sozinha; a etapa clicada na barra mostra "abrindo"; textos com acento; "Reposição (un.)".
+- **Perda confirmada na Gestão do acervo** baixa o estoque de verdade: tira da revisão e cria a falta em investigação; perda da mesma peça em duas contagens do mesmo pedido conta uma vez; a Posição final cobra o desaparecido confirmado (migration `…000700`). A Posição final pergunta antes de confirmar.
+- **Cadastros**: cliente só com nome, telefone e e-mail obrigatórios (aviso lista tudo que falta), "Última locação" vem dos pedidos; local só com nome e endereço, nome e número vindos do Google, Salvar no topo, "Calculado" no km; **baldeação e escada só nas etiquetas de Observações** (a complexidade lê de lá); etiquetas de cliente e local deixaram de ser obrigatórias (dado em `cadastro_etiquetas`).
+- **App do Montador**: "Encerrar montagem (saída da equipe)"; freelancer identificado; "Não usamos sacola nesta entrega"; aviso ao abrir etapa de outro dia.
+- **Mensagem de falta de estoque** sem código interno (migration `…000800`); **número do endereço não repete** quando o Google já traz (`numeroSeFalta` no pedido/contrato e `mont_dados`, migration `…000900`); cidade/UF do contrato lidas certo; **contrato com as partes** (empresa e cliente, no modelo).
+- **Pós-venda**: feedback que precisa de atenção tem responsável pelo retorno e "resolvido" (`posvenda_tratativa`, migration `…001000`); resolvido sai da aba.
+- **Painel Logístico**: os números vermelhos contam só o que falta planejar e têm legenda; **Cronograma**: barra lateral visível e botão "Mais dias à direita".
+- Telefones formatados nas listas; Helena escondida na aba Pedido; nome da conta sem cair no e-mail; selo "Bloqueado · em contagem no estoque" explicado.
+- **Pendências do usuário**: cadastro da empresa sem nome e sem CNPJ (aparecem no contrato); assinatura da empresa em Contratos; Geocoding API do Google; regra do frete (caminhão P no frete × G na escala).

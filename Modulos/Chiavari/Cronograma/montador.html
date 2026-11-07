@@ -7,7 +7,7 @@
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261106-bonus-admin"></script>
+  <script src="../operacao-sem-motor.js?v=20261107-teste-usuario"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -270,6 +270,7 @@
     .conclusao-status.ok{ background:var(--ok-soft); color:var(--ok-forte); }
     .tudo-pronto{ display:none; margin-top:12px; padding:20px; border-radius:18px; background:var(--ok-soft); border:1px solid var(--ok-borda); color:var(--ok-forte); text-align:center; }
     .tudo-pronto b{ display:block; font-family:var(--serif); font-size:24px; }
+    .tudo-pronto .encerrar-evento{ margin:14px auto 0; display:flex; width:100%; max-width:340px; justify-content:center; }
     .progresso.tudo ~ .passos + .tudo-pronto{ display:block; }
 
     /* ---------- Folha (confirmações, mapa, QR) ---------- */
@@ -848,7 +849,7 @@
   function abrirEtapa(id){
     const e = acharEtapa(id);
     if(!e){ return; }
-    if(estado.apontamento && estado.apontamento.idEtapa!==id){toast("Há um evento em andamento. Aguarde o check-out da equipe antes de abrir outro.",true);return;}
+    if(estado.apontamento && estado.apontamento.idEtapa!==id){toast("Há um evento em andamento (Pedido #"+estado.apontamento.pedido+"). Encerre-o no fim da etapa (\"Encerrar montagem\") antes de abrir outro.",true);return;}
     if(estado.etapaAberta===id && document.getElementById("passo_equipe")){trocarPainelEtapa(estado.acesso==='agenda'?'info':estado.acesso);renderApontamento();mostrarTela("telaEtapa");return;}
     if(window.MontadorEvento){ MontadorEvento.preparar(); }
     estado.etapaAberta = id;
@@ -869,6 +870,12 @@
     renderApontamento();
     mostrarTela("telaEtapa");
     window.scrollTo({top:0,behavior:"auto"});
+    // Nov/2026 (teste do usuário final, item 22): avisa quando a etapa não é de hoje, antes de alguém registrar no evento errado.
+    const hojeISO = new Date().toLocaleDateString("sv-SE");
+    if(e.operacao && e.dataISO && String(e.dataISO).slice(0,10) !== hojeISO){
+      const d = String(e.dataISO).slice(0,10).split("-");
+      toast("Atenção: esta etapa está marcada para " + d[2] + "/" + d[1] + "/" + d[0] + ", não para hoje. Confira se é o evento certo antes de registrar.", true);
+    }
   }
 
   function voltarInicio(){
@@ -939,8 +946,11 @@
     const pessoas = fotos.pessoas || [];
     const responsavel = pessoas.find(p=>p.papel==='responsavel' && p.nome===e.responsavel) || {nome:e.responsavel};
     const internos = (e.equipe || []).filter(function(n){ return n !== e.responsavel; }).map(function(n){
-      const p=pessoas.find(p=>p.papel==='equipe' && p.nome===n) || {nome:n};
-      return '<div class="pessoa">'+fotoCadastroHtml(p)+'<div class="pessoa-nome">' + esc(n) + '</div></div>';
+      const cadastrado=pessoas.find(p=>p.papel==='equipe' && p.nome===n);
+      const p=cadastrado || {nome:n};
+      // Nov/2026 (teste do usuário final, item 22): quem não tem cadastro de funcionário é freelancer.
+      const freelancer=Array.isArray(fotos.pessoas) && !cadastrado;
+      return '<div class="pessoa">'+fotoCadastroHtml(p)+'<div class="pessoa-nome">' + esc(n) + (freelancer?'<small>Freelancer</small>':'') + '</div></div>';
     }).join("");
 
     let free = "";
@@ -969,9 +979,9 @@
         '<div class="secao-titulo"><h2>Sua equipe</h2><small>presença atualizada</small></div>' +
         '<div class="subtitulo">Responsável</div>' +
         '<div class="pessoas"><div class="pessoa">'+fotoCadastroHtml(responsavel)+'<div class="pessoa-nome">' + esc(e.responsavel || "-") + '</div></div></div>' +
-        (internos ? '<div class="subtitulo">Equipe interna</div><div class="pessoas">' + internos + '</div>' : "") +
+        (internos ? '<div class="subtitulo">Equipe</div><div class="pessoas">' + internos + '</div>' : "") +
         free +
-      '</section>' + (e.caminhao ? '<section class="secao secao-compacta evento-caminhoes"><div class="secao-titulo"><h2>Caminhões</h2></div><div class="pessoas pessoas-linha">'+(fotos.caminhoes?.length ? fotos.caminhoes : String(e.caminhao).split(/,|\n/).map(nome=>({nome:nome.trim()}))).map(c=>'<div class="pessoa">'+fotoCadastroHtml(c,true)+'<div class="pessoa-nome">'+esc(c.nome)+'</div></div>').join('')+'</div></section>' : '');
+      '</section>' + (e.caminhao ? '<section class="secao secao-compacta evento-caminhoes"><div class="secao-titulo"><h2>Caminhões</h2></div><div class="pessoas pessoas-linha">'+(fotos.caminhoes?.length ? fotos.caminhoes : String(e.caminhao).split(/,|\n/).map(nome=>({nome:nome.trim()}))).map(c=>'<div class="pessoa">'+fotoCadastroHtml(c,true)+'<div class="pessoa-nome">'+esc(String(c.nome||'').length<=3?'Caminhão '+c.nome:c.nome)+'</div></div>').join('')+'</div></section>' : '');
     if(!soFotos){pintarUberMontador(e);pintarFreteMontador(e);}
   }
 
@@ -1251,7 +1261,8 @@
         passoHtml("sacolas", 3, "Sacolas de proteção", "Registre o código e a foto de cada sacola",
           '<div id="regSacolas" style="display:flex;flex-direction:column;gap:10px"></div>' +
           '<button class="btn btn-claro" type="button" onclick="adicionarSacola()">' + I.mais + 'Adicionar outra sacola</button>' +
-          '<button class="btn" type="button" onclick="enviarSacolas(this)">' + I.enviar + 'Enviar sacolas</button>', "✓ Sacolas enviadas") +
+          '<button class="btn" type="button" onclick="enviarSacolas(this)">' + I.enviar + 'Enviar sacolas</button>' +
+          '<button class="btn btn-claro" type="button" onclick="semSacolas(this)">Não usamos sacola nesta entrega</button>', "✓ Sacolas enviadas") +
         passoHtml("lista", 4, "Foto da lista assinada", "Informe quem recebeu e fotografe a lista assinada",
           '<label class="rotulo" for="regRecebedor">Quem recebeu</label><input class="input" id="regRecebedor" type="text" autocomplete="name" placeholder="Nome de quem recebeu">' +
           fotoTile("regFotoLista", "Tirar foto da lista assinada", "fotoLista(event)") +
@@ -1275,7 +1286,7 @@
 
     const progresso = '<div class="progresso" id="regProgresso"><div class="progresso-linha"><span id="regProgressoTexto">Verificando…</span><span id="regProgressoPct">0%</span></div><div class="progresso-barra"><i id="regProgressoBarra"></i></div></div>';
     document.getElementById("etapaRegistros").innerHTML = e.operacao === "montagem"
-      ? progresso + '<div class="passos">' + passos + '</div><div class="tudo-pronto"><b>Montagem registrada</b>Todos os registros obrigatórios foram enviados.</div>'
+      ? progresso + '<div class="passos">' + passos + '</div><div class="tudo-pronto"><b>Montagem registrada</b>Todos os registros obrigatórios foram enviados.<button class="btn btn-ok encerrar-evento" type="button" onclick="encerrarEventoApp(this)">' + I.check + 'Encerrar montagem (saída da equipe)</button></div>'
       : '<section class="secao"><div class="secao-titulo"><h2>Registros da ' + esc(e.operacao) + '</h2></div>' + progresso + resumoChegada + '<div class="passos">' + passos + '</div></section>';
 
     if(e.operacao === "montagem"){ adicionarSacola(); }
@@ -1380,8 +1391,22 @@
       .catch(function(e){ liberar(btn); toast(mensagemErro(e, "Erro ao salvar as sacolas."), true); });
   }
 
+  // Nov/2026 (teste do usuário final, item 22): entrega sem sacola de proteção não pode travar o passo.
+  function semSacolas(btn){
+    if(btn.disabled){ return; }
+    perguntar("Nenhuma sacola nesta entrega?", "O passo fica registrado como entrega sem sacolas de proteção.", "Confirmar").then(function(sim){
+      if(!sim){ return; }
+      ocupar(btn, "Registrando…");
+      chamar("salvarSacolasProtecao", { idCronograma: reg.id, pedido: reg.pedido, sacolas: [] })
+        .then(function(){ sacolasFeitas({ sacolas: [] }); toast("Registrado: entrega sem sacolas"); })
+        .catch(function(e){ liberar(btn); toast(mensagemErro(e, "Erro ao registrar."), true); });
+    });
+  }
+  window.semSacolas = semSacolas;
+
   function sacolasFeitas(r){
     const sacolas = r.sacolas || [];
+    if(!sacolas.length){ marcarFeito("sacolas", "✓ Entrega sem sacolas de proteção"); return; }
     marcarFeito("sacolas", "✓ Sacolas enviadas" + linksHtml(sacolas.map(function(s){ return (s.fotos || [])[0] || ""; }), function(i){ return sacolas[i].codigo || "Foto " + (i + 1); }));
   }
 
@@ -1599,10 +1624,26 @@
       if(!sim){ return; }
       ocupar(btn, "Concluindo…");
       chamar("concluirDesmontagem", { idCronograma: reg.id, pedido: reg.pedido })
-        .then(function(){ marcarFeito("conclusao"); toast("Desmontagem concluída"); })
+        .then(function(){ marcarFeito("conclusao"); toast("Desmontagem concluída"); encerrarEventoApp(null, true); })
         .catch(function(e){ liberar(btn); toast(mensagemErro(e, "Erro ao concluir a desmontagem."), true); });
     });
   }
+
+  /* Nov/2026 (teste do usuário final, item 9): sem check-out pelo QR, o evento ficava "em andamento" para sempre e
+     travava a abertura da próxima etapa. Encerrar registra a saída da equipe e para o cronômetro. */
+  function encerrarEventoApp(btn, automatico){
+    const p = estado.apontamento;
+    if(!p){ if(btn){ btn.disabled = true; btn.textContent = "Evento encerrado"; } return; }
+    const fazer = function(){
+      if(btn){ ocupar(btn, "Encerrando…"); }
+      chamar("MONT_finalizarApontamento", estado.token, p.id)
+        .then(function(){ estado.apontamento = null; renderApontamento(); if(btn){ btn.textContent = "Evento encerrado"; } toast("Evento encerrado. Você já pode abrir a próxima etapa."); })
+        .catch(function(e){ if(btn){ liberar(btn); } toast(mensagemErro(e, "Não foi possível encerrar o evento."), true); });
+    };
+    if(automatico){ fazer(); return; }
+    perguntar("Encerrar a montagem?", "Registra a saída da equipe e para o cronômetro.", "Encerrar").then(function(sim){ if(sim){ fazer(); } });
+  }
+  window.encerrarEventoApp = encerrarEventoApp;
 
   /* =========================================================
      TROCA DE MATERIAL

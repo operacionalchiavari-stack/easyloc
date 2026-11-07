@@ -293,7 +293,7 @@ export function iniciarEntradaComercial(vitrine){
       img.onerror=()=>{retrato.textContent=c.nome_razao?.charAt(0) || '?';};retrato.appendChild(img);
     }else retrato.textContent=c.nome_razao?.charAt(0) || '?';
     identidade.querySelector('h3').textContent=c.nome_razao;
-    identidade.querySelector('p').textContent=c.telefone || 'Cliente selecionado para este projeto';
+    identidade.querySelector('p').textContent=(c.telefone && window.EasyLocMascara ? window.EasyLocMascara.formatar('telefone', c.telefone) : c.telefone) || 'Cliente selecionado para este projeto';
   });
   clienteCampo.addEventListener('input',()=>{
     window.__pedidoClienteAtual=null;
@@ -370,6 +370,9 @@ export function iniciarEntradaComercial(vitrine){
     const ultimoDia=(fimItem && !fimItem.hidden && campo('dataEventoFim')?.value) || data.value;
     if(coleta.value<ultimoDia)return falta(coleta,'A coleta precisa ser no último dia do evento ou depois.');
     if(!local?.value.trim())return falta(local,'Informe o local do evento.');
+    // Nov/2026 (teste do usuário final, item 2): local digitado e não escolhido da lista não tem endereço nem
+    // distância, e o frete saía R$ 0,00. Só vale local cadastrado (a lista oferece "+ Cadastrar ... como novo local").
+    if(!campo('localIdHidden')?.value)return falta(local,'Escolha o local na lista. Se ele não existir, use "+ Cadastrar como novo local" no fim da lista.');
     return '';
   }
   window.__pedidoValidarDados=validarDados;
@@ -399,6 +402,8 @@ export function iniciarEntradaComercial(vitrine){
   async function irPara(destino){
     if(ocupado || destino===etapaAtual)return;
     ocupado=true;erroTrilha('');trilha.classList.add('is-ocupado');
+    // Nov/2026: a etapa clicada mostra que está abrindo (antes parecia que o clique não tinha pegado).
+    const clicados=[...trilha.querySelectorAll('[data-etapa="'+destino+'"]')];clicados.forEach(b=>b.classList.add('is-abrindo'));
     try{
       // Catálogo, lista, 3D, plantas e financeiro só depois dos dados do pedido (a disponibilidade depende deles).
       if(destino!=='dados'){
@@ -433,7 +438,7 @@ export function iniciarEntradaComercial(vitrine){
       }
       etapaAtual=destino;pintarTrilha(true);
     }catch(error){erroTrilha(error.message);}
-    finally{ocupado=false;trilha.classList.remove('is-ocupado');}
+    finally{ocupado=false;trilha.classList.remove('is-ocupado');trilha.querySelectorAll('.is-abrindo').forEach(b=>b.classList.remove('is-abrindo'));}
   }
   trilha.querySelector('.ct-ferramentas').addEventListener('click',e=>{const b=e.target.closest('button[data-etapa]');if(b)irPara(b.dataset.etapa);});
   trilha.querySelector('.ct-depois').addEventListener('click',e=>{const b=e.target.closest('button[data-etapa]');if(b)irPara(b.dataset.etapa);});

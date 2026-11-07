@@ -154,8 +154,8 @@ export function imprimirPedido() {
     });
 
   const resumo = [
-    ["Valor de locacao", text("#resumoLocacaoBruto", "R$ 0,00")],
-    ["Customizacoes", text("#resumoCustomizacoes", "R$ 0,00")],
+    ["Valor de locação", text("#resumoLocacaoBruto", "R$ 0,00")],
+    ["Customizações", text("#resumoCustomizacoes", "R$ 0,00")],
     ["Frete", text("#resumoFreteBruto", "R$ 0,00")],
     ["Montagem", text("#resumoMontagemBruto", "R$ 0,00")],
     ["Total do pedido", text("#resumoTotalGeral", "R$ 0,00")]

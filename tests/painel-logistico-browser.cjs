@@ -54,12 +54,12 @@ function painel() {
   await page.clock.setFixedTime(new Date('2026-10-20T15:00:00Z'));
   await page.goto(BASE + "Modulos/Logistica/PainelLogistico/painel-logistico.html");
   await page.waitForSelector(".pl-etapa");
-  assert.equal(await page.locator('#plTabEquipe .pl-alerta-aba').innerText(), '4');
+  assert.equal(await page.locator('#plTabEquipe .pl-alerta-aba').innerText(), '3'); // nov/2026: conta só o que falta planejar
   assert.equal(await page.locator('#plTabEquipe .pl-alerta-aba').isVisible(), true);
   assert.equal(await page.locator('#plTabEquipe .pl-alerta-aba').evaluate(el=>getComputedStyle(el).animationName), 'none');
   assert.equal(await page.locator('#plDias details').count(), 0);
   assert.equal(await page.locator('#plDias [data-selecionar=e1]').count(), 0);
-  assert.equal(await page.locator('[data-dia="2026-10-20"] .pl-pendencia-dia').innerText(), '2');
+  assert.equal(await page.locator('[data-dia="2026-10-20"] .pl-pendencia-dia').innerText(), '1'); // pendentes do dia
   assert.equal(await page.locator('#plTabEntrega .pl-alerta-aba').isVisible(), false);
   assert.equal(await page.locator('#plTabColeta .pl-alerta-aba').isVisible(), false);
   const faixaDias=await page.locator('#plAbasDias').boundingBox();

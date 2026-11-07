@@ -101,8 +101,8 @@
     const { data: mods, error } = await sb.rpc("app_celular_modulos", { p_empresa: empresa });
     if(error){ throw new Error(error.message); }
     sessionStorage.setItem("login_ok", "1"); sessionStorage.setItem("empresa_id", empresa);
-    const nome = String(mods.nome || acesso.data.nome || user.email || "").trim();
-    $("apOla").textContent = "Olá, " + (nome.split(" ")[0] || "equipe");
+    const nome = String(mods.nome || acesso.data.nome || "").trim(); // sem nome cadastrado: "Olá!", nunca o e-mail
+    $("apOla").textContent = nome ? "Olá, " + nome.split(" ")[0] : "Olá!";
     $("apData").textContent = hojeLongo();
     const inicial = esc((nome || "?").charAt(0).toUpperCase());
     const foto = sb.storage.from("avatares").getPublicUrl(empresa + "/" + user.id + ".jpg").data.publicUrl;

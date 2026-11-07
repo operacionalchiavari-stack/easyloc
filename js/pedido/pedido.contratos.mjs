@@ -6,6 +6,16 @@ import {
 } from "../core/contracts.mjs";
 import { parseCurrency } from "./pedido.utils.mjs";
 
+
+// Nov/2026: o endereço do Google já traz o número; só acrescenta quando ele não aparece.
+function numeroSeFalta(local = {}){
+  const n = String(local?.numero_endereco || "").trim();
+  if(!n || ["s/n","sn"].includes(n.toLowerCase())) return "";
+  const end = String(local?.endereco || "");
+  const ja = /^[0-9]+$/.test(n) ? end.split(/[^0-9]+/).includes(n) : end.includes(n);
+  return ja ? "" : n;
+}
+
 const state = {
   supabase: null,
   empresaId: null,
@@ -163,7 +173,8 @@ function extrairCidadeEstado(local = {}){
   const estado = local.estado || local.uf || "";
   if(cidade || estado) return { cidade, estado };
   const endereco = String(local.endereco || "");
-  const match = endereco.match(/,\s*([^,-]+)\s*-\s*([A-Z]{2})/i);
+  // Nov/2026: "Cidade - UF" com UF em maiúsculas (antes "4462 - It" virava cidade "4462" e estado "IT").
+  const match = [...endereco.matchAll(/,\s*([^,]+?)\s*-\s*([A-Z]{2})(?=,|$)/g)].pop();
   return {
     cidade: match?.[1]?.trim() || "",
     estado: match?.[2]?.trim()?.toUpperCase() || "",
@@ -173,7 +184,7 @@ function extrairCidadeEstado(local = {}){
 function enderecoCompletoLocal(local = {}){
   return [
     local.endereco,
-    local.numero_endereco ? String(local.numero_endereco).trim() : "",
+    numeroSeFalta(local),
   ].filter(Boolean).join(", ");
 }
 

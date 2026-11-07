@@ -1039,3 +1039,6 @@ html:root #centralPedidosPage .ca-qtd{font-style:normal;font-weight:500;color:#9
 .central-skeleton td:nth-child(7) span{width:90%}
 @keyframes central-skeleton{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @media(prefers-reduced-motion:reduce){.central-skeleton td span{animation:none}}
+
+/* Nov/2026: nomes das etapas sem corte no meio da palavra */
+html body .central-fluxo li>span:last-child{word-break:normal !important;overflow-wrap:normal !important;hyphens:manual}

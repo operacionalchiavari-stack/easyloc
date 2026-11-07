@@ -160,7 +160,9 @@
 
   function formatDateOnly(value) {
     if (!value) return "-";
-    const date = new Date(value);
+    // Nov/2026: "AAAA-MM-DD" sem hora era lido em UTC e aparecia um dia antes.
+    const texto = String(value);
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(texto) ? new Date(texto + "T00:00:00") : new Date(texto);
     if (Number.isNaN(date.getTime())) return "-";
     return date.toLocaleDateString("pt-BR");
   }
@@ -275,7 +277,7 @@
     if (!["aprovado", "enviado", "finalizado"].includes(statusComercial)) {
       return {
         liberado: false,
-        motivo: "Pedido em pre reserva. A equipe pode visualizar, mas a separacao fica bloqueada ate a aprovacao comercial."
+        motivo: "Pedido em pré-reserva. A equipe pode visualizar, mas a separação fica bloqueada até a aprovação comercial."
       };
     }
 
@@ -288,7 +290,7 @@
       };
     }
 
-    return { liberado: true, motivo: "Separacao liberada." };
+    return { liberado: true, motivo: "Separação liberada." };
   }
 
   function separacaoLiberada(pedido = getPedidoAtual()) {
@@ -304,7 +306,7 @@
   }
 
   function avisarSeparacaoBloqueada(pedido = getPedidoAtual()) {
-    avisar(regraSeparacaoPedido(pedido).motivo, "Separacao bloqueada", "aviso");
+    avisar(regraSeparacaoPedido(pedido).motivo, "Separação bloqueada", "aviso");
   }
 
   function modalAberto(element) {
@@ -428,7 +430,7 @@
     const data = formatDateOnly(pedido.data_evento || pedido.data_hora);
     const setor = pedidoSetor(pedido);
     const local = pedidoLocal(pedido);
-    const qtdLabel = `${formatQty(resumo.total)} ${Number(resumo.total) === 1 ? "item" : "itens"}`;
+    const qtdLabel = `${formatQty(resumo.total)} ${Number(resumo.total) === 1 ? "peça" : "peças"}`;
     const progresso = `
       <div class="separacao-card-progress">
         <span>${resumo.percent}%</span>
@@ -464,7 +466,7 @@
         <div class="separacao-card-meta-line">${escapeHtml(data)} &middot; ${escapeHtml(setor)} &middot; ${escapeHtml(qtdLabel)}</div>
         ${coluna === "andamento" ? progresso : ""}
         ${regra.liberado ? "" : `<div class="separacao-lock-note">${escapeHtml(regra.motivo)}</div>`}
-        ${coluna === "andamento" && STATUS_EM_ANDAMENTO.has(pedido.status) && !pedido.status_operacional ? `<button type="button" class="btn" data-separacao-action="liberar-retirada" data-pedido-id="${escapeHtml(pedido.id)}">Liberar pedido</button>` : ""}
+        ${coluna === "andamento" && STATUS_EM_ANDAMENTO.has(pedido.status) && !pedido.status_operacional ? `<button type="button" class="btn" data-separacao-action="liberar-retirada" data-pedido-id="${escapeHtml(pedido.id)}" title="Devolve o pedido ao Comercial para revisar os itens">Devolver ao Comercial</button>` : ""}
         ${coluna==='separado'?`<button type="button" class="btn" data-separacao-action="reabrir-triagem" data-pedido-id="${escapeHtml(pedido.id)}">Reabrir triagem</button>`:''}
       </article>
     `;
@@ -654,8 +656,8 @@
     if (els.scannerInput) {
       els.scannerInput.disabled = !editavel;
       els.scannerInput.placeholder = editavel
-        ? "Passe o codigo de barras"
-        : regra.motivo || "Separacao bloqueada";
+        ? "Passe o código de barras"
+        : regra.motivo || "Separação bloqueada";
     }
 
     if (els.btnFinalizarSeparacao) els.btnFinalizarSeparacao.disabled = !editavel;
@@ -943,12 +945,12 @@
       await carregarHistorico();
       window.finalizarCarregamentoModulo?.();
     } catch (err) {
-      console.error("Erro ao carregar separacao:", err);
+      console.error("Erro ao carregar separação:", err);
       if (isTabelaAusente(err)) {
         setupState("As tabelas de separacao ainda nao existem neste Supabase.");
         return;
       }
-      avisar("Nao foi possivel carregar a fila de separacao.", "Erro", "erro");
+      avisar("Não foi possível carregar a fila de separação.", "Erro", "erro");
       window.finalizarCarregamentoModulo?.();
     }
   }
@@ -1120,7 +1122,7 @@
       return;
     }
 
-    if (pedido.status === "pendente" || pedido.status === "pausado") {
+    if ((pedido.status === "pendente" || pedido.status === "pausado") && pedido.modo_separacao) {
       await atualizarPedidoStatus(pedido.id, "em_separacao", true);
     }
     // Clicar no pedido da fila já abre a tela dele (out/2026).
@@ -1177,6 +1179,10 @@
     const {data,error}=await state.supabase.rpc('separacao_definir_modo',{p_pedido:pedido.id,p_modo:modo});
     if(error){avisar(error.message,'Separação','aviso');return;}
     pedido.modo_separacao=data || modo;
+    // Só passa para "em triagem" quando a forma de separar foi escolhida.
+    if (pedido.status === "pendente" || pedido.status === "pausado") {
+      await atualizarPedidoStatus(pedido.id, "em_separacao", true);
+    }
     abrirNoModo(pedido.modo_separacao);
   }
 
@@ -1487,8 +1493,8 @@
         status: "bloqueado",
         observacao: regraSeparacaoPedido(pedido).motivo
       });
-      setScannerStatus("Separacao bloqueada", "error");
-      setUltimaLeitura({ tipo: "erro", codigo, observacao: "Separacao bloqueada" });
+      setScannerStatus("Separação bloqueada", "error");
+      setUltimaLeitura({ tipo: "erro", codigo, observacao: "Separação bloqueada" });
       avisarSeparacaoBloqueada(pedido);
       return;
     }
@@ -1520,7 +1526,7 @@
           observacao: "Codigo nao encontrado no cadastro de itens ou patrimonios"
         });
         setScannerStatus("Codigo nao encontrado", "error");
-        setUltimaLeitura({ tipo: "erro", codigo, observacao: "Codigo nao encontrado" });
+        setUltimaLeitura({ tipo: "erro", codigo, observacao: "Código não encontrado" });
         return;
       }
 
@@ -1703,7 +1709,7 @@
     if (novaQtd === atual) {
       avisar(
         delta > 0 ? "A quantidade desse item ja esta completa." : "Esse item ainda nao possui separacao para remover.",
-        "Separacao manual",
+        "Separação manual",
         "aviso"
       );
       return;
@@ -1852,7 +1858,7 @@
       .single();
 
     if (error) {
-      console.warn("Nao foi possivel salvar historico da leitura:", error);
+      console.warn("Não foi possível salvar histórico da leitura:", error);
       return;
     }
 
@@ -1922,7 +1928,7 @@
     }
 
     avisar(
-      status === "separado" ? "Separacao finalizada com sucesso." : "Separacao finalizada com divergencia.",
+      status === "separado" ? "Separação finalizada com sucesso." : "Separação finalizada com divergência.",
       "Separacao",
       status === "separado" ? "sucesso" : "aviso"
     );
@@ -2010,7 +2016,7 @@
           if(!pedido || !STATUS_EM_ANDAMENTO.has(pedido.status) || pedido.status_operacional) return;
           const liberar = !pedido?.reducao_liberada_em;
           (async () => {
-            if(liberar && !await window.confirmarGlobal("O pedido voltará ao Comercial e sairá da fila da Triagem até a revisão ser salva. Peças separadas precisam ser desmarcadas antes de reduzir a quantidade.", "Liberar pedido", { confirmarTexto: "Liberar", cancelarTexto: "Voltar" })) return;
+            if(liberar && !await window.confirmarGlobal("O pedido voltará ao Comercial e sairá da fila da Triagem até a revisão ser salva. Peças separadas precisam ser desmarcadas antes de reduzir a quantidade.", "Devolver ao Comercial", { confirmarTexto: "Devolver", cancelarTexto: "Voltar" })) return;
             actionButton.disabled = true;
             const { error } = await state.supabase.rpc("pedido_liberar_reducao", { p_pedido: pedidoId, p_liberar: liberar });
             if(error) throw error;
@@ -2084,7 +2090,7 @@
       if (!item) return;
       ajustarQuantidadeManual(item, Number(button.dataset.manualDelta)).catch((error) => {
         console.error("Erro na separacao manual:", error);
-        avisar("Nao foi possivel ajustar esse item manualmente.", "Separacao manual", "erro");
+        avisar("Não foi possível ajustar esse item manualmente.", "Separação manual", "erro");
       });
     });
 
@@ -2095,7 +2101,7 @@
       if (!item) return;
       definirQuantidadeManual(item, input.value).catch((error) => {
         console.error("Erro na separacao manual:", error);
-        avisar("Nao foi possivel ajustar esse item manualmente.", "Separacao manual", "erro");
+        avisar("Não foi possível ajustar esse item manualmente.", "Separação manual", "erro");
       });
     });
 
