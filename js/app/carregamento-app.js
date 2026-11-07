@@ -12,7 +12,8 @@
   const params = new URLSearchParams(location.search);
   let doApp = params.get("app") === "1";
   try { if (!doApp && atual && atual.dataset.cond === "catalogo") doApp = sessionStorage.getItem("catalogo_do_app") === "1"; } catch (e) {}
-  const automatico = !!(atual && atual.hasAttribute("data-auto") && doApp);
+  // data-sempre: a própria tela inicial do app (app.html), que mostra sempre ao abrir.
+  const automatico = !!(atual && atual.hasAttribute("data-auto") && (doApp || atual.hasAttribute("data-sempre")));
 
   const CSS = `
 #appCarregamento{position:fixed;inset:0;z-index:2147483000;display:grid;place-items:center;background:#fff;opacity:1;transition:opacity .45s ease,visibility 0s linear 0s}

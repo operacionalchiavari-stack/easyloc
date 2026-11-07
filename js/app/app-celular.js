@@ -18,6 +18,8 @@
       icone: '<svg viewBox="0 0 24 24"><path d="M3 8h18v4H3zm2 4v9h14v-9M12 8v13"/><path d="M12 8H8a3 3 0 1 1 3-3Zm0 0h4a3 3 0 1 0-3-3Z"/></svg>' },
   ];
   function tela(id){ ["apCarregando", "apLogin", "apInicio"].forEach((x) => { $(x).hidden = x !== id; }); document.body.dataset.tela = id;
+    // Nov/2026: ao abrir o app (inclusive pelo ícone na tela do celular) entra a animação padrão até a tela ficar pronta.
+    if(window.AppCarregamento){ id === "apCarregando" ? AppCarregamento.mostrar() : AppCarregamento.pronto(); }
     if(id === "apLogin"){ iniciarVitrine(); try{ const aviso = sessionStorage.getItem("app_aviso"); if(aviso){ sessionStorage.removeItem("app_aviso"); mensagem(aviso); } }catch(e){} } }
   function mensagem(t){ $("apMsg").textContent = t || ""; }
   const empresaQuery = () => new URLSearchParams(location.search).get("empresa");
