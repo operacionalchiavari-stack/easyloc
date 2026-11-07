@@ -102,7 +102,11 @@ test('posição final: interface integrada, decisão, confirmação, pagamentos 
   assert.match(await page.locator('.pf-resumo').innerText(),/1\.200,00/);
   await page.getByRole('button',{name:'Salvar análise'}).click();await page.waitForFunction(()=>document.querySelector('.pf-pedido').textContent.includes('Em análise'));
   await page.screenshot({path:'.tmp/posicao-final-desktop.png',fullPage:true});
-  await page.getByRole('button',{name:'Confirmar posição final'}).click();await page.locator('.pf-status.ok').waitFor();
+  // nov/2026: confirmar pergunta antes (janela global ou confirm do navegador)
+  page.once('dialog',d=>d.accept());
+  await page.getByRole('button',{name:'Confirmar posição final'}).click();
+  const conf=page.getByRole('button',{name:'Confirmar',exact:true});if(await conf.isVisible().catch(()=>false))await conf.click();
+  await page.locator('.pf-status.ok').waitFor();
   assert.match(await page.locator('.pf-resumo').innerText(),/1\.200,00/);assert.equal(await page.locator('[data-confirmar]').count(),0);
   await page.setViewportSize({width:390,height:844});await page.screenshot({path:'.tmp/posicao-final-mobile.png',fullPage:true});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(errors,[]);
