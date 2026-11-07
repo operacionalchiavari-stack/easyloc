@@ -236,7 +236,7 @@ html:root #plTopoUnificado#plTopoUnificado #plPreencher[hidden]{display:none!imp
 /* Em telas de computador, titulo e abas compartilham a mesma linha. */
 @media(min-width:1200px){
 html:root #plTopoUnificado#plTopoUnificado{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;gap:16px!important}
-html:root #plTopoUnificado#plTopoUnificado>h1{grid-column:2!important;grid-row:1!important;padding:34px 0 22px!important;font-size:clamp(26px,2.2vw,38px)!important;letter-spacing:.12em!important}
+html:root #plTopoUnificado#plTopoUnificado>h1{grid-column:2!important;grid-row:1!important;padding:34px 0 22px!important;font-size:clamp(19px,1.9vw,30px)!important;letter-spacing:.16em!important}
 html:root #plTopoUnificado#plTopoUnificado #plModuloAbas{grid-column:1!important;grid-row:1!important;flex-wrap:nowrap!important;gap:clamp(8px,1vw,18px)!important;margin-top:12px}
 html:root #plTopoUnificado#plTopoUnificado #plAcoesDireita{grid-column:3!important;grid-row:1!important;margin-top:12px;margin-bottom:0}
 html:root #plTopoUnificado#plTopoUnificado #plModuloAbas button{font-size:clamp(11px,.85vw,13px)!important}

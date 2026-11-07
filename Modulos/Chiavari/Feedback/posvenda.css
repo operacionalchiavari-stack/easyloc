@@ -25,7 +25,7 @@
 /* Título, abas (globais .el-tabs) e busca na mesma linha (out/2026) — mesmo esquema do Financeiro */
 html:root:is(#pv-topo#pv-topo#pv-topo,html) body .pv-page > .header-list.pv-topo{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:flex-start!important;gap:8px 32px!important;margin:0 0 14px!important;padding:16px 0 0!important;position:relative;border:0!important}
 html:root:is(#pv-topo#pv-topo#pv-topo,html) body .pv-page > .header-list.pv-topo::after{content:"";position:absolute;left:50%;bottom:0;width:100vw;height:1px;transform:translateX(-50%);background:var(--ch-line,#e3e7ec);pointer-events:none}
-html:root:is(#pv-topo#pv-topo#pv-topo,html) body .pv-page > .header-list.pv-topo > h1:first-child{flex:none!important;margin:0!important;padding:0 0 12px!important;border:0!important;text-align:left!important;font-size:clamp(24px,2.2vw,32px)!important}
+html:root:is(#pv-topo#pv-topo#pv-topo,html) body .pv-page > .header-list.pv-topo > h1:first-child{flex:none!important;margin:0!important;padding:0 0 12px!important;border:0!important;text-align:left!important;font-size:clamp(19px,1.9vw,30px)!important;letter-spacing:.16em!important}
 html:root:is(#pv-topo#pv-topo#pv-topo,html) body .pv-page > .header-list.pv-topo > h1:first-child::after{content:none!important;display:none!important}
 html:root:is(#pv-topo#pv-topo#pv-topo,html) body .pv-page > .header-list.pv-topo > .pv-abas{flex:1 1 auto!important;margin:0!important;min-width:0}
 .pv-busca{flex:none;padding-bottom:8px}

@@ -111,7 +111,7 @@ html:root :is(body:not(.portal-shell), #main-content) :is(
   .header-list > h2:first-child, .page-header h1, .page-top h1, .page-header > h2:first-child
 ){
   font-family:var(--ch-serif) !important;
-  font-size:clamp(26px, 2.8vw, 38px) !important;
+  font-size:clamp(19px,1.9vw,30px) !important;
   font-weight:500 !important;
   letter-spacing:.16em !important;
   line-height:1.05 !important;
@@ -313,7 +313,7 @@ html:root :is(body:not(.portal-shell), #main-content) :is(.el-page-header, .sepa
 }
 html:root :is(body:not(.portal-shell), #main-content) :is(.el-page-header, .separacao-header, .credits-heading, .cadastro-view > .section-head) > div:first-child :is(h1, h2){
   margin:0 !important;
-  font-family:var(--ch-serif) !important; font-size:clamp(26px, 2.8vw, 38px) !important; font-weight:500 !important;
+  font-family:var(--ch-serif) !important; font-size:clamp(19px,1.9vw,30px) !important; font-weight:500 !important;
   letter-spacing:.16em !important; line-height:1.05 !important; text-transform:uppercase !important; color:var(--ch-text) !important;
 }
 html:root :is(body:not(.portal-shell), #main-content) :is(.el-page-header, .separacao-header, .credits-heading, .cadastro-view > .section-head) > div:first-child p{ max-width:640px; margin:10px auto 0 !important; color:var(--ch-muted) !important; font-size:14px !important; text-align:center; }
@@ -352,7 +352,7 @@ html:root :is(body:not(.portal-shell), #main-content) .el-page > :is(header, .za
 }
 html:root :is(body:not(.portal-shell), #main-content) .el-page > :is(header, .zapi-header):first-child > div:first-child :is(h1, h2){
   margin:0 !important; max-width:none !important;
-  font-family:var(--ch-serif) !important; font-size:clamp(26px, 2.8vw, 38px) !important; font-weight:500 !important;
+  font-family:var(--ch-serif) !important; font-size:clamp(19px,1.9vw,30px) !important; font-weight:500 !important;
   letter-spacing:.16em !important; line-height:1.05 !important; text-transform:uppercase !important; color:var(--ch-text) !important;
 }
 html:root :is(body:not(.portal-shell), #main-content) .el-page > :is(header, .zapi-header):first-child > div:first-child > span:first-child{

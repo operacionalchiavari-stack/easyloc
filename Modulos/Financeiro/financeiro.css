@@ -232,7 +232,7 @@ html:root:is(#acervo-fin,html) #contaDecoradorOpcoes button:hover,html:root:is(#
    A linha fina de ponta a ponta passa para o cabeçalho. Em tela estreita as abas descem para a linha de baixo. */
 html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo{display:flex!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:space-between!important;gap:8px 36px!important;margin:0 0 20px!important;padding:16px 0 0!important;position:relative;border:0!important}
 html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo::after{content:"";position:absolute;left:50%;bottom:0;width:100vw;height:1px;transform:translateX(-50%);background:var(--ch-line,#e3e7ec);pointer-events:none}
-html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > h2:first-child{flex:none!important;order:0!important;margin:0!important;padding:0 0 12px!important;border:0!important;text-align:left!important;font-size:clamp(24px,2.2vw,32px)!important}
+html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > h2:first-child{flex:none!important;order:0!important;margin:0!important;padding:0 0 12px!important;border:0!important;text-align:left!important;font-size:clamp(19px,1.9vw,30px)!important;letter-spacing:.16em!important}
 html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > h2:first-child::after{content:none!important;display:none!important}
 html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > .fin-abas{--el-tab-gap:13px;flex:1 1 auto!important;justify-content:flex-end!important;margin:0!important;padding-top:0!important;min-width:0}
 @media(max-width:1279px){

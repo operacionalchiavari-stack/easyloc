@@ -287,7 +287,8 @@ const mock = `(() => {
   await page.click('[data-aba="gateways"]'); await page.waitForSelector(".fin-gateways #pgBtnRefresh"); assert.ok(await page.locator(".fin-gateways .pg-card").count() === 2, "gateways dentro do Financeiro");
   await page.setViewportSize({ width: 1700, height: 900 }); await page.waitForTimeout(200);
   assert.equal(await page.$$eval('#finAbas [data-aba]', (l) => new Set(l.map((b) => Math.round(b.getBoundingClientRect().top))).size), 1, "abas numa linha só a 1700px");
-  assert.equal(Math.round(await page.$eval('.fin-topo h2', (h) => h.getBoundingClientRect().top)), Math.round(await page.$eval('#finAbas [data-aba]', (b) => b.getBoundingClientRect().top)), "na mesma linha do título");
+  { const meio = (r) => (r.top + r.bottom) / 2; const t = await page.$eval('.fin-topo h2', (h) => { const r = h.getBoundingClientRect(); return { top: r.top, bottom: r.bottom }; }), b = await page.$eval('#finAbas [data-aba]', (x) => { const r = x.getBoundingClientRect(); return { top: r.top, bottom: r.bottom }; });
+    assert.ok(Math.abs(meio(t) - meio(b)) < 14, "na mesma linha do título: " + JSON.stringify([t, b])); }
   await page.click('[data-aba="dre"]'); await page.click('#finSubAbas [data-subaba="plano"]'); await page.waitForTimeout(300);
   assert.match(await page.textContent("#finConteudo"), /Locação de mobiliário/);
   console.log("ok 8 - DRE e plano de contas abrem");
