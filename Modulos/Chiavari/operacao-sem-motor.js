@@ -1005,6 +1005,12 @@
     try { localStorage.setItem("montadorPasta", r.pasta); } catch (e) {}
     return { token: r.token, nome: r.nome, perfil: r.perfil };
   };
+  /* Nov/2026: "Meu bônus" de quem cuida do RH sem ter cadastro de funcionário: escolhe o funcionário e vê o bônus dele. */
+  L.MONT_bonusOpcoes = function () { return rpc("mont_bonus_opcoes", {}); };
+  L.MONT_bonusVer = async function (funcionario) {
+    var r = await rpc("mont_bonus_ver", { p_funcionario: funcionario });
+    return { token: r.token, nome: r.nome, perfil: r.perfil };
+  };
   L.MONT_sair = function (t) { return rpc("app_sair", { p_token: t }); };
   L.MONT_bonusExtrato = async function (token) {
     const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && location.port === "3000";

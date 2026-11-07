@@ -25,7 +25,7 @@ async function main(){
     function guardar(tipo,d){localStorage.setItem('fixture:'+tipo,JSON.stringify(d));return d;}
     function result(fn,args){
      window.chamadas.push({fn,args});
-     if(fn==='MONT_usuarioSistema')return 'u1';if(fn==='MONT_loginConta')return {token:'fixture',nome:'Ana Silva',perfil:'RESPONSAVEL'};
+     if(fn==='MONT_usuarioSistema')return 'u1';if(fn==='MONT_bonusOpcoes')return window.bonusAdmin?{proprio:false,administrador:true,funcionarios:[{id:'f1',nome:'Bruno Silva',setor:'Montagem'},{id:'f2',nome:'Aline Pereira',setor:''}]}:{proprio:true};if(fn==='MONT_bonusVer'){window.bonusVisto=args[0];return {token:'fixture',nome:'Bruno Silva',perfil:'RESPONSAVEL'};}if(fn==='MONT_loginConta')return {token:'fixture',nome:'Ana Silva',perfil:'RESPONSAVEL'};
      if(fn==='MONT_login'){if(args[2]===true&&args[3]===true)return {token:'fixture-sistema',nome:'Supervisor',perfil:'SUPERVISOR'};if(args[1]!=='1234')throw Error('CPF ou PIN incorretos.');return {token:'fixture',nome:'Ana Silva',perfil:'RESPONSAVEL'};}
      if(fn==='MONT_appCarregar')return {nome:'Ana Silva',perfil:'RESPONSAVEL',etapas,apontamento:registro('apontamento')?.status==='ATIVO'?registro('apontamento'):null};
      if(fn==='MONT_bonusExtrato'){

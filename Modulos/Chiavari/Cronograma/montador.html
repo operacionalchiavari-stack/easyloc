@@ -6,7 +6,7 @@
 <script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
   <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261106-cartao-cliente"></script>
+  <script src="../operacao-sem-motor.js?v=20261106-bonus-admin"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -335,7 +335,7 @@
 .dano-fotos .dano-rem{border:0;background:none;color:#b42318;font-size:12px;padding:0 4px}
 </style>
   <meta name="theme-color" content="#5a5a55">
-  <link rel="stylesheet" href="../apps-equipe.css?v=20261106-cartao-cliente">
+  <link rel="stylesheet" href="../apps-equipe.css?v=20261106-bonus-admin">
   <link rel="stylesheet" href="montador-evento.css?v=20261031-app-integrado">
 </head>
 <body class="chiavari-equipe-app" data-app-equipe="montagem">
@@ -1767,6 +1767,24 @@
   // Nov/2026: entra pela conta do sistema (mesma sessão do login). Sem sessão, volta para o app (app.html), que tem o login.
   const NO_QUADRO = window.top !== window;
   function irParaApp(){ location.href = '../../../app.html'; }
+  function escolherBonusFuncionario(lista){
+    estado.acesso='bonus'; mostrarTela('telaBonus');
+    const host=document.getElementById('bonusConteudo');
+    const pintar=(filtro)=>{
+      const f=String(filtro||'').toLowerCase();
+      const itens=lista.filter(p=>!f||String(p.nome).toLowerCase().includes(f));
+      host.querySelector('[data-bonus-lista]').innerHTML=itens.length?itens.map(p=>'<button type="button" class="bonus-escolher" data-bonus-func="'+esc(p.id)+'"><b>'+esc(p.nome)+'</b>'+(p.setor?'<small>'+esc(p.setor)+'</small>':'')+'</button>').join(''):'<p class="bonus-escolher-vazio">Ninguém com esse nome.</p>';
+    };
+    host.innerHTML='<div class="bonus-escolha"><p>Você não tem cadastro de funcionário. Escolha de quem quer ver o bônus:</p><input type="search" placeholder="Buscar funcionário" data-bonus-busca aria-label="Buscar funcionário"><div data-bonus-lista></div></div>';
+    pintar('');
+    host.querySelector('[data-bonus-busca]').addEventListener('input',e=>pintar(e.target.value));
+    host.onclick=async(e)=>{
+      const b=e.target.closest('[data-bonus-func]'); if(!b) return;
+      b.disabled=true;
+      try{ const r=await chamar('MONT_bonusVer', b.dataset.bonusFunc); salvarToken(r.token); host.onclick=null; carregar(); }
+      catch(err){ b.disabled=false; toast(mensagemErro(err), true); }
+    };
+  }
   lerLink().then(async function(){
     try{
       if(MODO_SISTEMA){ const r=await chamar('MONT_login','','',true,true);salvarToken(r.token);estado.supervisor=true; }
@@ -1774,6 +1792,14 @@
         const uid = await chamar('MONT_usuarioSistema');
         if(!uid){ if(NO_QUADRO){ mostrarLogin('Entre no sistema para abrir o App do Montador.'); } else { irParaApp(); } return; }
         let dono=''; try{ dono=localStorage.getItem(CHAVE_TOKEN+'Conta')||''; }catch(e){}
+        if(MODO_BONUS_TOKEN){
+          // Nov/2026: quem não tem cadastro de funcionário mas cuida do RH escolhe de quem ver o bônus.
+          const op = await chamar('MONT_bonusOpcoes');
+          if(!op.proprio){
+            if(op.administrador){ escolherBonusFuncionario(op.funcionarios || []); return; }
+            throw new Error('O Meu bônus mostra o bônus de quem tem cadastro no Cadastro de Funcionários. Seu usuário não tem esse cadastro.');
+          }
+        }
         if(!estado.token || dono!==uid){ const r=await chamar('MONT_loginConta', MODO_BONUS_TOKEN); salvarToken(r.token); try{ localStorage.setItem(CHAVE_TOKEN+'Conta',uid); }catch(e){} }
       }
     }catch(e){ mostrarLogin(mensagemErro(e)); return; }

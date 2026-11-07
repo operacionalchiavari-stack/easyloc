@@ -308,3 +308,26 @@ body.assistente-aberta .app-toasts{bottom:calc(var(--base) + 96px)}
 .cond-op:has(input:checked){border-color:#123f86;background:#eaf0fa}
 .cond-op b{display:block}
 .cond-op small{display:block;color:#4f4f4f;font-size:12.5px}
+/* Nov/2026: catálogo da equipe (pelo app ou pelo sistema): fundo branco, sem a Início nem a Helena. */
+html:has(body.catalogo-equipe),body.catalogo-equipe{--bg:#fff;background:#fff}
+body.catalogo-equipe .app-abas{display:none!important}
+body.catalogo-equipe .tela-rolagem{padding-bottom:calc(var(--base) + 28px)}
+/* Nov/2026: categorias da equipe iguais à Home do site: foto inteira no branco, sem a sombra escura, nome embaixo. */
+body.catalogo-equipe .grade-cats{gap:22px 14px}
+body.catalogo-equipe .cat-card{display:flex;flex-direction:column;align-items:center;gap:10px;aspect-ratio:auto;overflow:visible;border-radius:0;background:transparent}
+body.catalogo-equipe .cat-card::after{content:none}
+body.catalogo-equipe .cat-card img{width:100%;height:auto;aspect-ratio:1/1;object-fit:contain;background:#fff}
+body.catalogo-equipe .cat-card span{position:static;color:var(--ink);text-align:center;font:600 1.02rem/1.25 var(--serif);letter-spacing:.02em;text-transform:uppercase}
+body.catalogo-equipe .cat-card small{display:none}
+/* Topo da equipe: branco, com o voltar e a busca na mesma linha. */
+body.catalogo-equipe .topo{background:rgba(255,255,255,.94)}
+body.catalogo-equipe .topo-busca{padding-right:12px}
+body.catalogo-equipe .topo-busca .busca{flex:1;margin:0}
+body.catalogo-equipe .topo-busca .busca input{height:44px}
+body.catalogo-equipe .grade-cats{padding-top:14px}
+body.catalogo-equipe .topo-busca .busca svg{top:11px}
+/* Card do produto na equipe: nome, medida, preço e estoque centralizados. */
+body.catalogo-equipe .produto{align-items:center;text-align:center}
+body.catalogo-equipe .produto-foto{align-self:stretch}
+body.catalogo-equipe .produto-estoque{justify-content:center}
+body.catalogo-equipe .produto .cores{justify-content:center;align-self:center}

@@ -192,14 +192,17 @@ const ABAS = [
 ];
 function pintarAbas(){
   const nav = $("appAbas");
-  const abas = ABAS.filter((a) => !visitante() || !["helena", "projeto"].includes(a.id));
+  // Nov/2026: a equipe (pelo app ou pelo sistema) não usa a Início nem a Helena: o catálogo começa nas categorias.
+  const abas = ABAS.filter((a) => (!visitante() || !["helena", "projeto"].includes(a.id)) && (!equipe() || !["inicio", "helena"].includes(a.id)));
   nav.style.gridTemplateColumns = `repeat(${abas.length},1fr)`;
   nav.innerHTML = abas.map((a) => a.helena
     ? `<button type="button" class="aba aba-helena${S.aba === a.id ? " ativa" : ""}" data-aba="helena" aria-label="Conversar com a Helena"><span class="aba-bola">H</span>${a.rotulo}${S.naoLidas ? `<i class="aba-ponto">${S.naoLidas}</i>` : ""}</button>`
     : `<button type="button" class="aba${S.aba === a.id ? " ativa" : ""}" data-aba="${a.id}" aria-label="${a.rotulo}"${S.aba === a.id ? ' aria-current="page"' : ""}><svg viewBox="0 0 24 24" aria-hidden="true">${ICO[a.ico]}</svg>${a.rotulo}${a.id === "projeto" && totalPecas() ? `<i class="aba-ponto" style="background:var(--grafite)">${totalPecas()}</i>` : ""}</button>`).join("");
   nav.hidden = false;
+  if(equipe()){ nav.hidden = true; nav.style.setProperty("display", "none", "important"); } // a equipe não usa a barra de abas
 }
 function irParaAba(id){
+  if(equipe() && (id === "inicio" || id === "helena")) id = "catalogo";
   if(id === "helena"){ abrirHelena(); return; }
   S.aba = id;
   S.pilha.forEach((t) => t.el.remove());
@@ -241,7 +244,7 @@ window.addEventListener("popstate", () => {
 // Em qual projeto/ambiente as peças estão entrando (pedido do usuário: "no app eu não consigo ver qual pedido estamos
 // alterando"). Tocar abre a aba Projeto.
 function chipProjeto(){
-  if(visitante()) return "";
+  if(visitante() || equipe()) return ""; // a equipe só consulta o catálogo (sem projeto)
   if(!S.projeto) return `<button type="button" class="chip-projeto vazio" data-ir-aba="projeto">${ico("projeto")}<span>Escolher projeto</span></button>`;
   return `<button type="button" class="chip-projeto" data-ir-aba="projeto" aria-label="Projeto ${esc(S.projeto.noivos)}">${ico("projeto")}<span>${esc(S.projeto.noivos)}${ambienteAtivo() ? `<small>${esc(ambienteAtivo().nome)} · ${totalPecas()} ${totalPecas() === 1 ? "peça" : "peças"}</small>` : ""}</span></button>`;
 }
@@ -358,8 +361,13 @@ function aoClicarComum(e){
 
 function telaCatalogo(){
   const cats = categorias();
-  const el = novaTela(`${topo("Catálogo", { voltar: false, extra: chipProjeto() })}<div class="tela-rolagem">
-    <label class="busca"><svg viewBox="0 0 24 24" aria-hidden="true">${ICO.busca}</svg><input type="search" placeholder="Buscar sofá, cadeira, boho…" aria-label="Buscar no catálogo" data-busca enterkeyhint="search"></label>
+  const busca = `<label class="busca"><svg viewBox="0 0 24 24" aria-hidden="true">${ICO.busca}</svg><input type="search" placeholder="Buscar sofá, cadeira, boho…" aria-label="Buscar no catálogo" data-busca enterkeyhint="search"></label>`;
+  // Nov/2026: na equipe, o voltar (para o app) e a busca ficam na mesma linha no topo, sem o título, para poupar espaço.
+  const cabeca = equipe()
+    ? `<header class="topo topo-busca">${DO_APP ? `<button type="button" class="btn-icone" data-app-inicio aria-label="Voltar ao início do app">${ico("voltar")}</button>` : ""}${busca}</header>`
+    : topo("Catálogo", { voltar: false, extra: chipProjeto() });
+  const el = novaTela(`${cabeca}<div class="tela-rolagem">
+    ${equipe() ? "" : busca}
     <div data-resultado><div class="grade-cats">${cats.map((c) => `<button type="button" class="cat-card" data-cat="${esc(c.cat)}"><img src="${esc(otimizar(capaDaCategoria(c), 420))}" alt="" loading="lazy"><span>${esc(c.label)}<small>${c.itens.length} ${c.itens.length === 1 ? "peça" : "peças"}</small></span></button>`).join("")}</div></div>
   </div>`);
   el.addEventListener("click", aoClicarComum);
@@ -372,7 +380,7 @@ function telaCatalogo(){
       const termos = normalizar(e.target.value).split(/\s+/).filter(Boolean);
       if(!termos.length){ res.innerHTML = padrao; return; }
       const achados = S.itens.filter((i) => { const txt = normalizar([i.name, i.catLabel, i.subcatLabel, i.material, i.cor, i.estilo, ...(i.variantGroup || []).map((v) => v.cor)].join(" ")); return termos.every((x) => txt.includes(x)); });
-      res.innerHTML = achados.length ? `<p class="subtitulo">${achados.length} ${achados.length === 1 ? "peça encontrada" : "peças encontradas"}</p><div class="grade-produtos">${achados.slice(0, 80).map(cardProduto).join("")}</div>` : `<p class="vazio">Nada encontrado para "${esc(e.target.value)}".<br>Que tal perguntar pra Helena?</p>`;
+      res.innerHTML = achados.length ? `<p class="subtitulo">${achados.length} ${achados.length === 1 ? "peça encontrada" : "peças encontradas"}</p><div class="grade-produtos">${achados.slice(0, 80).map(cardProduto).join("")}</div>` : `<p class="vazio">Nada encontrado para "${esc(e.target.value)}".${equipe() ? "" : "<br>Que tal perguntar pra Helena?"}</p>`;
     }, 180);
   });
   return el;
@@ -461,9 +469,9 @@ function telaItem(itemInicial){
         ${item.variantGroup?.length > 1 ? `<div class="item-variantes">${item.variantGroup.map((v) => `<button type="button" class="variante${v.id === item.id ? " ativa" : ""}" data-variante="${esc(v.id)}" aria-label="${esc(v.cor || v.name)}"><i style="background-image:url('${esc(otimizar(v.photo, 100))}')"></i><span>${esc(v.cor || "—")}</span></button>`).join("")}</div>` : ""}
         ${item.desc ? `<p class="item-desc">${esc(item.desc)}</p>` : ""}
         ${item.specs.length ? `<dl class="specs">${item.specs.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>` : ""}
-        ${!visitante() ? `<button type="button" class="item-perguntar" data-perguntar><span class="cas-avatar">H</span><span><strong>Perguntar à Helena</strong><small>Disponibilidade, combinações, foto em composição…</small></span></button>` : ""}
+        ${!visitante() && !equipe() ? `<button type="button" class="item-perguntar" data-perguntar><span class="cas-avatar">H</span><span><strong>Perguntar à Helena</strong><small>Disponibilidade, combinações, foto em composição…</small></span></button>` : ""}
       </div></div>
-      ${!visitante() ? `<div class="barra-acao"><div class="barra-destino">${S.projeto ? `${ico("projeto")}<span>Projeto <b>${esc(S.projeto.noivos)}</b>${amb ? ` · ${esc(amb.nome)}` : ""}${qtd ? ` · já tem ${qtd}` : ""}</span><button type="button" class="link" data-trocar-amb>${amb ? "trocar" : "escolher"}</button>` : `${ico("projeto")}<span>Nenhum projeto aberto</span><button type="button" class="link" data-trocar-amb>escolher</button>`}</div><div class="passos"><button type="button" data-passo="-1" aria-label="Menos">−</button><input type="number" inputmode="numeric" min="1" max="999" value="${qtd || 1}" aria-label="Quantidade" data-qtd><button type="button" data-passo="1" aria-label="Mais">+</button></div>
+      ${!visitante() && !equipe() ? `<div class="barra-acao"><div class="barra-destino">${S.projeto ? `${ico("projeto")}<span>Projeto <b>${esc(S.projeto.noivos)}</b>${amb ? ` · ${esc(amb.nome)}` : ""}${qtd ? ` · já tem ${qtd}` : ""}</span><button type="button" class="link" data-trocar-amb>${amb ? "trocar" : "escolher"}</button>` : `${ico("projeto")}<span>Nenhum projeto aberto</span><button type="button" class="link" data-trocar-amb>escolher</button>`}</div><div class="passos"><button type="button" data-passo="-1" aria-label="Menos">−</button><input type="number" inputmode="numeric" min="1" max="999" value="${qtd || 1}" aria-label="Quantidade" data-qtd><button type="button" data-passo="1" aria-label="Mais">+</button></div>
         <button type="button" class="btn" data-adicionar>${qtd ? `Atualizar${amb ? ` · ${esc(amb.nome)}` : ""}` : `Adicionar${amb ? ` · ${esc(amb.nome)}` : " ao projeto"}`}</button></div>` : ""}`;
     const atual = item;
     disponibilidade(item.id).then((d) => {
@@ -670,7 +678,7 @@ function telaProjeto(){
       <section class="proj-cab"><button type="button" class="btn-icone proj-trocar" data-trocar aria-label="Trocar de projeto">${ico("trocar")}</button><small>Seu projeto</small><h2>${esc(p.noivos)}</h2><p>${esc(dataLonga(p.data_evento))} · ${esc(p.local_evento || "")}</p><span class="proj-status">${esc(rotuloStatus(p.status))}</span></section>
       <div class="chips" style="margin-top:16px">${ambientes().map((a) => `<button type="button" class="chip${a.id === S.ambAtivo ? " ativo" : ""}" data-amb="${esc(a.id)}">${esc(a.nome)} · ${a.itens.reduce((q, i) => q + (Number(i.quantidade) || 0), 0)}</button>`).join("")}<button type="button" class="chip" data-novo-amb>＋ Ambiente</button></div>
       ${amb ? (amb.itens.length ? `<div class="linhas">${amb.itens.map((l) => { const i = acharItem(l.item_id); return `<div class="linha" data-linha="${esc(l.item_id)}"><img src="${esc(otimizar(i?.photo || FOTO_VAZIA, 140))}" alt="" data-item="${esc(l.item_id)}"><div><strong>${esc(i?.name || "Peça")}</strong><small>${i?.rentalPrice != null ? dinheiro.format(i.rentalPrice) + " · " : ""}${esc(i?.cor || "")}</small></div><div class="passos"><button type="button" data-q="-1" aria-label="Menos">−</button><input type="number" inputmode="numeric" value="${Number(l.quantidade) || 1}" aria-label="Quantidade" data-qi><button type="button" data-q="1" aria-label="Mais">+</button></div></div>`; }).join("")}</div>`
-        : `<p class="vazio">Nenhuma peça em ${esc(amb.nome)} ainda.<br><button type="button" class="link" data-ir-aba="catalogo">Ver o catálogo</button> ou <button type="button" class="link" data-helena>pedir sugestões à Helena</button></p>`)
+        : `<p class="vazio">Nenhuma peça em ${esc(amb.nome)} ainda.<br><button type="button" class="link" data-ir-aba="catalogo">Ver o catálogo</button>${equipe() ? "" : ` ou <button type="button" class="link" data-helena>pedir sugestões à Helena</button>`}</p>`)
         : `<p class="vazio">Crie um ambiente (ex.: Lounge, Cerimônia) para começar.</p>`}
       ${amb?.renders?.length ? `<h2 class="secao-titulo">Imagens</h2><div class="proj-renders">${amb.renders.map((r) => `<img src="${esc(otimizar(r.url, 600))}" alt="" data-zoom="${esc(r.url)}">`).join("")}</div>` : ""}
       ${totalPecas() ? `<div class="total"><span>${totalPecas()} ${totalPecas() === 1 ? "peça" : "peças"} no projeto</span><strong>${dinheiro.format(valor)}</strong></div>
@@ -997,8 +1005,8 @@ async function iniciar(){
     vigiarEstoque(); // estoque/disponível conforme Parâmetros > Catálogo (o visitante também, se liberado)
     if(!visitante()){
       const ativo = lerAtivo();
-      if(ativo?.id) await usarProjeto(ativo.id, ativo.amb).catch(() => { try{ localStorage.removeItem(chaveAtivo()); }catch{} });
-      initCatalogAssistente(Object.assign(ctxHelena, {
+      if(ativo?.id && !equipe()) await usarProjeto(ativo.id, ativo.amb).catch(() => { try{ localStorage.removeItem(chaveAtivo()); }catch{} });
+      if(!equipe()) initCatalogAssistente(Object.assign(ctxHelena, {
         supabase, getSession: () => S.sessao, modoPedido: false, notify, temProjetos: true,
         // Fechar a Helena dispara um "voltar" (history); espera ele passar antes de empilhar a tela do item.
         findItem: acharItem, abrirItem: (id) => setTimeout(() => abrirItem(id), 320),
@@ -1013,7 +1021,8 @@ async function iniciar(){
       setInterval(() => presenca(true), 60000);
       setTimeout(prepararMotor3D, 1500);
     }
-    irParaAba(new URLSearchParams(location.search).get("aba") || "inicio");
+    document.body.classList.toggle("catalogo-equipe", equipe());
+    irParaAba(new URLSearchParams(location.search).get("aba") || (equipe() ? "catalogo" : "inicio"));
     sairAbertura();
   }catch(error){
     console.error(error);
