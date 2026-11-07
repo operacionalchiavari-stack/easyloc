@@ -23,3 +23,17 @@ test('logout revoga preferencia e bloqueia envio pendente de geolocalizacao',asy
 test('permissao negada interrompe rastreamento e remove retomada automatica',async()=>{
  const a=ambiente();await a.ctx.AppRastreador.iniciar('empresa');await a.elementos.get('[data-ativar]').onclick();a.failure({code:1});assert.equal(a.storage.size,0);assert.ok(a.cleared);
 });
+test('falhas do servidor, sessao e rede mostram orientacoes diferentes',async()=>{
+ for(const [error,esperado] of [
+  [{code:'PGRST202'},/configurado no servidor/],
+  [{code:'P0001',message:'Acesso não autorizado'},/entre novamente/],
+  [{code:'23514'},/posição inválida/],
+  [{message:'Failed to fetch'},/Sem conexão/],
+  [{code:'XX000'},/servidor não conseguiu salvar/]
+ ]){
+  const a=ambiente();a.ctx.supabaseClient.rpc=async()=>({error});
+  await a.ctx.AppRastreador.iniciar('empresa');await a.elementos.get('[data-ativar]').onclick();
+  await a.success({coords:{latitude:-23,longitude:-46,accuracy:20}});
+  assert.match(a.elementos.get('[role="status"]').textContent,esperado);
+ }
+});

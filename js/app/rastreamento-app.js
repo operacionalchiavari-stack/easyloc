@@ -5,6 +5,13 @@
  const sb = () => window.supabaseClient;
  const chave = () => `rastreamento:${empresa}:${usuario}`;
  function mensagem(texto) { painel?.querySelector('[role="status"]') && (painel.querySelector('[role="status"]').textContent = texto); }
+ function erroEnvio(erro) {
+  if (navigator.onLine === false || /failed to fetch|networkerror|load failed/i.test(erro?.message || '')) return 'Sem conexão com o servidor. O envio será tentado novamente.';
+  if (['PGRST202','PGRST205','42P01','42883'].includes(erro?.code)) return 'O rastreamento ainda não está configurado no servidor. Avise o administrador.';
+  if (['PGRST301','PGRST302','PGRST303','42501'].includes(erro?.code) || /jwt|acesso não autorizado|sessão necessária/i.test(erro?.message || '')) return 'Não foi possível validar seu acesso. Saia e entre novamente no app.';
+  if (['23514','23502','22P02'].includes(erro?.code)) return 'O celular enviou uma posição inválida. Aguardando uma nova leitura do GPS.';
+  return 'O servidor não conseguiu salvar a posição. O envio será tentado novamente.';
+ }
  function montar() {
   if (painel) return;
   painel = document.createElement('section');
@@ -28,7 +35,7 @@
     if (atual !== geracao) return;
     if(error) throw error;
     ultimo=Date.now(); mensagem('Posição enviada às '+new Date().toLocaleTimeString('pt-BR')+'.');
-   } catch (_) { if(atual===geracao) mensagem('Não foi possível enviar a posição. Verifique a conexão e tente novamente.'); }
+   } catch (erro) { if(atual===geracao) mensagem(erroEnvio(erro)); }
    finally { enviando=false; }
   };
   const falha=(erro)=>{ if(atual!==geracao)return; mensagem(erro.code===1?'Permissão de localização negada. Libere nas configurações do celular.':'Não foi possível obter a posição. Aguardando novo sinal.'); if(erro.code===1){localStorage.removeItem(chave());limpar();} };
