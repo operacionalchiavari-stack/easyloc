@@ -1,0 +1,7 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Rastreamento · Logística</title>
+<link rel="stylesheet" href="rastreamento.css"><script src="../../../js/core/themePrepaint.js"></script></head>
+<body><main class="rastreador" data-module-root><div id="mapa" aria-label="Mapa de localização da equipe"></div>
+<header><h1>Rastreamento</h1><button id="enquadrar" type="button">Ver toda a equipe</button><button id="telaCheia" type="button">Tela cheia</button></header>
+<aside aria-label="Equipe no mapa"><label for="busca">Buscar usuário</label><input id="busca" type="search" placeholder="Nome do usuário"><p id="estado" role="status">Carregando mapa...</p><div id="usuarios"></div><small>Posições com mais de 2 minutos são indicadas como desatualizadas. O envio depende da conexão e do app do usuário.</small></aside></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/context.js"></script><script src="../../../js/core/permissions.js"></script><script src="../../../js/core/google.config.js"></script><script src="../../../js/core/google.js"></script><script src="rastreamento.js"></script></body></html>

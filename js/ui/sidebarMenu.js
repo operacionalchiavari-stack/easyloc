@@ -130,6 +130,7 @@
         rotulo: "Logística",
         itens: [
           { rotulo: "Painel Logístico", href: "Modulos/Logistica/PainelLogistico/painel-logistico.html" },
+          { rotulo: "Rastreamento", href: "Modulos/Logistica/Rastreamento/rastreamento.html" },
           // Triagem era categoria própria; com o menu no topo foi para dentro de Logística (pedido do usuário).
           { rotulo: "Triagem", href: "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html" },
           { rotulo: "Fretes", href: "Modulos/Chiavari/Fretes/gestao-fretes.html" },

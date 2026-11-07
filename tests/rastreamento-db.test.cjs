@@ -1,0 +1,44 @@
+﻿const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const {PGlite}=require('@electric-sql/pglite');
+const id=n=>'00000000-0000-0000-0000-'+String(n).padStart(12,'0');
+test('rastreamento: acesso por empresa, identidade no servidor, limites e pausa',async()=>{
+ const db=new PGlite();
+ try{
+ await db.exec(`create role anon; create role authenticated; create schema auth;
+ create table auth.users(id uuid primary key,raw_user_meta_data jsonb default '{}');
+ create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('test.uid',true),'')::uuid$$;
+ create table empresas(id uuid primary key);
+ create table funcionarios_acesso(id uuid,empresa_id uuid,nome text);
+ create table vinculos(usuario uuid,empresa uuid,pode boolean,ativo boolean);
+ create function funcionario_contexto(uuid) returns jsonb language sql as $$select jsonb_build_object('ativo',coalesce((select ativo from vinculos where usuario=auth.uid() and empresa=$1),false))$$;
+ create function eh_membro_empresa(uuid) returns boolean language sql as $$select exists(select 1 from vinculos where usuario=auth.uid() and empresa=$1 and ativo)$$;
+ create function funcionario_pode(uuid,uuid,text) returns boolean language sql as $$select exists(select 1 from vinculos where usuario=$2 and empresa=$1 and pode and ativo)$$;
+ grant usage on schema public,auth to authenticated;
+ grant select on vinculos to authenticated;
+ insert into empresas values('${id(1)}'),('${id(2)}');
+ insert into auth.users(id) values('${id(10)}'),('${id(11)}'),('${id(12)}');
+ insert into funcionarios_acesso values('${id(10)}','${id(1)}','Ana');
+ insert into vinculos values('${id(10)}','${id(1)}',false,true),('${id(11)}','${id(1)}',true,true),('${id(12)}','${id(2)}',true,true);`);
+ await db.exec(fs.readFileSync('supabase/migrations/20261107000100_rastreamento_equipe.sql','utf8'));
+ await db.exec(`select set_config('test.uid','${id(10)}',false);set role authenticated;`);
+ const enviar=(empresa=id(1),lat=-23)=>db.query('select rastreamento_enviar($1,$2,-46,10)',[empresa,lat]);
+ await enviar();
+ assert.equal((await db.query('select * from rastreamento_posicoes')).rows.length,0);
+ await assert.rejects(enviar(id(2)),/autorizado/);
+ await assert.rejects(enviar(id(1),100),/check constraint/);
+ await assert.rejects(db.query('update rastreamento_posicoes set latitude=0'),/permission denied/);
+ await db.exec(`reset role;select set_config('test.uid','${id(11)}',false);set role authenticated;`);
+ const rows=(await db.query('select * from rastreamento_posicoes')).rows;
+ assert.equal(rows.length,1);assert.equal(rows[0].usuario_id,id(10));assert.equal(rows[0].nome,'Ana');
+ await db.query('select rastreamento_parar($1)',[id(1)]);
+ assert.equal((await db.query('select * from rastreamento_posicoes')).rows.length,1);
+ await db.exec(`reset role;select set_config('test.uid','${id(12)}',false);set role authenticated;`);
+ assert.equal((await db.query('select * from rastreamento_posicoes')).rows.length,0);
+ await db.exec(`reset role;select set_config('test.uid','${id(10)}',false);set role authenticated;`);
+ await db.query('select rastreamento_parar($1)',[id(1)]);
+ await db.exec('reset role');assert.equal((await db.query('select * from rastreamento_posicoes')).rows.length,0);
+ await db.exec('set role anon');await assert.rejects(enviar(),/permission denied/);
+ }finally{await db.close();}
+});

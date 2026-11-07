@@ -194,6 +194,7 @@
     [/Compras/i, 'estoque.compras.visualizar'],
     [/Estoque\/TriagemApp/i, 'logistica.separacao.visualizar'],
     [/SeparacaoMateriais/i, 'logistica.separacao.visualizar'],
+    [/Rastreamento/i, 'logistica.planejamento.visualizar'],
     [/PainelLogistico/i, 'logistica.planejamento.visualizar'],
     [/Cronograma/i, 'logistica.cronograma.visualizar'],
     [/Expedicao|EntregasColetas/i, 'logistica.expedicao.visualizar'],

@@ -113,6 +113,7 @@
       '<span class="ap-modulo-texto"><b class="ap-modulo-titulo">' + m.nome + '</b><small>' + m.texto + '</small></span><span class="ap-seta" aria-hidden="true">›</span></a>').join("")
       : '<p class="ap-vazio">Seu usuário ainda não tem acesso a nenhum módulo do app. Fale com o administrador.</p>';
     tela("apInicio");
+    window.AppRastreador?.iniciar(empresa);
     window.AppAvisos?.iniciar(empresa); // Nov/2026: bloco "Avisos no celular" (notificações)
   }
 
