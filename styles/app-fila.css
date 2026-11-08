@@ -37,3 +37,22 @@
 .af-nav .af-aba[aria-current] b{background:var(--a-cor);color:#fff}
 .af-aba-aguardando{--a-cor:#c27803}.af-aba-andamento{--a-cor:#2563eb}.af-aba-concluido,.af-aba-conferidos{--a-cor:#1f8a4c}.af-aba-divergencias,.af-aba-pendencias{--a-cor:#a72d28}
 @media(prefers-reduced-motion:reduce){.af-dot{animation:none}}
+/* Tela do pedido mais compacta (nov/2026): número na linha do "← Pedidos", câmera na linha do cliente,
+   vídeo pequeno que cresce ao tocar, sem a frase de instrução — os itens sobem. */
+.voltar-linha{gap:10px;margin-bottom:12px}
+.voltar-numero{flex:1;min-width:0;text-align:center;font:600 22px/1.1 "Cormorant Garamond",Georgia,serif;color:#2b2622;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pedido-detalhe{padding:14px 16px}
+.pedido-detalhe .pessoa{align-items:center}
+.pedido-detalhe .pessoa-texto{flex:1}
+.camera-btn{flex:none;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;width:62px;height:56px;border:1px solid #d9d2c6;border-radius:14px;background:#fff;color:#2b2622;font:700 11px/1 Manrope,Inter,sans-serif;cursor:pointer}
+.camera-btn svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.camera-btn.is-ligada{background:#2b2622;color:#fff;border-color:#2b2622}
+.leitor-compacto{padding:12px;margin-bottom:14px}
+.leitor-compacto .camera-quadro{margin:0 0 10px;cursor:zoom-in}
+.leitor-compacto .camera-quadro video{aspect-ratio:auto;height:120px;object-fit:cover}
+.leitor-compacto .camera-quadro.is-grande{cursor:zoom-out}
+.leitor-compacto .camera-quadro.is-grande video{height:auto;aspect-ratio:3/4;max-height:62dvh;object-fit:cover}
+.leitor-compacto .camera-codigo{bottom:6px;padding:4px 8px;font-size:11px}
+.leitor-compacto .leitor-form{margin-top:0}
+.leitor-compacto .ultima-leitura{margin-top:8px}
+.leitor-compacto .ultima-leitura:empty{display:none}

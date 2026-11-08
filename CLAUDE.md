@@ -11493,6 +11493,13 @@ Pedido: no celular, o link do sistema abre um app; o mesmo login do sistema; dep
     - Cada coluna mistura os cartões de ida e de volta/descarregamento, cada um com o seu selo; tocar abre a etapa certa.
   - **Cartão** (`js/app/fila-app.js` + `styles/app-fila.css`, comuns aos dois apps): letra maior, as cores de cada coluna iguais às do computador (a volta da Triagem em lilás) e duas datas. Na ida: Carregamento (da etapa no cronograma, `operacao_etapas`, senão a entrega) e Entrega. Na volta: Coleta e Descarregamento.
   - Testes: `app-celular-browser.cjs` (Configurações; já passa, o painel que cobria o Sair saiu), `app-triagem-browser.cjs` e `app-expedicao-browser.cjs`.
+  - **Tela do pedido mais compacta** (Triagem e Expedição do app; pedido: "subir os itens da conferência"):
+    - o número do pedido fica na linha do "← Pedidos" e do selo da etapa;
+    - o botão da câmera (`.camera-btn`) fica na linha do cliente;
+    - o vídeo nasce pequeno (120px de altura) e cresce ao tocar nele (`.is-grande`, 3:4);
+    - saíram o título "Ler QR Code" e a frase de instrução.
+
+    O contorno verde do QR usa `preserveAspectRatio="xMidYMid slice"`, que acompanha o vídeo recortado (`object-fit:cover`). O CSS fica no fim de `styles/app-fila.css`.
 
 ## Solicitação de compra e de manutenção com especialista (06/11/2026)
 Pedido: no lugar de preencher o modal, uma IA que entende o pedido, pergunta o necessário, mostra o resumo, a pessoa confirma e ela registra (como a Ideia Premiada). Em Geral > Solicitação de compra e Solicitação de manutenção, "+ Nova solicitação" abre a conversa (`js/ui/assistente-solicitacao.js` + `styles/assistente-solicitacao.css`, `EasyLocAssistenteSolicitacao.abrir({tipo, titulo, assistente, saudacao, resumoHtml, confirmar, formulario})`): texto ou áudio (microfone/arquivo, transcrito), uma pergunta por vez, resumo com "Está certo, registrar" / "Quero ajustar"; "Prefiro preencher o formulário" abre o modal antigo. Conversa guardada na aba (`sessionStorage solic_chat:<tipo>:<empresa>:<usuário>`) até registrar ou "Começar de novo".
