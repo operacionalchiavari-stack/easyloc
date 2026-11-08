@@ -8,8 +8,8 @@
  function paint(){
   if(!host())return;
   host().hidden=false;
-  const state=!configured?'As notificações Android aguardam a configuração do Firebase.':enabled?'Receba suas escalas e avisos neste aplicativo, mesmo com a tela fechada.':'Ative os avisos para receber suas escalas neste aplicativo.';
-  host().innerHTML='<div class="ap-avisos-texto"><b>Notificações do Chiavari</b><p>'+state+'</p><div class="ap-avisos-acoes">'+(configured?(enabled?'<button type="button" class="ap-avisos-btn" data-native-push="test">Enviar teste</button><button type="button" class="ap-avisos-link" data-native-push="disable">Desligar</button>':'<button type="button" class="ap-avisos-btn" data-native-push="enable">Ativar avisos</button>'):'')+'</div><small role="status"></small></div>';
+  const texto=!configured?'As notificações aguardam a configuração do Firebase.':enabled?'Ligadas. Você recebe suas escalas mesmo com a tela fechada.':'Receba suas escalas neste aplicativo, mesmo com a tela fechada.';
+  host().innerHTML='<div class="ap-cfg-linha"><span class="ap-cfg-icone" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"/></svg></span><div class="ap-cfg-texto"><b>Notificações</b><p>'+texto+'</p></div>'+(configured?'<button type="button" class="ap-switch" role="switch" aria-checked="'+enabled+'" aria-label="Notificações" data-native-push="'+(enabled?'disable':'enable')+'"><span></span></button>':'')+'</div>'+(configured&&enabled?'<button type="button" class="ap-cfg-link" data-native-push="test">Enviar notificação de teste</button>':'')+'<small class="ap-cfg-msg" role="status"></small>';
  }
  async function bind(detail){
   if(busy||!empresa)return;busy=true;const current=epoch;

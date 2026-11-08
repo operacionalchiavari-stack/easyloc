@@ -15,19 +15,23 @@
   if (['23514','23502','22P02'].includes(erro?.code)) return 'O celular enviou uma posição inválida. Aguardando uma nova leitura do GPS.';
   return 'O servidor não conseguiu salvar a posição. O envio será tentado novamente.';
  }
+ // Nov/2026: a localização fica em Configurações do app (#apLocal), numa linha simples com um botão liga/desliga.
+ // Nas telas dos módulos não há painel na tela: a coleta continua, sem nada por cima do conteúdo.
+ function ligada(){ return android() ? nativoAtivo : localStorage.getItem(chave())==='1'; }
+ function pintar(){
+  if(!painel)return;
+  const host=document.getElementById('apLocal'); if(!host||painel!==host)return;
+  const on=ligada(), status=painel.querySelector('[role="status"]')?.textContent||'';
+  const texto=on?'Ligada. Sua posição é compartilhada com a Logística.':android()?'Compartilhe sua posição com a Logística, mesmo com a tela apagada.':'Compartilhe sua posição com a Logística enquanto o app estiver aberto.';
+  painel.innerHTML='<div class="ap-cfg-linha"><span class="ap-cfg-icone" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span><div class="ap-cfg-texto"><b>Localização</b><p>'+texto+'</p></div><button type="button" class="ap-switch" role="switch" aria-checked="'+on+'" aria-label="Localização" data-local="'+(on?'parar':'ativar')+'"><span></span></button></div>'+
+   (!android()&&/android/i.test(navigator.userAgent||'')?'<a class="ap-cfg-link" href="https://easyloc-zeta.vercel.app/instalar.html">Instalar o aplicativo para Android (funciona com a tela apagada)</a>':'')+'<small class="ap-cfg-msg" role="status"></small>';
+  painel.querySelector('[role="status"]').textContent=status;
+  painel.querySelector('[data-local]').onclick=async e=>{const b=e.currentTarget;b.disabled=true;try{if(b.dataset.local==='ativar')await ativar();else await parar();}finally{pintar();}};
+ }
  function montar() {
   if (painel) return;
-  painel = document.createElement('section');
-  painel.setAttribute('aria-label','Compartilhamento de localização');
-  painel.style.cssText='position:fixed;bottom:12px;right:12px;z-index:1000;max-width:310px;padding:12px;border:1px solid #dce2e8;border-radius:12px;background:white;color:#263442;box-shadow:0 4px 18px #0002;font:13px system-ui';
-  painel.innerHTML='<details><summary>Localização para a Logística</summary><p>Ao ativar, sua última posição será compartilhada com a Logística da empresa. Neste app, a coleta pode parar ao fechar ou trocar de aplicativo.</p><button type="button" data-ativar>Compartilhar localização</button> <button type="button" data-parar>Pausar e remover posição</button><p role="status" style="margin-bottom:0"></p></details>';
-  (document.getElementById('apInicio') || document.body).append(painel);
-  painel.querySelector('[data-ativar]').onclick = ativar;
-  painel.querySelector('[data-parar]').onclick = parar;
-  if(android())painel.querySelector('details > p').textContent='Ao ativar, o Android compartilhará sua localização com a Logística mesmo ao sair do app ou apagar a tela. Uma notificação indicará o rastreamento; você pode pausar a qualquer momento.';
-  else if(/android/i.test(navigator.userAgent||'')){
-   const link=document.createElement('a');link.href='https://easyloc-zeta.vercel.app/instalar.html';link.textContent='Aplicativo Chiavari para Android';link.style.cssText='display:block;margin-top:10px';painel.querySelector('details').append(link);
-  }
+  painel = document.getElementById('apLocal') || document.createElement('div');
+  pintar();
  }
  function limpar() { geracao++; clearInterval(consulta); consulta=null; if (watch !== null) navigator.geolocation.clearWatch(watch); watch=null; ultimo=0; }
  async function ativar() {
@@ -46,7 +50,7 @@
    } catch (erro) { if(atual===geracao) mensagem(erroEnvio(erro)); }
    finally { enviando=false; }
   };
-  const falha=(erro)=>{ if(atual!==geracao)return; mensagem(erro.code===1?'Permissão de localização negada. Libere nas configurações do celular.':'Não foi possível obter a posição. Aguardando novo sinal.'); if(erro.code===1){localStorage.removeItem(chave());limpar();} };
+  const falha=(erro)=>{ if(atual!==geracao)return; mensagem(erro.code===1?'Permissão de localização negada. Libere nas configurações do celular.':'Não foi possível obter a posição. Aguardando novo sinal.'); if(erro.code===1){localStorage.removeItem(chave());limpar();pintar();mensagem('Permissão de localização negada. Libere nas configurações do celular.');} };
   const opcoes={enableHighAccuracy:true,maximumAge:10000,timeout:30000};
   watch=navigator.geolocation.watchPosition(transmitir,falha,opcoes);
   consulta=setInterval(()=>{if(atual===geracao)navigator.geolocation.getCurrentPosition(transmitir,falha,opcoes);},30000);
@@ -72,10 +76,10 @@
  window.addEventListener('acervo:android',async event=>{
   if(!android()||!painel)return;
   const {type,message}=event.detail||{};
-  if(type==='started'){nativoAtivo=true;tokenPendente=null;localStorage.setItem(chave(),'1');mensagem(message);}
-  else if(type==='stopped'){nativoAtivo=false;localStorage.removeItem(chave());mensagem('Compartilhamento Android pausado. Toque em Compartilhar localização para ativar.');}
+  if(type==='started'){nativoAtivo=true;tokenPendente=null;localStorage.setItem(chave(),'1');pintar();mensagem(message);}
+  else if(type==='stopped'){nativoAtivo=false;localStorage.removeItem(chave());pintar();mensagem('Compartilhamento pausado.');}
   else if(type==='error'){
-   const token=tokenPendente;tokenPendente=null;nativoAtivo=false;localStorage.removeItem(chave());mensagem(message);
+   const token=tokenPendente;tokenPendente=null;nativoAtivo=false;localStorage.removeItem(chave());pintar();mensagem(message);
    if(token)try{await sb().rpc('rastreamento_dispositivo_encerrar',{p_token:token});}catch(_){}
   }
  });
@@ -93,13 +97,13 @@
   const novoUsuario=data.session.user.id;
   if(empresa===id && usuario===novoUsuario)return;
   limpar(); empresa=id; usuario=novoUsuario; montar();
-  mensagem('Compartilhamento desativado.');
+  
   if(android())enviarAndroid({action:'status'});
   else if(localStorage.getItem(chave())==='1') ativar();
  }
  window.AppRastreador={iniciar};
  window.addEventListener('storage',event=>{if(empresa&&usuario&&event.key===chave()&&event.newValue!=='1'){limpar();mensagem('Compartilhamento pausado em outra tela.');}});
- sb()?.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){if(android()){enviarAndroid({action:'stop'});enviarAndroid({action:'push:disable'});}limpar();if(empresa&&usuario)localStorage.removeItem(chave());painel?.remove();painel=null;empresa=null;usuario=null;}});
+ sb()?.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){if(android()){enviarAndroid({action:'stop'});enviarAndroid({action:'push:disable'});}limpar();if(empresa&&usuario)localStorage.removeItem(chave());painel=null;empresa=null;usuario=null;}});
  window.addEventListener('pagehide',limpar);
  window.addEventListener('pageshow',()=>{if(android()){if(empresa)enviarAndroid({action:'status'});return;}if(empresa&&usuario&&localStorage.getItem(chave())==='1'&&watch===null)ativar();});
  if(!/\/app\.html$/.test(location.pathname)) {

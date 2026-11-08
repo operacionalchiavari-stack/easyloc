@@ -4,7 +4,7 @@
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const data=v=>v?String(v).slice(0,10).split('-').reverse().join('/'):'Sem data';
  const numero=v=>Number(v||0).toLocaleString('pt-BR');
- const s={usuario:null,empresa:null,vinculos:[],fila:[],fotos:new Map(),etapa:'ida',base:null,q:{},danos:{},primeira:null,fotosNovas:new Map(),vistos:new Set(),ocupado:false,leitor:null,pendente:null,geracao:0};
+ const s={usuario:null,empresa:null,vinculos:[],fila:[],fotos:new Map(),etapa:'ida',coluna:'aguardando',datas:new Map(),divergencias:{mapa:new Map(),pedidos:[]},base:null,q:{},danos:{},primeira:null,fotosNovas:new Map(),vistos:new Set(),ocupado:false,leitor:null,pendente:null,geracao:0};
  const imagens=url=>/^https?:\/\//i.test(url||'');
  const marca=$('taLogoEmpresa');let geracaoMarca=0;
  const ajustarMarca=()=>marca.classList.toggle('quadrada',!!marca.naturalHeight&&marca.naturalWidth/marca.naturalHeight<1.6);
@@ -69,29 +69,54 @@
   (nomes.data||[]).forEach(e=>{const option=[...$('taEmpresa').options].find(o=>o.value===e.id);if(option)option.textContent=e.nome;});
   await identidade(empresa);await carregarFila();tela('taFila');
  }
+ // Nov/2026: as mesmas colunas do quadro do computador (Aguardando, Em triagem, Concluído, Divergências), uma por aba.
+ const COLUNAS=[{chave:'aguardando',nome:'Aguardando'},{chave:'andamento',nome:'Em triagem'},{chave:'concluido',nome:'Concluído'},{chave:'divergencias',nome:'Divergências'}];
+ const TITULOS={aguardando:['Aguardando','Pedidos prontos para separar (ida) ou para conferir a volta.'],andamento:['Em triagem','Separações e conferências já começadas.'],concluido:['Concluído','Separados, esperando a Expedição carregar.'],divergencias:['Divergências','Volta com peça faltando ou a mais. Quem resolve é a Gestão do acervo.']};
  async function carregarFila(){
   const geracao=s.geracao,empresa=s.empresa;$('taAtualizar').disabled=true;
   try{
    const fila=await window.PedidoFluxo.fila(sb,empresa,'triagem');
    if(geracao!==s.geracao||empresa!==s.empresa)return;
-   s.fila=fila.filter(p=>!p.somente_consulta&&(p.fluxo_etapa==='triagem'||!p.pedido_origem_id)&&['triagem','triagem_retorno','retorno_simultaneo'].includes(p.fluxo_etapa));
-   const ids=[...new Set(s.fila.map(p=>p.cliente_id).filter(Boolean))];
+   s.fila=fila.filter(p=>!p.somente_consulta&&(['triagem','expedicao'].includes(p.fluxo_etapa)||!p.pedido_origem_id)&&['triagem','expedicao','triagem_retorno','retorno_simultaneo'].includes(p.fluxo_etapa));
+   s.divergencias={mapa:new Map(),pedidos:[]};
+   try{const r=await sb.from('operacao_ocorrencias').select('pedido_id,tipo').eq('empresa_id',empresa).is('resolvida_em',null).in('tipo',['falta','sobra']).eq('etapa','retorno');
+    (r.data||[]).forEach(o=>{const k=String(o.pedido_id),m=s.divergencias.mapa.get(k)||{falta:0,sobra:0};m[o.tipo]++;s.divergencias.mapa.set(k,m);});
+    if(s.divergencias.mapa.size){const ps=await sb.from('separacoes_pedidos').select('id,numero_pedido,cliente_nome,cliente_id,local_nome,data_coleta,data_evento,data_entrega').eq('empresa_id',empresa).in('id',[...s.divergencias.mapa.keys()]);s.divergencias.pedidos=ps.data||[];}
+   }catch(_){}
+   const todos=[...s.fila,...s.divergencias.pedidos];
+   s.datas=await window.AppFila.datas(sb,empresa,[...new Set(todos.map(p=>p.id))]);
+   const ids=[...new Set(todos.map(p=>p.cliente_id).filter(Boolean))];
    for(let i=0;i<ids.length;i+=100){const r=await sb.from('clientes_empresas').select('id,catalogo_logo_url').eq('empresa_id',empresa).in('id',ids.slice(i,i+100));(r.data||[]).forEach(c=>s.fotos.set(c.id,c.catalogo_logo_url));}
    if(geracao===s.geracao&&empresa===s.empresa)renderFila();
   }finally{$('taAtualizar').disabled=false;}
  }
- const daEtapa=p=>s.etapa==='ida'?p.fluxo_etapa==='triagem':['triagem_retorno','retorno_simultaneo'].includes(p.fluxo_etapa);
+ function cartoes(){
+  const out={aguardando:[],andamento:[],concluido:[],divergencias:[]};
+  s.fila.forEach(p=>{
+   if(['triagem','expedicao'].includes(p.fluxo_etapa)){
+    const col=p.fluxo_etapa==='expedicao'||['separado','separado_com_divergencia'].includes(p.status)?'concluido':['em_separacao','pausado'].includes(p.status)?'andamento':'aguardando';
+    out[col].push({p,tipo:'ida',col});
+   }else{const col=p.operacao?.retorno?.iniciado_em?'andamento':'aguardando';out[col].push({p,tipo:'volta',col});}
+  });
+  s.divergencias.pedidos.forEach(p=>out.divergencias.push({p,tipo:'volta',col:'divergencias'}));
+  return out;
+ }
+ function cartaoHtml({p,tipo,col}){
+  const d=s.datas?.get(String(p.id))||{},ida=tipo==='ida';
+  const r=s.divergencias.mapa.get(String(p.id));
+  const status=col==='divergencias'?[r?.falta?r.falta+' item(ns) faltando':'',r?.sobra?r.sobra+' item(ns) a mais':''].filter(Boolean).join(' · '):
+   ida?(col==='concluido'?'Separado · aguardando a Expedição':col==='andamento'?'Separação em andamento':'Aguardando separação'):(col==='andamento'?'Conferência em andamento':'Aguardando conferência da volta');
+  return window.AppFila.cartao({id:p.id,numero:p.numero_pedido,cliente:p.cliente_nome,local:p.local_nome,foto:s.fotos.get(p.cliente_id),coluna:col,tipo,selo:ida?'Ida':'Volta',
+   datas:ida?[['Carregamento',d.carregamento||p.data_entrega||p.data_evento],['Entrega',p.data_entrega||p.data_evento]]:[['Coleta',p.data_coleta||p.data_evento],['Descarregamento',d.descarregamento||p.data_coleta||p.data_evento]],status});
+ }
  function renderFila(){
   const termo=$('taBusca').value.trim().toLocaleLowerCase('pt-BR');
-  const lista=s.fila.filter(daEtapa).filter(p=>!termo||[p.numero_pedido,p.cliente_nome,p.local_nome].join(' ').toLocaleLowerCase('pt-BR').includes(termo));
-  lista.sort((a,b)=>String(s.etapa==='ida'?a.data_entrega:a.data_coleta).localeCompare(String(s.etapa==='ida'?b.data_entrega:b.data_coleta)));
-  $('taFilaTitulo').textContent=s.etapa==='ida'?'Separação de ida':'Conferência da volta';
-  $('taFilaDescricao').textContent=s.etapa==='ida'?'Separe os materiais com a câmera ou com um leitor QR.':'Conte o que voltou. Os danos seguem para a Gestão do Acervo.';
-  $('taFilaContagem').textContent=lista.length;
-  document.querySelector('[data-total="ida"]').textContent=s.fila.filter(p=>p.fluxo_etapa==='triagem').length;
-  document.querySelector('[data-total="volta"]').textContent=s.fila.filter(p=>['triagem_retorno','retorno_simultaneo'].includes(p.fluxo_etapa)).length;
-  document.querySelectorAll('[data-etapa]').forEach(b=>{if(b.dataset.etapa===s.etapa)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
-  $('taPedidos').innerHTML=lista.length?lista.map(p=>'<button type="button" class="pedido '+(s.etapa==='volta'?'pedido-volta':'')+'" data-pedido="'+esc(p.id)+'"><span class="pedido-topo"><span class="pedido-numero">Pedido #'+esc(p.numero_pedido)+'</span><span class="pedido-data">'+data(s.etapa==='ida'?p.data_entrega||p.data_evento:p.data_coleta||p.data_evento)+'</span></span><span class="pessoa">'+avatar(p.cliente_nome,s.fotos.get(p.cliente_id))+'<span class="pessoa-texto"><strong>'+esc(p.cliente_nome||'Decorador')+'</strong><small>'+esc(p.local_nome||'Local não informado')+'</small></span></span><span class="pedido-status"><i></i>'+(s.etapa==='volta'?'Pronto para conferir o retorno':['em_separacao','pausado'].includes(p.status)?'Separação em andamento':'Aguardando separação')+'</span></button>').join(''):'<div class="vazio">'+(termo?'Nenhum pedido encontrado.':'Nenhum pedido liberado para esta etapa.')+'</div>';
+  const grupos=cartoes(),filtro=c=>!termo||[c.p.numero_pedido,c.p.cliente_nome,c.p.local_nome].join(' ').toLocaleLowerCase('pt-BR').includes(termo);
+  const dataDe=c=>String((c.tipo==='ida'?c.p.data_entrega:c.p.data_coleta)||c.p.data_evento||'9999');
+  const lista=grupos[s.coluna].filter(filtro).sort((a,b)=>dataDe(a).localeCompare(dataDe(b)));
+  $('taFilaTitulo').textContent=TITULOS[s.coluna][0];$('taFilaDescricao').textContent=TITULOS[s.coluna][1];$('taFilaContagem').textContent=lista.length;
+  const cont={};COLUNAS.forEach(c=>cont[c.chave]=grupos[c.chave].length);window.AppFila.nav($('taNavegacao'),COLUNAS,s.coluna,cont);
+  $('taPedidos').innerHTML=lista.length?lista.map(cartaoHtml).join(''):'<div class="vazio">'+(termo?'Nenhum pedido encontrado.':'Nenhum pedido nesta coluna.')+'</div>';
  }
  async function abrir(id){
   if(s.ocupado)return;s.ocupado=true;const geracao=s.geracao;mensagem('');pararCamera();
@@ -232,8 +257,8 @@
   }catch(err){mensagem(err.message);}finally{s.ocupado=false;botao.disabled=false;}
  };
  $('taBusca').oninput=renderFila;$('taAtualizar').onclick=async()=>{mensagem('');try{await carregarFila();}catch(e){mensagem(e.message);}};
- $('taPedidos').onclick=e=>{const b=e.target.closest('[data-pedido]');if(b)abrir(b.dataset.pedido);};
- $('taNavegacao').onclick=e=>{const b=e.target.closest('[data-etapa]');if(b){s.etapa=b.dataset.etapa;mensagem('');renderFila();}};
+ $('taPedidos').onclick=e=>{const b=e.target.closest('[data-pedido]');if(!b)return;if(b.dataset.coluna==='divergencias'){sinal('aviso',{titulo:'Divergência na Gestão do acervo',texto:'A diferença deste pedido é resolvida em Estoque › Gestão do acervo, com a contagem geral do item.'});return;}s.etapa=b.dataset.tipo==='volta'?'volta':'ida';abrir(b.dataset.pedido);};
+ $('taNavegacao').onclick=e=>{const b=e.target.closest('[data-coluna-aba]');if(b){s.coluna=b.dataset.colunaAba;mensagem('');renderFila();window.scrollTo(0,0);}};
  $('taConta').onclick=()=>$('taContaDialog').showModal();
  document.querySelector('[data-fechar-conta]').onclick=()=>$('taContaDialog').close();
  $('taEmpresa').onchange=async e=>{if(s.ocupado)return;s.ocupado=true;const anterior=s.empresa;$('taContaDialog').close();tela('taCarregando');try{await selecionarEmpresa(e.target.value);}catch(err){s.empresa=anterior;localStorage.setItem('triagem-app:empresa',anterior);$('taEmpresa').value=anterior;tela('taFila');mensagem(err.message);}finally{s.ocupado=false;}};

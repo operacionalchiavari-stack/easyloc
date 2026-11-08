@@ -19,7 +19,10 @@
     { chave: "bonus", nome: "Meu bônus", texto: "Seu bônus, extrato e prêmios.", href: "Modulos/Chiavari/Cronograma/montador.html?app=1&tela=bonus",
       icone: '<svg viewBox="0 0 24 24"><path d="M3 8h18v4H3zm2 4v9h14v-9M12 8v13"/><path d="M12 8H8a3 3 0 1 1 3-3Zm0 0h4a3 3 0 1 0-3-3Z"/></svg>' },
   ];
-  function tela(id){ ["apCarregando", "apLogin", "apInicio"].forEach((x) => { $(x).hidden = x !== id; }); document.body.dataset.tela = id;
+  // Nov/2026: Configurações (notificações e localização) aparece para todos, no fim da lista.
+  const CONFIG = { chave: "config", nome: "Configurações", texto: "Notificações e localização.", href: "#config",
+    icone: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>' };
+  function tela(id){ ["apCarregando", "apLogin", "apInicio", "apConfig"].forEach((x) => { $(x).hidden = x !== id; }); document.body.dataset.tela = id;
     // Nov/2026: ao abrir o app (inclusive pelo ícone na tela do celular) entra a animação padrão até a tela ficar pronta.
     if(window.AppCarregamento){ id === "apCarregando" ? AppCarregamento.mostrar() : AppCarregamento.pronto(); }
     if(id === "apLogin"){ iniciarVitrine(); try{ const aviso = sessionStorage.getItem("app_aviso"); if(aviso){ sessionStorage.removeItem("app_aviso"); mensagem(aviso); } }catch(e){} } }
@@ -109,18 +112,24 @@
     const inicial = esc((nome || "?").charAt(0).toUpperCase());
     const foto = sb.storage.from("avatares").getPublicUrl(empresa + "/" + user.id + ".jpg").data.publicUrl;
     $("apAvatar").innerHTML = inicial + '<img alt="" src="' + esc(foto) + '?t=' + Date.now() + '" onerror="this.remove()">';
-    const disponiveis = MODULOS.filter((m) => mods[m.chave]);
-    $("apModulos").innerHTML = disponiveis.length ? disponiveis.map((m, i) =>
+    const disponiveis = MODULOS.filter((m) => mods[m.chave]).concat(CONFIG);
+    $("apModulos").innerHTML = disponiveis.map((m, i) =>
       '<a class="ap-modulo" href="' + m.href + '" style="--i:' + i + '"><span class="ap-modulo-icone" aria-hidden="true">' + m.icone + '</span>' +
       '<span class="ap-modulo-texto"><b class="ap-modulo-titulo">' + m.nome + '</b><small>' + m.texto + '</small></span><span class="ap-seta" aria-hidden="true">›</span></a>').join("")
-      : '<p class="ap-vazio">Seu usuário ainda não tem acesso a nenhum módulo do app. Fale com o administrador.</p>';
-    tela("apInicio");
+      + (disponiveis.length === 1 ? '<p class="ap-vazio">Seu usuário ainda não tem acesso a nenhum módulo do app. Fale com o administrador.</p>' : "");
+    tela(location.hash === "#config" ? "apConfig" : "apInicio");
     window.AppRastreador?.iniciar(empresa);
     window.AppAvisos?.iniciar(empresa); // Nov/2026: bloco "Avisos no celular" (notificações)
   }
 
   /* Nov/2026: tocar num módulo mostra o carregamento padrão (branco, com a logo) enquanto a página do módulo abre. */
-  $("apModulos").addEventListener("click", (e) => { if(e.target.closest(".ap-modulo")) window.AppCarregamento?.mostrar(); });
+  $("apModulos").addEventListener("click", (e) => {
+    const a = e.target.closest(".ap-modulo"); if(!a){ return; }
+    if(a.getAttribute("href") === "#config"){ e.preventDefault(); history.pushState(null, "", "#config"); tela("apConfig"); window.scrollTo(0, 0); return; }
+    window.AppCarregamento?.mostrar();
+  });
+  $("apConfigVoltar").addEventListener("click", () => { if(location.hash === "#config"){ history.back(); } else { tela("apInicio"); } });
+  window.addEventListener("popstate", () => { if(!$("apLogin").hidden || !$("apCarregando").hidden){ return; } tela(location.hash === "#config" ? "apConfig" : "apInicio"); });
 
   /* ---------- Entrar e sair ---------- */
   $("apForm").addEventListener("submit", async (ev) => {

@@ -12,7 +12,7 @@
  const imagens=url=>/^(https?:|data:)/i.test(url||'');
  const CAMPO={carregamento:'lida_carregamento_em',descarregamento:'lida_descarregamento_em'};
  const ROTULO={carregamento:'Carregamento',descarregamento:'Descarregamento'};
- const s={usuario:null,empresa:null,vinculos:[],fila:[],fotos:new Map(),etapa:'carregamento',ocupado:false,leitor:null,geracao:0,
+ const s={usuario:null,empresa:null,vinculos:[],fila:[],fotos:new Map(),etapa:'carregamento',coluna:'aguardando',datas:new Map(),ocupado:false,leitor:null,geracao:0,
   bloqueados:new Set(),semCaminhao:new Set(),cega:false,
   pedido:null,etiquetas:[],nomes:new Map(),fotoItem:new Map(),patLidos:new Set(),modo:'qr',pecas:[],q:{},primeira:null,recontou:false,concluido:null,capas:null};
  const marca=$('taLogoEmpresa');let geracaoMarca=0;
@@ -59,46 +59,64 @@
   s.cegaDescarga=regra.data?.descarregamento_conferencia==='cegas';
   await identidade(empresa);await carregarFila();tela('taFila');
  }
- const daEtapa=p=>s.etapa==='carregamento'?p.fluxo_etapa==='expedicao':['descarregamento','retorno_simultaneo'].includes(p.fluxo_etapa);
+ // Nov/2026: as mesmas colunas do quadro do computador, uma por aba: Aguardando conferência, Em conferência,
+ // Aguardando entrega (conferidos) e Pendências. Cada pedido vira um cartão de ida (carregamento) ou de descarregamento.
+ const COLUNAS=[{chave:'aguardando',nome:'Aguardando conferência'},{chave:'andamento',nome:'Em conferência'},{chave:'conferidos',nome:'Aguardando entrega'},{chave:'pendencias',nome:'Pendências'}];
+ const TITULOS={aguardando:['Aguardando conferência','Pedidos para carregar ou descarregar.'],andamento:['Em conferência','Carregamentos e descarregamentos já começados.'],conferidos:['Aguardando entrega','Conferidos: carregados esperando a entrega, ou descarregados esperando a triagem da volta.'],pendencias:['Pendências','Conferidos com volume faltando.']};
  async function carregarFila(){
   const geracao=s.geracao,empresa=s.empresa;$('taAtualizar').disabled=true;
   try{
    const fila=await window.PedidoFluxo.fila(sb,empresa,'expedicao');
    if(geracao!==s.geracao||empresa!==s.empresa)return;
-   s.fila=fila.filter(p=>!p.somente_consulta&&['expedicao','descarregamento','retorno_simultaneo'].includes(p.fluxo_etapa));
-   const ids=s.fila.map(p=>p.id);s.bloqueados=new Set();s.semCaminhao=new Set();
+   s.fila=fila.filter(p=>!p.somente_consulta&&['expedicao','descarregamento','retorno_simultaneo','entrega','triagem_retorno','posicao_final'].includes(p.fluxo_etapa));
+   const ids=s.fila.filter(p=>p.fluxo_etapa==='expedicao').map(p=>p.id);s.bloqueados=new Set();s.semCaminhao=new Set();
    for(let i=0;i<ids.length;i+=100){
     const parte=ids.slice(i,i+100);
     const [b1,b2]=await Promise.all([sb.rpc('pedidos_pagamento_bloqueados',{p_pedidos:parte,p_etapa:'carregamento'}),sb.rpc('pedidos_sem_caminhao_bloqueados',{p_pedidos:parte})]);
     (b1.data||[]).forEach(id=>s.bloqueados.add(String(id)));(b2.data||[]).forEach(id=>s.semCaminhao.add(String(id)));
    }
+   s.datas=await window.AppFila.datas(sb,empresa,s.fila.map(p=>p.id));
    const cli=[...new Set(s.fila.map(p=>p.cliente_id).filter(Boolean))];
    for(let i=0;i<cli.length;i+=100){const r=await sb.from('clientes_empresas').select('id,catalogo_logo_url').eq('empresa_id',empresa).in('id',cli.slice(i,i+100));(r.data||[]).forEach(c=>s.fotos.set(c.id,c.catalogo_logo_url));}
    if(geracao===s.geracao&&empresa===s.empresa)renderFila();
   }finally{$('taAtualizar').disabled=false;}
  }
- function motivoBloqueio(p){
-  if(s.etapa!=='carregamento')return '';
+ const etapaDo=tipo=>tipo==='ida'?'carregamento':'descarregamento';
+ function faltas(p,tipo){const r=p.operacao?.[etapaDo(tipo)];if(!r?.concluido_em||p.encerrado_operacional_em)return 0;return Array.isArray(r.faltando)?r.faltando.length:Number(r.faltando)||0;}
+ function cartoes(){
+  const out={aguardando:[],andamento:[],conferidos:[],pendencias:[]};
+  s.fila.forEach(p=>{
+   if(['expedicao','descarregamento','retorno_simultaneo'].includes(p.fluxo_etapa)){const tipo=p.fluxo_etapa==='expedicao'?'ida':'descarregamento';const col=p.operacao?.[etapaDo(tipo)]?.iniciado_em?'andamento':'aguardando';out[col].push({p,tipo,col});}
+   else{const tipo=p.fluxo_etapa==='entrega'?'ida':'descarregamento';const col=faltas(p,tipo)?'pendencias':'conferidos';out[col].push({p,tipo,col});}
+  });
+  return out;
+ }
+ function motivoBloqueio(p,tipo,col){
+  if(tipo!=='ida'||!['aguardando','andamento'].includes(col))return '';
   if(s.bloqueados.has(String(p.id)))return 'Aguardando o Financeiro: o pedido ainda não tem o pagamento mínimo.';
   if(s.semCaminhao.has(String(p.id)))return 'Sem caminhão programado no Painel Logístico.';
   return '';
  }
+ const quando=v=>{const d=new Date(v);return Number.isNaN(d.getTime())?'':d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' às '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});};
+ function cartaoHtml({p,tipo,col}){
+  const d=s.datas?.get(String(p.id))||{},ida=tipo==='ida',reg=p.operacao?.[etapaDo(tipo)];
+  let status;
+  if(col==='pendencias')status=faltas(p,tipo)+' volume(s) com pendência';
+  else if(col==='conferidos')status=(ida?'Carregado ':'Descarregado ')+quando(reg?.concluido_em)+(reg?.por?' por '+reg.por:'');
+  else if(col==='andamento')status='Conferência em andamento';
+  else if(ida&&!['separado','separado_com_divergencia'].includes(p.status))status='Ainda em separação';
+  else status=ida?'Aguardando carregamento':'Aguardando descarregamento';
+  return window.AppFila.cartao({id:p.id,numero:p.numero_pedido,cliente:p.cliente_nome,local:p.local_nome,foto:s.fotos.get(p.cliente_id),coluna:col,tipo,selo:ida?'Ida':'Descarregamento',trava:motivoBloqueio(p,tipo,col),
+   datas:ida?[['Carregamento',d.carregamento||p.data_entrega||p.data_evento],['Entrega',p.data_entrega||p.data_evento]]:[['Coleta',p.data_coleta||p.data_evento],['Descarregamento',d.descarregamento||p.data_coleta||p.data_evento]],status});
+ }
  function renderFila(){
   const termo=$('taBusca').value.trim().toLocaleLowerCase('pt-BR');
-  const lista=s.fila.filter(daEtapa).filter(p=>!termo||[p.numero_pedido,p.cliente_nome,p.local_nome].join(' ').toLocaleLowerCase('pt-BR').includes(termo));
-  const dataDe=p=>s.etapa==='carregamento'?p.data_entrega||p.data_evento:p.data_coleta||p.data_evento;
-  lista.sort((a,b)=>String(dataDe(a)).localeCompare(String(dataDe(b))));
-  $('taFilaTitulo').textContent=ROTULO[s.etapa];
-  $('taFilaDescricao').textContent=s.etapa==='carregamento'?'Leia o QR de cada volume ao colocar no caminhão.':'Leia o QR de cada volume que desceu do caminhão.';
-  $('taFilaContagem').textContent=lista.length;
-  document.querySelector('[data-total="carregamento"]').textContent=s.fila.filter(p=>p.fluxo_etapa==='expedicao').length;
-  document.querySelector('[data-total="descarregamento"]').textContent=s.fila.filter(p=>['descarregamento','retorno_simultaneo'].includes(p.fluxo_etapa)).length;
-  document.querySelectorAll('[data-etapa]').forEach(b=>{if(b.dataset.etapa===s.etapa)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current');});
-  $('taPedidos').innerHTML=lista.length?lista.map(p=>{
-   const trava=motivoBloqueio(p),reg=p.operacao?.[s.etapa];
-   const status=trava?'<span class="pedido-status ex-travado"><i></i>'+esc(trava)+'</span>':'<span class="pedido-status"><i></i>'+(reg?.iniciado_em?'Conferência em andamento':s.etapa==='carregamento'?'Aguardando carregamento':'Aguardando descarregamento')+'</span>';
-   return '<button type="button" class="pedido'+(s.etapa==='descarregamento'?' pedido-volta':'')+(trava?' ex-bloqueado':'')+'" data-pedido="'+esc(p.id)+'"'+(trava?' data-trava="'+esc(trava)+'"':'')+'><span class="pedido-topo"><span class="pedido-numero">Pedido #'+esc(p.numero_pedido)+'</span><span class="pedido-data">'+data(dataDe(p))+'</span></span><span class="pessoa">'+avatar(p.cliente_nome,s.fotos.get(p.cliente_id))+'<span class="pessoa-texto"><strong>'+esc(p.cliente_nome||'Decorador')+'</strong><small>'+esc(p.local_nome||'Local não informado')+'</small></span></span>'+status+'</button>';
-  }).join(''):'<div class="vazio">'+(termo?'Nenhum pedido encontrado.':s.etapa==='carregamento'?'Nenhum pedido pronto para carregar.':'Nenhum pedido para descarregar.')+'</div>';
+  const grupos=cartoes(),filtro=c=>!termo||[c.p.numero_pedido,c.p.cliente_nome,c.p.local_nome].join(' ').toLocaleLowerCase('pt-BR').includes(termo);
+  const dataDe=c=>String((c.tipo==='ida'?c.p.data_entrega:c.p.data_coleta)||c.p.data_evento||'9999');
+  const lista=grupos[s.coluna].filter(filtro).sort((a,b)=>dataDe(a).localeCompare(dataDe(b)));
+  $('taFilaTitulo').textContent=TITULOS[s.coluna][0];$('taFilaDescricao').textContent=TITULOS[s.coluna][1];$('taFilaContagem').textContent=lista.length;
+  const cont={};COLUNAS.forEach(c=>cont[c.chave]=grupos[c.chave].length);window.AppFila.nav($('taNavegacao'),COLUNAS,s.coluna,cont);
+  $('taPedidos').innerHTML=lista.length?lista.map(cartaoHtml).join(''):'<div class="vazio">'+(termo?'Nenhum pedido encontrado.':'Nenhum pedido nesta coluna.')+'</div>';
  }
 
  // ------------------------------------------------------------------ pedido
@@ -119,7 +137,7 @@
     const ex=await sb.from('separacoes_pedidos').select('id').eq('empresa_id',s.empresa).eq('pedido_origem_id',id).neq('status','cancelado');
     if((ex.data||[]).length)throw Error('Este pedido tem pedido extra: o descarregamento é conferido junto, pela Expedição do computador.');
    }
-   const assumido=await rpc('operacao_iniciar_conferencia',{p_pedido:id,p_etapa:etapa});
+   const assumido=pedido.operacao?.[etapa]?.concluido_em?null:await rpc('operacao_iniciar_conferencia',{p_pedido:id,p_etapa:etapa});
    if(geracao!==s.geracao)return;
    s.pedido=assumido?.id?{...pedido,...assumido}:pedido;s.etiquetas=etq.data||[];s.patLidos=new Set();s.q={};s.primeira=null;s.recontou=false;
    s.cega=etapa==='descarregamento'&&s.cegaDescarga;
@@ -293,8 +311,8 @@
   }catch(err){mensagem(err.message);}finally{s.ocupado=false;botao.disabled=false;}
  };
  $('taBusca').oninput=renderFila;$('taAtualizar').onclick=async()=>{mensagem('');try{await carregarFila();}catch(e){mensagem(e.message);}};
- $('taPedidos').onclick=e=>{const b=e.target.closest('[data-pedido]');if(!b)return;if(b.dataset.trava){sinal('erro',{titulo:'Pedido bloqueado',texto:b.dataset.trava});return;}abrir(b.dataset.pedido);};
- $('taNavegacao').onclick=e=>{const b=e.target.closest('[data-etapa]');if(b){s.etapa=b.dataset.etapa;mensagem('');renderFila();}};
+ $('taPedidos').onclick=e=>{const b=e.target.closest('[data-pedido]');if(!b)return;if(b.dataset.trava){sinal('erro',{titulo:'Pedido bloqueado',texto:b.dataset.trava});return;}s.etapa=b.dataset.tipo==='ida'?'carregamento':'descarregamento';abrir(b.dataset.pedido);};
+ $('taNavegacao').onclick=e=>{const b=e.target.closest('[data-coluna-aba]');if(b){s.coluna=b.dataset.colunaAba;mensagem('');renderFila();window.scrollTo(0,0);}};
  $('taConta').onclick=()=>$('taContaDialog').showModal();
  document.querySelector('[data-fechar-conta]').onclick=()=>$('taContaDialog').close();
  $('taEmpresa').onchange=async e=>{if(s.ocupado)return;$('taContaDialog').close();tela('taCarregando');try{await selecionarEmpresa(e.target.value);}catch(err){tela('taFila');mensagem(err.message);}};

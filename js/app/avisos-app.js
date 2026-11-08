@@ -26,16 +26,19 @@
   }
   function msg(t, erro) { const p = host()?.querySelector("[data-avisos-msg]"); if (p) { p.textContent = t || ""; p.classList.toggle("erro", !!erro); } }
 
+  // Nov/2026: em Configurações do app, uma linha simples com um botão liga/desliga.
+  const ICONE = '<span class="ap-cfg-icone" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"/></svg></span>';
   function pintar(estado) {
     const h = host(); if (!h) return;
-    const icone = '<span class="ap-avisos-icone" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"/></svg></span>';
-    let corpo;
-    if (!suporta) corpo = '<p>Este navegador não recebe notificações.' + (iphone ? " No iPhone, abra pelo Safari e use Compartilhar → Adicionar à Tela de Início." : "") + "</p>";
-    else if (iphone && !instalado) corpo = '<p>No iPhone, os avisos só funcionam com o app na Tela de Início: no Safari, toque em Compartilhar → <b>Adicionar à Tela de Início</b> e abra por lá.</p>';
-    else if (Notification.permission === "denied") corpo = '<p>Os avisos estão bloqueados para este app. Libere nas configurações do celular (Notificações) e volte aqui.</p>';
-    else if (estado === "ligado") corpo = '<p>Avisos ligados neste celular. Você recebe quando for escalado para uma montagem ou desmontagem.</p><div class="ap-avisos-acoes"><button type="button" class="ap-avisos-btn" data-avisos="teste">Enviar notificação de teste</button><button type="button" class="ap-avisos-link" data-avisos="desligar">Desligar</button></div>';
-    else corpo = '<p>Receba no celular quando for escalado para uma montagem ou desmontagem.</p><div class="ap-avisos-acoes"><button type="button" class="ap-avisos-btn" data-avisos="ligar">Ativar avisos</button></div>';
-    h.innerHTML = icone + '<div class="ap-avisos-texto"><b>Avisos no celular</b>' + corpo + '<small data-avisos-msg role="status"></small></div>';
+    const ligado = estado === "ligado";
+    let texto, botao = "";
+    if (!suporta) texto = "Este navegador não recebe notificações." + (iphone ? " No iPhone, abra pelo Safari e adicione à Tela de Início." : "");
+    else if (iphone && !instalado) texto = "No iPhone, funciona só com o app na Tela de Início (Safari › Compartilhar › Adicionar à Tela de Início).";
+    else if (Notification.permission === "denied") texto = "Bloqueadas no celular. Libere em Configurações do celular › Notificações.";
+    else { texto = ligado ? "Ligadas. Você recebe quando for escalado." : "Receba quando for escalado para uma montagem ou desmontagem.";
+      botao = '<button type="button" class="ap-switch" role="switch" aria-checked="' + ligado + '" aria-label="Notificações" data-avisos="' + (ligado ? "desligar" : "ligar") + '"><span></span></button>'; }
+    h.innerHTML = '<div class="ap-cfg-linha">' + ICONE + '<div class="ap-cfg-texto"><b>Notificações</b><p>' + texto + '</p></div>' + botao + '</div>' +
+      (ligado ? '<button type="button" class="ap-cfg-link" data-avisos="teste">Enviar notificação de teste</button>' : "") + '<small class="ap-cfg-msg" data-avisos-msg role="status"></small>';
     h.hidden = false;
   }
 
@@ -48,7 +51,7 @@
     const j = s.toJSON();
     const { error } = await sb().rpc("app_push_registrar", { p_empresa: empresa, p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth, p_aparelho: navigator.userAgent.slice(0, 200) });
     if (error) throw new Error(error.message);
-    pintar("ligado"); msg("Pronto! Toque em \"Enviar notificação de teste\" para ver como fica.");
+    pintar("ligado"); msg("Notificações ligadas.");
   }
   async function desligar() {
     const s = await assinaturaAtual();

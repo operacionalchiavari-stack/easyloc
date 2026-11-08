@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles/app-celular.css?v=20261106-avisos">
+<link rel="stylesheet" href="styles/app-celular.css?v=20261107-config">
 <script src="https://unpkg.com/@supabase/supabase-js@2.118.0"></script>
 <script src="js/core/supabase.js"></script>
 <script src="js/core/doisFatores.js?v=20261023-2fa"></script>
@@ -48,17 +48,25 @@
     </div>
     <p class="ap-titulo">O que vamos fazer agora?</p>
     <div class="ap-modulos" id="apModulos"></div>
-    <section class="ap-avisos" id="apAvisos" hidden aria-label="Avisos no celular"></section>
     <div class="ap-rodape">
       <button type="button" class="ap-link" id="apCompleta">Abrir a versão completa</button>
       <button type="button" class="ap-sair" id="apSair"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v16h5m6-14 6 6-6 6m-6-6h12"/></svg>Sair</button>
     </div>
   </section>
+
+  <section id="apConfig" class="ap-config" hidden>
+    <button type="button" class="ap-voltar" id="apConfigVoltar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Início</button>
+    <h1 class="ap-config-titulo">Configurações</h1>
+    <div class="ap-cfg-lista">
+      <section class="ap-cfg" id="apAvisos" aria-label="Notificações"></section>
+      <section class="ap-cfg" id="apLocal" aria-label="Localização"></section>
+    </div>
+  </section>
 </main>
-<script src="js/app/avisos-android.js?v=20261107-fcm"></script>
-<script src="js/app/avisos-app.js?v=20261107-fcm"></script>
-<script src="js/app/rastreamento-app.js?v=20261107-principal"></script>
-<script src="js/app/app-celular.js?v=20261107-app-expedicao"></script>
+<script src="js/app/avisos-android.js?v=20261107-config"></script>
+<script src="js/app/avisos-app.js?v=20261107-config"></script>
+<script src="js/app/rastreamento-app.js?v=20261107-config"></script>
+<script src="js/app/app-celular.js?v=20261107-config"></script>
 <script src="js/app/android-principal.js?v=20261107"></script>
 </body>
 </html>

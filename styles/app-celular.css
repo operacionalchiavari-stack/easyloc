@@ -94,3 +94,27 @@ body{ min-height:100dvh; display:flex; flex-direction:column; }
 .ap-avisos-texto small{display:block;margin-top:8px;font-size:12.5px;color:#1f7a44}
 .ap-avisos-texto small:empty{display:none}
 .ap-avisos-texto small.erro{color:#b42318}
+/* Configurações do app (nov/2026): notificações e localização com um botão liga/desliga */
+.ap-config{flex:1;display:flex;flex-direction:column;padding:18px 20px calc(24px + env(safe-area-inset-bottom));width:min(560px,100%);margin:0 auto}
+.ap-voltar{align-self:flex-start;display:inline-flex;align-items:center;gap:4px;border:0;background:none;padding:8px 4px 8px 0;color:var(--ap-suave);font:600 14px Manrope,sans-serif;cursor:pointer}
+.ap-voltar svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ap-config-titulo{margin:10px 0 22px;font:600 34px/1.05 "Cormorant Garamond",serif;color:var(--ap-tinta)}
+.ap-cfg-lista{display:flex;flex-direction:column;gap:14px}
+.ap-cfg{padding:18px;border-radius:22px;background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.06),0 8px 24px -14px rgba(15,23,42,.18)}
+.ap-cfg-linha{display:flex;align-items:center;gap:14px}
+.ap-cfg-icone{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#f6efe2,#ead9bd);color:#7a5a32}
+.ap-cfg-icone svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ap-cfg-texto{flex:1;min-width:0}
+.ap-cfg-texto b{display:block;font:700 17px Manrope,sans-serif;color:var(--ap-tinta);margin-bottom:3px}
+.ap-cfg-texto p{margin:0;color:var(--ap-suave);font-size:13.5px;line-height:1.45}
+.ap-switch{flex:none;position:relative;width:56px;height:32px;border:0;border-radius:999px;background:#d9d6d0;cursor:pointer;transition:background .2s;padding:0}
+.ap-switch span{position:absolute;top:3px;left:3px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s}
+.ap-switch[aria-checked="true"]{background:#2f8f5b}
+.ap-switch[aria-checked="true"] span{transform:translateX(24px)}
+.ap-switch:disabled{opacity:.6}
+.ap-switch:focus-visible{outline:2px solid #123f86;outline-offset:3px}
+.ap-cfg-link{display:inline-block;margin:12px 0 0 60px;border:0;background:none;padding:0;color:var(--ap-suave);font:600 13px Manrope,sans-serif;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.ap-cfg-msg{display:block;margin:8px 0 0 60px;font-size:12.5px;color:#1f7a44}
+.ap-cfg-msg:empty{display:none}
+.ap-cfg-msg.erro{color:#b42318}
+@media(prefers-reduced-motion:reduce){.ap-switch,.ap-switch span{transition:none}}

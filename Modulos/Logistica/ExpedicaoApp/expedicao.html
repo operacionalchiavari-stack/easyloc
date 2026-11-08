@@ -11,7 +11,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../Estoque/TriagemApp/triagem.css?v=20261106-topo-branco">
-  <link rel="stylesheet" href="expedicao.css?v=20261107-app-expedicao">
+  <link rel="stylesheet" href="../../../styles/app-fila.css?v=20261107-colunas">
+  <link rel="stylesheet" href="expedicao.css?v=20261107-colunas">
   <link rel="stylesheet" href="../../../styles/capas-operacao.css?v=20261101-ocorrencias-auto">
   <script src="../../../js/app/carregamento-app.js?v=20261106-abertura" data-auto></script>
   <script src="../../../js/core/limpezaDados.js?v=20261026"></script>
@@ -44,9 +45,7 @@
       <div class="titulo-secao"><h2 id="taFilaTitulo">Carregamento</h2><span id="taFilaContagem" class="contador"></span></div>
       <p class="muted descricao" id="taFilaDescricao">Pedidos prontos para carregar.</p>
       <div id="taPedidos" class="pedidos" aria-live="polite"></div>
-      <nav id="taNavegacao" class="navegacao" aria-label="Etapas da Expedição">
-        <button type="button" data-etapa="carregamento" aria-current="page"><span class="nav-icone" aria-hidden="true">↗</span><span>Carregar <b data-total="carregamento">0</b></span></button>
-        <button type="button" data-etapa="descarregamento"><span class="nav-icone" aria-hidden="true">↙</span><span>Descarregar <b data-total="descarregamento">0</b></span></button>
+      <nav id="taNavegacao" class="navegacao" aria-label="Colunas da Expedição">
       </nav>
     </section>
     <section id="taDetalhe" hidden></section>
@@ -60,8 +59,9 @@
   <script src="../../../js/core/pedidoFluxo.js?v=20261024-fluxo"></script>
   <script src="../../../js/core/leitorQr.js?v=20261103-qr-destaque"></script>
     <script src="../../../js/ui/capas-operacao.js?v=20261101-ocorrencias-auto"></script>
-  <script src="expedicao.js?v=20261107-app-expedicao"></script>
-<script src="../../../js/app/rastreamento-app.js?v=20261107-principal"></script>
+  <script src="../../../js/app/fila-app.js?v=20261107-colunas"></script>
+  <script src="expedicao.js?v=20261107-colunas"></script>
+<script src="../../../js/app/rastreamento-app.js?v=20261107-config"></script>
 <script src="../../../js/app/android-principal.js?v=20261107"></script>
 </body>
 </html>

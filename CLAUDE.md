@@ -11484,7 +11484,15 @@ Pedido: no celular, o link do sistema abre um app; o mesmo login do sistema; dep
   - **Carregamento**: só conclui com todos os volumes. Carregar com pendência (motivo e nova data) continua só no computador. Ao concluir, escolhe-se o caminhão, com os programados já marcados (`operacao_registrar_caminhoes`).
   - **Descarregamento**: com volume faltando por QR, pede uma segunda busca e depois conclui. A diferença vai para a Gestão do acervo.
   - Pedido extra e pedido com extras: o descarregamento fica só no computador (é conferido junto).
-  - Teste: `tests/app-expedicao-browser.cjs`. `tests/app-celular-browser.cjs` já falhava antes: o painel de compartilhar localização cobre o botão Sair.
+  - Teste: `tests/app-expedicao-browser.cjs`.
+- **Configurações no app + colunas do computador na Triagem e na Expedição** (07/11/2026):
+  - **Configurações**: cartão no fim da Início (para todos, `href="#config"`), que abre a tela `#apConfig` no próprio `app.html` (o voltar do celular volta para a Início). Tem duas linhas com um botão liga/desliga (`.ap-switch`): **Notificações** (`#apAvisos`, pintado por `avisos-app.js` ou, no aplicativo Android, `avisos-android.js`; com elas ligadas aparece "Enviar notificação de teste") e **Localização** (`#apLocal`, `rastreamento-app.js`). O bloco de avisos saiu da Início, e o painel flutuante "Compartilhamento de localização" não existe mais: nos módulos a coleta continua, sem nada na tela.
+  - **Fila da Triagem e da Expedição**: as abas de baixo são as colunas do quadro do computador.
+    - Triagem: Aguardando · Em triagem · Concluído (separado até a Expedição começar) · Divergências (volta com falta/sobra aberta; tocar só avisa que se resolve na Gestão do acervo).
+    - Expedição: Aguardando conferência · Em conferência · Aguardando entrega · Pendências.
+    - Cada coluna mistura os cartões de ida e de volta/descarregamento, cada um com o seu selo; tocar abre a etapa certa.
+  - **Cartão** (`js/app/fila-app.js` + `styles/app-fila.css`, comuns aos dois apps): letra maior, as cores de cada coluna iguais às do computador (a volta da Triagem em lilás) e duas datas. Na ida: Carregamento (da etapa no cronograma, `operacao_etapas`, senão a entrega) e Entrega. Na volta: Coleta e Descarregamento.
+  - Testes: `app-celular-browser.cjs` (Configurações; já passa, o painel que cobria o Sair saiu), `app-triagem-browser.cjs` e `app-expedicao-browser.cjs`.
 
 ## Solicitação de compra e de manutenção com especialista (06/11/2026)
 Pedido: no lugar de preencher o modal, uma IA que entende o pedido, pergunta o necessário, mostra o resumo, a pessoa confirma e ela registra (como a Ideia Premiada). Em Geral > Solicitação de compra e Solicitação de manutenção, "+ Nova solicitação" abre a conversa (`js/ui/assistente-solicitacao.js` + `styles/assistente-solicitacao.css`, `EasyLocAssistenteSolicitacao.abrir({tipo, titulo, assistente, saudacao, resumoHtml, confirmar, formulario})`): texto ou áudio (microfone/arquivo, transcrito), uma pergunta por vez, resumo com "Está certo, registrar" / "Quero ajustar"; "Prefiro preencher o formulário" abre o modal antigo. Conversa guardada na aba (`sessionStorage solic_chat:<tipo>:<empresa>:<usuário>`) até registrar ou "Começar de novo".

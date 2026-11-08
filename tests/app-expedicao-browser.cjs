@@ -33,7 +33,9 @@ const mock=`(()=>{
  const page=await browser.newPage({viewport:{width:390,height:844}}),erros=[];page.on('pageerror',e=>erros.push(e.message));
  await page.route('**/*',r=>{const u=r.request().url();if(u.includes('supabase-js'))return r.fulfill({body:mock,contentType:'text/javascript'});if(u.startsWith(BASE)){const file=path.join(process.cwd(),decodeURIComponent(new URL(u).pathname));if(!fs.existsSync(file))return r.fulfill({status:404,body:''});return r.fulfill({body:fs.readFileSync(file),contentType:{'.html':'text/html','.css':'text/css','.js':'text/javascript','.png':'image/png'}[path.extname(file)]||'application/octet-stream'});}return r.abort();});
  await page.goto(BASE+'Modulos/Logistica/ExpedicaoApp/expedicao.html?app=1');await page.locator('[data-pedido=p1]').waitFor();
- assert.equal(await page.locator('#taFilaTitulo').innerText(),'Carregamento');assert.equal(await page.locator('[data-total=carregamento]').innerText(),'2');assert.equal(await page.locator('[data-total=descarregamento]').innerText(),'1');
+ assert.equal(await page.locator('#taFilaTitulo').innerText(),'Aguardando conferência');assert.equal(await page.locator('[data-coluna-aba=aguardando] b').innerText(),'3');assert.equal(await page.locator('[data-coluna-aba]').count(),4);
+ assert.match(await page.locator('[data-pedido=p1]').innerText(),/CARREGAMENTO[\s\S]*ENTREGA/i);assert.equal(await page.locator('[data-pedido=p1]').evaluate(e=>getComputedStyle(e).backgroundColor),'rgb(255, 249, 234)','cor da coluna Aguardando');
+ assert.ok(parseFloat(await page.locator('[data-pedido=p1] .af-pessoa-texto strong').evaluate(e=>getComputedStyle(e).fontSize))>=18,'fonte maior');await page.screenshot({path:'.tmp/app-expedicao-fila.png',fullPage:true});
  // Pedido sem o pagamento mínimo: travado, não abre.
  await page.locator('[data-pedido=p2]').click();await page.locator('#taSinal.sinal-erro.ver').waitFor();assert.match(await page.locator('#taSinal').innerText(),/Financeiro/);await page.locator('#taSinal').click();await page.waitForFunction(()=>!document.querySelector('#taSinal.ver'));
  await page.locator('[data-pedido=p1]').click();await page.locator('#taCodigo').waitFor();
@@ -50,7 +52,7 @@ const mock=`(()=>{
  await page.locator('[data-confirmar-caminhao]').click();await page.getByText('Carregamento concluído').first().waitFor();
  const reg=await page.evaluate(()=>__chamadas.find(([n])=>n==='operacao_registrar_caminhoes')[1]);assert.deepEqual(reg.p_caminhoes,['c1']);
  // Descarregamento por quantidade com 2ª contagem.
- await page.locator('#taSinal').click().catch(()=>{});await page.locator('[data-voltar]').click();await page.locator('[data-etapa=descarregamento]').click();await page.locator('[data-pedido=p3]').click();
+ await page.locator('#taSinal').click().catch(()=>{});await page.locator('[data-voltar]').click();await page.locator('[data-pedido=p3]').click();
  await page.locator('[data-contagem="s9|i9"]').waitFor();assert.match(await page.locator('.material').innerText(),/Saiu: 3/);
  await page.locator('[data-contagem="s9|i9"]').fill('2');await page.locator('#taFinalizar').click();await page.locator('#taSinal.sinal-aviso.ver').waitFor();await page.locator('#taSinal').click();
  assert.equal(await page.locator('#taRodada').innerText(),'2ª contagem');await page.locator('[data-contagem="s9|i9"]').fill('3');
