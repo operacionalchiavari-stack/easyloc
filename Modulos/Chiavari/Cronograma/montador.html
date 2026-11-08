@@ -338,7 +338,7 @@
 </style>
   <meta name="theme-color" content="#5a5a55">
   <link rel="stylesheet" href="../apps-equipe.css?v=20261106-topo-branco">
-  <link rel="stylesheet" href="montador-evento.css?v=20261031-app-integrado">
+  <link rel="stylesheet" href="montador-evento.css?v=20261108-abas-etapa3">
 </head>
 <body class="chiavari-equipe-app" data-app-equipe="montagem">
 
@@ -726,7 +726,7 @@
       if(!p){
         const etapa=acharEtapa(estado.etapaAberta);
         const encerrado=etapa?.apontamento?.status==='ENCERRADO'?etapa.apontamento:null;
-        area.innerHTML=id!=='apontamentoEtapa'?'':encerrado?'<section class="apontamento-ativo apontamento-encerrado"><div class="apontamento-relogio"><span class="apontamento-tempo-final" aria-label="Tempo total">'+esc(duracaoApontamento(encerrado))+'</span><small>Tempo total · check-out da equipe</small></div></section>':etapa?.operacao?'<p class="evento-checkin-status">O check-in da equipe registra o início. Se não houver check-in, envie a foto da equipe para registrar a chegada.</p>':'';
+        area.innerHTML=id!=='apontamentoEtapa'?'':encerrado?'<section class="apontamento-ativo apontamento-encerrado"><div class="apontamento-relogio"><span class="apontamento-tempo-final" aria-label="Tempo total">'+esc(duracaoApontamento(encerrado))+'</span><small>Tempo total · check-out da equipe</small></div></section>':'';
         return;
       }
       area.innerHTML='<section class="apontamento-ativo"><div><small>EVENTO EM ANDAMENTO · #'+esc(p.pedido)+'</small><strong>'+esc(e?e.cliente:'Evento em andamento')+'</strong></div><div class="apontamento-relogio"><span class="apontamento-tempo" role="timer" aria-label="Tempo decorrido">'+esc(duracaoApontamento(p))+'</span><small>tempo em andamento</small></div>'+(id==='apontamentoInicio'?'<div class="apontamento-acoes"><button type="button" class="btn btn-claro" onclick="abrirEtapa(\''+esc(p.idEtapa)+'\')">Continuar evento</button></div>':'')+'</section>';
@@ -868,6 +868,8 @@
     if(window.MontadorEvento){ MontadorEvento.montar(e); }
     trocarPainelEtapa(estado.acesso === "agenda" ? "info" : estado.acesso);
     renderApontamento();
+    estado.abaEtapa = "equipe";
+    montarAbasEtapa();
     mostrarTela("telaEtapa");
     window.scrollTo({top:0,behavior:"auto"});
     // Nov/2026 (teste do usuário final, item 22): avisa quando a etapa não é de hoje, antes de alguém registrar no evento errado.
@@ -877,6 +879,60 @@
       toast("Atenção: esta etapa está marcada para " + d[2] + "/" + d[1] + "/" + d[0] + ", não para hoje. Confira se é o evento certo antes de registrar.", true);
     }
   }
+
+  /* Nov/2026: abas da etapa, embaixo (como na Triagem): Equipe (equipe, caminhões, Uber e foto da equipe),
+     Lista (conferência, sacolas, registros) e Informações do pedido (assistente; a conversa ainda será definida). */
+  const ABAS_ETAPA = [
+    { chave: "equipe", rotulo: "Equipe", icone: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.6 13.6c2.6-.3 4.7 1.2 5.4 4.4"/></svg>' },
+    { chave: "lista", rotulo: "Lista", icone: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 6 1.2 1.2L7 5M3.5 12l1.2 1.2L7 11M3.5 18l1.2 1.2L7 17"/></svg>' },
+    { chave: "info", rotulo: "Informações", icone: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>' }
+  ];
+  function montarAbasEtapa(){
+    const tela = document.getElementById("telaEtapa");
+    const el = function(id){ return document.getElementById(id); };
+    function painel(chave){
+      let p = el("etapaAba_" + chave);
+      if(!p){ p = document.createElement("div"); p.id = "etapaAba_" + chave; p.className = "etapa-aba-painel"; p.setAttribute("role", "tabpanel"); }
+      tela.append(p); return p;
+    }
+    const equipe = painel("equipe"), lista = painel("lista"), info = painel("info");
+    let colunas = el("etapaColunas");
+    if(!colunas){ colunas = document.createElement("div"); colunas.id = "etapaColunas"; colunas.className = "etapa-colunas"; }
+    equipe.append(colunas);
+    if(!el("etapaUber")){ const u = document.createElement("div"); u.id = "etapaUber"; colunas.append(u); }
+    ["etapaEquipe", "etapaUber", "etapaFrete"].forEach(function(id){ if(el(id)) colunas.append(el(id)); });
+    if(el("etapaFotoEquipe")) equipe.append(el("etapaFotoEquipe"));
+    ["regProgresso", "etapaConferencia", "etapaSacolas", "etapaRegistros"].forEach(function(id){ if(el(id)) lista.append(el(id)); });
+    if(el("etapaTrocas") && !el("etapaTrocas").closest("#etapaConferencia")) lista.append(el("etapaTrocas"));
+    if(!el("etapaAssistente")){
+      const a = document.createElement("section"); a.id = "etapaAssistente"; a.className = "secao etapa-assistente";
+      a.innerHTML = '<div class="secao-titulo"><h2>Informações do pedido</h2></div>' +
+        '<div class="etapa-assistente-conversa"><div class="etapa-assistente-msg">Em breve você poderá conversar comigo aqui sobre as informações deste pedido.</div></div>' +
+        '<div class="etapa-assistente-campo"><input type="text" placeholder="Em breve" disabled aria-label="Mensagem para o assistente"><button type="button" class="btn" disabled>Enviar</button></div>';
+      info.append(a);
+    }
+    ["etapaInfo", "etapaPedido"].forEach(function(id){ if(el(id)) info.append(el(id)); });
+    let nav = el("etapaAbas");
+    if(!nav){
+      nav = document.createElement("nav"); nav.id = "etapaAbas"; nav.className = "etapa-abas"; nav.setAttribute("role", "tablist"); nav.setAttribute("aria-label", "Partes da etapa");
+      nav.innerHTML = ABAS_ETAPA.map(function(a){ return '<button type="button" role="tab" data-etapa-aba="' + a.chave + '">' + a.icone + '<span>' + a.rotulo + '</span></button>'; }).join("");
+      nav.addEventListener("click", function(ev){ const b = ev.target.closest("[data-etapa-aba]"); if(b){ trocarAbaEtapa(b.dataset.etapaAba); } });
+    }
+    tela.append(nav);
+    tela.classList.add("com-abas-etapa");
+    trocarAbaEtapa(estado.abaEtapa || "equipe", true);
+  }
+  function trocarAbaEtapa(chave, semRolar){
+    estado.abaEtapa = chave;
+    ABAS_ETAPA.forEach(function(a){
+      const p = document.getElementById("etapaAba_" + a.chave); if(p) p.hidden = a.chave !== chave;
+    });
+    document.querySelectorAll("#etapaAbas [data-etapa-aba]").forEach(function(b){
+      const ativo = b.dataset.etapaAba === chave; b.setAttribute("aria-selected", ativo ? "true" : "false"); b.classList.toggle("ativa", ativo);
+    });
+    if(!semRolar) window.scrollTo({ top: 0, behavior: "auto" });
+  }
+  window.trocarAbaEtapa = trocarAbaEtapa;
 
   function voltarInicio(){
     if(location.hash === "#etapa"){ history.back(); return; }
@@ -910,7 +966,7 @@
     /* Nov/2026: cliente, data e endereço ficam só no cartão da lista; aqui a tela começa na Equipe.
        Fica só a orientação (observação) e o alerta, quando houver. */
     document.getElementById("etapaCabeca").innerHTML =
-      (e.observacao ? '<p class="evento-orientacao evento-orientacao-solta">'+esc(e.observacao)+'</p>' : '') +
+      (e.observacao && !/^gerado pelo pedido\.?$/i.test(String(e.observacao).trim()) ? '<p class="evento-orientacao evento-orientacao-solta">'+esc(e.observacao)+'</p>' : '') +
       (e.alerta ? '<div class="alerta">' + I.alerta + '<div><strong>' + esc(e.alerta.problema) + '</strong>' + esc(e.alerta.observacao || "") + (e.alerta.enviadoPor ? ' — ' + esc(e.alerta.enviadoPor) : "") + '</div></div>' : "");
   }
 
@@ -974,14 +1030,18 @@
         '<div style="margin-top:8px;font-size:12.5px;color:var(--muted)">Encontro dos free: ' + esc(f.horario) + ' · ' + esc(f.pontoEncontro) + '</div>';
     }
 
+    /* Nov/2026: três colunas lado a lado (Equipe · Caminhões · Uber); o responsável fica na mesma lista da equipe. */
+    const resp = e.responsavel ? '<div class="pessoa pessoa-responsavel">'+fotoCadastroHtml(responsavel)+'<div class="pessoa-nome">' + esc(e.responsavel) + '<small>Responsável</small></div></div>' : '';
+    const caminhoes = e.caminhao ? (fotos.caminhoes?.length ? fotos.caminhoes : String(e.caminhao).split(/,|\n/).map(nome=>({nome:nome.trim()}))) : [];
     document.getElementById("etapaEquipe").innerHTML =
-      '<section class="secao">' +
+      '<section class="secao evento-coluna evento-equipe">' +
         '<div class="secao-titulo"><h2>Sua equipe</h2><small>presença atualizada</small></div>' +
-        '<div class="subtitulo">Responsável</div>' +
-        '<div class="pessoas"><div class="pessoa">'+fotoCadastroHtml(responsavel)+'<div class="pessoa-nome">' + esc(e.responsavel || "-") + '</div></div></div>' +
-        (internos ? '<div class="subtitulo">Equipe</div><div class="pessoas">' + internos + '</div>' : "") +
+        ((resp || internos) ? '<div class="pessoas">' + resp + internos + '</div>' : '<p class="evento-sem-transporte">Ninguém escalado ainda.</p>') +
         free +
-      '</section>' + (e.caminhao ? '<section class="secao secao-compacta evento-caminhoes"><div class="secao-titulo"><h2>Caminhões</h2></div><div class="pessoas pessoas-linha">'+(fotos.caminhoes?.length ? fotos.caminhoes : String(e.caminhao).split(/,|\n/).map(nome=>({nome:nome.trim()}))).map(c=>'<div class="pessoa">'+fotoCadastroHtml(c,true)+'<div class="pessoa-nome">'+esc(String(c.nome||'').length<=3?'Caminhão '+c.nome:c.nome)+'</div></div>').join('')+'</div></section>' : '');
+      '</section>' +
+      '<section class="secao secao-compacta evento-coluna evento-caminhoes"><div class="secao-titulo"><h2>Caminhões</h2></div>' +
+        (caminhoes.length ? '<div class="pessoas">'+caminhoes.map(c=>'<div class="pessoa">'+fotoCadastroHtml(c,true)+'<div class="pessoa-nome">'+esc(String(c.nome||'').length<=3?'Caminhão '+c.nome:c.nome)+'</div></div>').join('')+'</div>' : '<p class="evento-sem-transporte">Nenhum caminhão programado.</p>') +
+      '</section>';
     if(!soFotos){pintarUberMontador(e);pintarFreteMontador(e);}
   }
 

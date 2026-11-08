@@ -92,8 +92,18 @@ async function main(){
    assert.equal(await page.locator('#etapaCabeca .cabeca,#etapaCabeca .evento-cliente,#etapaCabeca .evento-endereco').count(),0,'sem cliente/endereço dentro da etapa');
    await page.getByRole('button',{name:'Consultar Uber novamente',exact:true}).click();
    await page.locator('#etapaUber').filter({hasText:'Pedro Motorista'}).waitFor();
-   const ordem=await page.evaluate(()=>['etapaEquipe','etapaUber','etapaFotoEquipe','etapaConferencia','passo_sacolas','passo_lista'].map(id=>document.getElementById(id).getBoundingClientRect().top));
-   assert.ok(ordem.every((n,i)=>!i||n>ordem[i-1]),'ordem do roteiro');assert.equal(await page.locator('#passo_posicionamento').count(),0);
+   // Nov/2026: aba Equipe com Equipe · Caminhões · Uber lado a lado e a foto da equipe embaixo; o resto na aba Lista.
+   const col=await page.evaluate(()=>['#etapaEquipe .evento-equipe','#etapaEquipe .evento-caminhoes','#etapaUber .secao','#etapaFotoEquipe'].map(q=>{const r=document.querySelector(q).getBoundingClientRect();return {top:Math.round(r.top),left:Math.round(r.left)};}));
+   assert.ok(col[0].top===col[1].top&&col[1].top===col[2].top,'três colunas na mesma linha');assert.ok(col[0].left<col[1].left&&col[1].left<col[2].left,'equipe, caminhões e uber lado a lado');
+   assert.ok(col[3].top>col[0].top,'foto da equipe abaixo das colunas');
+   assert.equal(await page.locator('#etapaEquipe .evento-equipe .pessoa-responsavel').count(),1,'responsável na lista da equipe');
+   assert.equal(await page.getByText('O check-in da equipe registra o início').count(),0,'sem a frase do check-in');
+   assert.ok(await page.locator('#etapaAba_lista').isHidden(),'aba Lista começa fechada');
+   await page.click('[data-etapa-aba="lista"]');
+   const ordem=await page.evaluate(()=>['etapaConferencia','passo_sacolas','passo_lista'].map(id=>document.getElementById(id).getBoundingClientRect().top));
+   assert.ok(ordem.every((n,i)=>!i||n>ordem[i-1]),'ordem do roteiro na aba Lista');
+   await page.click('[data-etapa-aba="info"]');await page.locator('#etapaAssistente').waitFor();
+   await page.click('[data-etapa-aba="equipe"]');assert.equal(await page.locator('#passo_posicionamento').count(),0);
    assert.equal(await page.getByText('Outras etapas do pedido',{exact:true}).count(),0);assert.equal(await page.getByText('Decorador confirmou',{exact:true}).count(),0);
    assert.ok(await page.evaluate(()=>{const b=document.getElementById('btnVoltar').getBoundingClientRect(),c=document.getElementById('etapaEtiquetas').getBoundingClientRect();return Math.abs(b.top+b.height/2-c.top-c.height/2)<3;}));
    assert.equal(await page.locator('#btnVoltar').textContent(),'Voltar');
@@ -103,14 +113,14 @@ async function main(){
    assert.equal(await page.locator('#regEmpresas,#regQtd,#eventoDetalhes').count(),0);
    await page.getByRole('button',{name:'QR code da equipe',exact:true}).click();await page.getByText('123456',{exact:true}).waitFor();await page.locator('#folha').getByRole('button',{name:'Fechar',exact:true}).click();
    await page.getByRole('button',{name:'QR para o motorista',exact:true}).click();await page.getByText('654321',{exact:true}).waitFor();await page.locator('#folha').getByRole('button',{name:'Fechar',exact:true}).click();
-   await page.getByRole('button',{name:'Tentar novamente',exact:true}).click();await page.locator('.entrega-item').first().waitFor();
+   await page.click('[data-etapa-aba="lista"]');await page.getByRole('button',{name:'Tentar novamente',exact:true}).click();await page.locator('.entrega-item').first().waitFor();
    assert.deepEqual(await page.locator('.entrega-ambiente>h3').allTextContents(),['Cerimônia','Recepção']);
    assert.equal(await page.getByText(/Parte do kit:/).count(),0);assert.ok(await page.locator('.entrega-item h3').first().evaluate(e=>e.scrollHeight>e.clientHeight&&getComputedStyle(e).webkitLineClamp==='2'));
    await page.screenshot({path:path.join(os.tmpdir(),`montador-fluxo-inicial-${width}.png`),fullPage:true});
-   await page.locator('#regFotoEquipe input').setInputFiles({name:'equipe.png',mimeType:'image/png',buffer:png});await page.waitForSelector('#regFotoEquipe.tem');await page.getByRole('button',{name:'Enviar foto da equipe',exact:true}).click();await page.waitForSelector('#passo_equipe.concluido');
+   await page.click('[data-etapa-aba="equipe"]');await page.locator('#regFotoEquipe input').setInputFiles({name:'equipe.png',mimeType:'image/png',buffer:png});await page.waitForSelector('#regFotoEquipe.tem');await page.getByRole('button',{name:'Enviar foto da equipe',exact:true}).click();await page.waitForSelector('#passo_equipe.concluido');
    assert.equal(await page.evaluate(()=>('quantidade' in chamadas.find(c=>c.fn==='MONT_fotoEquipe').args[0])),false);
    assert.equal(await page.locator('#regProgressoPct').textContent(),'25%');
-   await page.getByRole('button',{name:'Salvar conferência',exact:true}).click();assert.equal(await page.evaluate(()=>chamadas.some(c=>c.fn==='MONT_entregaSalvar')),false);
+   await page.click('[data-etapa-aba="lista"]');await page.getByRole('button',{name:'Salvar conferência',exact:true}).click();assert.equal(await page.evaluate(()=>chamadas.some(c=>c.fn==='MONT_entregaSalvar')),false);
    const linhas=page.locator('.entrega-item');await linhas.nth(0).getByRole('button',{name:'Tudo entregue, sem danos'}).click();
    assert.equal(await linhas.nth(0).locator('.entrega-quantidades').isVisible(),false);
    await linhas.nth(0).getByRole('button',{name:'Corrigir quantidades ou informar dano',exact:true}).click();
@@ -120,7 +130,7 @@ async function main(){
    await linhas.nth(1).locator('[data-obs]').fill('Pé da mesa danificado no transporte');
    await linhas.nth(1).locator('input[type=file]').setInputFiles({name:'dano.png',mimeType:'image/png',buffer:png});await page.waitForSelector('.entrega-foto-dano:not([hidden])');
    await page.locator('#btnVoltar').click();await page.locator('#telaInicio.ativa').waitFor();await page.locator('#telaInicio .etapa').filter({hasText:'Evento Jardim'}).click();assert.equal(await linhas.nth(1).locator('[data-entregue]').inputValue(),'1');
-   await page.getByRole('button',{name:'Salvar conferência',exact:true}).click();await page.waitForSelector('.conferencia-enviada');assert.equal(await page.locator('#regProgressoPct').textContent(),'50%');
+   await page.click('[data-etapa-aba="lista"]');await page.getByRole('button',{name:'Salvar conferência',exact:true}).click();await page.waitForSelector('.conferencia-enviada');assert.equal(await page.locator('#regProgressoPct').textContent(),'50%');
    const enviado=await page.evaluate(()=>chamadas.find(c=>c.fn==='MONT_entregaSalvar').args);assert.equal(enviado[0],'fixture');assert.equal(enviado[1],'montagem');assert.equal(enviado[2]['kit/b'].danificados,1);assert.match(enviado[2]['kit/b'].foto,/^data:image/);
    assert.equal(await linhas.nth(1).locator('[data-entregue]').isDisabled(),true);
    assert.equal(await linhas.nth(0).locator('.entrega-quantidades').isVisible(),false);assert.match(await linhas.nth(0).locator('.entrega-confirmado').textContent(),/3 entregues/);
@@ -128,7 +138,7 @@ async function main(){
    await page.locator('#regRecebedor').fill('Maria Cliente');await page.locator('#regFotoLista input').setInputFiles({name:'lista.png',mimeType:'image/png',buffer:png});await page.waitForSelector('#regFotoLista.tem');await page.getByRole('button',{name:'Enviar lista assinada',exact:true}).click();await page.waitForSelector('#passo_lista.concluido');assert.equal(await page.locator('#regProgressoPct').textContent(),'100%');assert.equal(await page.locator('.tudo-pronto').isVisible(),true);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
    await page.screenshot({path:path.join(os.tmpdir(),`montador-fluxo-completo-${width}.png`),fullPage:true});
-   await page.reload();await page.locator('#telaInicio .etapa').filter({hasText:'Evento Jardim'}).click();await page.waitForSelector('.conferencia-enviada');await page.waitForFunction(()=>document.getElementById('regProgressoPct').textContent==='100%');assert.equal(await page.locator('#regProgresso').count(),1);
+   await page.reload();await page.locator('#telaInicio .etapa').filter({hasText:'Evento Jardim'}).click();await page.click('[data-etapa-aba="lista"]');await page.waitForSelector('.conferencia-enviada');await page.waitForFunction(()=>document.getElementById('regProgressoPct').textContent==='100%');assert.equal(await page.locator('#regProgresso').count(),1);
    assert.equal(await page.getByRole('button',{name:/Encerrar apontamento/}).count(),0);
    await page.evaluate(async()=>{const p=JSON.parse(localStorage.getItem('fixture:apontamento'));p.status='ENCERRADO';p.fim=new Date().toISOString();localStorage.setItem('fixture:apontamento',JSON.stringify(p));await carregar();});
    await page.locator('.apontamento-tempo-final').waitFor();assert.equal(await page.evaluate(()=>estado.apontamento),null);
