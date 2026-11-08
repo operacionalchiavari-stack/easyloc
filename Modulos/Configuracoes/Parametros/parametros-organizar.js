@@ -65,6 +65,7 @@
     const uber = host.querySelector('.pr-uber-faixas');
     const divergencias = host.querySelector('.pr-divergencias');
     const carregCam = host.querySelector('.pr-carregamento-caminhao');
+    const appMont = host.querySelector('.pr-app-montador');
     const motivos = [...host.querySelectorAll('[data-motivos]')];
     const qualidade = [...host.querySelectorAll(':scope>.pr-motivos-logistica')].find(s => !s.dataset.motivos && !s.classList.contains('pr-fluxo-pedidos'));
     const escalaWrap = host.querySelector('.escala-parametros');
@@ -109,7 +110,8 @@
       grupo('Equipes e caminhões (escala)', [
         titulo(escalaLiga, 'Escala automática'),
         opEscala,
-        escalaWrap && (titulo(escalaPessoas, 'Pessoas que não podem trabalhar juntas'), escalaWrap)
+        escalaWrap && (titulo(escalaPessoas, 'Pessoas que não podem trabalhar juntas'), escalaWrap),
+        titulo(appMont, 'App do Montador: etapas que aparecem')
       ]),
       grupo('Frete, montagem e Uber', [frete, mont, titulo(uber, 'Valores do Uber por km')]),
       grupo('Motivos', motivos.map(m => titulo(m, m.querySelector('h3')?.textContent || 'Motivos')))

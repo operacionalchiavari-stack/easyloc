@@ -272,3 +272,6 @@ html:root #parametrosPagina .pr-painel-cards #logisticaManualParametros{margin-t
 .pr-cond-acoes{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .pr-cond-excluir{border:0;background:none;color:#b42318;font-size:12.5px;cursor:pointer}
 @media (max-width:900px){.pr-cond-campos{grid-template-columns:1fr 1fr}.pr-cond-nome{grid-column:1/-1}}
+
+/* Nov/2026: App do Montador · dias à frente (dois números lado a lado) */
+.pr-app-montador .pr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,280px));gap:14px;margin:6px 0 10px}

@@ -39,6 +39,7 @@
       await window.carregarParametrosUber?.(host, state.empresaId);
       await window.carregarParametrosDivergencias?.(host, state.empresaId);
       await window.carregarParametrosCarregamento?.(host, state.empresaId);
+      await window.carregarParametrosAppMontador?.(host, state.empresaId);
       // Junta os cards da antiga aba Operação e separa cada assunto num card (parametros-organizar.js).
       window.prOrganizarLogistica?.(host);
     }
