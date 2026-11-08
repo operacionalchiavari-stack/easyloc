@@ -292,7 +292,16 @@
     if (etapaVolta) await carregarDivergencias();
     const divCapas=s.capas?.diferencas()||0;
     avisar(faltando.length ? "Conferência concluída com " + faltando.length + " pendência(s)." + avisoPendencia(registro) : divCapas?'Conferência concluída. Diferenças de capas registradas em '+divCapas+' modelo(s).':"Conferência concluída: tudo " + cfg.verbo + ".", cfg.rotulo, faltando.length||divCapas ? "aviso" : "sucesso");
-    $("cfConcluir").textContent = "Concluída · conferir de novo";
+    travarConcluida(registro);
+  }
+
+  // Conferência concluída não pode ser refeita: o pedido já passou para a etapa seguinte e o servidor recusa
+  // (era o "Concluída · conferir de novo", que mostrava "Confirme a coleta…"). Trava leitura e botão.
+  function travarConcluida(feito) {
+    leitor?.desligar();
+    ["cfConcluir", "cfBtnCamera", "cfEntrada"].forEach((id) => { if ($(id)) $(id).disabled = true; });
+    if ($("cfConcluir")) $("cfConcluir").textContent = "Conferência concluída";
+    if (feito?.concluido_em) mostrarAviso("Conferência concluída em " + new Date(feito.concluido_em).toLocaleString("pt-BR") + (feito.por ? " por " + feito.por : "") + " (" + feito.lidas + " de " + feito.total + "). O pedido já seguiu para a próxima etapa.");
   }
 
   async function carregarOcorrencias(){
@@ -518,8 +527,6 @@
     if (feito?.concluido_em && cega) {
       s.revelado = true;
       mostrarResultadoRetorno(feito);
-    } else if (feito?.concluido_em) {
-      mostrarAviso("Já conferido em " + new Date(feito.concluido_em).toLocaleString("pt-BR") + (feito.por ? " por " + feito.por : "") + " (" + feito.lidas + " de " + feito.total + "). Pode bipar de novo para completar.");
     }
     if (escondido()) $("cfUltimaDetalhe").textContent = "Conferência às cegas: bipe cada peça que " + voltaOuChegou() + ". Ao concluir, o sistema mostra o que faltou.";
     $("cfCorpo").hidden = false; $("cfRodape").hidden = false;
@@ -532,6 +539,7 @@
     $("cfSoFaltando").addEventListener("change", pintar);
     $("cfConcluir").addEventListener("click", () => concluir().catch(console.error));
     pintar();
+    if (feito?.concluido_em) { travarConcluida(feito); if (cega) $("cfAviso").hidden = true; }
     if(etapa === "retorno" && feito?.concluido_em) await carregarOcorrencias();
     if(etapaVolta && feito?.concluido_em) await carregarDivergencias();
     mostrarPendenciasRede();

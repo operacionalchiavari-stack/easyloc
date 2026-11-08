@@ -108,7 +108,10 @@ const mock = `(() => {
   assert.strictEqual(fim.operacao.carregamento.lidas, 2);
   assert.deepStrictEqual(fim.operacao.carregamento.faltando.map((f) => f.codigo), ["12-002"]);
   assert.ok(fim.operacao.carregamento.por && fim.operacao.carregamento.concluido_em, "quem e quando");
-  console.log("ok 5 - concluir com pendência grava carregado, 2 de 3 e o que faltou");
+  await page.waitForFunction(() => document.getElementById("cfConcluir").disabled, null, { timeout: 8000 });
+  assert.strictEqual(await page.locator("#cfConcluir").textContent(), "Conferência concluída", "depois de concluir não oferece concluir de novo");
+  assert.ok(await page.evaluate(() => document.getElementById("cfEntrada").disabled), "leitura travada depois de concluir");
+  console.log("ok 5 - concluir com pendência grava carregado, 2 de 3 e o que faltou; botão e leitura travados");
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(BASE + "Modulos/Logistica/Conferencia/conferencia.html?pedido=p1&etapa=retorno");
