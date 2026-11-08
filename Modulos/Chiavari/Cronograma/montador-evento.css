@@ -202,3 +202,12 @@ body:has(#telaEtapa.ativa.com-abas-etapa) .toast{bottom:calc(96px + env(safe-are
 /* campo do chat preso logo acima da barra de abas */
 #telaEtapa.aba-chat #etapaAssistente .etapa-assistente-campo{position:fixed;z-index:13;left:50%;transform:translateX(-50%);width:min(100%,680px);bottom:var(--etapa-abas-h,76px);box-shadow:0 -1px 0 #0000000f}
 #telaEtapa.aba-chat #etapaAssistente .etapa-assistente-conversa{padding-bottom:72px}
+
+/* Nov/2026: lista sem subtítulo nem selo "Pendente"; chat clean, tudo branco, sem faixa no topo */
+#passo_conferencia .passo-sub,#passo_conferencia .passo-status{display:none}
+#etapaAba_info>#etapaAssistente{background:#fff;border:0;border-radius:0;box-shadow:none}
+#etapaAssistente .etapa-assistente-conversa{background:#fff;padding:8px 2px}
+#etapaAssistente .etapa-assistente-msg{background:#f3f4f6;border:0;box-shadow:none;border-radius:4px 16px 16px 16px;color:#1f2020}
+#telaEtapa.aba-chat #etapaAssistente .etapa-assistente-campo{background:#fff;box-shadow:none;border-top:1px solid #eceef1;padding:8px 12px}
+#etapaAssistente .etapa-assistente-campo input{background:#fff;border:1px solid #dfe3e8}
+.etapa-chat-enviar{background:#2b3240;opacity:.35}

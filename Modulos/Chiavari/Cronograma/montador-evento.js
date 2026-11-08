@@ -58,7 +58,7 @@
    while(corpo.firstChild)campo.append(corpo.firstChild);corpo.append(campo);
   });
   atual={id:e.id,lista:[],itens:{},carregado:false,enviado:false,carregandoFoto:0};
-  conferencia.innerHTML=passoHtml('conferencia',2,'Conferência dos itens','Informe quantos foram entregues de cada item e sinalize danos.',
+  conferencia.innerHTML=passoHtml('conferencia',2,'Conferência dos itens','',
    '<p class="entrega-bloqueio" id="entregaBloqueio" hidden>A lista libera quando o evento começar: check-in da equipe ou foto da equipe (aba Equipe).</p><div id="entregaItens" aria-live="polite"><p class="entrega-carregando">Carregando os itens do pedido…</p></div>'+
    '<p class="entrega-resumo" id="entregaResumo" role="status"></p><button type="button" class="btn" id="entregaSalvar" disabled>Salvar conferência</button>', '✓ Conferência enviada');
   el('entregaSalvar').addEventListener('click',salvar);

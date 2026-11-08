@@ -338,7 +338,7 @@
 </style>
   <meta name="theme-color" content="#5a5a55">
   <link rel="stylesheet" href="../apps-equipe.css?v=20261106-topo-branco">
-  <link rel="stylesheet" href="montador-evento.css?v=20261108-lista-chat2">
+  <link rel="stylesheet" href="montador-evento.css?v=20261108-lista-chat3">
 </head>
 <body class="chiavari-equipe-app" data-app-equipe="montagem">
 
@@ -408,7 +408,7 @@
 
   <div class="toast" id="toast"></div>
 
-<script src="montador-evento.js?v=20261108-lista-chat2"></script>
+<script src="montador-evento.js?v=20261108-lista-chat3"></script>
 <script src="montador-bonus.js?v=20261031-integrado"></script>
 <script>
   /* =========================================================
@@ -906,7 +906,7 @@
     // Nov/2026: troca/reposição e sacolas saíram da aba Lista (ficam escondidas; vão para o chat do pedido).
     if(!el("etapaAssistente")){
       const a = document.createElement("section"); a.id = "etapaAssistente"; a.className = "secao etapa-assistente";
-      a.innerHTML = '<header class="etapa-chat-topo"><span class="etapa-chat-avatar" aria-hidden="true">A</span><span><strong>Assistente do pedido</strong><small>em breve</small></span></header>' +
+      a.innerHTML =
         '<div class="etapa-assistente-conversa"><div class="etapa-assistente-msg">Em breve você poderá conversar comigo aqui sobre as informações deste pedido.</div></div>' +
         '<div class="etapa-assistente-campo"><input type="text" placeholder="Mensagem" disabled aria-label="Mensagem para o assistente"><button type="button" class="etapa-chat-enviar" disabled aria-label="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 20 4l-6 16-3-7z"/></svg></button></div>';
       info.append(a);
@@ -1309,7 +1309,6 @@
     reg = { id: e.id, pedido: e.pedido, cliente: e.cliente, responsavel: e.responsavel, tipo: e.operacao, horario: e.horario, feitos: {}, empresa: "", qtd: "", fotoEquipe: "", fotosPos: [], posCorreto: null, fotoLista: "", paginas: [] };
 
     const equipe =
-      '<p class="foto-equipe-instrucao">Fotografe todos juntos, de corpo inteiro e com o uniforme à mostra: o RH confere o uniforme por esta foto. O horário e a localização serão registrados no envio.</p>' +
       fotoTile("regFotoEquipe", "Tirar foto da equipe", "fotoEquipe(event)") +
       '<button class="btn" type="button" onclick="enviarEquipe(this)">' + I.enviar + 'Enviar foto da equipe</button>';
 
