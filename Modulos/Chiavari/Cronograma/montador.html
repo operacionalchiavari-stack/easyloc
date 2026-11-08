@@ -338,7 +338,7 @@
 </style>
   <meta name="theme-color" content="#5a5a55">
   <link rel="stylesheet" href="../apps-equipe.css?v=20261106-topo-branco">
-  <link rel="stylesheet" href="montador-evento.css?v=20261108-lista-chat3">
+  <link rel="stylesheet" href="montador-evento.css?v=20261108-lista-chat4">
 </head>
 <body class="chiavari-equipe-app" data-app-equipe="montagem">
 
@@ -408,7 +408,7 @@
 
   <div class="toast" id="toast"></div>
 
-<script src="montador-evento.js?v=20261108-lista-chat3"></script>
+<script src="montador-evento.js?v=20261108-lista-chat4"></script>
 <script src="montador-bonus.js?v=20261031-integrado"></script>
 <script>
   /* =========================================================
@@ -908,8 +908,20 @@
       const a = document.createElement("section"); a.id = "etapaAssistente"; a.className = "secao etapa-assistente";
       a.innerHTML =
         '<div class="etapa-assistente-conversa"><div class="etapa-assistente-msg">Em breve você poderá conversar comigo aqui sobre as informações deste pedido.</div></div>' +
-        '<div class="etapa-assistente-campo"><input type="text" placeholder="Mensagem" disabled aria-label="Mensagem para o assistente"><button type="button" class="etapa-chat-enviar" disabled aria-label="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 20 4l-6 16-3-7z"/></svg></button></div>';
+        '<form class="etapa-assistente-campo"><input type="text" placeholder="Mensagem" maxlength="1000" autocomplete="off" aria-label="Mensagem para o assistente"><button type="submit" class="etapa-chat-enviar" disabled aria-label="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 20 4l-6 16-3-7z"/></svg></button></form>';
       info.append(a);
+      /* Nov/2026: só para teste do visual: a mensagem aparece na conversa, mas não vai para lugar nenhum nem fica salva. */
+      const form = a.querySelector("form"), campo = form.querySelector("input"), enviar = form.querySelector("button");
+      campo.addEventListener("input", function(){ enviar.disabled = !campo.value.trim(); });
+      form.addEventListener("submit", function(ev){
+        ev.preventDefault();
+        const texto = campo.value.trim(); if(!texto) return;
+        const conversa = a.querySelector(".etapa-assistente-conversa");
+        const msg = document.createElement("div"); msg.className = "etapa-assistente-msg etapa-msg-minha";
+        msg.innerHTML = esc(texto) + '<small>' + new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) + '</small>';
+        conversa.append(msg); conversa.scrollTop = conversa.scrollHeight; msg.scrollIntoView({ block: "end" });
+        campo.value = ""; enviar.disabled = true; campo.focus();
+      });
     }
     ["etapaInfo", "etapaPedido"].forEach(function(id){ if(el(id)) info.append(el(id)); });
     let nav = el("etapaAbas");

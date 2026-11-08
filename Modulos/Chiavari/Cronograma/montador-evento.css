@@ -211,3 +211,9 @@ body:has(#telaEtapa.ativa.com-abas-etapa) .toast{bottom:calc(96px + env(safe-are
 #telaEtapa.aba-chat #etapaAssistente .etapa-assistente-campo{background:#fff;box-shadow:none;border-top:1px solid #eceef1;padding:8px 12px}
 #etapaAssistente .etapa-assistente-campo input{background:#fff;border:1px solid #dfe3e8}
 .etapa-chat-enviar{background:#2b3240;opacity:.35}
+
+/* Nov/2026: foto da equipe sem subtítulo nem selo "Pendente"; mensagem enviada por mim no chat (teste) */
+#passo_equipe .passo-sub,#passo_equipe .passo-status{display:none}
+#etapaAssistente .etapa-msg-minha{align-self:flex-end;background:#2b3240;color:#fff;border-radius:16px 4px 16px 16px;white-space:pre-wrap;overflow-wrap:anywhere}
+#etapaAssistente .etapa-assistente-msg small{display:block;margin-top:4px;font-size:10px;text-align:right;opacity:.65}
+.etapa-chat-enviar:not(:disabled){opacity:1;cursor:pointer}
