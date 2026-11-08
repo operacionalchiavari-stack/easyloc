@@ -27,6 +27,7 @@
   const encerrado=etapaAtual()?.apontamento?.status==='ENCERRADO';
   document.querySelectorAll('#telaEtapa fieldset[data-evento-dados]').forEach(f=>f.disabled=encerrado||(!f.closest('#etapaFotoEquipe')&&!ativo()));
   el('telaEtapa').classList.toggle('evento-pendente',!ativo());
+  if(el('entregaBloqueio'))el('entregaBloqueio').hidden=ativo()||!!atual?.enviado||etapaAtual()?.apontamento?.status==='ENCERRADO';
  }
  function navegar(painel){
   if(!linear())return false;
@@ -57,12 +58,9 @@
    while(corpo.firstChild)campo.append(corpo.firstChild);corpo.append(campo);
   });
   atual={id:e.id,lista:[],itens:{},carregado:false,enviado:false,carregandoFoto:0};
-  conferencia.innerHTML=passoHtml('conferencia',2,'Conferência dos itens','Veja a foto, confira a entrega e sinalize danos.',
-   '<div id="entregaItens" aria-live="polite"><p class="entrega-carregando">Carregando os itens do pedido…</p></div>'+
+  conferencia.innerHTML=passoHtml('conferencia',2,'Conferência dos itens','Informe quantos foram entregues de cada item e sinalize danos.',
+   '<p class="entrega-bloqueio" id="entregaBloqueio" hidden>A lista libera quando o evento começar: check-in da equipe ou foto da equipe (aba Equipe).</p><div id="entregaItens" aria-live="polite"><p class="entrega-carregando">Carregando os itens do pedido…</p></div>'+
    '<p class="entrega-resumo" id="entregaResumo" role="status"></p><button type="button" class="btn" id="entregaSalvar" disabled>Salvar conferência</button>', '✓ Conferência enviada');
-  const reposicao=document.createElement('details');reposicao.className='evento-reposicao';
-  reposicao.innerHTML='<summary>Precisa de troca ou reposição?<span>Acionar o galpão para um item danificado ou faltante</span></summary>';
-  reposicao.append(el('etapaTrocas'));conferencia.append(reposicao);
   el('entregaSalvar').addEventListener('click',salvar);
   acesso();carregar(e.id);
  }
@@ -102,10 +100,10 @@
    const foto=imagem(it.foto);
    linha.innerHTML='<div class="entrega-item-topo">'+(foto?'<button type="button" class="entrega-foto" aria-label="Ampliar foto de '+esc(it.nome)+'"><img src="'+esc(foto)+'" alt="'+esc(it.nome)+'" loading="lazy"></button>':'<div class="entrega-foto sem-foto">Sem foto</div>')+
     '<div><h3 title="'+esc(it.nome)+'">'+esc(it.nome)+'</h3><p class="entrega-previsto">Previsto: <b>'+esc(it.esperado)+'</b></p></div></div>'+
-    '<fieldset data-evento-dados><button type="button" class="entrega-tudo" aria-pressed="false">✓ Tudo entregue, sem danos</button>'+
+    '<fieldset data-evento-dados>'+
     '<div class="entrega-quantidades"><label for="entregue-'+i+'">Entregues<input id="entregue-'+i+'" class="input" data-entregue type="number" min="0" max="'+esc(it.esperado)+'" step="1" inputmode="numeric" placeholder="Qtd."></label>'+
     '<label for="dano-'+i+'">Danificados<input id="dano-'+i+'" class="input" data-dano type="number" min="0" step="1" inputmode="numeric" value="0"></label></div>'+
-    '<button type="button" class="entrega-corrigir" hidden>Corrigir quantidades ou informar dano</button><p class="entrega-confirmado" hidden></p>'+
+    '<p class="entrega-confirmado" hidden></p>'+
     '<div class="entrega-dano" hidden><label for="obs-'+i+'">O que aconteceu?<textarea class="input" id="obs-'+i+'" maxlength="1000" placeholder="Descreva o dano" data-obs></textarea></label>'+
     '<label class="entrega-anexo">'+I.camera+'<span>Foto do dano (opcional)</span><input type="file" accept="image/*" capture="environment" hidden></label><img class="entrega-foto-dano" alt="Foto do dano" hidden></div></fieldset>';
    const chaveGrupo=(it.pedido_numero||'')+':'+(it.ambiente_id||'legado');
@@ -118,11 +116,6 @@
    grupos.get(chaveGrupo).append(linha);
    if(salvo){linha.querySelector('[data-entregue]').value=salvo.entregue;linha.querySelector('[data-dano]').value=salvo.danificados;linha.querySelector('[data-obs]').value=salvo.observacao||'';}
    if(foto)linha.querySelector('button.entrega-foto').addEventListener('click',()=>abrirFolha('<h3>'+esc(it.nome)+'</h3><img class="foto-free-ampliada" src="'+esc(foto)+'" alt="'+esc(it.nome)+'"><button class="btn btn-claro" type="button" onclick="fecharFolha()">Fechar foto</button>'));
-   linha.querySelector('.entrega-tudo').addEventListener('click',()=>{
-    if(atual.enviado)return;delete linha.dataset.editar;linha.querySelector('[data-entregue]').value=it.esperado;linha.querySelector('[data-dano]').value=0;
-    guardar(linha,it);resumo();
-   });
-   linha.querySelector('.entrega-corrigir').addEventListener('click',()=>{linha.dataset.editar='1';pintarItem(linha,it);linha.querySelector('[data-entregue]').focus();});
    linha.querySelectorAll('input[type=number],textarea').forEach(c=>c.addEventListener('input',()=>{guardar(linha,it);resumo();}));
    linha.querySelector('input[type=file]').addEventListener('change',e=>fotoDano(e,linha,it));
    if(salvo?.foto)mostrarFotoDano(linha,salvo.foto);
@@ -143,9 +136,7 @@
  function valido(it,d){return !!d&&Number.isInteger(d.entregue)&&d.entregue>=0&&d.entregue<=Number(it.esperado)&&Number.isInteger(d.danificados)&&d.danificados>=0&&d.danificados<=d.entregue&&(!d.danificados||!!d.observacao);}
  function pintarItem(linha,it){
   const d=atual.itens[it.chave];const perfeito=valido(it,d)&&d.entregue===Number(it.esperado)&&!d.danificados;
-  linha.querySelector('.entrega-tudo').setAttribute('aria-pressed',String(perfeito));
-  linha.querySelector('.entrega-quantidades').hidden=perfeito&&!linha.dataset.editar;
-  linha.querySelector('.entrega-corrigir').hidden=!perfeito||!!linha.dataset.editar||atual.enviado;
+  linha.querySelector('.entrega-quantidades').hidden=perfeito&&atual.enviado;
   const confirmado=linha.querySelector('.entrega-confirmado');confirmado.hidden=!perfeito||!atual.enviado;
   confirmado.textContent=d?.entregue+' entregues · sem danos';
   linha.querySelector('.entrega-dano').hidden=!(d?.danificados>0);

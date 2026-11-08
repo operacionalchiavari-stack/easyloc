@@ -338,7 +338,7 @@
 </style>
   <meta name="theme-color" content="#5a5a55">
   <link rel="stylesheet" href="../apps-equipe.css?v=20261106-topo-branco">
-  <link rel="stylesheet" href="montador-evento.css?v=20261108-abas-etapa3">
+  <link rel="stylesheet" href="montador-evento.css?v=20261108-lista-chat2">
 </head>
 <body class="chiavari-equipe-app" data-app-equipe="montagem">
 
@@ -408,7 +408,7 @@
 
   <div class="toast" id="toast"></div>
 
-<script src="montador-evento.js?v=20261031-app-integrado"></script>
+<script src="montador-evento.js?v=20261108-lista-chat2"></script>
 <script src="montador-bonus.js?v=20261031-integrado"></script>
 <script>
   /* =========================================================
@@ -902,13 +902,13 @@
     if(!el("etapaUber")){ const u = document.createElement("div"); u.id = "etapaUber"; colunas.append(u); }
     ["etapaEquipe", "etapaUber", "etapaFrete"].forEach(function(id){ if(el(id)) colunas.append(el(id)); });
     if(el("etapaFotoEquipe")) equipe.append(el("etapaFotoEquipe"));
-    ["regProgresso", "etapaConferencia", "etapaSacolas", "etapaRegistros"].forEach(function(id){ if(el(id)) lista.append(el(id)); });
-    if(el("etapaTrocas") && !el("etapaTrocas").closest("#etapaConferencia")) lista.append(el("etapaTrocas"));
+    ["regProgresso", "etapaConferencia", "etapaRegistros"].forEach(function(id){ if(el(id)) lista.append(el(id)); });
+    // Nov/2026: troca/reposição e sacolas saíram da aba Lista (ficam escondidas; vão para o chat do pedido).
     if(!el("etapaAssistente")){
       const a = document.createElement("section"); a.id = "etapaAssistente"; a.className = "secao etapa-assistente";
-      a.innerHTML = '<div class="secao-titulo"><h2>Informações do pedido</h2></div>' +
+      a.innerHTML = '<header class="etapa-chat-topo"><span class="etapa-chat-avatar" aria-hidden="true">A</span><span><strong>Assistente do pedido</strong><small>em breve</small></span></header>' +
         '<div class="etapa-assistente-conversa"><div class="etapa-assistente-msg">Em breve você poderá conversar comigo aqui sobre as informações deste pedido.</div></div>' +
-        '<div class="etapa-assistente-campo"><input type="text" placeholder="Em breve" disabled aria-label="Mensagem para o assistente"><button type="button" class="btn" disabled>Enviar</button></div>';
+        '<div class="etapa-assistente-campo"><input type="text" placeholder="Mensagem" disabled aria-label="Mensagem para o assistente"><button type="button" class="etapa-chat-enviar" disabled aria-label="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 20 4l-6 16-3-7z"/></svg></button></div>';
       info.append(a);
     }
     ["etapaInfo", "etapaPedido"].forEach(function(id){ if(el(id)) info.append(el(id)); });
@@ -930,6 +930,9 @@
     document.querySelectorAll("#etapaAbas [data-etapa-aba]").forEach(function(b){
       const ativo = b.dataset.etapaAba === chave; b.setAttribute("aria-selected", ativo ? "true" : "false"); b.classList.toggle("ativa", ativo);
     });
+    document.getElementById("telaEtapa").classList.toggle("aba-chat", chave === "info");
+    const navAbas = document.getElementById("etapaAbas");
+    if(navAbas) document.documentElement.style.setProperty("--etapa-abas-h", navAbas.offsetHeight + "px");
     if(!semRolar) window.scrollTo({ top: 0, behavior: "auto" });
   }
   window.trocarAbaEtapa = trocarAbaEtapa;
@@ -1315,18 +1318,10 @@
     let passos = "";
 
     if(e.operacao === "montagem"){
-      reg.obrigatorios = ["equipe", "conferencia", "sacolas", "lista"];
+      // Nov/2026: sacolas de proteção e foto da lista assinada saíram do app (vão para o chat do pedido).
+      reg.obrigatorios = ["equipe", "conferencia"];
       passos =
-        passoHtml("equipe", 1, "Foto da equipe reunida", "Reúna todos e registre uma foto no local do evento", equipe, "✓ Foto da equipe enviada") +
-        passoHtml("sacolas", 3, "Sacolas de proteção", "Registre o código e a foto de cada sacola",
-          '<div id="regSacolas" style="display:flex;flex-direction:column;gap:10px"></div>' +
-          '<button class="btn btn-claro" type="button" onclick="adicionarSacola()">' + I.mais + 'Adicionar outra sacola</button>' +
-          '<button class="btn" type="button" onclick="enviarSacolas(this)">' + I.enviar + 'Enviar sacolas</button>' +
-          '<button class="btn btn-claro" type="button" onclick="semSacolas(this)">Não usamos sacola nesta entrega</button>', "✓ Sacolas enviadas") +
-        passoHtml("lista", 4, "Foto da lista assinada", "Informe quem recebeu e fotografe a lista assinada",
-          '<label class="rotulo" for="regRecebedor">Quem recebeu</label><input class="input" id="regRecebedor" type="text" autocomplete="name" placeholder="Nome de quem recebeu">' +
-          fotoTile("regFotoLista", "Tirar foto da lista assinada", "fotoLista(event)") +
-          '<button class="btn" type="button" onclick="enviarListaAssinada(this)">' + I.enviar + 'Enviar lista assinada</button>', "✓ Lista assinada enviada");
+        passoHtml("equipe", 1, "Foto da equipe reunida", "Reúna todos e registre uma foto no local do evento", equipe, "✓ Foto da equipe enviada");
     }else{
       reg.obrigatorios = ["equipe", "conferida", "contagem", "conclusao"];
       passos =
@@ -1346,10 +1341,9 @@
 
     const progresso = '<div class="progresso" id="regProgresso"><div class="progresso-linha"><span id="regProgressoTexto">Verificando…</span><span id="regProgressoPct">0%</span></div><div class="progresso-barra"><i id="regProgressoBarra"></i></div></div>';
     document.getElementById("etapaRegistros").innerHTML = e.operacao === "montagem"
-      ? progresso + '<div class="passos">' + passos + '</div><div class="tudo-pronto"><b>Montagem registrada</b>Todos os registros obrigatórios foram enviados.<button class="btn btn-ok encerrar-evento" type="button" onclick="encerrarEventoApp(this)">' + I.check + 'Encerrar montagem (saída da equipe)</button></div>'
+      ? progresso + '<div class="passos">' + passos + '</div><div class="tudo-pronto"><b>Montagem registrada</b>Foto da equipe e lista conferidas.<button class="btn btn-ok encerrar-evento" type="button" onclick="encerrarEventoApp(this)">' + I.check + 'Encerrar montagem (saída da equipe)</button></div>'
       : '<section class="secao"><div class="secao-titulo"><h2>Registros da ' + esc(e.operacao) + '</h2></div>' + progresso + resumoChegada + '<div class="passos">' + passos + '</div></section>';
 
-    if(e.operacao === "montagem"){ adicionarSacola(); }
     verificarRegistros(e);
     atualizarProgresso();
   }
@@ -1361,8 +1355,6 @@
     chamar("verificarEquipeTerceirizadaJaEnviada", id).then(function(r){ if(mesmo() && r && r.enviado){ marcarFeito("equipe"); } }).catch(console.error);
 
     if(e.operacao === "montagem"){
-      chamar("verificarSacolasJaEnviadas", id).then(function(r){ if(mesmo() && r && r.enviado){ sacolasFeitas(r); } }).catch(console.error);
-      chamar("verificarListaAssinadaJaEnviada", id).then(function(r){ if(mesmo() && r && r.enviado){ marcarFeito("lista"); } }).catch(console.error);
     }else{
       chamar("verificarListaConferidaDesmontagem", id).then(function(r){ if(mesmo() && r && r.enviado){ conferidaFeita(r); } }).catch(console.error);
       carregarContagemItens(id, mesmo);

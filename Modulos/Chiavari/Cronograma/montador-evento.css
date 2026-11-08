@@ -177,3 +177,28 @@ body:has(#telaEtapa.ativa.com-abas-etapa) .toast{bottom:calc(96px + env(safe-are
 #telaEtapa .etapa-colunas .uber-motorista-nome{display:block;max-width:100%;overflow-wrap:break-word}
 #telaEtapa .etapa-colunas .uber-motorista-nome small{display:block}
 #telaEtapa .etapa-colunas .uber-vaga,#telaEtapa .etapa-colunas .uber-motorista{min-width:0;max-width:100%}
+
+/* Nov/2026: aba Lista só com a lista (sem troca/reposição e sem sacolas) */
+#telaEtapa.com-abas-etapa #etapaTrocas,#telaEtapa.com-abas-etapa #etapaSacolas,#telaEtapa.com-abas-etapa .evento-reposicao{display:none!important}
+.entrega-bloqueio{margin:0 0 12px;padding:10px 12px;border-radius:12px;background:#fdf6dd;border:1px solid #ecd9a0;color:#7a5a12;font-size:13px;line-height:1.4}
+.entrega-item .entrega-quantidades{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.entrega-item .entrega-quantidades[hidden]{display:none}
+
+/* Nov/2026: aba Informações = chat em tela cheia, no estilo do WhatsApp */
+#telaEtapa.ativa.aba-chat{display:flex;flex-direction:column;min-height:100dvh}
+#telaEtapa.aba-chat>#etapaCabeca,#telaEtapa.aba-chat>#apontamentoEtapa,#telaEtapa.aba-chat>#etapaTituloPagina{display:none}
+#telaEtapa.aba-chat>#etapaAba_info:not([hidden]){flex:1;display:flex;flex-direction:column;min-height:0}
+#etapaAba_info>#etapaAssistente{flex:1;display:flex;flex-direction:column;margin:0;padding:0;overflow:hidden;border-radius:18px;border:1px solid var(--line);background:#efeae2;min-height:60dvh}
+.etapa-chat-topo{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#2f3a35;color:#fff}
+.etapa-chat-topo strong{display:block;font-size:15px}
+.etapa-chat-topo small{display:block;font-size:11px;color:#c9d6cf}
+.etapa-chat-avatar{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:#c9a24f;color:#fff;font-weight:700}
+#etapaAssistente .etapa-assistente-conversa{flex:1;min-height:0;overflow-y:auto;border-radius:0;background:#efeae2;justify-content:flex-start;padding:14px}
+#etapaAssistente .etapa-assistente-msg{border:0;border-radius:0 12px 12px 12px;box-shadow:0 1px 1px #0000001a;background:#fff}
+#etapaAssistente .etapa-assistente-campo{margin:0;padding:8px 10px;background:#f0f0f0;align-items:center}
+#etapaAssistente .etapa-assistente-campo input{border:0;border-radius:999px;background:#fff;min-height:42px;padding:8px 16px}
+.etapa-chat-enviar{display:grid;place-items:center;width:44px;height:44px;flex:none;border:0;border-radius:50%;background:#1f7a44;color:#fff;opacity:.6}
+.etapa-chat-enviar svg{width:20px;height:20px;fill:currentColor}
+/* campo do chat preso logo acima da barra de abas */
+#telaEtapa.aba-chat #etapaAssistente .etapa-assistente-campo{position:fixed;z-index:13;left:50%;transform:translateX(-50%);width:min(100%,680px);bottom:var(--etapa-abas-h,76px);box-shadow:0 -1px 0 #0000000f}
+#telaEtapa.aba-chat #etapaAssistente .etapa-assistente-conversa{padding-bottom:72px}
