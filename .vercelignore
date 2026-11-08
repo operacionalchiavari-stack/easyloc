@@ -18,3 +18,8 @@ outputs
 docs
 android
 *.md
+
+# configurações do editor e pastas locais de ferramentas
+.vscode
+.agents
+.claude
