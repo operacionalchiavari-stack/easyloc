@@ -98,7 +98,8 @@ Deno.serve(async (req) => {
     if (promover && (!await can('configuracoes.permissoes.editar') || !employee.senha)) return response({ error: 'Um administrador deve informar a senha para liberar o acesso.' }, 403);
     let id = body.id;
     let created = false;
-    let oldPhoto = '';
+    // Nov/2026: ao liberar o acesso (promover) o cadastro já pode ter foto; sem isto ela era recusada como "Foto inválida".
+    let oldPhoto = cadastroAnterior?.foto_url || '';
     let currentEmail = employee.email;
     if (id && !promover) {
       const links = checked(await admin.from('usuarios_empresas').select('empresa_id').eq('user_id', id));
