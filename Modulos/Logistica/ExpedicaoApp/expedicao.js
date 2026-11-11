@@ -332,6 +332,8 @@
  document.addEventListener('visibilitychange',()=>{if(document.hidden)pararCamera();});
  window.addEventListener('pagehide',pararCamera);
  window.addEventListener('offline',()=>{pararCamera();mensagem('Sem conexão. As leituras precisam de internet.');});
+ // Leitor USB/bluetooth: bipar em sequência sem tocar na caixa do código (a caixa fica sempre marcada).
+ if(window.EasyLocLeitor?.manterFoco)window.EasyLocLeitor.manterFoco(()=>document.getElementById('taCodigo'),codigo=>ler(codigo));
  window.addEventListener('online',()=>mensagem('Conexão restabelecida. Você pode continuar a conferência.',true));
  sb.auth.onAuthStateChange(ev=>{if(ev==='SIGNED_OUT'){pararCamera();s.geracao++;s.pedido=null;irParaLogin('');}});
  (async()=>{await window.__limpezaDadosPronta;identidade(localStorage.getItem('expedicao-app:empresa'));try{const {data,error}=await sb.auth.getSession();if(error)throw Error(error.message);if(data.session?.user)await validarSessao(data.session.user);else irParaLogin('');}catch(e){if(NO_QUADRO){tela('taLogin');mensagem(e.message);}else{try{sessionStorage.setItem('app_aviso',e.message);}catch(_){}location.replace(APP);}}})();

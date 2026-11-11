@@ -11618,3 +11618,5 @@ de ":" — "ACERVO:ENV:12-003" chegava como "acervoçenvç12-003". `EasyLocLeito
 `:`, `;`, `ç`, `Ç` como separador e devolve "ACERVO:TIPO:código"; usado por `ler()` (Conferência, Expedição do app), pela
 Triagem do app (`triagem.js`, antes de mandar a `triagem_app_ler`) e pela Triagem do computador (`lerEtiqueta`). O ideal
 continua sendo configurar o leitor para o teclado brasileiro (ABNT2) pelo código de configuração do manual dele.
+
+- **Bipar em sequência no app sem tocar na caixa** (11/11/2026): `EasyLocLeitor.manterFoco(pegarCampo, aoLer)` (`js/core/leitorQr.js`), ligado na Triagem e na Expedição do app (`#taCodigo`). A caixa fica sempre marcada com `inputmode="none"` (o teclado do celular não abre; tocar nela abre para digitar à mão); o que o leitor digitar em qualquer lugar da tela vai para a leitura; leituras seguidas entram numa fila (bipar rápido não perde código). Não age com outro campo em edição (contagem, danificados) nem com janela aberta.

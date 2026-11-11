@@ -120,5 +120,66 @@
     });
   }
 
-  window.EasyLocLeitor = { criar, teclado, ler, normalizar };
+  // Leitor USB/bluetooth sem precisar tocar na caixa do código (nov/2026): enquanto a caixa existe na tela, o que o leitor
+  // "digitar" em qualquer lugar da página vai para ela; a caixa fica sempre marcada, com inputmode="none" para o
+  // teclado do celular não abrir (tocar nela abre o teclado para digitar à mão). Leituras seguidas entram numa fila e
+  // são conferidas uma depois da outra (bipar rápido não perde código enquanto a anterior ainda está sendo gravada).
+  function manterFoco(pegarCampo, aoLer) {
+    let buffer = "", ultimaTecla = 0, fila = Promise.resolve();
+    const editavel = (el) => el && el !== document.body && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
+    const visivel = (el) => el && el.isConnected && !el.disabled && el.offsetParent !== null;
+    const janelaAberta = () => [...document.querySelectorAll("dialog[open]")].some((d) => !d.contains(pegarCampo()));
+    function enfileirar(v) {
+      v = String(v || "").trim();
+      if (!v) return;
+      fila = fila.then(() => aoLer(v)).catch(() => {}).then(() => focar());
+    }
+    function preparar(campo) {
+      if (!campo || campo.dataset.leitorFoco) return;
+      campo.dataset.leitorFoco = "1";
+      campo.setAttribute("inputmode", "none");
+      campo.addEventListener("pointerdown", () => campo.setAttribute("inputmode", "text"));
+      campo.addEventListener("blur", () => campo.setAttribute("inputmode", "none"));
+    }
+    function focar() {
+      const campo = pegarCampo();
+      if (!visivel(campo) || janelaAberta() || document.hidden) return;
+      preparar(campo);
+      const ativo = document.activeElement;
+      if (ativo === campo || editavel(ativo) || Date.now() - ultimaTecla < 600) return;
+      campo.focus({ preventScroll: true });
+    }
+    document.addEventListener("keydown", (e) => {
+      const campo = pegarCampo();
+      if (!campo || !campo.isConnected || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.target === campo) {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        const v = (Date.now() - ultimaTecla < 1500 ? buffer : "") + campo.value;
+        buffer = "";
+        campo.value = "";
+        enfileirar(v);
+        return;
+      }
+      if (editavel(e.target) || janelaAberta()) return;
+      const agora = Date.now();
+      if (agora - ultimaTecla > 1500) buffer = "";
+      ultimaTecla = agora;
+      if (e.key === "Enter") {
+        if (!buffer) return;
+        e.preventDefault();
+        const v = buffer;
+        buffer = "";
+        enfileirar(v);
+      } else if (e.key.length === 1) {
+        e.preventDefault();
+        buffer += e.key;
+      }
+    }, true);
+    setInterval(focar, 400);
+    document.addEventListener("visibilitychange", focar);
+    return { focar };
+  }
+
+  window.EasyLocLeitor = { criar, teclado, ler, normalizar, manterFoco };
 })();
