@@ -1300,8 +1300,9 @@
   // Etiquetas do sistema trazem o tipo no QR: ACERVO:PAT:<patrimônio fixo>, ACERVO:ENV:<etiqueta de envio>,
   // ACERVO:ITEM:<código do item>. Sem prefixo (leitor/digitado), vale o código puro.
   function lerEtiqueta(texto) {
+    // Leitor com teclado americano no Windows brasileiro manda "Ç"/";" no lugar de ":" (ex.: acervoçenvç12-003).
     const t = String(texto || "").trim();
-    const m = /^ACERVO:(PAT|ITEM|ENV):(.+)$/i.exec(t);
+    const m = /^ACERVO\s*[:;çÇ]\s*(PAT|ITEM|ENV)\s*[:;çÇ]\s*(.+)$/i.exec(t);
     return m ? { tipo: m[1].toUpperCase(), codigo: m[2].trim() } : { tipo: "", codigo: t };
   }
 

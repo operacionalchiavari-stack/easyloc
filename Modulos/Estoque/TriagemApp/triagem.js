@@ -198,7 +198,7 @@
  function tituloDoErro(msg,tipo){if(tipo==='aviso')return /complet/i.test(msg)?'Item já completo':'Já conferido';if(/outro pedido|n[aã]o pertence/i.test(msg))return 'Não é deste pedido';if(/n[aã]o encontrad/i.test(msg))return 'Código não encontrado';return 'Não foi possível ler';}
 
  async function ler(codigo){
-  codigo=String(codigo||'').trim();if(!codigo||s.ocupado||!s.base||sinalTravado)return;
+  codigo=String(codigo||'').trim();if(window.EasyLocLeitor?.normalizar)codigo=window.EasyLocLeitor.normalizar(codigo);if(!codigo||s.ocupado||!s.base||sinalTravado)return;
   bloquear(true);mensagem('');
   try{
    if(!s.pendente||s.pendente.codigo!==codigo)s.pendente={codigo,id:crypto.randomUUID()};

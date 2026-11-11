@@ -11611,3 +11611,10 @@ Teste feito como funcionário (conta temporária e um pedido de teste no banco r
 - **Conferência por QR (07/11)**:
   - Cada linha mostra a foto do item e a contagem do material de proteção na mesma linha, numa lista só (`fotoEtqHtml`, `capaDoGrupo`). O quadro de baixo (`#cfCapasBipe`) só aparece para materiais de itens sem etiqueta.
   - "Só o que falta" virou um botão de liga/desliga em pílula, só no CSS.
+
+## Leitor de QR com teclado americano (11/11/2026)
+Leitor USB/bluetooth configurado como teclado americano num Windows com teclado brasileiro manda "Ç"/"ç" (ou ";") no lugar
+de ":" — "ACERVO:ENV:12-003" chegava como "acervoçenvç12-003". `EasyLocLeitor.normalizar()` (`js/core/leitorQr.js`) aceita
+`:`, `;`, `ç`, `Ç` como separador e devolve "ACERVO:TIPO:código"; usado por `ler()` (Conferência, Expedição do app), pela
+Triagem do app (`triagem.js`, antes de mandar a `triagem_app_ler`) e pela Triagem do computador (`lerEtiqueta`). O ideal
+continua sendo configurar o leitor para o teclado brasileiro (ABNT2) pelo código de configuração do manual dele.

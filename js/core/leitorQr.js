@@ -9,8 +9,18 @@
 (function () {
   if (window.EasyLocLeitor) return;
 
-  function ler(texto) {
+  // Leitor USB/bluetooth configurado com teclado americano num Windows com teclado brasileiro (ABNT2): os dois
+  // pontos ":" chegam como "Ç"/"ç" (mesma tecla) e às vezes como ";". Aceita esses separadores e devolve o texto
+  // no formato certo "ACERVO:TIPO:código" (ex.: "acervoçenvç12-003" → "ACERVO:ENV:12-003").
+  const ETIQUETA = /^ACERVO\s*[:;çÇ]\s*(PAT|ITEM|ENV)\s*[:;çÇ]\s*(.+)$/i;
+  function normalizar(texto) {
     const t = String(texto || "").trim();
+    const m = ETIQUETA.exec(t);
+    return m ? "ACERVO:" + m[1].toUpperCase() + ":" + m[2].trim() : t;
+  }
+
+  function ler(texto) {
+    const t = normalizar(texto);
     const m = /^ACERVO:(PAT|ITEM|ENV):(.+)$/i.exec(t);
     return m ? { tipo: m[1].toUpperCase(), codigo: m[2].trim() } : { tipo: "", codigo: t };
   }
@@ -110,5 +120,5 @@
     });
   }
 
-  window.EasyLocLeitor = { criar, teclado, ler };
+  window.EasyLocLeitor = { criar, teclado, ler, normalizar };
 })();
