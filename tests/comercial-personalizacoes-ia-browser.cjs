@@ -55,7 +55,7 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
     await ui.locator('#catalogFabricInput').setInputFiles({name:'tecido.png',mimeType:'image/png',buffer:png});
     await ui.locator('#catalogCustomizeGenerate:not([disabled])').waitFor();await ui.locator('#catalogCustomizeGenerate').click();
    }
-   const toast=ui.locator('.catalog-notification.has-photo');await toast.waitFor();assert.match(await toast.textContent(),/Comercial › Personalizações IA/);
+   const toast=ui.locator('.catalog-notification.has-photo');await toast.waitFor();assert.match(await toast.textContent(),/Comercial › Renderizações/);
    await toast.locator('.catalog-notification-action').click();await ui.locator('#catalogFabricResultDialog[open]').waitFor();
    assert.match(await ui.locator('#catalogFabricResultImage').getAttribute('alt'),new RegExp(tipo));
    await ui.locator('#catalogFabricResultAdd').click();
@@ -76,12 +76,12 @@ const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42
    // A recuperação ocorre na tela independente do Comercial, sem carregar o catálogo.
    const requests=[];page.on('request',r=>requests.push(r.url()));
    const acervo='http://127.0.0.1:'+server.address().port+'/Modulos/Comercial/PersonalizacoesIA/personalizacoes-ia.html';
-   await page.goto(acervo);await page.locator('[data-open-root]').click();await page.locator('[data-category="Sofás"]').click();await page.locator(`[data-item="${id}"]`).click();
+   await page.goto(acervo);await page.locator('[data-open-root="itens"]').click();await page.locator('[data-category="Sofás"]').click();await page.locator(`[data-item="${id}"]`).click();
    assert.equal(await page.locator('[data-photo]').count(),1);await page.locator('[data-photo]').click();await page.locator('#piaPreview[open]').waitFor();
    assert.match(await page.locator('#piaImagem').getAttribute('src'),new RegExp('personalizado-'+tipo));
    assert.equal(await page.locator('iframe').count(),0);assert.ok(!requests.some(url=>url.includes('/Comercial/Catalogo/')),'o módulo não importa nem abre o catálogo');
-   assert.equal(await page.locator('#catalogBiblioteca').count(),0);assert.equal(await page.title(),'Personalizações IA — Comercial');
-   await page.locator('#piaFechar').click();await page.reload();await page.locator('[data-open-root]').waitFor();
+   assert.equal(await page.locator('#catalogBiblioteca').count(),0);assert.equal(await page.title(),'Renderizações — Comercial');
+   await page.locator('#piaFechar').click();await page.reload();await page.locator('[data-open-root="itens"]').waitFor();
    dados=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('mockdb')).projetos[0].dados);
    assert.equal(dados.ambientes[0].itens[0].quantidade,4,'abrir o acervo preserva a quantidade ajustada');assert.equal(dados.ambientes[0].renders.length,1);
    fs.mkdirSync('.tmp/biblioteca-personalizacoes',{recursive:true});await page.screenshot({path:'.tmp/biblioteca-personalizacoes/'+tipo+'.png',fullPage:false});

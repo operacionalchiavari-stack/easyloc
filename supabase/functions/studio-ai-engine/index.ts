@@ -3,7 +3,7 @@ import { instrucoesEmpresa } from '../_shared/ia-config.ts';
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { designPresentation } from "./presentation-design.mjs";
-import { guardarPersonalizacao, prepararPersonalizacao } from "./personalizacao-acervo.mjs";
+import { guardarPersonalizacao, guardarRender3d, prepararPersonalizacao } from "./personalizacao-acervo.mjs";
 import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
 
 const corsHeaders = {
@@ -559,12 +559,24 @@ serve(comUsoIA("studio3d", async (req) => {
         });
       } catch (error) {
         console.error('Erro ao guardar personalização comercial', error);
-        personalizacaoErro = 'A imagem foi gerada, mas não foi possível salvá-la em Personalizações IA. Baixe a imagem para preservá-la.';
+        personalizacaoErro = 'A imagem foi gerada, mas não foi possível salvá-la em Renderizações. Baixe a imagem para preservá-la.';
       }
+    }
+
+    // Renderização do Módulo 3D: também fica em Comercial › Renderizações (pasta Módulo 3D).
+    let renderSalvo = null;
+    if (result.providerStatus === 'ok' && result.images[0] && input.scene?.referencePolicy !== 'fabric_customization' && Array.isArray(input.scene?.objects)) {
+      try {
+        renderSalvo = await guardarRender3d(acesso.serviceClient, input, result.images[0], {
+          clienteId: 'catalogSession' in acesso ? acesso.catalogSession.cliente_id : null,
+          usuarioId: 'user' in acesso ? acesso.user.id : null,
+        });
+      } catch (error) { console.error('Erro ao guardar a renderização 3D em Renderizações', error); }
     }
 
     return respostaJson({
       ok: result.providerStatus === "ok",
+      renderSalvo: renderSalvo ? { id: renderSalvo.id, url: renderSalvo.url } : null,
       providerStatus: result.providerStatus,
       images: result.images,
       personalizacaoSalva, personalizacaoErro,

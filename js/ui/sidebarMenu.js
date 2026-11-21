@@ -73,7 +73,7 @@
             ],
           },
           { rotulo: "Pedidos e Orçamentos", href: "Modulos/Comercial/Pedidos/CentralPedidos.html" },
-          { rotulo: "Personalizações IA", href: "Modulos/Comercial/PersonalizacoesIA/personalizacoes-ia.html" },
+          { rotulo: "Renderizações", href: "Modulos/Comercial/PersonalizacoesIA/personalizacoes-ia.html" },
           { rotulo: "Sublocações", href: "Modulos/Comercial/Terceirizacoes/terceirizacoes.html" }, // empresas e itens sublocados (nov/2026)
           { rotulo: "Contas a receber", href: "Modulos/Comercial/ContasReceber/contas-receber.html" },
           { rotulo: "Cancelamentos", href: "Modulos/Comercial/Cancelamentos/cancelamentos.html" },

@@ -2930,7 +2930,7 @@ async function generateFabricVariation(cartela = null){
     workingToast.update({
       status: "done",
       title: data.reutilizada ? 'Versão já renderizada reutilizada' : 'Sua personalização ficou pronta',
-      message: data.reutilizada ? `${item.name}. Nenhum crédito de IA utilizado.` : data.personalizacaoSalva ? `${item.name}. Salva em Comercial › Personalizações IA › Itens personalizáveis.` : (data.personalizacaoErro || 'A imagem ainda não foi salva em Personalizações IA. Baixe o resultado para preservá-lo.'),
+      message: data.reutilizada ? `${item.name}. Nenhum crédito de IA utilizado.` : data.personalizacaoSalva ? `${item.name}. Salva em Comercial › Renderizações › Itens personalizáveis.` : (data.personalizacaoErro || 'A imagem ainda não foi salva em Personalizações IA. Baixe o resultado para preservá-lo.'),
       image: src,
       actionLabel: "Ver resultado",
       duration: 0,

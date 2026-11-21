@@ -14,33 +14,40 @@ function folderSvg(foto){
 const dataBr = data => data ? new Date(data).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo',dateStyle:'short',timeStyle:'short'}) : '';
 const pasta = (nome,quantidade,atributos,foto) => `<button type="button" class="pia-card pia-folder" ${atributos}><span class="pia-card-visual">${folderSvg(foto)}</span><span class="pia-card-copy"><strong>${escapeHtml(nome)}</strong><small>${quantidade} ${quantidade===1?'imagem':'imagens'}</small></span></button>`;
 
+// 21/11/2026: a tela virou "Renderizações". Na raiz, duas pastas: "Itens personalizáveis" (tecido e tinta, por
+// categoria e item, como antes) e "Módulo 3D" (as renderizações feitas no 3D, tipo render3d, mais novas primeiro).
+const eh3d = f => f.tipo === 'render3d';
 function renderizar(){
   const busca=normalizar($('piaBusca').value), tipo=$('piaTipo').value;
-  const fotos=state.fotos.filter(f=>(!tipo || f.tipo===tipo) && (!busca || normalizar([f.item_nome,f.item_codigo,f.categoria,f.titulo,f.cliente_nome,f.tipo].join(' ')).includes(busca)));
-  const trilha=['<button type="button" data-nav="inicio">Personalizações IA</button>'];
-  if(state.dentro)trilha.push('<span>›</span><button type="button" data-nav="raiz">Itens personalizáveis</button>');
+  const fotos=state.fotos.filter(f=>(!tipo || f.tipo===tipo) && (!busca || normalizar([f.item_nome,f.item_codigo,f.categoria,f.titulo,f.cliente_nome,f.criado_por_nome,f.tipo].join(' ')).includes(busca)));
+  const itensF=fotos.filter(f=>!eh3d(f)), f3d=fotos.filter(eh3d);
+  const trilha=['<button type="button" data-nav="inicio">Renderizações</button>'];
+  if(state.dentro==='3d')trilha.push('<span>›</span><strong>Módulo 3D</strong>');
+  if(state.dentro==='itens')trilha.push('<span>›</span><button type="button" data-nav="raiz">Itens personalizáveis</button>');
   if(state.categoria!==null)trilha.push(`<span>›</span><button type="button" data-nav="categoria">${escapeHtml(state.categoria)}</button>`);
   if(state.item!==null)trilha.push(`<span>›</span><strong>${escapeHtml(state.fotos.find(f=>itemId(f)===state.item)?.item_nome || 'Item')}</strong>`);
   $('piaCaminho').innerHTML=trilha.join('');
+  const cartao=f=>`<button type="button" class="pia-card" data-photo="${escapeHtml(f.id)}"><span class="pia-card-visual"><img src="${escapeHtml(f.url)}" alt="${escapeHtml(f.titulo)}" loading="lazy"></span><span class="pia-card-copy"><strong>${escapeHtml(eh3d(f)?f.titulo:f.titulo)}</strong><small>${escapeHtml([eh3d(f)?'Módulo 3D':(f.tipo==='tinta'?'Tinta':'Tecido'),f.cliente_nome||f.criado_por_nome,dataBr(f.criado_em)].filter(Boolean).join(' · '))}</small></span></button>`;
   let html='';
-  if(!state.dentro){html=pasta('Itens personalizáveis',fotos.length,'data-open-root',fotos[0]?.url);}
+  if(!state.dentro){html=pasta('Itens personalizáveis',itensF.length,'data-open-root="itens"',itensF[0]?.url)+pasta('Módulo 3D',f3d.length,'data-open-root="3d"',f3d[0]?.url);}
+  else if(state.dentro==='3d'){html=f3d.map(cartao).join('');}
   else if(state.categoria===null){
-    const categorias=[...new Set(fotos.map(f=>f.categoria))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
-    html=categorias.map(c=>pasta(c,fotos.filter(f=>f.categoria===c).length,`data-category="${escapeHtml(c)}"`,fotos.find(f=>f.categoria===c)?.url)).join('');
+    const categorias=[...new Set(itensF.map(f=>f.categoria))].sort((a,b)=>a.localeCompare(b,'pt-BR'));
+    html=categorias.map(c=>pasta(c,itensF.filter(f=>f.categoria===c).length,`data-category="${escapeHtml(c)}"`,itensF.find(f=>f.categoria===c)?.url)).join('');
   }else if(state.item===null){
-    const itens=new Map();fotos.filter(f=>f.categoria===state.categoria).forEach(f=>{const id=itemId(f);if(!itens.has(id))itens.set(id,{foto:f,n:0});itens.get(id).n++;});
+    const itens=new Map();itensF.filter(f=>f.categoria===state.categoria).forEach(f=>{const id=itemId(f);if(!itens.has(id))itens.set(id,{foto:f,n:0});itens.get(id).n++;});
     html=[...itens].sort(([,a],[,b])=>a.foto.item_nome.localeCompare(b.foto.item_nome,'pt-BR')).map(([id,{foto,n}])=>pasta([foto.item_nome,foto.item_codigo].filter(Boolean).join(' · '),n,`data-item="${escapeHtml(id)}"`,foto.url)).join('');
   }else{
-    html=fotos.filter(f=>f.categoria===state.categoria && itemId(f)===state.item).map(f=>`<button type="button" class="pia-card" data-photo="${escapeHtml(f.id)}"><span class="pia-card-visual"><img src="${escapeHtml(f.url)}" alt="${escapeHtml(f.titulo)}" loading="lazy"></span><span class="pia-card-copy"><strong>${escapeHtml(f.titulo)}</strong><small>${f.tipo==='tinta'?'Tinta':'Tecido'} · ${escapeHtml(dataBr(f.criado_em))}${f.cliente_nome?'<br>'+escapeHtml(f.cliente_nome):''}</small></span></button>`).join('');
+    html=itensF.filter(f=>f.categoria===state.categoria && itemId(f)===state.item).map(cartao).join('');
   }
   $('piaGrade').innerHTML=html;
   $('piaStatus').hidden=Boolean(html);
-  $('piaStatus').textContent=busca||tipo?'Nenhuma personalização encontrada com esses filtros.':'As imagens geradas com IA aparecerão aqui automaticamente.';
+  $('piaStatus').textContent=busca||tipo?'Nenhuma renderização encontrada com esses filtros.':'As imagens geradas com IA aparecerão aqui automaticamente.';
 }
 
 async function carregar(){
   if(state.carregando)return;
-  state.carregando=true;const at=$('piaAtualizar');if(at)at.disabled=true;$('piaStatus').hidden=false;$('piaStatus').textContent='Carregando personalizações…';
+  state.carregando=true;const at=$('piaAtualizar');if(at)at.disabled=true;$('piaStatus').hidden=false;$('piaStatus').textContent='Carregando renderizações…';
   try{
     const contexto=await window.aguardarContexto();
     if(!contexto?.empresa_id)throw Error('Não foi possível identificar a empresa. Entre novamente no sistema.');
@@ -54,15 +61,15 @@ async function carregar(){
 function abrirFoto(id){
   const foto=state.fotos.find(f=>String(f.id)===id);if(!foto)return;
   state.foto=foto;
-  $('piaPreviewTitulo').textContent=foto.item_nome;
-  $('piaPreviewDetalhe').textContent=[foto.item_codigo,foto.titulo,foto.cliente_nome].filter(Boolean).join(' · ');
+  $('piaPreviewTitulo').textContent=eh3d(foto)?'Renderização do Módulo 3D':foto.item_nome;
+  $('piaPreviewDetalhe').textContent=[foto.item_codigo,foto.titulo,foto.cliente_nome||foto.criado_por_nome].filter(Boolean).join(' · ');
   $('piaPreviewData').textContent=dataBr(foto.criado_em);
   $('piaImagem').src=foto.url;$('piaImagem').alt=`${foto.item_nome} — ${foto.titulo}`;
   $('piaPreview').showModal();
 }
 $('piaGrade').addEventListener('click',event=>{
   const botao=event.target.closest('button');if(!botao)return;
-  if(botao.hasAttribute('data-open-root'))state.dentro=true;
+  if(botao.hasAttribute('data-open-root'))state.dentro=botao.dataset.openRoot||'itens';
   else if(botao.hasAttribute('data-category'))state.categoria=botao.dataset.category;
   else if(botao.hasAttribute('data-item'))state.item=botao.dataset.item;
   else if(botao.hasAttribute('data-photo')){abrirFoto(botao.dataset.photo);return;}
