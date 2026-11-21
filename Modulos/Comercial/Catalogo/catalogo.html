@@ -31,10 +31,10 @@
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
   <link rel="stylesheet" href="catalogo.css?v=20261108-identidade-global">
   <link rel="stylesheet" href="projeto-apresentacao.css?v=20261117-ajustes">
-  <link rel="stylesheet" href="catalogo-studio3d.css?v=20261029-disponivel">
+  <link rel="stylesheet" href="catalogo-studio3d.css?v=20261121-formatos">
   <link rel="stylesheet" href="catalogo-biblioteca.css?v=20261021-subpastas">
   <link rel="stylesheet" href="catalogo-projetos.css?v=20261118-varios">
-  <link rel="stylesheet" href="catalogo-assistente.css?v=20261108-identidade-global">
+  <link rel="stylesheet" href="catalogo-assistente.css?v=20261121-pedido-helena">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
   <script src="../../../js/core/supabase.js"></script>
   <script src="../../../js/core/doisFatores.js?v=20261023-2fa"></script>
@@ -349,8 +349,8 @@
   <dialog class="studio-preset-dialog studio-formats-browse-dialog" id="studioFormatsBrowseDialog" aria-labelledby="studioFormatsBrowseTitle">
     <div class="studio-preset-card studio-formats-browse-card">
       <button type="button" class="studio-preset-close" id="studioFormatsBrowseClose" aria-label="Fechar">×</button>
-      <span>FORMATOS</span><h2 id="studioFormatsBrowseTitle">Todos os formatos</h2>
-      <label class="studio-library-search"><input type="search" id="studioFormatsBrowseSearch" placeholder="Pesquisar formatos" aria-label="Pesquisar formatos pelo nome ou categoria" autocomplete="off" data-lpignore="true" data-1p-ignore="true"></label>
+      <div class="sfb-topo"><h2 id="studioFormatsBrowseTitle">Formatos</h2>
+      <label class="studio-library-search"><input type="search" id="studioFormatsBrowseSearch" placeholder="Pesquisar" aria-label="Pesquisar formatos pelo nome ou tipo" autocomplete="off" data-lpignore="true" data-1p-ignore="true"></label></div>
       <div id="studioFormatsBrowseList" class="studio-formats-browse-groups"></div>
       <p id="studioFormatsBrowseStatus" role="status"></p>
     </div>
@@ -390,18 +390,12 @@
   <dialog class="studio-preset-dialog studio-swap-dialog" id="studioFormatApplyDialog" aria-labelledby="studioFormatApplyTitle">
     <form class="studio-preset-card" id="studioFormatApplyForm">
       <button type="button" class="studio-preset-close" id="studioFormatApplyClose" aria-label="Fechar">×</button>
-      <span>FORMATO</span><h2 id="studioFormatApplyTitle">Escolher os móveis</h2>
-      <p id="studioFormatApplyDescription"></p>
-      <div class="studio-swap-columns">
-        <div class="studio-swap-col">
-          <span class="studio-swap-col-heading">Peças do formato</span>
-          <div class="studio-library-list" id="studioFormatApplyCurrentList"></div>
-        </div>
-        <div class="studio-swap-col">
-          <span class="studio-swap-col-heading">Modelos disponíveis</span>
-          <label class="studio-library-search"><input type="search" id="studioFormatApplySearch" placeholder="Pesquisar móveis" aria-label="Pesquisar móveis por nome ou categoria" autocomplete="off" data-lpignore="true" data-1p-ignore="true"></label>
-          <div class="studio-library-list" id="studioFormatApplyList"></div>
-        </div>
+      <div class="sfb-topo"><h2 id="studioFormatApplyTitle">Escolher os móveis</h2>
+      <label class="studio-library-search"><input type="search" id="studioFormatApplySearch" placeholder="Pesquisar" aria-label="Pesquisar móveis por nome ou categoria" autocomplete="off" data-lpignore="true" data-1p-ignore="true"></label></div>
+      <p id="studioFormatApplyDescription" hidden></p>
+      <div class="studio-swap-columns sfa-colunas">
+        <div class="studio-library-list" id="studioFormatApplyCurrentList" aria-label="Peças do formato"></div>
+        <div class="studio-library-list" id="studioFormatApplyList" aria-label="Modelos para a peça escolhida"></div>
       </div>
       <small id="studioFormatApplyStatus" role="status"></small>
       <button type="submit" class="studio-preset-submit">Inserir formato</button>
@@ -524,6 +518,6 @@
   <div class="catalog-empty hidden" id="catalogEmpty">Nenhum item disponível para exibição no catálogo.</div>
   <div class="cpj-dock hidden" id="catalogProjetoDock" aria-label="Projeto ativo"></div>
   <div class="catalog-notifications" id="catalogNotifications" aria-live="polite" aria-label="Notificações"></div>
-  <script type="module" src="catalogo.mjs?v=20261118-fixo"></script>
+  <script type="module" src="catalogo.mjs?v=20261121-pedido-helena"></script>
 </body>
 </html>

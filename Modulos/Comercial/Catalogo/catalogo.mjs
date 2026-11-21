@@ -1,11 +1,11 @@
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
 import { iniciarDetalhesEstoque } from "./pedido-estoque-tooltip.mjs?v=20261029-mesma-conta";
 import { iniciarVitrineLogin } from "./catalogo-login-vitrine.mjs?v=20260926-login-nomes";
-import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261118-3d-personalizacao";
+import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261121-formatos";
 import {prepararImagemPersonalizacao} from './catalogo-personalizacao-imagem.mjs?v=20261118-personalizacao';
-import { initCatalogAssistente } from "./catalogo-assistente.mjs?v=20261102-planta-desativada";
+import { initCatalogAssistente } from "./catalogo-assistente.mjs?v=20261121-pedido-helena";
 import { initCatalogBiblioteca, openCatalogBiblioteca, backCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20261021-subpastas";
-import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos, personalizacoesDoItem, abrirPersonalizarItem, registrarPersonalizacaoGerada, adicionarPersonalizacaoAoProjeto, buscarPersonalizacoesGeradas } from "./catalogo-projetos.mjs?v=20261118-fixo";
+import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos, personalizacoesDoItem, abrirPersonalizarItem, registrarPersonalizacaoGerada, adicionarPersonalizacaoAoProjeto, buscarPersonalizacoesGeradas } from "./catalogo-projetos.mjs?v=20261121-pedido-helena";
 import { chaveEscolha } from './catalogo-personalizacao-modal.mjs?v=20261118-reuso';
 
 const supabase = window.supabaseClient;

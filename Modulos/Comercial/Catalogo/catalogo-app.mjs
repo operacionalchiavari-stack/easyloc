@@ -7,9 +7,10 @@
 // Navegação de app: abas embaixo, telas empilhadas com o "voltar" do celular (history), folhas que sobem de baixo.
 import { arquivosDoBucket } from "./catalogo-arquivos.mjs";
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
-import { initCatalogAssistente, abrirCatalogAssistente } from "./catalogo-assistente.mjs?v=20261120-agente";
+import { initCatalogAssistente, abrirCatalogAssistente } from "./catalogo-assistente.mjs?v=20261121-pedido-helena";
 
 const supabase = window.supabaseClient;
+const fotoHelena = new URL("../../../assets/agentes/helena.jpg", import.meta.url).href;
 // Bucket "projetos": o decorador (sem login) passa pela função catalogo-arquivos — ver catalogo-arquivos.mjs.
 const arquivosProjeto = () => arquivosDoBucket(supabase, "projetos", () => S.sessao);
 const $ = (id) => document.getElementById(id);
@@ -284,7 +285,7 @@ function telaInicio(){
       <p class="inicio-sub">Transite por vários estilos e encontre o seu.</p>
     </section>
     ${visitante() ? `<button type="button" class="helena-card" data-ir-aba="catalogo"><span class="cas-avatar">C</span><span><strong>Explorar o catálogo</strong><small>${S.itens.length} peças para o seu evento</small></span>${ico("seta")}</button>`
-      : `<button type="button" class="helena-card" data-helena><span class="cas-avatar">H</span><span><strong>Fale com a Helena</strong><small>Sua consultora: sugere peças, monta fotos das composições e fecha o pedido com você. Pode mandar áudio.</small></span>${ico("seta")}</button>`}
+      : `<button type="button" class="helena-card" data-helena><span class="cas-avatar"><img data-ia-foto width="512" height="512" loading="eager" src="${fotoHelena}" alt="" decoding="sync"></span><span><strong>Fale com a Helena</strong><small>Sua consultora: sugere peças, monta fotos das composições e fecha o pedido com você. Pode mandar áudio.</small></span>${ico("seta")}</button>`}
     ${!visitante() ? (p ? `<button type="button" class="projeto-card" data-ir-aba="projeto"><span class="projeto-card-foto">${p.dados?.foto_casal?.url ? `<img src="${esc(otimizar(p.dados.foto_casal.url, 120))}" alt="">` : esc((p.noivos || "?")[0])}</span><div><small>Projeto em andamento</small><strong>${esc(p.noivos)}</strong><span>${esc(dataLonga(p.data_evento))} · ${totalPecas()} ${totalPecas() === 1 ? "peça" : "peças"}</span></div>${ico("seta")}</button>`
       : `<button type="button" class="projeto-card" data-ir-aba="projeto"><span class="projeto-card-foto">${ico("mais")}</span><div><small>Comece por aqui</small><strong>Crie o projeto do evento</strong><span>Noivos, data e local — e vá montando o pedido</span></div>${ico("seta")}</button>`) : ""}
     <h2 class="secao-titulo">Categorias <button type="button" data-ir-aba="catalogo">Ver todas</button></h2>
@@ -474,7 +475,7 @@ function telaItem(itemInicial){
         ${item.variantGroup?.length > 1 ? `<div class="item-variantes">${item.variantGroup.map((v) => `<button type="button" class="variante${v.id === item.id ? " ativa" : ""}" data-variante="${esc(v.id)}" aria-label="${esc(v.cor || v.name)}"><i style="background-image:url('${esc(otimizar(v.photo, 100))}')"></i><span>${esc(v.cor || "—")}</span></button>`).join("")}</div>` : ""}
         ${item.desc ? `<p class="item-desc">${esc(item.desc)}</p>` : ""}
         ${item.specs.length ? `<dl class="specs">${item.specs.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>` : ""}
-        ${!visitante() && !equipe() ? `<button type="button" class="item-perguntar" data-perguntar><span class="cas-avatar">H</span><span><strong>Perguntar à Helena</strong><small>Disponibilidade, combinações, foto em composição…</small></span></button>` : ""}
+        ${!visitante() && !equipe() ? `<button type="button" class="item-perguntar" data-perguntar><span class="cas-avatar"><img data-ia-foto width="512" height="512" loading="eager" src="${fotoHelena}" alt="" decoding="sync"></span><span><strong>Perguntar à Helena</strong><small>Disponibilidade, combinações, foto em composição…</small></span></button>` : ""}
       </div></div>
       ${!visitante() && !equipe() ? `<div class="barra-acao"><div class="barra-destino">${S.projeto ? `${ico("projeto")}<span>Projeto <b>${esc(S.projeto.noivos)}</b>${amb ? ` · ${esc(amb.nome)}` : ""}${qtd ? ` · já tem ${qtd}` : ""}</span><button type="button" class="link" data-trocar-amb>${amb ? "trocar" : "escolher"}</button>` : `${ico("projeto")}<span>Nenhum projeto aberto</span><button type="button" class="link" data-trocar-amb>escolher</button>`}</div><div class="passos"><button type="button" data-passo="-1" aria-label="Menos">−</button><input type="number" inputmode="numeric" min="1" max="999" value="${qtd || 1}" aria-label="Quantidade" data-qtd><button type="button" data-passo="1" aria-label="Mais">+</button></div>
         <button type="button" class="btn" data-adicionar>${qtd ? `Atualizar${amb ? ` · ${esc(amb.nome)}` : ""}` : `Adicionar${amb ? ` · ${esc(amb.nome)}` : " ao projeto"}`}</button></div>` : ""}`;
@@ -826,17 +827,23 @@ window.catalogAssistenteProjeto = {
   },
   enviarPedido(){ setTimeout(() => { irParaAba("projeto"); enviarPedido().then(atualizarTelaAtual); }, 320); },
   // Versão final do pedido (a mesma prévia do computador), aberta e fechada pela Helena.
-  async verPedido(abrir){
-    if(!abrir){ S.previaHelena = null; document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close()); return true; }
+  async verPedido(abrir, { naConversa = false } = {}){
+    if(!abrir){ S.previaHelena?.close(); S.previaHelena = null; document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close()); return true; }
     if(!S.projeto) return false;
-    for(const href of ["catalogo-projetos.css?v=20261118-varios", "projeto-apresentacao.css?v=20261115-pers-desc"]){
-      if(!document.querySelector(`link[data-previa="${href}"]`)){ const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; l.dataset.previa = href; document.head.appendChild(l); }
-    }
+    const project = S.projeto;
+    await Promise.all(["catalogo-projetos.css?v=20261118-varios", "projeto-apresentacao.css?v=20261115-pers-desc"].map(href => new Promise((resolve, reject) => {
+      let l = document.querySelector(`link[data-previa="${href}"]`);
+      if(l?.sheet){ resolve(); return; }
+      if(!l){ l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; l.dataset.previa = href; document.head.appendChild(l); }
+      l.addEventListener("load", resolve, { once: true }); l.addEventListener("error", () => { l.remove(); reject(new Error("Não foi possível carregar o documento. Tente novamente.")); }, { once: true });
+    })));
     const m = await import("./projeto-apresentacao.mjs?v=20261118-fixo");
-    await new Promise((r) => setTimeout(r, 360));
+    if(S.projeto !== project) return false;
+    S.previaHelena?.close();
     document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close());
-    S.previaHelena = m.abrirVisualizacaoPedido({ titulo: S.projeto.noivos || "Pedido", model: m.dadosApresentacao(S.projeto, acharItem),
-      decorador: S.decorador, empresa: S.empresa, flutuante: true });
+    S.previaHelena = m.abrirVisualizacaoPedido({ titulo: project.noivos || "Pedido", model: m.dadosApresentacao(project, acharItem),
+      decorador: S.decorador, empresa: S.empresa, flutuante: !naConversa,
+      onMount: naConversa ? ({dialog}) => dialog.classList.add('cpj-order-helena') : null });
     return true;
   },
   async atualizarEvento({ data_evento, local_evento, evento, noivos }){
@@ -903,7 +910,7 @@ async function prepararMotor3D(){
     const host = $("appStudioHost");
     const pecas = [doc.getElementById("catalogStudio"), ...doc.querySelectorAll("dialog[id^='studio']")].filter(Boolean);
     pecas.forEach((p) => host.appendChild(document.importNode(p, true)));
-    const m = await import("./catalogo-studio3d.mjs?v=20261118-3d-personalizacao");
+    const m = await import("./catalogo-studio3d.mjs?v=20261121-formatos");
     m.initCatalogStudio3D({ items: S.itens, supabase, empresaId: S.sessao.empresa_id, ownerId: S.sessao.cliente_id, token: S.sessao.token });
     ctxHelena.cenaEditor = m.cenaEditor;
   }catch(error){ console.warn("Motor 3D indisponível no app:", error); }

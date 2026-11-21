@@ -166,7 +166,8 @@ const STORAGE_MOCK_SNIPPET = `
     assert.equal(await page.locator('#studioItemsPanel').isVisible(), true);
     assert.equal(await page.locator('[data-studio-format="lounge-compacto"]').count(), 0, 'O embutido "Lounge compacto" saiu da lista (pedido do usuário)');
     // Agrupado pela categoria escolhida ao salvar ("Lounge") — cada grupo tem um título.
-    assert.match(await page.locator('.studio-formats-browse-group:has([data-studio-format="custom:saved"]) h3').textContent(), /Lounge/);
+    // 21/11/2026: os tipos ficam numa coluna à esquerda ("Todos" + cada categoria com a quantidade).
+    assert.match(await page.locator('#studioFormatsBrowseList .sfb-tipos').textContent(), /Lounge/);
     // "Lounge compacto" (embutido) tem categoria "Lounge" fixa no código — cai no MESMO grupo.
 
     // Favoritar direto do modal, sem editar o formato (pedido explícito: "dentro desse modal nós poderemos
@@ -195,7 +196,8 @@ const STORAGE_MOCK_SNIPPET = `
     await page.locator('#studioFavoritesList [data-studio-format="custom:saved"]').click();
     await page.locator('#studioFormatApplyDialog[open]').waitFor();
     assert.equal(await page.evaluate(() => window.studioTest.studio.objects.length), 3, 'Só abriu o diálogo — nada foi inserido ainda');
-    assert.equal(await page.locator('#studioFormatApplyCurrentList .studio-library-item').count(), 2, 'Uma linha por papel do formato');
+    assert.equal(await page.locator('#studioFormatApplyCurrentList .sfa-peca').count(), 2, 'Uma foto por peça do formato');
+    assert.equal(await page.locator('#studioFormatApplyList [data-stock-item]').count() > 0, true, 'Cada modelo mostra a disponibilidade');
     // Seleção padrão reproduz o comportamento de ANTES desta mudança: o item que originalmente foi salvo em
     // cada papel (Mesa 1 no papel 0, Mesa 2 no papel 1) — clicar "Inserir" sem mexer em nada dá o mesmo
     // resultado de sempre.
@@ -205,11 +207,11 @@ const STORAGE_MOCK_SNIPPET = `
     // — são todos "mesas"/"centro", então os 3 aparecem como opção pra qualquer um dos 2 papéis).
     await page.locator('#studioFormatApplyCurrentList [data-format-apply-target-index="1"]').click();
     assert.equal(await page.locator('#studioFormatApplyList [data-format-apply-choice]').count(), 3);
-    assert.equal(await page.locator('#studioFormatApplyList [data-format-apply-choice="2"]').getAttribute('aria-pressed'), null);
+    assert.equal(await page.locator('#studioFormatApplyList [data-format-apply-choice="2"]').getAttribute('aria-pressed'), 'true', 'O modelo escolhido aparece marcado');
     await page.locator('#studioFormatApplyList [data-format-apply-choice="3"]').click();
     // O RÓTULO do papel continua "Mesa 2" (nome de quando o formato foi salvo, não muda) — o que precisa
     // mudar é o item ESCOLHIDO pra esse papel, mostrado depois do " · ".
-    assert.match(await page.locator('#studioFormatApplyCurrentList [data-format-apply-target-index="1"]').textContent(), /· Mesa 3/, 'Item escolhido pro papel virou Mesa 3');
+    assert.match(await page.locator('#studioFormatApplyCurrentList [data-format-apply-target-index="1"]').textContent(), /Mesa 3/, 'Item escolhido pro papel virou Mesa 3');
     // Fecha e reabre: a escolha feita acima NÃO deveria vazar pra próxima abertura — cada abertura começa do
     // zero, com a seleção padrão de novo (evita "herdar" uma escolha de uma sessão anterior do diálogo). Desta
     // vez reabre pelo MODAL "Todos os formatos" — o 2º ponto de entrada — confirmando que clicar no card
@@ -222,7 +224,8 @@ const STORAGE_MOCK_SNIPPET = `
     await page.locator('#studioFormatsBrowseList [data-studio-format="custom:saved"]').click();
     assert.equal(await page.locator('#studioFormatsBrowseDialog[open]').count(), 0, 'Clicar no card fecha o modal de navegação');
     await page.locator('#studioFormatApplyDialog[open]').waitFor();
-    assert.match(await page.locator('#studioFormatApplyCurrentList [data-format-apply-target-index="1"]').textContent(), /· Mesa 2/, 'Reabrir volta pra seleção padrão (Mesa 2) — nada ficou "preso" da tentativa anterior (Mesa 3)');
+    assert.match(await page.locator('#studioFormatApplyCurrentList [data-format-apply-target-index="1"]').textContent(), /Mesa 2/, 'Reabrir volta pra seleção padrão (Mesa 2) — nada ficou "preso" da tentativa anterior (Mesa 3)');
+    await page.waitForTimeout(400); await page.screenshot({path:'outputs/studio-formatos-escolher.png'});
     await page.locator('#studioFormatApplyForm [type=submit]').click();
     await page.waitForFunction(() => window.studioTest.studio.objects.length === 5 && !document.getElementById('studioFormatApplyDialog').open);
     const inserted = await page.evaluate(() => window.studioTest.studio.objects.slice(3).map(object => ({id:object.userData.item.id, group:object.userData.catalogGroupId,position:object.position.toArray(),rotation:object.rotation.y})));
@@ -320,13 +323,17 @@ const STORAGE_MOCK_SNIPPET = `
     await page.waitForFunction(() => document.querySelectorAll('#studioFormatsBrowseList [data-studio-format]').length === 6);
     // Sem paginação — o modal (maior, com scroll próprio) mostra tudo de uma vez, dividido por categoria.
     assert.equal(await page.locator('.studio-formats-pages,#studioFormatsPage,#studioFormatsNext,#studioFormatsPrevious').count(), 0);
-    const groupTitles = await page.locator('.studio-formats-browse-group h3').allTextContents();
-    // Alfabética, com "Outros" sempre por último (pro formato salvo antes de existir categoria).
-    assert.deepEqual(groupTitles.map((title) => title.replace(/\s*\d+$/, '').trim()), ['Bar', 'Lounge', 'Outros']);
-    assert.equal(await page.locator('.studio-formats-browse-group:has([data-studio-format="custom:sem-categoria"]) h3').textContent(), 'Outros 1');
-    assert.equal(await page.locator('.studio-formats-browse-group:has([data-studio-format="custom:bar-1"]) h3').textContent(), 'Bar 1');
-    // Grupo "Lounge" tem 5: saved + extra-0/1/2 + lounge-compacto (embutido).
-    assert.equal(await page.locator('.studio-formats-browse-group:has([data-studio-format="custom:extra-0"]) [data-studio-format]').count(), 4);
+    const tipos = await page.locator('#studioFormatsBrowseList .sfb-tipo span').allTextContents();
+    // "Todos" primeiro, depois alfabética, com "Outros" sempre por último (formato salvo antes de existir categoria).
+    assert.deepEqual(tipos, ['Todos', 'Bar', 'Lounge', 'Outros']);
+    assert.equal(await page.locator('[data-format-cat="Outros"] b').textContent(), '1');
+    assert.equal(await page.locator('[data-format-cat="Bar"] b').textContent(), '1');
+    // Clicar num tipo mostra só os formatos dele (Lounge: saved + extra-0/1/2), 3 por linha.
+    await page.locator('[data-format-cat="Lounge"]').click();
+    assert.equal(await browseFormats().count(), 4);
+    assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.sfb-grade')).gridTemplateColumns.split(' ').length), 3, '3 formatos por linha');
+    await page.waitForTimeout(400); await page.screenshot({path:'outputs/studio-formatos-lista.png'});
+    await page.locator('[data-format-cat=""]').click();
     // Pesquisa por NOME do formato.
     await page.locator('#studioFormatsBrowseSearch').fill('extra 2');
     assert.equal(await browseFormats().count(), 1);

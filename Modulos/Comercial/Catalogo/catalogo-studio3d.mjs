@@ -372,41 +372,39 @@ function formatCardMarkup(format){
 // e abre "Escolher os móveis" (ver initStudioLibraryTabs). Sem estrela pro "Lounge compacto" embutido (sem
 // `recordId`, não tem onde persistir um favorito).
 function formatBrowseCardMarkup(format){
+  // 21/11/2026: foto grande em cima, só o nome embaixo; a estrela fica no canto da foto.
+  const titulo = escapeHtml(format.title);
   const star = format.recordId
     ? `<button type="button" class="studio-format-favorite ${format.favorito ? "is-active" : ""}" data-format-favorite="${escapeHtml(format.key)}" aria-pressed="${format.favorito ? "true" : "false"}" aria-label="${format.favorito ? "Remover dos favoritos" : "Marcar como favorito"}" title="${format.favorito ? "Remover dos favoritos" : "Marcar como favorito"}">${format.favorito ? "★" : "☆"}</button>`
     : "";
-  return `<div class="studio-format-browse-card">${formatCardMarkup(format)}${star}</div>`;
+  const foto = format.capaUrl
+    ? `<span class="studio-format-preview"><img src="${escapeHtml(otimizarFoto(format.capaUrl, 560))}" alt="" width="480" height="360" loading="lazy"></span>`
+    : `<span class="studio-format-preview" aria-busy="true"><img alt="" width="480" height="360" hidden><span class="studio-format-spinner" role="status" aria-label="Carregando prévia"></span></span>`;
+  return `<div class="studio-format-browse-card sfb-card"><button type="button" class="sfb-abrir" data-studio-format="${escapeHtml(format.key)}" aria-label="${titulo}">${foto}<strong>${titulo}</strong></button>${star}</div>`;
 }
 
 // Modal grande "Todos os formatos" (pedido explícito do usuário) — agrupado por categoria ("Outros" pros
 // formatos salvos antes desta feature, sem categoria), com pesquisa por nome OU categoria. Sem paginação: no
 // lugar da paginação de 6 em 6 que a barra lateral estreita tinha, o modal (maior, com scroll próprio) mostra
 // tudo de uma vez, dividido por seção — a categoria já é o "filtro" principal.
+let formatsBrowseCat = "";
 function renderFormatsBrowseModal(){
   const list = $("studioFormatsBrowseList");
   const status = $("studioFormatsBrowseStatus");
   if(!list) return;
   formatPreviewObserver?.disconnect();
   const query = normalizeSearch(($("studioFormatsBrowseSearch")?.value || "").trim());
-  const filtered = availableFormats.filter((format) => !query || normalizeSearch(`${format.title} ${format.categoria || ""}`).includes(query));
-  if(status) status.textContent = filtered.length ? "" : "Nenhum formato encontrado.";
-  if(!filtered.length){ list.innerHTML = ""; return; }
-  const groups = new Map();
-  filtered.forEach((format) => {
-    const categoria = format.categoria || "Outros";
-    if(!groups.has(categoria)) groups.set(categoria, []);
-    groups.get(categoria).push(format);
-  });
-  const ordered = [...groups.keys()].sort((a, b) => {
-    if(a === "Outros") return 1;
-    if(b === "Outros") return -1;
-    return a.localeCompare(b, "pt-BR");
-  });
-  list.innerHTML = ordered.map((categoria) => `
-    <div class="studio-formats-browse-group">
-      <h3>${escapeHtml(categoria)} <span>${groups.get(categoria).length}</span></h3>
-      <div class="studio-formats-browse-grid">${groups.get(categoria).map(formatBrowseCardMarkup).join("")}</div>
-    </div>`).join("");
+  const daBusca = availableFormats.filter((format) => !query || normalizeSearch(`${format.title} ${format.categoria || ""}`).includes(query));
+  // 21/11/2026: os tipos (categorias) ficam numa coluna à esquerda; clicar mostra só os formatos daquele tipo.
+  const contagem = new Map();
+  daBusca.forEach((format) => { const c = format.categoria || "Outros"; contagem.set(c, (contagem.get(c) || 0) + 1); });
+  const tipos = [...contagem.keys()].sort((a, b) => a === "Outros" ? 1 : b === "Outros" ? -1 : a.localeCompare(b, "pt-BR"));
+  if(formatsBrowseCat && !contagem.has(formatsBrowseCat)) formatsBrowseCat = "";
+  const filtered = daBusca.filter((format) => !formatsBrowseCat || (format.categoria || "Outros") === formatsBrowseCat);
+  if(status) status.textContent = filtered.length ? "" : (availableFormats.length ? "Nenhum formato encontrado." : "");
+  const tipoBtn = (valor, nome, n) => `<button type="button" class="sfb-tipo ${formatsBrowseCat === valor ? "is-active" : ""}" data-format-cat="${escapeHtml(valor)}" aria-pressed="${formatsBrowseCat === valor}"><span>${escapeHtml(nome)}</span><b>${n}</b></button>`;
+  list.innerHTML = `<nav class="sfb-tipos" aria-label="Tipos de formato">${tipoBtn("", "Todos", daBusca.length)}${tipos.map((t) => tipoBtn(t, t, contagem.get(t))).join("")}</nav>
+    <div class="sfb-grade">${filtered.map(formatBrowseCardMarkup).join("")}</div>`;
   const semFoto = filtered.filter((format) => !format.capaUrl);
   if(!semFoto.length) return;
   const observer = new IntersectionObserver(entries => {
@@ -433,7 +431,7 @@ function renderFormatsBrowseModal(){
         }
       });
     });
-  }, {rootMargin:'120px', root: list});
+  }, {rootMargin:'120px', root: list.querySelector('.sfb-grade') || list});
   formatPreviewObserver = observer;
   semFoto.forEach((format) => {
     const card = list.querySelector(`[data-studio-format="${CSS.escape(format.key)}"]`);
@@ -488,6 +486,7 @@ function openFormatsBrowseDialog(){
   if(!dialog) return;
   const search = $("studioFormatsBrowseSearch");
   if(search) search.value = "";
+  formatsBrowseCat = "";
   dialog.showModal();
   loadStudioFormats();
   search?.focus();
@@ -525,6 +524,7 @@ async function insertStudioFormat(format, selection, status, disableTargets){
     studio.objects = studio.objects.filter(object => !added.includes(object));
     if(added.length){ selectObject(null); updateCount(); }
     if(status) status.textContent = error?.message || "Não foi possível inserir o formato.";
+    else window.catalogNotify?.({ title: "Não foi possível montar o formato", message: error?.message || "Tente de novo em instantes.", status: "error" });
     return false;
   }finally{
     insertingFormat = false;
@@ -551,16 +551,18 @@ function formatApplyActiveRole(){
 }
 
 function renderFormatApplyCurrentList(){
+  // 21/11/2026: cada peça do formato é uma foto (a do móvel escolhido) com o nome curto embaixo e a disponibilidade.
   const list = $("studioFormatApplyCurrentList");
   if(!list || !formatApplyTarget) return;
   list.innerHTML = formatApplyTarget.roles.map((role, index) => {
     const item = formatApplySelection[role.key];
     const active = index === formatApplyRoleIndex;
-    const label = escapeHtml(role.label || "Peça");
+    const nome = escapeHtml(item?.name || role.label || "Peça");
     return `
-    <button type="button" class="studio-library-item ${active ? "is-active" : ""}" data-format-apply-target-index="${index}" aria-pressed="${active}" title="${label}">
-      ${item ? `<img src="${escapeHtml(otimizarFoto(item.photo, 120))}" alt="" loading="lazy">` : `<span class="studio-format-apply-missing" aria-hidden="true">–</span>`}
-      <span>${label}${item ? ` · ${escapeHtml(item.name)}` : " · sem modelo disponível"}</span><b aria-hidden="true">${active ? "✓" : ""}</b>
+    <button type="button" class="sfa-peca ${active ? "is-active" : ""} ${item ? "" : "is-vazia"}" data-format-apply-target-index="${index}" aria-pressed="${active}" title="${nome}">
+      <span class="sfa-foto">${item ? `<img src="${escapeHtml(otimizarFoto(item.photo, 240))}" alt="" loading="lazy">` : `<i aria-hidden="true">–</i>`}</span>
+      <span class="sfa-nome">${nome}</span>
+      ${item ? `<small class="sfa-stock" data-stock-item="${escapeHtml(item.id)}" hidden></small>` : `<small class="sfa-stock is-sem">Sem modelo</small>`}
     </button>`;
   }).join("");
 }
@@ -577,20 +579,32 @@ function renderFormatApplyList(query = ""){
     const hidden = normalized && !search.includes(normalized);
     const active = String(item.id) === String(chosenId);
     return `
-    <button type="button" class="studio-library-item ${active ? "is-active" : ""} ${hidden ? "hidden" : ""}" data-format-apply-choice="${escapeHtml(item.id)}" data-search="${escapeHtml(search)}">
-      <img src="${escapeHtml(otimizarFoto(item.photo, 120))}" alt="" loading="lazy">
-      <span>${escapeHtml(item.name)}</span><b aria-hidden="true">${active ? "✓" : ""}</b>
+    <button type="button" class="sfa-opcao ${active ? "is-active" : ""} ${hidden ? "hidden" : ""}" data-format-apply-choice="${escapeHtml(item.id)}" data-search="${escapeHtml(search)}" aria-pressed="${active}">
+      <span class="sfa-foto">${item.photo ? `<img src="${escapeHtml(otimizarFoto(item.photo, 320))}" alt="" loading="lazy">` : `<i aria-hidden="true">–</i>`}${active ? `<b class="sfa-check" aria-hidden="true">✓</b>` : ""}</span>
+      <span class="sfa-nome">${escapeHtml(item.name)}</span>
+      <small class="sfa-stock" data-stock-item="${escapeHtml(item.id)}" hidden></small>
     </button>`;
-  }).join("") : `<div class="studio-library-empty">Nenhum modelo disponível pra "${escapeHtml(role.label || "esta peça")}".</div>`;
+  }).join("") : `<div class="studio-library-empty">Nenhum modelo para esta peça.</div>`;
 }
 
 function updateFormatApplyDescription(){
+  const titulo = $("studioFormatApplyTitle");
+  if(titulo && formatApplyTarget) titulo.textContent = formatApplyTarget.title;
   const description = $("studioFormatApplyDescription");
-  const role = formatApplyActiveRole();
-  if(!description || !formatApplyTarget || !role) return;
-  description.textContent = formatApplyTarget.roles.length > 1
-    ? `"${formatApplyTarget.title}" — escolha à esquerda qual peça ajustar (agora: "${role.label || "peça selecionada"}") e à direita o modelo. As posições e giros do formato continuam os mesmos.`
-    : `Escolha o modelo pra "${role.label || "esta peça"}". A posição continua a do formato.`;
+  if(description) description.textContent = "";
+}
+
+// Aviso pequeno no centro enquanto o formato é montado na cena (o modal já fechou).
+function avisoMontando(mostrar, texto){
+  let el = document.getElementById("studioMontandoAviso");
+  if(!mostrar){ if(el){ el.classList.remove("on"); setTimeout(() => el.remove(), 260); } return; }
+  if(!el){
+    el = document.createElement("div"); el.id = "studioMontandoAviso"; el.className = "studio-montando"; el.setAttribute("role", "status");
+    el.innerHTML = `<div class="studio-montando-card"><span class="studio-montando-anim" aria-hidden="true"><i></i><i></i><i></i></span><b></b><small>Colocando cada peça no lugar</small></div>`;
+    document.body.append(el);
+  }
+  el.querySelector("b").textContent = texto || "Montando o formato…";
+  requestAnimationFrame(() => el.classList.add("on"));
 }
 
 function openFormatApplyDialog(key){
@@ -619,9 +633,10 @@ async function confirmFormatApply(){
   const status = $("studioFormatApplyStatus");
   const missing = formatApplyTarget.roles.find((role) => !formatApplySelection[role.key]);
   if(missing){ status.textContent = `Sem modelo disponível pra "${missing.label || "uma das peças"}".`; return; }
-  const buttons = [...$("studioFormatApplyForm").querySelectorAll("button")];
-  const ok = await insertStudioFormat(formatApplyTarget, formatApplySelection, status, buttons);
-  if(ok) $("studioFormatApplyDialog").close();
+  const alvo = formatApplyTarget, escolha = { ...formatApplySelection };
+  $("studioFormatApplyDialog").close();
+  avisoMontando(true, "Montando " + alvo.title + "…");
+  try { await insertStudioFormat(alvo, escolha, null, []); } finally { avisoMontando(false); }
 }
 
 function initStudioLibraryTabs(){
@@ -632,6 +647,8 @@ function initStudioLibraryTabs(){
   $("studioFormatsBrowseClose")?.addEventListener("click", () => $("studioFormatsBrowseDialog")?.close());
   $("studioFormatsBrowseSearch")?.addEventListener("input", () => renderFormatsBrowseModal());
   $("studioFormatsBrowseList")?.addEventListener("click", (event) => {
+    const tipo = event.target.closest("[data-format-cat]");
+    if(tipo){ formatsBrowseCat = tipo.dataset.formatCat; renderFormatsBrowseModal(); return; }
     const star = event.target.closest("[data-format-favorite]");
     if(star){ toggleFormatFavorite(star.dataset.formatFavorite); return; }
     const card = event.target.closest("[data-studio-format]");
