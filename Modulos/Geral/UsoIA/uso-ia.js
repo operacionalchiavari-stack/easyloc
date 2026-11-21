@@ -80,20 +80,23 @@
     else if (pctProj > 100) frase = `No ritmo atual, o mês deve fechar em cerca de ${num(d.projecao)} créditos — ${num(d.projecao - d.franquia)} acima da franquia (≈ ${brl((d.projecao - d.franquia) * d.valor_excedente)}).`;
     else frase = `No ritmo atual, o mês deve fechar em cerca de ${num(d.projecao)} créditos, dentro da franquia.`;
 
+    // Faixa compacta (21/11/2026): os créditos numa linha só, para o time de agentes subir e ficar em destaque.
     const hero = `
-      <section class="ia-hero is-${estado}">
-        <div class="ia-hero-topo"><span>Créditos de IA · ${esc(MESES[S.mes.getMonth()])}</span>${mesAtual ? `<small>Renova em ${diasRestam} ${diasRestam === 1 ? "dia" : "dias"}</small>` : `<small>Mês encerrado</small>`}</div>
-        <div class="ia-hero-num"><b>${num(d.usado)}</b><span>de ${num(d.franquia)} créditos usados</span><em>${Math.round(pct)}%</em></div>
-        <div class="ia-uso" role="img" aria-label="${Math.round(pct)}% da franquia usada">
-          <i style="width:${Math.min(pct, 100)}%"></i>
-          ${mesAtual && pctProj > pct ? `<s style="left:${Math.min(pct, 100)}%;width:${Math.max(0, Math.min(pctProj, 100) - Math.min(pct, 100))}%" title="Projeção do mês"></s>` : ""}
-          <em style="left:80%" aria-hidden="true"></em>
+      <section class="ia-hero ia-hero-compacto is-${estado}">
+        <div class="ia-hc-uso">
+          <div class="ia-hc-topo"><span>Créditos de IA · ${esc(MESES[S.mes.getMonth()])}</span><small>${mesAtual ? `renova em ${diasRestam} ${diasRestam === 1 ? "dia" : "dias"}` : "mês encerrado"}</small></div>
+          <div class="ia-hc-num"><b>${num(d.usado)}</b><span>de ${num(d.franquia)}</span><em>${Math.round(pct)}%</em></div>
+          <div class="ia-uso" role="img" aria-label="${Math.round(pct)}% da franquia usada">
+            <i style="width:${Math.min(pct, 100)}%"></i>
+            ${mesAtual && pctProj > pct ? `<s style="left:${Math.min(pct, 100)}%;width:${Math.max(0, Math.min(pctProj, 100) - Math.min(pct, 100))}%" title="Projeção do mês"></s>` : ""}
+            <em style="left:80%" aria-hidden="true"></em>
+          </div>
         </div>
-        <div class="ia-hero-dados">
-          <div><small>Restante</small><b>${num(d.restante)}</b><span>créditos</span></div>
-          ${mesAtual ? `<div><small>Projeção do mês</small><b>${num(d.projecao)}</b><span>${Math.round(pctProj)}% da franquia</span></div>` : ""}
-          <div class="${d.excedente > 0 ? "tem-excedente" : ""}"><small>Excedente</small><b>${num(d.excedente)}</b><span>${d.excedente > 0 ? `${brl(d.valor_excedente_total)} na próxima fatura` : "nada a pagar a mais"}</span></div>
-          <div><small>Tarefas do time</small><b>${num(d.chamadas)}</b><span>no mês</span></div>
+        <div class="ia-hc-dados">
+          <div><small>Restante</small><b>${num(d.restante)}</b></div>
+          ${mesAtual ? `<div title="${Math.round(pctProj)}% da franquia"><small>Projeção</small><b>${num(d.projecao)}</b></div>` : ""}
+          <div class="${d.excedente > 0 ? "tem-excedente" : ""}" title="${d.excedente > 0 ? `${brl(d.valor_excedente_total)} na próxima fatura` : "nada a pagar a mais"}"><small>Excedente</small><b>${num(d.excedente)}</b></div>
+          <div><small>Tarefas</small><b>${num(d.chamadas)}</b></div>
         </div>
         <p class="ia-hero-frase">${esc(frase)}</p>
       </section>`;

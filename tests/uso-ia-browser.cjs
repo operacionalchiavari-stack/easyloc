@@ -50,7 +50,7 @@ const FOTO = process.env.FOTO;
     await page.goto(BASE + 'Modulos/Geral/UsoIA/uso-ia.html');
     await page.locator('.ia-hero').waitFor();
     const hero = await page.locator('.ia-hero').innerText();
-    assert.match(hero, /1\.720/); assert.match(hero, /de 2\.000 créditos usados/); assert.match(hero, /86%/);
+    assert.match(hero, /1\.720/); assert.match(hero, /de 2\.000/); assert.match(hero, /86%/);
     assert.match(hero, /2\.450/, 'projeção'); assert.match(hero, /acima da franquia/i, 'frase da projeção acima');
     assert.ok(await page.locator('.ia-hero.is-alerta').count(), 'acima de 80% fica em alerta');
     assert.equal(await page.locator('#iaPlanoBtn').isHidden(), true, 'a empresa não muda a franquia');

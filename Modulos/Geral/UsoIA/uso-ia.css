@@ -174,3 +174,21 @@ html body .ia-outros h3{margin:0 0 8px;font:600 14px Inter,system-ui,sans-serif!
 @media(max-width:1400px){.ia-agentes{grid-template-columns:repeat(3,minmax(0,1fr))}.ia-agente-foto{width:132px;height:132px}.ia-agente-num b{font-size:16px}}
 @media(max-width:700px){.ia-agentes{grid-template-columns:repeat(2,minmax(0,1fr))}.ia-agente-foto{width:96px;height:96px}}
 .ia-outros ul{grid-template-columns:repeat(auto-fill,minmax(380px,1fr))}
+
+/* Faixa dos créditos compacta (21/11/2026): uma linha, para os agentes subirem na tela. */
+.ia-hero-compacto{display:grid;grid-template-columns:minmax(260px,1.2fr) auto;grid-template-areas:"uso dados" "frase frase";align-items:center;gap:8px 28px;padding:14px 20px;margin-bottom:14px}
+.ia-hc-uso{grid-area:uso;min-width:0}
+.ia-hc-topo{display:flex;justify-content:space-between;gap:10px;color:#6b6b6b;font:600 11.5px Inter,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.ia-hc-topo small{font:500 12px Inter,system-ui,sans-serif;letter-spacing:0;text-transform:none}
+.ia-hc-num{display:flex;align-items:baseline;gap:8px;margin:4px 0 8px}
+.ia-hc-num b{font:700 26px/1 Inter,system-ui,sans-serif;color:#1f2020}
+.ia-hc-num span{color:#4f4f4f;font:500 14px Inter,system-ui,sans-serif}
+.ia-hc-num em{margin-left:auto;padding:2px 9px;border-radius:999px;background:color-mix(in srgb,var(--ia-cor) 12%,#fff);color:var(--ia-cor);font:700 12.5px Inter,system-ui,sans-serif;font-style:normal}
+.ia-hero-compacto .ia-uso{height:8px}
+.ia-hc-dados{grid-area:dados;display:flex;gap:10px}
+.ia-hc-dados>div{min-width:96px;padding:8px 12px;border-radius:10px;background:#f7f9fb;display:flex;flex-direction:column;gap:1px}
+.ia-hc-dados small{color:#6b6b6b;font:500 11.5px Inter,system-ui,sans-serif}
+.ia-hc-dados b{color:#1f2020;font:700 18px Inter,system-ui,sans-serif}
+.ia-hc-dados .tem-excedente{background:#fdecea}.ia-hc-dados .tem-excedente b{color:#b42318}
+.ia-hero-compacto .ia-hero-frase{grid-area:frase;margin:2px 0 0;color:#4f4f4f;font:400 13px Inter,system-ui,sans-serif}
+@media(max-width:900px){.ia-hero-compacto{grid-template-columns:1fr;grid-template-areas:"uso" "dados" "frase"}.ia-hc-dados{flex-wrap:wrap}}
