@@ -12543,3 +12543,12 @@ podem ser um botão discreto" e "quando eu volto da Helena ela cai no catálogo,
   somam a partir do último valor pedido (`_alvo`). O aviso mostra o motivo real (setor, produção, pausa…) em vez do genérico.
 - **Financeiro (A receber, A pagar) e Comercial › Contas a receber**: a busca filtra enquanto se digita (sem Enter),
   mantendo o cursor no campo (`buscaAoDigitar` em financeiro.js).
+
+## App do celular com a identidade visual da empresa (21/11/2026)
+Pedido: o app segue as cores do sistema, inclusive o tema festivo (Natal etc.). `js/app/tema-app.js` (no `<head>` de
+app.html, Triagem, Expedição, Montador, Gerencial e Agentes) lê o tema guardado (`easyloc_theme_<empresa>`, mesma regra do
+menu: cor_sidebar/cor_destaque, trocadas pelo tema festivo no período) e põe `--app-cor`/`--app-destaque` + a classe
+`app-tema-empresa` no `<html>`; depois busca `configuracoes_empresa` no banco e atualiza o cache. `styles/app-tema.css`
+(carregado por último) troca só o que é da marca: faixas do topo, botões principais, período do Gerencial, câmera ligada,
+rótulos dourados. **Tela nova do app: incluir os dois.** O catálogo do app (Helena) ainda não carrega. A abertura do
+sistema (`js/core/abertura.js`) também segue a cor do menu com o tema festivo. `limpezaDados.js` preserva `easyloc_theme_*`.
