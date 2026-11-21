@@ -4,7 +4,7 @@
  window.__limpezaDadosPronta=(async()=>{
   if(localStorage.getItem(chave)===versao)return;
   // o login do sistema fica em 'easyloc-auth' (js/core/supabase.js); os apps de campo guardam a sessão própria
-  const manter=k=>/^sb-.*-auth-token(?:\.|$)/.test(k)||k==='easyloc-auth'||k==='triagem-app-auth'||k==='uber_motorista_token'||k==='frete_freteiro_token'||k==='montadorToken'||k==='montadorTokenConta'||k==='montadorBonusToken'||k==='montadorBonusTokenConta'||k==='acervo_ultima_empresa';
+  const manter=k=>/^sb-.*-auth-token(?:\.|$)/.test(k)||k==='easyloc-auth'||k==='triagem-app-auth'||k==='uber_motorista_token'||k==='frete_freteiro_token'||k==='montadorToken'||k==='montadorTokenConta'||k==='montadorBonusToken'||k==='montadorBonusTokenConta'||k==='acervo_ultima_empresa'||/^easyloc_theme_/.test(k);
   for(const k of Object.keys(localStorage))if(!manter(k))localStorage.removeItem(k);
   for(const nome of ['acervo-studio-projects','acervo-operacao-v1'])await new Promise(resolve=>{
    const request=indexedDB.open(nome);

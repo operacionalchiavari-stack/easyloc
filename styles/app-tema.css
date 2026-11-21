@@ -1,0 +1,32 @@
+/* Identidade visual da empresa no app do celular (21/11/2026). As variáveis --app-cor (cor do menu do sistema) e
+   --app-destaque vêm de js/app/tema-app.js, com o tema festivo (Natal etc.) quando ativo. Sem tema guardado, ficam as
+   cores de antes (fallback). Só troca o que é "da marca": faixas do topo, botões principais e os rótulos dourados; o
+   texto continua na tinta escura. Carregar por último em cada tela do app. */
+
+/* Início, login e Ajustes (app.html) */
+:root.app-tema-empresa{--ap-grafite:var(--app-cor,#5a5a55);--ap-dourado:var(--app-destaque,#8b6a45)}
+:root.app-tema-empresa .ap-avisos-btn{background:var(--app-cor,#5a5a55)}
+:root.app-tema-empresa :is(.ap-rel-grupo,.ap-agente-papel){color:var(--app-destaque,#9b793f)!important}
+:root.app-tema-empresa .ap-switch:focus-visible{outline-color:var(--app-cor,#123f86)}
+
+/* Agentes de IA (botões de enviar/gravar e o da Helena) */
+:root.app-tema-empresa :is(.ag-redondo,.ag-btn){background:var(--app-cor,#2b2622)}
+:root.app-tema-empresa body.catalogo-equipe-helena .cas-send{background:var(--app-cor,#2b2622)!important}
+
+/* Gerencial: período escolhido */
+:root.app-tema-empresa :is(.gd-periodos,.gd-pagina .gd-periodos) button.on{background:var(--app-cor,#2b2622);border-color:var(--app-cor,#2b2622)}
+
+/* Triagem e Expedição do app: faixa do topo, câmera ligada, setor escolhido */
+:root.app-tema-empresa .marca,:root.app-tema-empresa .marca.tem-capa{background:var(--app-cor,#5a5a55)!important}
+:root.app-tema-empresa .camera-btn.is-ligada{background:var(--app-cor,#2b2622);border-color:var(--app-cor,#2b2622)}
+:root.app-tema-empresa .dano-setor.escolhido{border-color:var(--app-cor,#123f86);color:var(--app-cor,#123f86)}
+
+/* App do Montador / Meu bônus (apps-equipe.css) */
+:root.app-tema-empresa{--escuro:var(--app-cor,#5a5a55)}
+:root.app-tema-empresa body[data-app-equipe] .topo,:root.app-tema-empresa body[data-app-equipe] .perfil{background-color:var(--app-cor,#5a5a55)}
+:root.app-tema-empresa body[data-app-equipe="montagem"] :is(.topo,.perfil){background:var(--app-cor,#5a5a55)!important}
+:root.app-tema-empresa body[data-app-equipe="montagem"] .etapa:focus-visible{outline-color:var(--app-cor,#123f86)}
+:root.app-tema-empresa .equipe-conta-fechar{color:var(--app-cor,#5a5a55)}
+
+/* Telas internas abertas pelo app (faixa do relatório) */
+:root.app-tema-empresa html.app-relatorio .ar-titulo small,:root.app-tema-empresa.app-relatorio .ar-titulo small{color:var(--app-destaque,#9b793f)}
