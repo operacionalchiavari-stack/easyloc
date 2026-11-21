@@ -140,7 +140,8 @@
       (html || '<div class="fin-vazio">Nenhuma conta a receber com esses filtros. Pedido aprovado aparece aqui sozinho, dividido em locação, frete e montagem.</div>');
     const at = () => { const status = $("frStatus").value; S.filtroR = { busca: $("frBusca").value, status, div: $("frDiv").value, conta: $("frConta").value, prazo: status === "abertos" ? S.filtroR.prazo : "" }; pintarReceber(); };
     $("crConteudo").querySelectorAll("[data-prazo]").forEach((b) => b.addEventListener("click", () => { S.filtroR = { ...S.filtroR, status: "abertos", prazo: S.filtroR.prazo === b.dataset.prazo ? "" : b.dataset.prazo }; pintarReceber(); }));
-    $("frBusca").addEventListener("change", at); $("frBusca").addEventListener("keydown", (e) => { if (e.key === "Enter") at(); });
+    { let t = 0; const inp = $("frBusca"); const rodar = () => { clearTimeout(t); const pos = inp.selectionStart; at(); const n = $("frBusca"); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (_) {} } };
+      inp.addEventListener("input", () => { clearTimeout(t); t = setTimeout(rodar, 220); }); inp.addEventListener("keydown", (e) => { if (e.key === "Enter") rodar(); }); inp.addEventListener("search", rodar); } // filtra enquanto digita (21/11/2026)
     ["frStatus", "frDiv", "frConta"].forEach((id) => $(id).addEventListener("change", at));
     $("frRecebidas").addEventListener("click", () => { S.filtroR = { ...S.filtroR, prazo: "", status: S.filtroR.status === "recebidos" ? "abertos" : "recebidos" }; pintarReceber(); });
     $("frModo").addEventListener("click", () => { S.recModo = porData ? "pedido" : "data"; try { localStorage.setItem("fin_receber_modo", S.recModo); } catch (_) {} pintarReceber(); });

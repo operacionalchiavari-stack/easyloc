@@ -1703,7 +1703,8 @@
       return;
     }
 
-    const atual = itemSeparado(itemSeparacao);
+    // toques rápidos somam a partir do último valor pedido (a gravação anterior pode ainda estar a caminho)
+    const atual = itemSeparacao._alvo ?? itemSeparado(itemSeparacao);
     const total = itemTotal(itemSeparacao);
     const novaQtd = Math.max(0, Math.min(total, atual + delta));
 
@@ -1716,10 +1717,13 @@
       return;
     }
 
-    await atualizarItemSeparacao(itemSeparacao, {
-      quantidade_separada: novaQtd,
-      status: novaQtd >= total ? "concluido" : novaQtd > 0 ? "em_andamento" : "pendente"
-    });
+    itemSeparacao._alvo = novaQtd;
+    try {
+      await atualizarItemSeparacao(itemSeparacao, {
+        quantidade_separada: novaQtd,
+        status: novaQtd >= total ? "concluido" : novaQtd > 0 ? "em_andamento" : "pendente"
+      });
+    } finally { if (itemSeparacao._alvo === novaQtd) delete itemSeparacao._alvo; }
 
     await registrarLeitura({
       codigo: "manual",
@@ -1766,7 +1770,29 @@
     if(novaQtd < atual) await carregarFila();
   }
 
-  async function atualizarItemSeparacao(itemSeparacao, payload, etiquetaId = null) {
+  /* 21/11/2026: gravações da separação uma de cada vez. Toques rápidos no +/− ou Enter seguido de troca de campo mandavam duas
+     gravações do mesmo item juntas e o servidor recusava a segunda ("Outro aparelho atualizou este item"), aparecendo como
+     "Não foi possível ajustar esse item manualmente". Agora vão em fila e, se o item mudou mesmo, relê do banco e tenta de novo. */
+  let filaGravacao = Promise.resolve();
+  function atualizarItemSeparacao(itemSeparacao, payload, etiquetaId = null) {
+    const rodar = async () => {
+      try { return await atualizarItemSeparacaoAgora(itemSeparacao, payload, etiquetaId); }
+      catch (e) {
+        if (!/outro aparelho/i.test(String(e?.message || ""))) throw e;
+        const linha = itemSeparacao.virtual ? itemSeparacao.kitRow : itemSeparacao;
+        const { data } = await state.supabase.from("separacoes_itens").select("quantidade_separada,componentes,status").eq("id", linha.id).maybeSingle();
+        if (data) Object.assign(linha, data);
+        return await atualizarItemSeparacaoAgora(itemSeparacao, payload, etiquetaId);
+      }
+    };
+    const p = filaGravacao.then(rodar, rodar);
+    filaGravacao = p.catch(() => {});
+    return p;
+  }
+  // Motivo que a pessoa entende (setor, produção, pausa, modo…); só cai no texto genérico se o erro não disser nada.
+  function motivoSeparacao(e){ const m = String(e?.message || "").trim(); return m && !/^(TypeError|fetch|Failed)/i.test(m) ? m : "Não foi possível ajustar esse item manualmente. Verifique a internet e tente de novo."; }
+
+  async function atualizarItemSeparacaoAgora(itemSeparacao, payload, etiquetaId = null) {
     if (!itemVisivel(itemSeparacao)) throw new Error(`Este item é do setor ${setorDoItem(itemSeparacao)}, que não está liberado para você separar.`);
     const modo=state.activeMode;
     if(!state.modosDisponiveis[modo])throw new Error('Este modo de separação não está liberado para você.');
@@ -2091,7 +2117,7 @@
       if (!item) return;
       ajustarQuantidadeManual(item, Number(button.dataset.manualDelta)).catch((error) => {
         console.error("Erro na separacao manual:", error);
-        avisar("Não foi possível ajustar esse item manualmente.", "Separação manual", "erro");
+        avisar(motivoSeparacao(error), "Separação manual", "erro");
       });
     });
 
@@ -2102,7 +2128,7 @@
       if (!item) return;
       definirQuantidadeManual(item, input.value).catch((error) => {
         console.error("Erro na separacao manual:", error);
-        avisar("Não foi possível ajustar esse item manualmente.", "Separação manual", "erro");
+        avisar(motivoSeparacao(error), "Separação manual", "erro");
       });
     });
 

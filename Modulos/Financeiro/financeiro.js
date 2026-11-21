@@ -541,6 +541,22 @@
           '</td><td class="num">' + brl(t.valor) + (Number(t.recebido) > 0 && Number(t.recebido) < Number(t.valor) ? '<small class="fin-parcial">recebido ' + brl(t.recebido) + "</small>" : "") + "</td>" + '<td><span class="fin-status ' + cls + '">' + rot + "</span></td>" + faltaNoPedido(t) + acoesR(t) + "</tr>";
       }).join("") + "</tbody></table></div></section>";
   }
+  /* Busca que filtra enquanto a pessoa digita (21/11/2026): a tela é redesenhada a cada filtro, então devolve o cursor ao campo
+     novo no mesmo lugar. Enter e o "x" do campo continuam funcionando. */
+  let buscaTimer = 0;
+  function buscaAoDigitar(id, aplicar){
+    const inp = $(id); if (!inp) return;
+    const rodar = () => {
+      clearTimeout(buscaTimer);
+      const pos = inp.selectionStart;
+      aplicar();
+      const novo = $(id);
+      if (novo){ novo.focus(); try { novo.setSelectionRange(pos, pos); } catch (_) {} }
+    };
+    inp.addEventListener("input", () => { clearTimeout(buscaTimer); buscaTimer = setTimeout(rodar, 220); });
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") rodar(); });
+    inp.addEventListener("search", rodar);
+  }
   function pintarReceber() {
     const f = S.filtroR, lista = filtrarR(), porData = modoReceber() === "data";
     const grupos = new Map();
@@ -580,7 +596,7 @@
     const at = () => { const status = $("frStatus").value; S.filtroR = { busca: $("frBusca").value, status, div: $("frDiv").value, conta: $("frConta").value, prazo: status === "abertos" ? S.filtroR.prazo : "" }; pintarReceber(); };
     // clicar de novo na aba escolhida volta a mostrar tudo em aberto
     $("finConteudo").querySelectorAll("[data-prazo]").forEach((b) => b.addEventListener("click", () => { S.filtroR = { ...S.filtroR, status: "abertos", prazo: S.filtroR.prazo === b.dataset.prazo ? "" : b.dataset.prazo }; pintarReceber(); }));
-    $("frBusca").addEventListener("change", at); $("frBusca").addEventListener("keydown", (e) => { if (e.key === "Enter") at(); });
+    buscaAoDigitar("frBusca", at);
     ["frStatus", "frDiv", "frConta"].forEach((id) => $(id).addEventListener("change", at));
     $("frNovo").addEventListener("click", () => novoTitulo("receber"));
     $("frRecebidas").addEventListener("click", () => { S.filtroR = { ...S.filtroR, prazo: "", status: S.filtroR.status === "recebidos" ? "abertos" : "recebidos" }; pintarReceber(); });
@@ -684,7 +700,7 @@
     }
     $("finConteudo").querySelectorAll("[data-p-linha]").forEach((tr) => tr.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target === tr) { e.preventDefault(); detalhesPagar(tr.dataset.pLinha); } }));
     const at = () => { const status = $("fpStatus").value; S.filtroP = { busca: $("fpBusca").value, status, cat: $("fpCat").value, conta: "", prazo: status === "abertos" ? S.filtroP.prazo : "" }; pintarPagar(); };
-    $("fpBusca").addEventListener("change", at); $("fpBusca").addEventListener("keydown", (e) => { if (e.key === "Enter") at(); });
+    buscaAoDigitar("fpBusca", at);
     ["fpStatus", "fpCat"].forEach((id) => $(id).addEventListener("change", at));
     // clicar de novo no atalho escolhido volta a mostrar tudo em aberto
     $("finConteudo").querySelectorAll("[data-prazo-p]").forEach((b) => b.addEventListener("click", () => { S.filtroP = { ...S.filtroP, status: "abertos", prazo: S.filtroP.prazo === b.dataset.prazoP ? "" : b.dataset.prazoP }; pintarPagar(); }));
