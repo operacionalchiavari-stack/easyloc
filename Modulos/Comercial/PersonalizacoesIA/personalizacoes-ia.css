@@ -40,3 +40,9 @@ html:root body .pia-page .pia-header h2{grid-column:2;text-align:center;align-se
 /* Sem o botão Atualizar: busca e filtro na mesma linha do título (21/11/2026). */
 .pia-header .pia-search{width:clamp(170px,17vw,300px)}
 @media(max-width:1100px){.pia-header{grid-template-columns:1fr;gap:14px}html:root body .pia-page .pia-header h2{grid-column:1}.pia-header .pia-toolbar{grid-column:1;justify-self:center}}
+
+/* Caminho (Personalizações IA › …) na mesma linha do título, à esquerda (21/11/2026). */
+.pia-header .pia-breadcrumb{grid-column:1;grid-row:1;justify-self:start;align-self:center;margin:0;min-height:0}
+html:root body .pia-page .pia-header h2{grid-row:1}
+.pia-header .pia-toolbar{grid-row:1}
+@media(max-width:1100px){.pia-header .pia-breadcrumb,html:root body .pia-page .pia-header h2,.pia-header .pia-toolbar{grid-row:auto}.pia-header .pia-breadcrumb{justify-self:center}}
