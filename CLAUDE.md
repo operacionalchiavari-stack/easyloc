@@ -12552,3 +12552,23 @@ menu: cor_sidebar/cor_destaque, trocadas pelo tema festivo no período) e põe `
 (carregado por último) troca só o que é da marca: faixas do topo, botões principais, período do Gerencial, câmera ligada,
 rótulos dourados. **Tela nova do app: incluir os dois.** O catálogo do app (Helena) ainda não carrega. A abertura do
 sistema (`js/core/abertura.js`) também segue a cor do menu com o tema festivo. `limpezaDados.js` preserva `easyloc_theme_*`.
+
+## Uso de IA: franquia mensal e excedente pós-pago (21/11/2026)
+Pedido: a mensalidade inclui um limite de IA; quem usar mais paga o excedente na próxima fatura (a IA nunca é bloqueada);
+a empresa acompanha em **Geral › Uso de IA** (`Modulos/Geral/UsoIA/`, permissão `gestao.ia_uso.visualizar`). O uso dos
+decoradores no catálogo conta e aparece separado.
+- **Registro**: `supabase/functions/_shared/ia-uso.ts` — `Deno.serve(comUsoIA("origem", handler))` abre um contexto por
+  requisição (AsyncLocalStorage) e um vigia no `fetch` grava em `ia_uso` o consumo que a OpenAI devolve (tokens de texto,
+  cache, áudio, imagem; segundos; caracteres da voz). Empresa = `empresa_id` do corpo; pessoa = `sub` do token de login;
+  decorador = `catalog_token`. A ligação em tempo real da Helena é registrada no fim pela duração (`registrarUsoIA`).
+  **Função de IA nova: embrulhar o `Deno.serve` com `comUsoIA`.** Origens: helena, clara, miguel, carla, marcos, ideia,
+  reunioes, studio3d, compras, avaria, planejador, montagem (nomes/cores em `ORIGENS` de `uso-ia.js`).
+- **Banco** (migration `20261121000500_ia_uso.sql`, aplicada): `ia_precos` (US$ por modelo, prefixo mais longo vale;
+  mudar preço = mudar a tabela), gatilho que calcula `custo_usd` e `creditos` (**1 crédito = US$ 0,01**), `ia_planos`
+  (franquia em créditos e R$ por crédito excedente por empresa; padrão 2.000 e R$ 0,10), `acervo_donos` (só o responsável
+  pelo sistema — hoje o Jonatan — muda o plano, `ia_plano_salvar`, e vê o custo real), `ia_uso_painel(empresa, mês)`.
+  Aviso no celular aos 80% e 100% (tipo `ia_franquia`). Mês civil, não acumula.
+- Medido ao vivo: uma mensagem de agente ≈ 0,2–0,4 crédito; renderização com IA ≈ 25; ligação ≈ 30/min.
+- Publicadas com o registro: ideia, avaria, catalogo (Helena), compras-proposta, financeiro (Clara), planejador, reunioes,
+  studio-ai-engine. **Faltam `estoque-assistente` (Miguel) e `solicitacao-assistente` (Carla/Marcos)**: o código já está
+  embrulhado, mas a outra sessão tinha mudanças em andamento nelas; publicar junto com o trabalho dela.
