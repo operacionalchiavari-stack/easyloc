@@ -34,8 +34,8 @@ const saida = path.join(root, 'outputs', 'app-agentes'); fs.mkdirSync(saida, { r
     const erros = []; page.on('pageerror', (e) => erros.push(page.url().split('?')[0].split('/').pop() + ': ' + e.message));
 
     await page.goto(BASE + 'app.html', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('#apInicio:not([hidden]) .ap-modulo[href="#agentes"]', { timeout: 30000 });
-    await page.click('.ap-modulo[href="#agentes"]');
+    await page.waitForSelector('#apInicio:not([hidden])', { timeout: 30000 });
+    await page.click('#apAbas [data-aba="agentes"]');
     await page.waitForSelector('#apAgentes:not([hidden]) .ap-agente');
     const nomes = await page.$$eval('.ap-agente .ap-modulo-titulo', (l) => l.map((x) => x.textContent));
     assert.equal(nomes.length, 6, 'admin vê os 6 agentes: ' + nomes.join(', '));
@@ -66,7 +66,7 @@ const saida = path.join(root, 'outputs', 'app-agentes'); fs.mkdirSync(saida, { r
       await page.waitForSelector('#apAgentes:not([hidden]) .ap-agente', { timeout: 20000 });
       console.log(`ok - ${nome}: abre com o campo de conversa, sem rolagem lateral, voltar leva aos agentes`);
     }
-    await page.click('#apAgentesVoltar');
+    await page.click('#apAbas [data-aba="inicio"]');
     await page.waitForSelector('#apInicio:not([hidden])');
     assert.deepEqual(erros, []);
     console.log('ok - Início de volta, sem erros de JavaScript');

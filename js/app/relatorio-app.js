@@ -19,9 +19,18 @@
   const esconder = atual.dataset.esconder || "";
   const html = document.documentElement;
   html.classList.add("app-relatorio");
+  // Aberta numa janela nova (ex.: tocando numa notificação com o app fechado) a aba não tem o login_ok do app; com a
+  // sessão do Supabase já salva neste aparelho, marca a empresa de sempre. O context.js confere tudo no servidor
+  // (vínculo, acesso ativo e verificação em duas etapas) antes de mostrar qualquer dado (mesmo jeito do Painel do CFO).
+  try {
+    const emp = localStorage.getItem("acervo_ultima_empresa");
+    if (!sessionStorage.getItem("login_ok") && localStorage.getItem("easyloc-auth") && /^[0-9a-f-]{36}$/i.test(emp || "")) {
+      sessionStorage.setItem("login_ok", "1"); sessionStorage.setItem("empresa_id", emp);
+    }
+  } catch (e) {}
 
   const css = document.createElement("link");
-  css.rel = "stylesheet"; css.href = new URL("styles/app-relatorio.css?v=20261120-agentes", raiz).href;
+  css.rel = "stylesheet"; css.href = new URL("styles/app-relatorio.css?v=20261120-app2", raiz).href;
   document.head.appendChild(css);
   if (esconder) {
     const st = document.createElement("style");

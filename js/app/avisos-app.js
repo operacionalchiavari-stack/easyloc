@@ -35,7 +35,7 @@
     if (!suporta) texto = "Este navegador não recebe notificações." + (iphone ? " No iPhone, abra pelo Safari e adicione à Tela de Início." : "");
     else if (iphone && !instalado) texto = "No iPhone, funciona só com o app na Tela de Início (Safari › Compartilhar › Adicionar à Tela de Início).";
     else if (Notification.permission === "denied") texto = "Bloqueadas no celular. Libere em Configurações do celular › Notificações.";
-    else { texto = ligado ? "Ligadas. Você recebe quando for escalado." : "Receba quando for escalado para uma montagem ou desmontagem.";
+    else { texto = ligado ? "Ligadas neste celular. Escolha abaixo o que quer receber." : "Receba os avisos do sistema neste celular, mesmo com o app fechado.";
       botao = '<button type="button" class="ap-switch" role="switch" aria-checked="' + ligado + '" aria-label="Notificações" data-avisos="' + (ligado ? "desligar" : "ligar") + '"><span></span></button>'; }
     h.innerHTML = '<div class="ap-cfg-linha">' + ICONE + '<div class="ap-cfg-texto"><b>Notificações</b><p>' + texto + '</p></div>' + botao + '</div>' +
       (ligado ? '<button type="button" class="ap-cfg-link" data-avisos="teste">Enviar notificação de teste</button>' : "") + '<small class="ap-cfg-msg" data-avisos-msg role="status"></small>';
@@ -58,12 +58,11 @@
     if (s) { await sb().rpc("app_push_remover", { p_endpoint: s.endpoint }).catch(() => {}); await s.unsubscribe().catch(() => {}); }
     pintar(); msg("Avisos desligados neste celular.");
   }
+  // 20/11/2026: o teste passa pela fila de avisos (aparece também na aba Avisos).
   async function teste() {
-    const { data, error } = await sb().functions.invoke("app-push", { body: { acao: "teste", empresa_id: empresa } });
-    let erro = data?.erro || "";
-    if (error && !erro) { try { erro = (await error.context?.json?.())?.erro || error.message; } catch (_) { erro = error.message; } }
-    if (erro) throw new Error(erro);
-    msg("Notificação enviada. Ela aparece em alguns segundos (com o app aberto, olhe a barra do celular).");
+    const { error } = await sb().rpc("app_notif_teste", { p_empresa: empresa });
+    if (error) throw new Error(error.message);
+    msg("Notificação enviada. Ela chega em alguns segundos e fica guardada na aba Avisos.");
   }
 
   async function iniciar(empresaId) {

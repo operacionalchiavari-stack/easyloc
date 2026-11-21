@@ -250,3 +250,20 @@ body[data-app-equipe="montagem"] .topo>#btnAtualizar{grid-column:3!important;gri
 body[data-app-equipe="montagem"] .topo>.icone-btn{width:44px;height:44px;border:0!important;background:transparent!important;color:#2f2b27!important;box-shadow:none!important}
 body[data-app-equipe="montagem"] .topo::after{content:"Montagem";grid-column:2;grid-row:1;align-self:center;text-align:center;font:600 21px/1 var(--serif,"Cormorant Garamond",Georgia,serif);letter-spacing:.02em;color:#2f2b27}
 
+/* 20/11/2026: Meu bônus com o mesmo topo das outras telas do app (seta, título no centro, atualizar) e a lista de
+   funcionários sem estourar a tela. */
+body[data-app-equipe="montagem"] #telaBonus .bonus-cabecalho{display:grid!important;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;gap:6px;margin:0 -16px 12px;padding:calc(6px + env(safe-area-inset-top)) 10px 6px;background:#fff;border-bottom:1px solid #f0ece5;position:sticky;top:0;z-index:5}
+body[data-app-equipe="montagem"] #telaBonus .bonus-cabecalho h1{grid-column:2;margin:0;text-align:center;font:600 22px/1.1 var(--serif,"Cormorant Garamond",serif);color:#2f2b27}
+body[data-app-equipe="montagem"] #telaBonus :is(.bonus-inicio,.bonus-atualizar){width:44px;height:44px;border:0;border-radius:12px;background:transparent;color:#2f2b27;display:grid;place-items:center;padding:0;cursor:pointer}
+body[data-app-equipe="montagem"] #telaBonus .bonus-inicio[hidden]{display:grid!important;visibility:hidden}
+body[data-app-equipe="montagem"] #telaBonus .bonus-atualizar{grid-column:3}
+body[data-app-equipe="montagem"] #telaBonus :is(.bonus-inicio,.bonus-atualizar):active{background:#f4f2ee}
+body[data-app-equipe="montagem"] #telaBonus :is(.bonus-inicio,.bonus-atualizar) svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.bonus-escolha input,.bonus-escolher{box-sizing:border-box;max-width:100%}
+.bonus-escolha [data-bonus-lista]{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.06)}
+.bonus-escolher{margin:0!important;border:0!important;border-radius:0!important;padding:13px 16px!important;position:relative}
+.bonus-escolher+.bonus-escolher{border-top:1px solid #efebe4!important}
+.bonus-escolher::after{content:"›";position:absolute;right:16px;top:50%;transform:translateY(-50%);color:#c3b9a8;font-size:22px}
+body[data-app-equipe="montagem"] #telaBonus{padding-left:0!important;padding-right:0!important}
+body[data-app-equipe="montagem"] #telaBonus .bonus-cabecalho{margin:0 0 12px!important}
+body[data-app-equipe="montagem"] #telaBonus #bonusConteudo{padding:0 16px 24px}

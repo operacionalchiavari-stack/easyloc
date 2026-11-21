@@ -62,7 +62,7 @@ const saida = path.join(root, 'outputs', 'app-gerencial'); fs.mkdirSync(saida, {
       await page.waitForSelector('#apGerencial:not([hidden]) .ap-rel', { timeout: 20000 });
       console.log(`ok - ${nome}: faixa do app, sem rolagem lateral, voltar leva ao Gerencial`);
     }
-    await page.click('#apGerencialVoltar');
+    await page.click('#apTopoVoltar');
     await page.waitForSelector('#apInicio:not([hidden])');
     assert.deepEqual(erros, []);
     console.log('ok - Início de volta, sem erros de JavaScript');

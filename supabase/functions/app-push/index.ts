@@ -64,7 +64,7 @@ async function enviarPara(sb: any, userId: string, empresaId: string, aviso: { t
 
 async function processar() {
   const sb = service();
-  const { data: fila } = await sb.from("app_push_fila").select("*").is("enviado_em", null).lt("tentativas", 5).order("criado_em").limit(50);
+  const { data: fila } = await sb.from("app_push_fila").select("*").is("enviado_em", null).lt("tentativas", 5).or(`enviar_apos.is.null,enviar_apos.lte.${new Date().toISOString()}`).order("criado_em").limit(50);
   let enviados = 0;
   for (const a of fila || []) {
     const r = await enviarPara(sb, a.user_id, a.empresa_id, { titulo: a.titulo, corpo: a.corpo, url: a.url, tag: a.chave || a.id });

@@ -20,8 +20,6 @@
       icone: '<svg viewBox="0 0 24 24"><path d="M3 8h18v4H3zm2 4v9h14v-9M12 8v13"/><path d="M12 8H8a3 3 0 1 1 3-3Zm0 0h4a3 3 0 1 0-3-3Z"/></svg>' },
     { chave: "gerencial", nome: "Gerencial", texto: "Os relatórios do sistema: eventos, vendas, pós-venda e financeiro.", href: "#gerencial",
       icone: '<svg viewBox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7m4 7H3"/></svg>' },
-    { chave: "agentes", nome: "Agentes de IA", texto: "Converse com as assistentes do sistema: vendas, financeiro, estoque e mais.", href: "#agentes",
-      icone: '<svg viewBox="0 0 24 24"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6zM18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8zM5.5 15.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg>' },
   ];
   /* 20/11/2026: módulo "Agentes de IA" = as assistentes que já existem nas telas do sistema, abertas com ?app=1
      (faixa do app em cima, js/app/relatorio-app.js; a Helena abre no catálogo do app, ?agente=helena). Cada uma segue a
@@ -67,10 +65,24 @@
         '<span class="ap-modulo-texto"><b class="ap-modulo-titulo">' + esc(r.nome) + '</b><small>' + esc(r.texto) + '</small></span><span class="ap-seta" aria-hidden="true">›</span></a>').join("") + '</div>').join("")
       || '<p class="ap-vazio">Seu usuário não tem acesso a nenhum relatório. Fale com o administrador.</p>';
   }
-  // Nov/2026: Configurações (notificações e localização) aparece para todos, no fim da lista.
-  const CONFIG = { chave: "config", nome: "Configurações", texto: "Notificações e localização.", href: "#config",
-    icone: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>' };
-  function tela(id){ ["apCarregando", "apLogin", "apInicio", "apConfig", "apGerencial", "apAgentes"].forEach((x) => { $(x).hidden = x !== id; }); document.body.dataset.tela = id;
+  /* 20/11/2026: o app ganhou cara de aplicativo: barra de abas embaixo (Início · Agentes · Avisos · Ajustes), a caixa de
+     avisos (notificações recebidas) e Ajustes com o que cada pessoa quer receber. Telas "empilhadas" (Gerencial) mostram
+     a seta de voltar na faixa de cima. Endereços: #agentes, #avisos, #config (Ajustes), #gerencial. */
+  const TELAS = ["apCarregando", "apLogin", "apInicio", "apConfig", "apGerencial", "apAgentes", "apAvisosTela"];
+  const ABA_DA_TELA = { apInicio: "inicio", apAgentes: "agentes", apAvisosTela: "avisos", apConfig: "ajustes", apGerencial: "inicio" };
+  const TELA_DA_ABA = { inicio: "apInicio", agentes: "apAgentes", avisos: "apAvisosTela", ajustes: "apConfig" };
+  const HASH_DA_ABA = { inicio: "", agentes: "#agentes", avisos: "#avisos", ajustes: "#config" };
+  let telaAtual = "apCarregando";
+  function tela(id){
+    const anterior = telaAtual; telaAtual = id;
+    TELAS.forEach((x) => { $(x).hidden = x !== id; }); document.body.dataset.tela = id;
+    const logado = !["apCarregando", "apLogin"].includes(id);
+    $("apAbas").hidden = !logado; document.body.classList.toggle("ap-com-abas", logado);
+    $("apTopoVoltar").hidden = id !== "apGerencial";
+    $("apAbas").querySelectorAll("[data-aba]").forEach((b) => { const on = ABA_DA_TELA[id] === b.dataset.aba; b.classList.toggle("ativa", on); if(on){ b.setAttribute("aria-current", "page"); } else { b.removeAttribute("aria-current"); } });
+    if(anterior !== id && logado){ const el = $(id); el.classList.remove("ap-entra", "ap-empilha"); void el.offsetWidth; el.classList.add(id === "apGerencial" ? "ap-empilha" : "ap-entra"); window.scrollTo(0, 0); }
+    if(id === "apAvisosTela"){ carregarCaixa(); }
+    if(id === "apConfig"){ carregarPreferencias(); }
     // Nov/2026: ao abrir o app (inclusive pelo ícone na tela do celular) entra a animação padrão até a tela ficar pronta.
     if(window.AppCarregamento){ id === "apCarregando" ? AppCarregamento.mostrar() : AppCarregamento.pronto(); }
     if(id === "apLogin"){ iniciarVitrine(); try{ const aviso = sessionStorage.getItem("app_aviso"); if(aviso){ sessionStorage.removeItem("app_aviso"); mensagem(aviso); } }catch(e){} } }
@@ -153,40 +165,187 @@
     if(acesso.error || !acesso.data?.ativo || acesso.data?.dois_fatores_pendente){ throw new Error("Entre de novo para continuar."); }
     const { data: mods, error } = await sb.rpc("app_celular_modulos", { p_empresa: empresa });
     if(error){ throw new Error(error.message); }
-    sessionStorage.setItem("login_ok", "1"); sessionStorage.setItem("empresa_id", empresa);
+    sessionStorage.setItem("login_ok", "1"); sessionStorage.setItem("empresa_id", empresa); try{ localStorage.setItem("acervo_ultima_empresa", empresa); }catch(e){}
     const nome = String(mods.nome || acesso.data.nome || "").trim(); // sem nome cadastrado: "Olá!", nunca o e-mail
     $("apOla").textContent = nome ? "Olá, " + nome.split(" ")[0] : "Olá!";
     $("apData").textContent = hojeLongo();
     const inicial = esc((nome || "?").charAt(0).toUpperCase());
     const foto = sb.storage.from("avatares").getPublicUrl(empresa + "/" + user.id + ".jpg").data.publicUrl;
     $("apAvatar").innerHTML = inicial + '<img alt="" src="' + esc(foto) + '?t=' + Date.now() + '" onerror="this.remove()">';
-    const disponiveis = MODULOS.filter((m) => mods[m.chave]).concat(CONFIG);
+    const disponiveis = MODULOS.filter((m) => mods[m.chave]);
+    EMPRESA = empresa; USUARIO = user;
+    pintarPerfil(nome, user, foto, inicial);
+    $("apAbas").querySelector('[data-aba="agentes"]').hidden = !AGENTES.some((a) => mods[a.flag]);
     $("apModulos").innerHTML = disponiveis.map((m, i) =>
       '<a class="ap-modulo" href="' + m.href + '" style="--i:' + i + '"><span class="ap-modulo-icone" aria-hidden="true">' + m.icone + '</span>' +
       '<span class="ap-modulo-texto"><b class="ap-modulo-titulo">' + m.nome + '</b><small>' + m.texto + '</small></span><span class="ap-seta" aria-hidden="true">›</span></a>').join("")
-      + (disponiveis.length === 1 ? '<p class="ap-vazio">Seu usuário ainda não tem acesso a nenhum módulo do app. Fale com o administrador.</p>' : "");
+      + (!disponiveis.length ? '<p class="ap-vazio">Seu usuário ainda não tem acesso a nenhum módulo do app. Fale com o administrador.</p>' : "");
     pintarRelatorios(mods, empresa);
     pintarAgentes(mods);
     tela(telaDoEndereco());
     window.AppRastreador?.iniciar(empresa);
     window.AppAvisos?.iniciar(empresa); // Nov/2026: bloco "Avisos no celular" (notificações)
+    carregarCaixa();
+    clearInterval(relogioCaixa); relogioCaixa = setInterval(() => { if(!document.hidden) carregarCaixa(); }, 60000);
   }
 
-  function telaDoEndereco(){ return location.hash === "#config" ? "apConfig" : location.hash === "#gerencial" ? "apGerencial" : location.hash === "#agentes" ? "apAgentes" : "apInicio"; }
+  function telaDoEndereco(){ return { "#config": "apConfig", "#ajustes": "apConfig", "#gerencial": "apGerencial", "#agentes": "apAgentes", "#avisos": "apAvisosTela" }[location.hash] || "apInicio"; }
+  // Abas: trocam de tela sem empilhar no histórico (o voltar do celular sai do app, como num aplicativo).
+  $("apAbas").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-aba]"); if(!b){ return; }
+    history.replaceState(null, "", location.pathname + location.search + HASH_DA_ABA[b.dataset.aba]);
+    tela(TELA_DA_ABA[b.dataset.aba]);
+  });
+  function voltarDaPilha(){ if(history.state && history.state.app){ history.back(); } else { history.replaceState(null, "", location.pathname + location.search); tela("apInicio"); } }
+  $("apTopoVoltar").addEventListener("click", voltarDaPilha);
   /* Nov/2026: tocar num módulo mostra o carregamento padrão (branco, com a logo) enquanto a página do módulo abre. */
   $("apModulos").addEventListener("click", (e) => {
     const a = e.target.closest(".ap-modulo"); if(!a){ return; }
-    const alvo = a.getAttribute("href");
-    const SUBTELAS = { "#config": "apConfig", "#gerencial": "apGerencial", "#agentes": "apAgentes" };
-    if(SUBTELAS[alvo]){ e.preventDefault(); history.pushState({ app: alvo }, "", alvo); tela(SUBTELAS[alvo]); window.scrollTo(0, 0); return; }
+    if(a.getAttribute("href") === "#gerencial"){ e.preventDefault(); history.pushState({ app: "#gerencial" }, "", "#gerencial"); tela("apGerencial"); return; }
     window.AppCarregamento?.mostrar();
   });
+  $("apNovos").addEventListener("click", (e) => { e.preventDefault(); history.replaceState(null, "", location.pathname + location.search + "#avisos"); tela("apAvisosTela"); });
   $("apRelatorios").addEventListener("click", (e) => { if(e.target.closest(".ap-rel")){ window.AppCarregamento?.mostrar(); } });
   $("apAgentesLista").addEventListener("click", (e) => { if(e.target.closest(".ap-agente")){ window.AppCarregamento?.mostrar(); } });
-  $("apAgentesVoltar").addEventListener("click", () => { if(history.state && history.state.app === "#agentes"){ history.back(); } else { history.replaceState(null, "", location.pathname + location.search); tela("apInicio"); } });
-  $("apGerencialVoltar").addEventListener("click", () => { if(history.state && history.state.app === "#gerencial"){ history.back(); } else { history.replaceState(null, "", location.pathname + location.search); tela("apInicio"); } });
-  $("apConfigVoltar").addEventListener("click", () => { if(location.hash === "#config"){ history.back(); } else { tela("apInicio"); } });
   window.addEventListener("popstate", () => { if(!$("apLogin").hidden || !$("apCarregando").hidden){ return; } tela(telaDoEndereco()); });
+
+  /* ---------- Avisos (caixa de notificações) ---------- */
+  let EMPRESA = null, USUARIO = null, relogioCaixa = 0, caixa = [];
+  const ICONE_GRUPO = {
+    "Operação": ["#e8f0fb", "#123f86", '<path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.8"/><circle cx="17.5" cy="17.5" r="1.8"/>'],
+    "Comercial": ["#f6efe2", "#8b6a45", '<path d="M4 7h16v12H4zM9 7V5h6v2"/>'],
+    "Financeiro": ["#e6f4ea", "#1f7a44", '<path d="M12 3v18M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3 2 2.7 4.5 3 4.5 1.3 4.5 3-2 3-4.5 3-4.5-1.3-4.5-3"/>'],
+    "Estoque": ["#fdf3dc", "#a16207", '<path d="M3 8l9-5 9 5-9 5zM3 8v8l9 5 9-5V8"/>'],
+    "Compras": ["#f1ebfb", "#6d4fc2", '<path d="M4 5h2l2 11h11l2-8H7"/><circle cx="9.5" cy="20" r="1.3"/><circle cx="17.5" cy="20" r="1.3"/>'],
+    "Pessoas": ["#fdecea", "#b42318", '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5M16 4.6a3.2 3.2 0 0 1 0 6.3M18.5 14.8c1.4.8 2.3 2.4 2.5 5.2"/>'],
+    "Sistema": ["#eef1f4", "#4f4f4f", '<path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"/>'],
+  };
+  function quando(iso){
+    const d = new Date(iso), agora = new Date(), min = Math.round((agora - d) / 6e4);
+    if(min < 1){ return "agora"; } if(min < 60){ return min + " min"; }
+    const hora = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    return d.toDateString() === agora.toDateString() ? hora : d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) + " " + hora;
+  }
+  function rotuloDia(iso){
+    const d = new Date(iso), h = new Date(), dias = Math.round((new Date(h.toDateString()) - new Date(d.toDateString())) / 864e5);
+    if(dias === 0){ return "Hoje"; } if(dias === 1){ return "Ontem"; }
+    const t = d.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" }); return t.charAt(0).toUpperCase() + t.slice(1);
+  }
+  function pintarBadge(n){
+    const b = $("apAbasBadge"); b.hidden = !n; b.textContent = n > 99 ? "99+" : String(n);
+    const novos = $("apNovos"); novos.hidden = !n;
+    novos.innerHTML = '<span class="ap-novos-sino" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"/></svg></span><span class="ap-linha-texto"><b>' + n + (n === 1 ? " aviso novo" : " avisos novos") + '</b><small>Toque para ver</small></span><span class="ap-seta-p" aria-hidden="true">›</span>';
+    try{ if(navigator.setAppBadge){ if(n){ navigator.setAppBadge(n); } else { navigator.clearAppBadge(); } } }catch(e){}
+  }
+  async function carregarCaixa(){
+    if(!EMPRESA){ return; }
+    try{
+      const { data, error } = await sb.rpc("app_notif_caixa", { p_empresa: EMPRESA, p_limite: 100 });
+      if(error){ throw error; }
+      caixa = data?.itens || []; pintarBadge(data?.nao_lidas || 0); pintarCaixa();
+    }catch(e){ if(!caixa.length){ $("apCaixa").innerHTML = '<p class="ap-vazio">Não foi possível carregar os avisos. Verifique a internet.</p>'; } }
+  }
+  function pintarCaixa(){
+    const host = $("apCaixa"); $("apLerTodos").hidden = !caixa.some((a) => !a.lida_em);
+    if(!caixa.length){ host.innerHTML = '<div class="ap-vazio-grande"><span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"/></svg></span><b>Nenhum aviso por enquanto</b><p>Quando o sistema tiver algo para você, como uma escala, um pagamento ou um pedido, aparece aqui.</p></div>'; return; }
+    let dia = "", html = "";
+    caixa.forEach((a) => {
+      const r = rotuloDia(a.criado_em);
+      if(r !== dia){ if(dia){ html += "</div>"; } dia = r; html += '<p class="ap-secao">' + esc(r) + '</p><div class="ap-grupo">'; }
+      const ic = ICONE_GRUPO[a.grupo] || ICONE_GRUPO.Sistema;
+      const linhas = String(a.corpo || "").split("\n").filter(Boolean);
+      html += '<button type="button" class="ap-aviso' + (a.lida_em ? "" : " nao-lido") + '" data-aviso="' + esc(a.id) + '">' +
+        '<span class="ap-aviso-icone" style="background:' + ic[0] + ';color:' + ic[1] + '" aria-hidden="true"><svg viewBox="0 0 24 24">' + ic[2] + '</svg></span>' +
+        '<span class="ap-aviso-texto"><span class="ap-aviso-topo"><b>' + esc(a.titulo) + '</b><small>' + esc(quando(a.criado_em)) + '</small></span>' +
+        (linhas.length ? '<span class="ap-aviso-corpo">' + linhas.map(esc).join("<br>") + '</span>' : "") + '</span>' +
+        (a.lida_em ? "" : '<i class="ap-aviso-ponto" aria-label="Não lido"></i>') + '</button>';
+    });
+    host.innerHTML = html + "</div>";
+  }
+  $("apCaixa").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-aviso]"); if(!b){ return; }
+    const a = caixa.find((x) => x.id === b.dataset.aviso); if(!a){ return; }
+    if(!a.lida_em){
+      a.lida_em = new Date().toISOString(); b.classList.remove("nao-lido"); b.querySelector(".ap-aviso-ponto")?.remove();
+      pintarBadge(caixa.filter((x) => !x.lida_em).length); $("apLerTodos").hidden = !caixa.some((x) => !x.lida_em);
+      sb.rpc("app_notif_ler", { p_empresa: EMPRESA, p_ids: [a.id] }).then(() => {}, () => {});
+    }
+    if(a.url && !/^app\.html(#avisos)?$/.test(a.url)){ window.AppCarregamento?.mostrar(); setTimeout(() => { location.href = a.url; }, 60); }
+  });
+  $("apLerTodos").addEventListener("click", async () => {
+    caixa.forEach((a) => { a.lida_em = a.lida_em || new Date().toISOString(); }); pintarCaixa(); pintarBadge(0);
+    await sb.rpc("app_notif_ler", { p_empresa: EMPRESA, p_ids: null }).then(() => {}, () => {});
+  });
+  document.addEventListener("visibilitychange", () => { if(!document.hidden && EMPRESA){ carregarCaixa(); } });
+
+  /* ---------- Ajustes ---------- */
+  function pintarPerfil(nome, user, foto, inicial){
+    let empresaNome = ""; try{ empresaNome = localStorage.getItem("app_empresa_nome") || ""; }catch(e){}
+    $("apPerfil").innerHTML = '<span class="ap-avatar ap-avatar-g">' + inicial + '<img alt="" src="' + esc(foto) + '?t=' + Date.now() + '" onerror="this.remove()"></span>' +
+      '<span class="ap-perfil-texto"><b>' + esc(nome || "Sua conta") + '</b><small>' + esc(user.email || "") + '</small>' + (empresaNome ? '<small>' + esc(empresaNome) + '</small>' : "") + '</span>';
+  }
+  let prefs = null, salvando = 0;
+  const SWITCH = (on, attrs) => '<button type="button" class="ap-switch" role="switch" aria-checked="' + !!on + '" ' + attrs + '><span></span></button>';
+  async function carregarPreferencias(){
+    if(!EMPRESA){ return; }
+    if(!prefs){ $("apNotifTipos").innerHTML = '<div class="ap-grupo"><p class="ap-carregando-linha">Carregando…</p></div>'; }
+    try{ const { data, error } = await sb.rpc("app_notif_config", { p_empresa: EMPRESA }); if(error){ throw error; } prefs = data; pintarPreferencias(); }
+    catch(e){ $("apNotifTipos").innerHTML = '<div class="ap-grupo"><p class="ap-carregando-linha">Não foi possível carregar as preferências.</p></div>'; }
+  }
+  function pintarPreferencias(){
+    const grupos = {}; (prefs.tipos || []).forEach((t) => { (grupos[t.grupo] = grupos[t.grupo] || []).push(t); });
+    $("apNotifTipos").innerHTML = '<p class="ap-nota">Escolha o que o sistema avisa. Tudo também fica guardado na aba Avisos.</p>' +
+      Object.keys(grupos).map((g) => '<p class="ap-secao">' + esc(g) + '</p><div class="ap-grupo">' + grupos[g].map((t) =>
+        '<div class="ap-linha"><span class="ap-linha-texto"><b>' + esc(t.rotulo) + '</b><small>' + esc(t.descricao) + '</small></span>' +
+        SWITCH(t.ativo, 'aria-label="' + esc(t.rotulo) + '" data-notif-tipo="' + esc(t.tipo) + '"') + '</div>').join("") + '</div>').join("");
+    $("apSilencio").innerHTML = '<div class="ap-linha"><span class="ap-linha-texto"><b>Não incomodar</b><small>' + (prefs.silencio ? "Das " + esc(prefs.inicio) + " às " + esc(prefs.fim) : "Desligado") + '</small></span>' +
+      SWITCH(prefs.silencio, 'aria-label="Horário de silêncio" data-silencio') + '</div>' +
+      (prefs.silencio ? '<div class="ap-linha ap-linha-horas"><label>Das<input type="time" data-silencio-inicio value="' + esc(prefs.inicio) + '"></label><label>Até<input type="time" data-silencio-fim value="' + esc(prefs.fim) + '"></label></div>' : "");
+  }
+  function salvarPreferencias(tipos){
+    clearTimeout(salvando);
+    salvando = setTimeout(async () => {
+      const { error } = await sb.rpc("app_notif_config_salvar", { p_empresa: EMPRESA, p_tipos: tipos || {}, p_silencio: !!prefs.silencio, p_inicio: prefs.inicio, p_fim: prefs.fim });
+      if(error){ toast("Não foi possível salvar. Tente de novo.", true); carregarPreferencias(); } else { toast("Salvo"); }
+    }, tipos ? 0 : 400);
+  }
+  $("apConfig").addEventListener("click", (e) => {
+    const t = e.target.closest("[data-notif-tipo]");
+    if(t){
+      const on = t.getAttribute("aria-checked") !== "true"; t.setAttribute("aria-checked", String(on));
+      const item = prefs.tipos.find((x) => x.tipo === t.dataset.notifTipo); if(item){ item.ativo = on; }
+      salvarPreferencias({ [t.dataset.notifTipo]: on }); return;
+    }
+    if(e.target.closest("[data-silencio]")){ prefs.silencio = !prefs.silencio; pintarPreferencias(); salvarPreferencias(); }
+  });
+  $("apConfig").addEventListener("change", (e) => {
+    if(e.target.matches("[data-silencio-inicio]") && e.target.value){ prefs.inicio = e.target.value; }
+    else if(e.target.matches("[data-silencio-fim]") && e.target.value){ prefs.fim = e.target.value; }
+    else { return; }
+    pintarPreferencias(); salvarPreferencias();
+  });
+  // Instalar na tela do celular (Android: o convite do próprio navegador; iPhone: como fazer pelo Safari).
+  let convite = null;
+  const instalado = () => window.matchMedia?.("(display-mode: standalone)").matches || navigator.standalone === true || !!window.AcervoAndroid;
+  function pintarInstalar(){
+    const iphone = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    $("apInstalar").hidden = instalado() || (!convite && !iphone);
+    $("apInstalarTexto").textContent = iphone && !convite ? "No Safari: Compartilhar › Adicionar à Tela de Início." : "Abra o Acervo como um aplicativo, sem o navegador.";
+  }
+  window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); convite = e; pintarInstalar(); });
+  $("apInstalar").addEventListener("click", async () => {
+    if(convite){ convite.prompt(); await convite.userChoice.catch(() => {}); convite = null; pintarInstalar(); }
+    else { toast("No Safari: toque em Compartilhar e depois em Adicionar à Tela de Início."); }
+  });
+  pintarInstalar();
+  let toastTimer = 0;
+  function toast(t, erro){
+    let el = $("apToast");
+    if(!el){ el = document.createElement("div"); el.id = "apToast"; el.className = "ap-toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
+    el.textContent = t; el.classList.toggle("erro", !!erro); el.classList.add("on");
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("on"), 2200);
+  }
+  window.AppToast = toast;
 
   /* ---------- Entrar e sair ---------- */
   $("apForm").addEventListener("submit", async (ev) => {
@@ -206,6 +365,8 @@
     try{ localStorage.removeItem("montadorPasta"); }catch(e){}
     ["login_ok", "empresa_id", "usuario_nome"].forEach((k) => sessionStorage.removeItem(k));
     await sb.auth.signOut().catch(() => {});
+    EMPRESA = null; prefs = null; caixa = []; clearInterval(relogioCaixa); pintarBadge(0);
+    history.replaceState(null, "", location.pathname + location.search);
     tela("apLogin");
   });
   $("apCompleta").addEventListener("click", () => window.EasyLocCelular.abrirVersaoCompleta());

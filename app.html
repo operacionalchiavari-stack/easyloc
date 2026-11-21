@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles/app-celular.css?v=20261120-agentes">
+<link rel="stylesheet" href="styles/app-celular.css?v=20261120-app">
 <script src="https://unpkg.com/@supabase/supabase-js@2.118.0"></script>
 <script src="js/core/supabase.js"></script>
 <script src="js/core/doisFatores.js?v=20261023-2fa"></script>
@@ -26,7 +26,7 @@
 <body>
 <!-- App de celular do sistema (nov/2026): mesmo login do sistema; depois de entrar, os módulos Triagem e Montagem.
      Lógica em js/app/app-celular.js; visual em styles/app-celular.css. -->
-<header class="ap-barra"><div class="ap-marca" id="apMarca"><span>Acervo</span></div></header>
+<header class="ap-barra"><button type="button" class="ap-topo-voltar" id="apTopoVoltar" aria-label="Voltar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><div class="ap-marca" id="apMarca"><span>Acervo</span></div></header>
 <main class="ap-main">
   <section id="apCarregando" class="ap-carregando"><span class="ap-spinner" aria-hidden="true"></span></section>
 
@@ -41,45 +41,67 @@
     </form>
   </section>
 
-  <section id="apInicio" class="ap-inicio" hidden>
+  <!-- Aba Início -->
+  <section id="apInicio" class="ap-inicio ap-tela" hidden>
     <div class="ap-ola">
       <span class="ap-avatar" id="apAvatar"></span>
       <div><small id="apData"></small><h1 id="apOla">Olá</h1></div>
     </div>
+    <a class="ap-novos" id="apNovos" href="#avisos" hidden></a>
     <p class="ap-titulo">O que vamos fazer agora?</p>
     <div class="ap-modulos" id="apModulos"></div>
-    <div class="ap-rodape">
-      <button type="button" class="ap-link" id="apCompleta">Abrir a versão completa</button>
-      <button type="button" class="ap-sair" id="apSair"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v16h5m6-14 6 6-6 6m-6-6h12"/></svg>Sair</button>
-    </div>
   </section>
 
-  <section id="apGerencial" class="ap-config ap-gerencial" hidden>
-    <button type="button" class="ap-voltar" id="apGerencialVoltar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Início</button>
-    <h1 class="ap-config-titulo">Gerencial</h1>
-    <div id="apRelatorios"></div>
-  </section>
-
-  <section id="apAgentes" class="ap-config ap-gerencial" hidden>
-    <button type="button" class="ap-voltar" id="apAgentesVoltar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Início</button>
+  <!-- Aba Agentes de IA -->
+  <section id="apAgentes" class="ap-config ap-gerencial ap-tela" hidden>
     <h1 class="ap-config-titulo">Agentes de IA</h1>
     <p class="ap-agentes-intro">Cada assistente cuida de uma área do sistema. Converse por texto ou áudio.</p>
     <div class="ap-modulos ap-rel-lista" id="apAgentesLista"></div>
   </section>
 
-  <section id="apConfig" class="ap-config" hidden>
-    <button type="button" class="ap-voltar" id="apConfigVoltar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Início</button>
-    <h1 class="ap-config-titulo">Configurações</h1>
-    <div class="ap-cfg-lista">
-      <section class="ap-cfg" id="apAvisos" aria-label="Notificações"></section>
-      <section class="ap-cfg" id="apLocal" aria-label="Localização"></section>
+  <!-- Aba Avisos (caixa de notificações) -->
+  <section id="apAvisosTela" class="ap-config ap-tela" hidden>
+    <div class="ap-tit-linha"><h1 class="ap-config-titulo">Avisos</h1><button type="button" class="ap-acao" id="apLerTodos" hidden>Marcar todos como lidos</button></div>
+    <div id="apCaixa" class="ap-caixa"></div>
+  </section>
+
+  <!-- Tela Gerencial (aberta pelo cartão da Início) -->
+  <section id="apGerencial" class="ap-config ap-gerencial ap-tela" hidden>
+    <h1 class="ap-config-titulo">Gerencial</h1>
+    <div id="apRelatorios"></div>
+  </section>
+
+  <!-- Aba Ajustes -->
+  <section id="apConfig" class="ap-config ap-tela ap-ajustes" hidden>
+    <h1 class="ap-config-titulo">Ajustes</h1>
+    <div class="ap-perfil" id="apPerfil"></div>
+    <p class="ap-secao">Notificações</p>
+    <div class="ap-grupo"><section class="ap-cfg" id="apAvisos" aria-label="Notificações"></section></div>
+    <div id="apNotifTipos"></div>
+    <p class="ap-secao">Horário de silêncio</p>
+    <div class="ap-grupo" id="apSilencio"></div>
+    <p class="ap-nota">Nesse horário os avisos ficam guardados e chegam quando ele termina.</p>
+    <p class="ap-secao">Localização</p>
+    <div class="ap-grupo"><section class="ap-cfg" id="apLocal" aria-label="Localização"></section></div>
+    <p class="ap-secao">Aplicativo</p>
+    <div class="ap-grupo" id="apAppGrupo">
+      <button type="button" class="ap-linha" id="apInstalar" hidden><span class="ap-linha-texto"><b>Instalar na tela do celular</b><small id="apInstalarTexto">Abra o Acervo como um aplicativo.</small></span><span class="ap-seta-p" aria-hidden="true">›</span></button>
+      <button type="button" class="ap-linha" id="apCompleta"><span class="ap-linha-texto"><b>Abrir a versão completa</b><small>O sistema inteiro, como no computador.</small></span><span class="ap-seta-p" aria-hidden="true">›</span></button>
+      <div class="ap-linha ap-linha-info"><span class="ap-linha-texto"><b>Versão</b></span><small id="apVersao">2026.11.20</small></div>
     </div>
+    <button type="button" class="ap-sair ap-sair-bloco" id="apSair"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v16h5m6-14 6 6-6 6m-6-6h12"/></svg>Sair da conta</button>
   </section>
 </main>
-<script src="js/app/avisos-android.js?v=20261107-config"></script>
-<script src="js/app/avisos-app.js?v=20261107-config"></script>
+<nav class="ap-abas" id="apAbas" aria-label="Navegação do app" hidden>
+  <button type="button" data-aba="inicio" aria-label="Início"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10.5 12 4l8 6.5V20a1 1 0 0 1-1 1h-4.5v-6h-5v6H5a1 1 0 0 1-1-1z"/></svg><span>Início</span></button>
+  <button type="button" data-aba="agentes" aria-label="Agentes de IA"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6zM18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8z"/></svg><span>Agentes</span></button>
+  <button type="button" data-aba="avisos" aria-label="Avisos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"/></svg><span>Avisos</span><i class="ap-abas-badge" id="apAbasBadge" hidden></i></button>
+  <button type="button" data-aba="ajustes" aria-label="Ajustes"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Ajustes</span></button>
+</nav>
+<script src="js/app/avisos-android.js?v=20261120-app"></script>
+<script src="js/app/avisos-app.js?v=20261120-app"></script>
 <script src="js/app/rastreamento-app.js?v=20261119-espera-conexao"></script>
-<script src="js/app/app-celular.js?v=20261120-agentes"></script>
+<script src="js/app/app-celular.js?v=20261120-app"></script>
 <script src="js/app/android-principal.js?v=20261107"></script>
 </body>
 </html>

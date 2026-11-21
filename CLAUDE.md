@@ -12435,3 +12435,43 @@ Helena = `comercial.catalogo.visualizar`, Clara = `financeiro.fluxo.visualizar`,
   `catalogo-app.mjs`) inicia a Helena para quem é da equipe (normalmente a equipe só consulta o catálogo), abre a conversa
   direto e mostra só as abas Catálogo e Helena; o "←" do catálogo volta para `app.html#agentes`.
 - Teste: `RUN_AGENTES_LIVE=1 node tests/app-agentes-live.cjs` (abre os 6, confere o campo de conversa; não envia mensagem).
+
+## App do celular com cara de aplicativo + notificações configuráveis (20/11/2026)
+Pedido: "fazer aparecer um app de verdade… em configurações quais notificações queremos que o sistema envie, todas as opções
+possíveis".
+- **Casca do app (`app.html`, `js/app/app-celular.js`, fim de `styles/app-celular.css`)**: barra de abas fixa embaixo
+  (**Início · Agentes · Avisos · Ajustes**; a aba Agentes some sem nenhum agente liberado), fundo cinza claro com grupos
+  brancos, telas que entram com animação, toast "Salvo". Abas trocam com `replaceState` (o voltar do celular sai do app);
+  **Gerencial** é tela empilhada (`pushState`) com a seta de voltar na faixa de cima (`#apTopoVoltar`). Endereços:
+  `#agentes`, `#avisos`, `#config` (Ajustes), `#gerencial`. Os cartões "Agentes de IA" e "Configurações" saíram da Início
+  (viraram abas); "Abrir a versão completa" e "Sair" foram para Ajustes.
+- **Avisos** (aba): a caixa de notificações recebidas (`app_notif_caixa`, últimos 60 dias), por dia, ícone por área, ponto
+  azul nos não lidos, "Marcar todos como lidos" (`app_notif_ler`); tocar abre o destino do aviso. Contador vermelho na aba,
+  atalho "N avisos novos" na Início e o número no ícone do app (`navigator.setAppBadge`). Atualiza a cada 60 s.
+- **Ajustes**: perfil; Notificações (liga/desliga do celular — `avisos-app.js`/`avisos-android.js`, o teste agora é
+  `app_notif_teste` e passa pela fila); **"o que avisar"** com 25 tipos em 6 grupos, só os que a pessoa pode receber;
+  **Não incomodar** (das/até); Localização; Instalar na tela do celular (convite do navegador ou instrução do iPhone);
+  versão; Sair.
+- **Banco** (migration `20261120001000_app_notificacoes.sql`, aplicada e registrada, testada numa transação desfeita):
+  - `app_push_fila` ganhou `tipo`, `lida_em`, `enviar_apos`; `app_notif_prefs` (por pessoa: `tipos` jsonb, silêncio).
+  - **Catálogo dos tipos = `app_notif_catalogo()`** (tipo, grupo, rótulo, descrição, padrão, permissão; `proprio` = só o
+    dono do registro). Tipo novo: uma linha lá + quem dispara chamando `app_notif_enviar`/`app_notif_grupo`.
+  - Gatilho `app_notif_filtrar` (antes de gravar na fila): descarta tipo desligado e, no silêncio, grava `enviar_apos`
+    (a Edge Function `app-push`, republicada, só manda o que já passou disso; o job `app-push-fila` também).
+  - Disparos: escala (agora todas as etapas, e entra na caixa mesmo sem celular), saída da escala, pedido separado →
+    Expedição, problema na separação (Acervo/Comercial/quem reportou), pedido reservado (padrão desligado) e cancelado,
+    pedido enviado pelo catálogo, reclamação no pós-venda, pagamento recebido, divergência de contagem, O.S. aberta,
+    material no mínimo, andamento da minha compra/manutenção, resposta da Ideia Premiada, comunicado novo, convite de
+    reunião (o antigo, agora com tipo). Rotinas pg_cron: `app-notif-manha` 7h30 (triagem do dia, pré-reservas vencendo,
+    contatos de orçamento, recebimentos atrasados, contas a pagar de hoje, aniversariantes), `app-notif-vespera` 18h
+    (lembrete do dia seguinte para quem está escalado) e `app-notif-reuniao` a cada 5 min (30 min antes).
+  - Quem recebe "por permissão": `app_notif_publico` (`funcionario_pode`; o administrador recebe tudo).
+- **Telas internas com o mesmo topo**: faixa branca, seta, nome no centro (relatórios/agentes pelo `relatorio-app.js`, Meu
+  bônus em `apps-equipe.css`). Meu bônus: lista de funcionários não estoura mais a tela. No Financeiro gerencial do app
+  somem "Painel gerencial ↗", Imprimir e Exportar.
+- Relatório/agente aberto direto (ex.: tocando numa notificação com o app fechado) entra sozinho: `relatorio-app.js`
+  marca `login_ok` com a empresa guardada (`acervo_ultima_empresa`) se a sessão existir; o `context.js` confere no servidor.
+  `limpezaDados.js` (limpeza única de 26/10) passou a preservar `acervo_ultima_empresa` e os tokens do Meu bônus e a **nunca
+  desligar o serviço do app (`app-sw.js`)** — antes, o primeiro relatório aberto num celular novo desligava as notificações.
+- Testes: `RUN_AVISOS_LIVE=1 node tests/app-avisos-live.cjs` (novo), `app-gerencial-live.cjs` e `app-agentes-live.cjs`
+  atualizados para as abas.

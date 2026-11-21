@@ -33,3 +33,15 @@ html.app-relatorio .ar-rolagem>table{min-width:100%}
   html.app-relatorio:is(#ar1#ar2#ar3#ar4,html) body :is(.sr-corpo,.ge-corpo,.cc-corpo,.cp-cat-corpo,.pp-secao-grade){grid-template-columns:minmax(0,1fr)!important}
   html.app-relatorio:is(#ar1#ar2#ar3#ar4,html) body :is(.sr-graf,.ge-graf,.cc-graf,.cp-cat-graf){border-left:0!important;border-top:1px solid #eef1f4}
 }
+/* 20/11/2026: mesma faixa de topo das outras telas do app (Montagem, Meu bônus): branca, seta à esquerda e o nome no
+   centro; o grupo (Gerencial / Agentes de IA) em letra pequena acima do nome. */
+html.app-relatorio .ar-barra{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:6px;padding:env(safe-area-inset-top,0px) 10px 0;background:#fff;color:#2f2b27;box-shadow:none;border-bottom:1px solid #f0ece5}
+html.app-relatorio .ar-voltar{color:#2f2b27}
+html.app-relatorio .ar-voltar:active{background:#f4f2ee}
+html.app-relatorio .ar-titulo{align-items:center;text-align:center}
+html.app-relatorio .ar-titulo small{color:#9b793f}
+html.app-relatorio .ar-titulo b{color:#2f2b27;font:600 20px/1.15 "Cormorant Garamond",Georgia,serif;max-width:100%}
+html.app-relatorio,html.app-relatorio body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
+/* Solicitações (Carla/Marcos) e Ideia Premiada no app: sem o espaço do título escondido em cima das abas. */
+html.app-relatorio:is(#ar1#ar2#ar3#ar4#ar5,html) body :is(.solicitacoes-page>header,.ideia-heading){padding-top:6px!important;margin-top:0!important;min-height:0!important}
+html.app-relatorio:is(#ar1#ar2#ar3#ar4#ar5,html) body :is(.solicitacoes-page>header,.ideia-heading)>div:empty{display:none!important}

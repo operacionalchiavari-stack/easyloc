@@ -342,7 +342,7 @@
 .dano-fotos .dano-rem{border:0;background:none;color:#b42318;font-size:12px;padding:0 4px}
 </style>
   <meta name="theme-color" content="#5a5a55">
-  <link rel="stylesheet" href="../apps-equipe.css?v=20261106-topo-branco">
+  <link rel="stylesheet" href="../apps-equipe.css?v=20261120-app">
   <link rel="stylesheet" href="montador-evento.css?v=20261108-lista-chat4">
 <link rel="stylesheet" href="../../../styles/assistente-solicitacao.css?v=20261108-montagem">
 <link rel="stylesheet" href="montador-ia.css?v=20261108-montagem">
@@ -406,7 +406,7 @@
   </section>
 
   <section class="tela" id="telaSemEvento"><h1 id="semEventoTitulo">Foto da equipe</h1><div class="secao sem-evento"><h2>Selecione um evento</h2><p>Abra uma etapa no seu cronograma. O check-in ou a foto da equipe registra o início do atendimento.</p><button class="btn" type="button" onclick="irAcesso('agenda')">Abrir meu cronograma</button></div></section>
-  <section class="tela" id="telaBonus"><div class="bonus-cabecalho"><button type="button" class="bonus-inicio" onclick="irParaApp()" aria-label="Voltar ao início do app" hidden>←</button><h1>Meu bônus</h1><button type="button" class="btn btn-claro btn-pequeno" onclick="MontadorBonus.atualizar()">Atualizar</button></div><div id="bonusConteudo"></div></section>
+  <section class="tela" id="telaBonus"><div class="bonus-cabecalho"><button type="button" class="bonus-inicio" onclick="irParaApp()" aria-label="Voltar ao início do app" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button><h1>Meu bônus</h1><button type="button" class="bonus-atualizar" onclick="MontadorBonus.atualizar()" aria-label="Atualizar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button></div><div id="bonusConteudo"></div></section>
   <nav class="app-navegacao" id="appNavegacao" aria-label="Navegação principal" hidden>
     <button type="button" data-acesso="agenda" onclick="irAcesso('agenda')"><span aria-hidden="true">▦</span>Cronograma</button>
     <button type="button" data-acesso="bonus" onclick="irAcesso('bonus')"><span aria-hidden="true">♧</span>Meu bônus</button>
