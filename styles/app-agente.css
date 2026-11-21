@@ -1,0 +1,193 @@
+/* Conversa com os agentes de IA no app (20/11/2026): o mesmo visual para todos (Clara, Cora, Carla, Marcos, Ideia
+   Premiada em Modulos/Gestao/AgentesApp/agente.html e a Helena no catálogo, pelo bloco do fim deste arquivo).
+   Fundo branco, tela cheia, faixa de cima com ← / foto e nome / ações, balões como um chat comum. */
+:root{ --ag-tinta:#2b2622; --ag-suave:#6b655c; --ag-mudo:#8f897f; --ag-linha:#ece8e1; --ag-ia:#f2f0ec; --ag-eu:#2b2622; }
+html:has(body.ag-pagina),body.ag-pagina{ margin:0; height:100%; background:#fff; color:var(--ag-tinta); font-family:Manrope,system-ui,sans-serif; -webkit-tap-highlight-color:transparent; }
+body.ag-pagina{ display:flex; flex-direction:column; height:100dvh; overflow:hidden; overscroll-behavior:none; }
+body.ag-pagina *{ box-sizing:border-box; }
+.ag-icone{ flex:none; width:44px; height:44px; border:0; border-radius:12px; background:transparent; color:var(--ag-tinta); display:grid; place-items:center; padding:0; cursor:pointer; }
+.ag-icone:active{ background:#f2f0ec; }
+.ag-icone:disabled{ opacity:.35; }
+.ag-icone svg,.ag-redondo svg{ width:23px; height:23px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+
+/* faixa de cima */
+.ag-cab{ flex:none; display:flex; align-items:center; gap:2px; padding:calc(env(safe-area-inset-top) + 6px) 6px 6px; border-bottom:1px solid var(--ag-linha); background:#fff; }
+.ag-cab-quem{ flex:1; min-width:0; display:flex; align-items:center; gap:10px; }
+.ag-cab-quem>div{ min-width:0; display:flex; flex-direction:column; }
+.ag-cab-quem strong{ font:800 16.5px/1.2 Manrope,sans-serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.ag-cab-quem small{ display:flex; align-items:center; gap:5px; color:var(--ag-mudo); font:600 12px Manrope,sans-serif; white-space:nowrap; overflow:hidden; }
+.ag-online{ width:7px; height:7px; border-radius:50%; background:#0ca30c; flex:none; }
+.ag-avatar{ flex:none; width:36px; height:36px; border-radius:50%; display:grid; place-items:center; background:var(--ag-cor,#2b2622); color:#fff; font:800 15px Manrope,sans-serif; }
+.ag-avatar.grande{ width:72px; height:72px; font-size:30px; box-shadow:0 10px 28px -14px var(--ag-cor,#2b2622); }
+
+/* mensagens */
+.ag-msgs{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px 12px 10px; display:flex; flex-direction:column; gap:10px; }
+.ag-msg{ display:flex; align-items:flex-end; gap:8px; max-width:100%; animation:agEntra .22s ease both; }
+.ag-msg.eu{ justify-content:flex-end; }
+.ag-msg.ia .ag-avatar{ width:28px; height:28px; font-size:12px; }
+@keyframes agEntra{ from{ opacity:0; transform:translateY(6px) } to{ opacity:1; transform:none } }
+.ag-balao{ position:relative; max-width:min(84%,560px); padding:10px 13px 6px; border-radius:18px; background:var(--ag-ia); color:var(--ag-tinta); font:500 15px/1.48 Manrope,sans-serif; word-wrap:break-word; overflow-wrap:anywhere; }
+.ag-msg.ia .ag-balao{ border-bottom-left-radius:6px; }
+.ag-msg.eu .ag-balao{ background:var(--ag-eu); color:#fff; border-bottom-right-radius:6px; }
+.ag-balao p{ margin:0 0 6px; } .ag-balao p:last-of-type{ margin-bottom:2px; }
+.ag-balao :is(ul,ol){ margin:2px 0 8px; padding-left:20px; } .ag-balao li{ margin:2px 0; }
+.ag-balao h5{ margin:8px 0 4px; font:800 14px Manrope,sans-serif; }
+.ag-balao time{ display:block; text-align:right; margin-top:2px; font:500 10.5px Manrope,sans-serif; color:var(--ag-mudo); }
+.ag-msg.eu .ag-balao time{ color:rgba(255,255,255,.6); }
+.ag-balao.erro{ background:#fdf1f0; color:#8e1b12; }
+.ag-balao-ok{ background:#e9f6ec; color:#14532d; font-weight:600; }
+.ag-audio{ display:block; font:700 11.5px Manrope,sans-serif; opacity:.75; margin-bottom:2px; }
+.ag-fotos{ display:flex; gap:6px; flex-wrap:wrap; margin:2px 0 6px; }
+.ag-fotos img{ width:84px; height:84px; object-fit:cover; border-radius:12px; cursor:zoom-in; }
+.ag-digitando{ display:flex; align-items:center; gap:4px; padding:12px 14px; }
+.ag-digitando i{ width:7px; height:7px; border-radius:50%; background:var(--ag-mudo); animation:agPula 1.2s infinite; }
+.ag-digitando i:nth-child(2){ animation-delay:.15s } .ag-digitando i:nth-child(3){ animation-delay:.3s }
+.ag-digitando small{ margin-left:6px; color:var(--ag-mudo); font:600 12.5px Manrope,sans-serif; }
+@keyframes agPula{ 0%,60%,100%{ transform:none; opacity:.5 } 30%{ transform:translateY(-4px); opacity:1 } }
+
+/* boas-vindas */
+.ag-boas{ margin:auto 0; padding:24px 10px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:10px; }
+.ag-boas h2{ margin:6px 0 0; font:800 21px/1.25 Manrope,sans-serif; }
+.ag-boas p{ margin:0; max-width:340px; color:var(--ag-suave); font:500 14.5px/1.5 Manrope,sans-serif; }
+.ag-sugestoes{ margin-top:10px; display:flex; flex-direction:column; gap:8px; width:100%; max-width:380px; }
+.ag-sugestoes button{ padding:12px 14px; border:1px solid var(--ag-linha); border-radius:14px; background:#fff; color:var(--ag-tinta); font:600 14px/1.35 Manrope,sans-serif; text-align:left; cursor:pointer; }
+.ag-sugestoes button:active{ background:#f7f6f3; }
+
+/* resumo para confirmar (Carla, Marcos, Ideia) */
+.ag-resumo{ max-width:min(88%,560px); padding:14px; border-radius:18px; border-bottom-left-radius:6px; background:#fff; border:1px solid var(--ag-linha); box-shadow:0 6px 20px -14px rgba(15,23,42,.35); }
+.ag-rel-kicker{ display:block; color:var(--ag-mudo); font:800 10.5px Manrope,sans-serif; letter-spacing:.12em; text-transform:uppercase; }
+.ag-resumo h4,.ag-relatorio h4{ margin:4px 0 2px; font:800 16.5px/1.3 Manrope,sans-serif; }
+.ag-res-sub{ color:var(--ag-mudo); font:600 12.5px Manrope,sans-serif; }
+.ag-res-grade{ display:grid; grid-template-columns:1fr 1fr; gap:10px 12px; margin-top:10px; }
+.ag-res-campo{ min-width:0; } .ag-res-campo.inteira{ grid-column:1/-1; }
+.ag-res-campo span{ display:block; color:var(--ag-mudo); font:700 11px Manrope,sans-serif; letter-spacing:.04em; text-transform:uppercase; margin-bottom:2px; }
+.ag-res-campo p{ margin:0; font:500 14px/1.45 Manrope,sans-serif; }
+.ag-res-acoes{ display:flex; gap:8px; margin-top:14px; }
+.ag-btn,.ag-btn-sec{ flex:1; min-height:44px; padding:0 14px; border-radius:12px; font:700 14px Manrope,sans-serif; cursor:pointer; }
+.ag-btn{ border:0; background:var(--ag-eu); color:#fff; }
+.ag-btn-sec{ border:1px solid var(--ag-linha); background:#fff; color:var(--ag-tinta); }
+.ag-relatorio .ag-btn-sec{ width:100%; margin-top:10px; }
+.ag-ok{ margin:12px 0 0; color:#15803d; font:800 14px Manrope,sans-serif; }
+.ag-resumo.enviado{ opacity:.85; }
+.ag-selo{ display:inline-block; padding:2px 9px; border-radius:999px; background:#eef2f7; font:700 12px Manrope,sans-serif; }
+.ag-selo.alta{ background:#fff1e6; color:#b45309; } .ag-selo.urgente{ background:#fdecea; color:#b42318; }
+
+/* Cora: itens com foto, rolando de lado */
+.ag-itens{ display:flex; gap:8px; overflow-x:auto; margin:8px -4px 6px; padding:0 4px 4px; scroll-snap-type:x mandatory; }
+.ag-item{ flex:0 0 150px; margin:0; scroll-snap-align:start; background:#fff; border-radius:14px; overflow:hidden; border:1px solid var(--ag-linha); }
+.ag-item-foto{ position:relative; height:100px; background:#fff; display:grid; place-items:center; font-size:30px; }
+.ag-item-foto img{ width:100%; height:100%; object-fit:contain; cursor:zoom-in; }
+.ag-pill{ position:absolute; left:6px; top:6px; padding:2px 8px; border-radius:999px; font:800 10.5px Manrope,sans-serif; color:#fff; }
+.ag-pill.ruim{ background:#d03b3b } .ag-pill.aviso{ background:#b45309 } .ag-pill.bom{ background:#15803d }
+.ag-item figcaption{ padding:7px 9px 9px; }
+.ag-item b{ display:block; font:700 12.5px/1.3 Manrope,sans-serif; }
+.ag-item p{ margin:3px 0 0; color:var(--ag-suave); font:500 11.5px/1.4 Manrope,sans-serif; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; }
+
+/* Clara: provas e relatório */
+.ag-provas{ margin:8px 0 4px; }
+.ag-provas summary{ display:inline-flex; align-items:center; gap:6px; padding:7px 12px; border-radius:999px; background:#fff; color:#2a78d6; font:700 12.5px Manrope,sans-serif; cursor:pointer; list-style:none; }
+.ag-provas summary::-webkit-details-marker{ display:none; }
+.ag-provas summary::before{ content:"▸"; transition:transform .2s; } .ag-provas[open] summary::before{ transform:rotate(90deg); }
+.ag-provas article{ margin-top:8px; padding:11px; border-radius:14px; background:#fff; }
+.ag-provas h6{ margin:0 0 3px; font:800 13.5px Manrope,sans-serif; }
+.ag-provas article>p{ margin:0 0 6px; color:var(--ag-suave); font:500 12.5px/1.45 Manrope,sans-serif; }
+.ag-kpis{ display:grid; grid-template-columns:1fr 1fr; gap:6px; margin:6px 0; }
+.ag-kpis div{ padding:8px 10px; border-radius:12px; background:#f7f6f3; }
+.ag-kpis small{ display:block; color:var(--ag-mudo); font:600 11px Manrope,sans-serif; }
+.ag-kpis b{ font:800 15px Manrope,sans-serif; }
+.ag-rank,.ag-lista{ list-style:none; margin:4px 0 0; padding:0; display:flex; flex-direction:column; gap:8px; }
+.ag-rank div,.ag-lista li{ display:flex; justify-content:space-between; gap:8px; font:600 12.5px Manrope,sans-serif; }
+.ag-rank div span,.ag-lista li span{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ag-rank i{ display:block; height:7px; margin-top:4px; border-radius:999px; background:#2a78d6; }
+.ag-graf{ display:block; margin-top:4px; }
+.ag-eixo{ fill:var(--ag-mudo); font:500 9.5px Manrope,sans-serif; }
+.ag-leg{ display:flex; gap:12px; font:600 11.5px Manrope,sans-serif; color:var(--ag-suave); }
+.ag-leg span{ display:inline-flex; align-items:center; gap:5px; } .ag-leg i{ width:9px; height:9px; border-radius:3px; }
+.ag-relatorio>p{ margin:4px 0 6px; } .ag-relatorio h5{ margin:10px 0 4px; }
+
+/* campo de escrever */
+.ag-campo{ flex:none; padding:8px 8px calc(8px + env(safe-area-inset-bottom)); border-top:1px solid var(--ag-linha); background:#fff; }
+.ag-campo-linha{ display:flex; align-items:flex-end; gap:4px; }
+.ag-campo textarea{ flex:1; min-width:0; min-height:44px; max-height:140px; padding:11px 14px; border:1px solid var(--ag-linha); border-radius:22px; background:#f7f6f3; color:var(--ag-tinta); font:500 16px/1.35 Manrope,sans-serif; resize:none; outline:none; }
+.ag-campo textarea:focus{ border-color:#cfc8bc; background:#fff; }
+.ag-redondo{ flex:none; width:44px; height:44px; border:0; border-radius:50%; display:grid; place-items:center; background:var(--ag-eu); color:#fff; cursor:pointer; padding:0; }
+.ag-redondo[hidden],.ag-icone[hidden]{ display:none; }
+.ag-redondo:disabled{ opacity:.4; }
+.ag-gravando-barra{ display:none; align-items:center; gap:8px; }
+body.ag-gravando .ag-gravando-barra{ display:flex; }
+body.ag-gravando .ag-campo-linha{ display:none; }
+.ag-rec{ flex:1; display:flex; align-items:center; gap:8px; color:var(--ag-tinta); font:600 14.5px Manrope,sans-serif; }
+.ag-rec i{ width:10px; height:10px; border-radius:50%; background:#d03b3b; animation:agPisca 1s infinite; }
+@keyframes agPisca{ 50%{ opacity:.3 } }
+
+/* folha de relatórios (sobe de baixo) */
+.ag-sheet{ position:fixed; inset:0; z-index:30; background:rgba(20,18,15,0); transition:background .2s; display:flex; align-items:flex-end; }
+.ag-sheet[hidden]{ display:none; }
+.ag-sheet.on{ background:rgba(20,18,15,.38); }
+.ag-sheet section{ width:100%; max-height:80dvh; overflow:auto; background:#fff; border-radius:22px 22px 0 0; padding:8px 14px calc(14px + env(safe-area-inset-bottom)); transform:translateY(100%); transition:transform .24s cubic-bezier(.22,1,.36,1); }
+.ag-sheet.on section{ transform:none; }
+.ag-sheet-alca{ display:block; width:40px; height:4px; border-radius:99px; background:#ddd7cd; margin:4px auto 6px; }
+.ag-sheet header{ display:flex; align-items:center; justify-content:space-between; }
+.ag-sheet h3{ margin:0; font:800 18px Manrope,sans-serif; }
+.ag-sheet ul{ list-style:none; margin:6px 0 0; padding:0; display:flex; flex-direction:column; gap:8px; }
+.ag-sheet li button{ width:100%; padding:12px 14px; border:1px solid var(--ag-linha); border-radius:14px; background:#fff; text-align:left; cursor:pointer; }
+.ag-sheet li b{ display:block; color:var(--ag-tinta); font:800 14.5px Manrope,sans-serif; }
+.ag-sheet li small{ display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; margin-top:2px; color:var(--ag-mudo); font:500 12.5px/1.4 Manrope,sans-serif; }
+.ag-zoom{ position:fixed; inset:0; z-index:40; background:rgba(0,0,0,.9); display:grid; place-items:center; }
+.ag-zoom[hidden]{ display:none; }
+.ag-zoom img{ max-width:100%; max-height:100%; object-fit:contain; }
+.ag-erro{ margin:auto; padding:24px; text-align:center; color:var(--ag-suave); }
+@media(prefers-reduced-motion:reduce){ .ag-msg,.ag-digitando i,.ag-rec i{ animation:none } .ag-sheet section{ transition:none } }
+
+/* ===== Helena como agente do app (catalogo-app.html?app=1&agente=helena, body.catalogo-equipe-helena) =====
+   O motor é o da Helena do catálogo (catalogo-assistente.mjs); aqui só o visual fica igual ao dos outros agentes:
+   faixa branca com ← / foto e nome / ligar e nova conversa, fundo branco, balões cinza (dela) e grafite (seus). */
+html body.catalogo-equipe-helena{ background:#fff!important; }
+html body.catalogo-equipe-helena .cas-panel{ background:#fff!important; font-family:Manrope,system-ui,sans-serif; }
+html body.catalogo-equipe-helena .cas-panel::before,html body.catalogo-equipe-helena .cas-panel::after{ display:none!important; }
+html body.catalogo-equipe-helena .cas-head{ display:flex!important; align-items:center!important; gap:2px!important; min-height:0!important; height:auto!important;
+  padding:calc(env(safe-area-inset-top) + 6px) 6px 6px!important; background:#fff!important; color:var(--ag-tinta)!important; border-bottom:1px solid var(--ag-linha)!important; box-shadow:none!important; }
+html body.catalogo-equipe-helena .cas-head :is(.cas-voltar,.cas-head-btn){ flex:none!important; width:44px!important; height:44px!important; min-width:0!important; padding:0!important; border:0!important; border-radius:12px!important;
+  background:transparent!important; color:var(--ag-tinta)!important; display:grid!important; place-items:center!important; box-shadow:none!important; }
+html body.catalogo-equipe-helena .cas-head :is(.cas-voltar,.cas-head-btn) span{ display:none!important; }
+html body.catalogo-equipe-helena .cas-head :is(.cas-voltar,.cas-head-btn) svg{ width:23px!important; height:23px!important; stroke:currentColor!important; fill:none!important; stroke-width:1.9!important; }
+html body.catalogo-equipe-helena .cas-head .cas-head-btn:last-of-type{ display:none!important; } /* "Minimizar": o ← já sai da conversa */
+html body.catalogo-equipe-helena .cas-head .cas-avatar.is-lg{ display:grid!important; width:36px!important; height:36px!important; margin:0 8px 0 0!important; border-radius:50%!important; place-items:center!important;
+  background:#8a6c48!important; color:#fff!important; font:800 15px Manrope,sans-serif!important; box-shadow:none!important; flex:none!important; }
+html body.catalogo-equipe-helena .cas-head .cas-head-copy{ display:flex!important; flex:1!important; min-width:0!important; flex-direction:column!important; }
+html body.catalogo-equipe-helena .cas-head .cas-head-copy strong{ color:var(--ag-tinta)!important; font:800 16.5px/1.2 Manrope,sans-serif!important; letter-spacing:0!important; }
+html body.catalogo-equipe-helena .cas-head .cas-head-copy small{ display:flex!important; align-items:center!important; gap:5px!important; color:var(--ag-mudo)!important; font:600 12px Manrope,sans-serif!important; }
+html body.catalogo-equipe-helena .cas-head .cas-dot{ background:#0ca30c!important; }
+html body.catalogo-equipe-helena .cas-head .cas-pedido-btn{ display:none!important; }
+
+html body.catalogo-equipe-helena :is(.cas-corpo,.cas-conversa,.cas-msgs){ background:#fff!important; }
+html body.catalogo-equipe-helena .cas-msgs{ padding:16px 12px 10px!important; }
+html body.catalogo-equipe-helena .cas-coluna{ max-width:none!important; gap:10px!important; }
+html body.catalogo-equipe-helena .cas-msg .cas-bubble{ max-width:min(84%,560px)!important; padding:10px 13px!important; border:0!important; border-radius:18px!important; box-shadow:none!important;
+  background:var(--ag-ia)!important; color:var(--ag-tinta)!important; font:500 15px/1.48 Manrope,sans-serif!important; }
+html body.catalogo-equipe-helena .cas-msg.is-bot .cas-bubble{ border-bottom-left-radius:6px!important; }
+html body.catalogo-equipe-helena .cas-msg.is-eu .cas-bubble{ background:var(--ag-eu)!important; color:#fff!important; border-bottom-right-radius:6px!important; }
+html body.catalogo-equipe-helena .cas-msg.is-bot .cas-avatar{ width:28px!important; height:28px!important; border-radius:50%!important; background:#8a6c48!important; color:#fff!important; font:800 12px Manrope,sans-serif!important; box-shadow:none!important; }
+
+html body.catalogo-equipe-helena .cas-boasvindas{ gap:10px!important; }
+html body.catalogo-equipe-helena .cas-boasvindas .cas-avatar.is-xl{ width:72px!important; height:72px!important; border-radius:50%!important; background:#8a6c48!important; color:#fff!important;
+  font:800 30px Manrope,sans-serif!important; box-shadow:0 10px 28px -14px #8a6c48!important; }
+html body.catalogo-equipe-helena .cas-boasvindas h2{ color:var(--ag-tinta)!important; font:800 21px/1.25 Manrope,sans-serif!important; letter-spacing:0!important; }
+html body.catalogo-equipe-helena .cas-boasvindas p{ color:var(--ag-suave)!important; font:500 14.5px/1.5 Manrope,sans-serif!important; max-width:340px!important; }
+html body.catalogo-equipe-helena .cas-sugestoes{ display:flex!important; flex-direction:column!important; align-items:stretch!important; gap:8px!important; width:100%!important; max-width:380px!important; margin-top:10px!important; }
+html body.catalogo-equipe-helena .cas-sugestoes button{ padding:12px 14px!important; border:1px solid var(--ag-linha)!important; border-radius:14px!important; background:#fff!important; color:var(--ag-tinta)!important;
+  font:600 14px/1.35 Manrope,sans-serif!important; text-align:left!important; box-shadow:none!important; }
+
+html body.catalogo-equipe-helena .cas-form{ padding:8px 8px calc(8px + env(safe-area-inset-bottom))!important; border-top:1px solid var(--ag-linha)!important; background:#fff!important; box-shadow:none!important; }
+html body.catalogo-equipe-helena .cas-form-dica{ display:none!important; }
+html body.catalogo-equipe-helena .cas-form-in{ display:flex!important; align-items:flex-end!important; gap:4px!important; padding:0!important; border:0!important; background:transparent!important; box-shadow:none!important; }
+html body.catalogo-equipe-helena .cas-form-in textarea{ flex:1!important; min-height:44px!important; max-height:140px!important; padding:11px 14px!important; border:1px solid var(--ag-linha)!important; border-radius:22px!important;
+  background:#f7f6f3!important; color:var(--ag-tinta)!important; font:500 16px/1.35 Manrope,sans-serif!important; box-shadow:none!important; }
+html body.catalogo-equipe-helena .cas-form-in textarea::placeholder{ color:var(--ag-mudo)!important; }
+html body.catalogo-equipe-helena .cas-clip{ width:44px!important; height:44px!important; border:0!important; background:transparent!important; color:var(--ag-tinta)!important; }
+html body.catalogo-equipe-helena .cas-send{ width:44px!important; height:44px!important; min-width:44px!important; border:0!important; border-radius:50%!important; background:var(--ag-eu)!important; color:#fff!important; box-shadow:none!important; }
+html body.catalogo-equipe-helena .cas-modo-planta{ display:none!important; }
+/* foto da peça nunca passa por cima do nome */
+.ag-item-foto{ overflow:hidden; }
+.ag-item-foto img{ display:block; max-height:100px; }
+.ag-item figcaption{ position:relative; background:#fff; }

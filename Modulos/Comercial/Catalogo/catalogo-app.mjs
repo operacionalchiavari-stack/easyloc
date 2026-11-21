@@ -7,7 +7,7 @@
 // Navegação de app: abas embaixo, telas empilhadas com o "voltar" do celular (history), folhas que sobem de baixo.
 import { arquivosDoBucket } from "./catalogo-arquivos.mjs";
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
-import { initCatalogAssistente, abrirCatalogAssistente } from "./catalogo-assistente.mjs?v=20261028-disponibilidade";
+import { initCatalogAssistente, abrirCatalogAssistente } from "./catalogo-assistente.mjs?v=20261120-agente";
 
 const supabase = window.supabaseClient;
 // Bucket "projetos": o decorador (sem login) passa pela função catalogo-arquivos — ver catalogo-arquivos.mjs.
@@ -1015,11 +1015,15 @@ async function iniciar(){
         supabase, getSession: () => S.sessao, modoPedido: false, notify, temProjetos: true,
         // Fechar a Helena dispara um "voltar" (history); espera ele passar antes de empilhar a tela do item.
         findItem: acharItem, abrirItem: (id) => setTimeout(() => abrirItem(id), 320),
+        // Helena como agente do app (20/11/2026): a conversa nunca leva ao catálogo; tocar numa peça só amplia a foto.
+        ...(helenaEquipe() ? { abrirItemSemFechar: (id) => { const it = acharItem(id); const foto = it?.photo || it?.foto; if(foto) window.catalogOpenPhotoZoom?.(foto, it?.name || ""); } } : {}),
         mostrarNoCatalogo: (ids, opcoes) => { setTimeout(() => mostrarPelaHelena(ids, opcoes), 340); return true; },
       }));
       // Fechar a Helena (voltar/minimizar) devolve pra aba de antes; foto nova com ela fechada vira um ponto na aba.
       new MutationObserver(() => {
         const aberta = document.body.classList.contains("assistente-aberta");
+        // Agente do app: fechar a Helena (voltar, minimizar) sai para a lista de agentes, nunca para o catálogo.
+        if(!aberta && helenaEquipe()){ location.replace("../../../app.html#agentes"); return; }
         if(!aberta && history.state?.helena) history.back();
       }).observe(document.body, { attributes: true, attributeFilter: ["class"] });
       document.addEventListener("visibilitychange", () => { if(document.visibilityState === "hidden") salvarAgora(); else presenca(true); });

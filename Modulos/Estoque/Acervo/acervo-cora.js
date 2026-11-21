@@ -97,6 +97,7 @@
   if(window.FinRelatorioA4)window.FinRelatorioA4.previa(html,rel.titulo);
  }
  window.AcervoCora={
+  abrirRelatorio,
   render(ctx){
    const host=ctx.host;st.chave='cora_chat:'+ctx.empresa;
    try{st.lista=JSON.parse(sessionStorage.getItem(st.chave)||'[]');}catch{st.lista=[];}

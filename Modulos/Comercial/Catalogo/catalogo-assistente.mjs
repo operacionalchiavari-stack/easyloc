@@ -517,7 +517,7 @@ async function aoClicar(event){
   if(event.target.closest("[data-cas-enviar]")){ alternar(false); window.catalogAssistenteProjeto?.enviarPedido(); return; }
   if(event.target.closest("[data-cas-recarregar]")){ carregarHistorico(); return; }
   const abrir = event.target.closest("[data-cas-abrir]");
-  if(abrir){ alternar(false); ctx.abrirItem?.(abrir.dataset.casAbrir); return; }
+  if(abrir){ if(ctx.abrirItemSemFechar){ ctx.abrirItemSemFechar(abrir.dataset.casAbrir); return; } alternar(false); ctx.abrirItem?.(abrir.dataset.casAbrir); return; }
   const opc = event.target.closest("[data-cas-opcoes]");
   if(opc){ irAoCatalogo(opc.dataset.casOpcoes.split(",").filter(Boolean), { titulo: opc.dataset.titulo, exato: true }); return; }
   const zoom = event.target.closest("[data-cas-zoom]");

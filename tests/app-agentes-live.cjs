@@ -48,21 +48,31 @@ const saida = path.join(root, 'outputs', 'app-agentes'); fs.mkdirSync(saida, { r
       const nome = await link.locator('.ap-modulo-titulo').textContent();
       await link.click();
       if (nome === 'Helena') await page.waitForSelector('body.assistente-aberta [data-cas-input]', { timeout: 40000 });
-      else await page.waitForSelector('#arBarra', { timeout: 30000 });
+      else await page.waitForSelector('#agNome', { timeout: 30000 });
       await page.waitForFunction(() => !document.getElementById('appCarregamento') || document.getElementById('appCarregamento').classList.contains('saindo'), null, { timeout: 30000 }).catch(() => {});
       await page.waitForTimeout(6000);
       const info = await page.evaluate(() => ({
-        titulo: document.querySelector('#arBarra b')?.textContent || 'Helena',
+        titulo: document.querySelector('#agNome')?.textContent || 'Helena',
+        mesmoVisual: !!document.querySelector('.ag-cab') || document.body.classList.contains('catalogo-equipe-helena'),
         campo: [...document.querySelectorAll('textarea,[data-cas-input]')].some((t) => t.getBoundingClientRect().width > 0),
         largo: document.documentElement.scrollWidth - innerWidth,
-        barraTopo: document.getElementById('arBarra')?.getBoundingClientRect().top,
       }));
       await page.screenshot({ path: path.join(saida, String(i + 1).padStart(2, '0') + '-' + nome.normalize('NFD').replace(/[^\w]+/g, '-').toLowerCase() + '.png'), fullPage: true });
       assert.ok(info.titulo.startsWith(nome.split(' ')[0] === 'Assistente' ? 'Ideia' : nome), info.titulo + ' x ' + nome);
       assert.ok(info.campo, nome + ': campo para conversar visível');
       assert.ok(info.largo <= 1, `${nome}: página rola de lado (${info.largo}px)`);
-      if (nome === 'Helena') { await page.click('[data-cas-fechar]').catch(() => {}); await page.waitForTimeout(600); await page.click('[data-app-inicio]'); }
-      else await page.click('#arBarra .ar-voltar');
+      assert.ok(info.mesmoVisual, nome + ': mesmo visual de conversa');
+      if (process.env.CONVERSA === '1' && nome === 'Cora') { // conversa de verdade (gasta IA): mensagem, resposta e relatório pelo botão discreto
+        await page.click('[data-ag-sugestao]'); await page.waitForSelector('.ag-msg.ia .ag-balao:not(.ag-digitando)', { timeout: 120000 });
+        await page.screenshot({ path: path.join(saida, 'cora-conversa.png') });
+        await page.click('#agRelatorios'); await page.waitForSelector('#agSheet.on'); await page.screenshot({ path: path.join(saida, 'cora-relatorios.png') });
+        await page.click('[data-ag-rel="1"]'); await page.waitForSelector('.ag-relatorio, .ag-balao.erro', { timeout: 180000 }); await page.waitForTimeout(500);
+        await page.screenshot({ path: path.join(saida, 'cora-relatorio.png') });
+        console.log('ok - Cora respondeu e gerou o relatório');
+      }
+      // voltar sai direto para a lista de agentes (a Helena nunca cai no catálogo)
+      if (nome === 'Helena') await page.locator('[data-cas-fechar]').first().click();
+      else await page.click('#agVoltar');
       await page.waitForSelector('#apAgentes:not([hidden]) .ap-agente', { timeout: 20000 });
       console.log(`ok - ${nome}: abre com o campo de conversa, sem rolagem lateral, voltar leva aos agentes`);
     }

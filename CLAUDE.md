@@ -12500,3 +12500,22 @@ abrir/atualizar`; permissões pela RPC `app_celular_modulos`) + `styles/app-gere
   `#2a78d6`, laranja `#eb6834`, verde-água `#1baf7a`, amarelo `#eda100`), vermelho só para alerta, sempre com texto.
 - Teste: `RUN_GERENCIAL_LIVE=1 node tests/app-gerencial-live.cjs` (sem tabela, gráficos presentes, toque, períodos, sem rolagem
   lateral; fotos em `outputs/app-gerencial/`). As páginas do computador continuam com o `relatorio-app.js`, sem uso pelo app.
+
+## Agentes de IA do app: uma conversa igual para todos (20/11/2026)
+Pedido: "refaça todos os chats de todos os agentes e deixe todos iguais… o chat quero um chat comum mesmo; os relatórios
+podem ser um botão discreto" e "quando eu volto da Helena ela cai no catálogo, quero remover isso".
+- **Clara, Cora, Carla, Marcos e Ideia Premiada**: tela única `Modulos/Gestao/AgentesApp/agente.html?ag=clara|cora|carla|marcos|ideia`
+  (`js/app/agente-chat.js` + `styles/app-agente.css`), aberta pelos cartões da aba Agentes do `app.html`. Faixa branca com ← /
+  foto e nome / 📄 Relatórios (só Clara e Cora, abre uma folha de baixo com os relatórios) / ↻ nova conversa; boas-vindas com
+  sugestões; balões cinza (agente) e grafite (você); áudio (transcrito pela `solicitacao-assistente`, ação transcrever) e fotos
+  (Carla e Marcos, bucket `solicitacoes-evidencias`). Cada agente usa a MESMA Edge Function das telas do computador
+  (`financeiro-assistente`, `estoque-assistente`, `solicitacao-assistente`, `ideia-assistente`) e registra pelas mesmas RPCs
+  (`compras_galpao`, `manutencao_predial_operar` + `solicitacao_evidencias_salvar`, `ideias_premiadas_enviar`). Clara mostra as
+  provas em "Ver as provas" (números e gráficos simples, sem tabela); Cora mostra as peças em cartões com foto e o relatório
+  com "Abrir em PDF" (`AcervoCora.abrirRelatorio`, exposto em acervo-cora.js). Conversa guardada na aba
+  (`sessionStorage agente_chat:<ag>:<empresa>:<usuário>`). **Agente novo: uma entrada em `AGENTES` de agente-chat.js e o cartão
+  em `AGENTES` de app-celular.js.**
+- **Helena**: continua no motor dela (`catalogo-app.html?app=1&agente=helena`), com o mesmo visual pelo bloco do fim de
+  `app-agente.css` (linkado no catalogo-app.html, só vale em `body.catalogo-equipe-helena`). Fechar/voltar sai para
+  `app.html#agentes` (nunca o catálogo) e tocar numa peça só amplia a foto (`ctx.abrirItemSemFechar` em catalogo-assistente.mjs).
+- Teste: `RUN_AGENTES_LIVE=1 node tests/app-agentes-live.cjs` (`CONVERSA=1` também conversa com a Cora e pede um relatório).

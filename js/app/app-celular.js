@@ -26,11 +26,11 @@
      permissão da tela onde mora (flags ag_* da RPC app_celular_modulos). */
   const AGENTES = [
     { flag: "ag_helena", inicial: "H", nome: "Helena", papel: "Comercial e catálogo", texto: "Monta pedidos, confere disponibilidade, sugere combinações e gera fotos das composições.", href: "Modulos/Comercial/Catalogo/catalogo-app.html?app=1&agente=helena" },
-    { flag: "ag_clara", inicial: "C", nome: "Clara", papel: "Financeiro", texto: "Diretora financeira: caixa, contas, DRE, simulações e relatórios com provas.", href: "Modulos/Financeiro/financeiro.html?app=1&aba=clara&grupo=agentes&titulo=Clara%20%C2%B7%20Financeiro" },
-    { flag: "ag_cora", inicial: "C", nome: "Cora", papel: "Estoque e acervo", texto: "Próximas saídas, divergências, peças em manutenção e inventário.", href: "Modulos/Estoque/Acervo/acervo.html?app=1&aba=cora&grupo=agentes&titulo=Cora%20%C2%B7%20Estoque" },
-    { flag: "ag_carla", inicial: "C", nome: "Carla", papel: "Compras", texto: "Pede o que você precisa comprar e confere se a compra é mesmo necessária.", href: "Modulos/Geral/SolicitacoesCompra/solicitacoes.html?app=1&grupo=agentes&titulo=Carla%20%C2%B7%20Compras" },
-    { flag: "ag_marcos", inicial: "M", nome: "Marcos", papel: "Manutenção", texto: "Abre a solicitação de manutenção com fotos, local e prioridade.", href: "Modulos/Geral/SolicitacoesManutencao/solicitacoes.html?app=1&grupo=agentes&titulo=Marcos%20%C2%B7%20Manuten%C3%A7%C3%A3o" },
-    { flag: "ag_ideia", inicial: "I", nome: "Assistente da Ideia Premiada", papel: "Ideias de melhoria", texto: "Ajuda você a contar sua ideia e envia para o RH avaliar.", href: "Modulos/RH/IdeiaPremiada/ideia-premiada.html?app=1&grupo=agentes&titulo=Ideia%20Premiada" },
+    { flag: "ag_clara", inicial: "C", nome: "Clara", papel: "Financeiro", texto: "Diretora financeira: caixa, contas, DRE, simulações e relatórios com provas.", href: "Modulos/Gestao/AgentesApp/agente.html?ag=clara" },
+    { flag: "ag_cora", inicial: "C", nome: "Cora", papel: "Estoque e acervo", texto: "Próximas saídas, divergências, peças em manutenção e inventário.", href: "Modulos/Gestao/AgentesApp/agente.html?ag=cora" },
+    { flag: "ag_carla", inicial: "C", nome: "Carla", papel: "Compras", texto: "Pede o que você precisa comprar e confere se a compra é mesmo necessária.", href: "Modulos/Gestao/AgentesApp/agente.html?ag=carla" },
+    { flag: "ag_marcos", inicial: "M", nome: "Marcos", papel: "Manutenção", texto: "Abre a solicitação de manutenção com fotos, local e prioridade.", href: "Modulos/Gestao/AgentesApp/agente.html?ag=marcos" },
+    { flag: "ag_ideia", inicial: "I", nome: "Assistente da Ideia Premiada", papel: "Ideias de melhoria", texto: "Ajuda você a contar sua ideia e envia para o RH avaliar.", href: "Modulos/Gestao/AgentesApp/agente.html?ag=ideia" },
   ];
   function pintarAgentes(mods){
     $("apAgentesLista").innerHTML = AGENTES.filter((a) => mods[a.flag]).map((a, i) =>
