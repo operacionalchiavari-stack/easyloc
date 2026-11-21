@@ -89,3 +89,9 @@ section.as-dialog.as-inline{display:flex;flex-direction:column;width:auto;height
 .as-msg.pessoa .as-fotos a{box-shadow:0 0 0 2px rgba(255,255,255,.6)}
 .as-resumo .as-fotos a{width:110px;height:110px}
 .as-fotos-titulo{display:block;margin-top:4px;font:600 11px Inter,system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#6b6b6b}
+
+/* Foto do assistente maior no topo da conversa (21/11/2026, pedido do usuário). */
+.solicitacoes-page .as-topo{grid-template-columns:84px minmax(0,1fr) auto;gap:16px;padding:16px 20px}
+.solicitacoes-page .as-topo .as-avatar{width:84px;height:84px;font-size:34px;box-shadow:0 0 0 3px #fff,0 0 0 5px #e3e7ec}
+.solicitacoes-page .as-topo strong{font-size:18px}
+.solicitacoes-page .as-topo small{font-size:13px}
