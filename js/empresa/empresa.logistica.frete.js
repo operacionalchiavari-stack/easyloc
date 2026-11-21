@@ -180,10 +180,11 @@ container.innerHTML = `
           const categoriaId = this.dataset.id;
           const novoStatus = this.checked;
           const span = this.nextElementSibling;
-          if (span) {
-            span.style.background = novoStatus ? "#16a34a" : "#e5e7eb";
-          }
-          await api.updateCategoriaCaminhao(categoriaId, { ativo: novoStatus });
+          this.disabled=true;
+          try{const r=await api.updateCategoriaCaminhao(categoriaId,{ativo:novoStatus});if(r.error)throw r.error;if(span)span.style.background=novoStatus?'#16a34a':'#e5e7eb';}
+          catch(err){this.checked=!novoStatus;if(span)span.style.background=this.checked?'#16a34a':'#e5e7eb';window.alerta?.(err.message,'Não foi possível atualizar a categoria','erro');}
+          finally{this.disabled=false;}
+
         });
       });
     }

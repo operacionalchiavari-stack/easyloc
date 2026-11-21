@@ -32,9 +32,54 @@
   const chavePeriodo = (p) => p.inicio + "~" + (p.fim || p.inicio);
   // Visão "por pedido" (out/2026): no lugar da coluna "Reservado na data", uma coluna para cada pedido que tem itens na
   // data, com a quantidade que ele usa de cada item, logo antes de "Disponível". Escolha guardada no navegador.
-  let visao = "resumo";
-  try { visao = localStorage.getItem("dispon_visao") === "pedidos" ? "pedidos" : "resumo"; } catch (_) {}
+  // 15/11/2026: a visão "somada" (Reservado na data numa coluna) foi removida a pedido; fica só esta, com uma coluna
+  // por pedido. O nome continua para não mexer nas condições abaixo.
+  const visao = "pedidos";
+  // 15/11/2026: simulação SÓ NA TELA, para testar a visão com muitos eventos: abra o sistema com ?simular=20
+  // (dashboard.html?simular=20) e entre na Disponibilidade. A tela inventa N pedidos para a data escolhida usando os
+  // itens reais; nada é gravado no banco e nenhuma outra tela vê. O "Disponível" passa a ser a conta da tela
+  // (a do banco não conhece os pedidos inventados).
+  const SIMULACAO = (() => { try { const n = Number(new URLSearchParams(location.search).get("simular")); return n > 0 ? Math.min(60, Math.floor(n)) : 0; } catch (_) { return 0; } })();
+  const SIM_CLIENTES = ["Kelly Khawam", "Fabiane Gabrich", "Ana Ribeiro Decor", "Marina Couto Eventos", "Lis Andrade", "Carolina Prado", "Juliana Mendes", "Beatriz Fontes", "Patrícia Lemos", "Renata Duarte", "Camila Torres", "Luiza Fernandes", "Gabriela Nunes", "Isabela Rocha", "Fernanda Lima", "Mariana Alves", "Paula Martins", "Vanessa Castro", "Débora Freitas", "Aline Moraes"];
+  const SIM_TIPOS = ["Casamento", "Aniversário de 15 anos", "Corporativo", "Bodas", "Formatura", "Batizado"];
+  const SIM_LOCAIS = ["Villa Bisutti", "Espaço Jardim Imperial", "Casa Petrópolis", "Fazenda Santa Clara", "Hotel Quitandinha", "Sítio das Hortênsias", "Clube Petropolitano"];
+  function simPedidos() {
+    // os eventos se espalham pelo período escolhido (um dia só = todos naquele dia)
+    const periodo = selectedPeriod(), dias = [];
+    for (let d = periodo.inicio; d <= periodo.fim && dias.length < 62; d = diaSeguinte(d)) dias.push(d);
+    return Array.from({ length: SIMULACAO }, (_, i) => { const hoje = dias[i % dias.length], amanha = diaSeguinte(hoje); return {
+      id: "sim-" + (i + 1), numero_pedido: String(9001 + i), cliente_id: null,
+      cliente_nome: SIM_CLIENTES[i % SIM_CLIENTES.length] + (i >= SIM_CLIENTES.length ? " " + (Math.floor(i / SIM_CLIENTES.length) + 1) : ""),
+      tipo_evento: SIM_TIPOS[i % SIM_TIPOS.length], local_nome: SIM_LOCAIS[i % SIM_LOCAIS.length],
+      data_entrega: hoje, data_evento: hoje, data_coleta: i % 3 === 0 ? amanha : hoje,
+      status: "pendente", status_comercial: i % 4 === 3 ? "pre_reserva" : "aprovado", encerrado_operacional_em: null
+    }; });
+  }
+  function simSorteio(texto) { let h = 2166136261; for (const c of String(texto)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return (h >>> 0) / 4294967295; }
+  function reservasSimuladas(items) {
+    const pedidos = simPedidos(), out = [];
+    items.forEach((item) => {
+      if (normalize(item.tipo) === "kit") return;
+      const estoque = totalItem(item); if (!estoque) return;
+      let sobra = estoque; // nunca reserva mais do que o estoque (alguns itens chegam a esgotar)
+      pedidos.forEach((p, i) => {
+        if (!sobra || simSorteio(item.id + ":" + i) > 0.28) return;
+        const q = Math.min(sobra, Math.max(1, Math.round(estoque * (0.05 + simSorteio(i + ":" + item.id) * 0.22))));
+        sobra -= q;
+        out.push({ id: "sim-" + i + "-" + item.id, item_id: item.id, quantidade_solicitada: q, separacoes_pedidos: p });
+      });
+    });
+    return out;
+  }
+  function avisoSimulacao() {
+    if (!SIMULACAO || $(".dispon-sim-aviso")) return;
+    const p = document.createElement("p");
+    p.className = "dispon-sim-aviso"; p.setAttribute("role", "status");
+    p.innerHTML = "<b>Simulação:</b> " + SIMULACAO + " pedidos inventados no período escolhido, só nesta tela. Nada foi gravado. Para sair, abra o sistema sem <code>?simular</code>.";
+    $(".dispon-card")?.before(p);
+  }
   async function carregarLivre(periodo, atualizar = false){
+    if (SIMULACAO) return;
     const chave = chavePeriodo(periodo);
     if(!atualizar && livrePorPeriodo.has(chave)) return;
     const { data: rows, error } = await sb().rpc("operacao_livre_periodo", { p_empresa: empresaId(), p_inicio: periodo.inicio, p_fim: periodo.fim || periodo.inicio });
@@ -126,6 +171,7 @@
     await carregarComposicoes(generation);
     await carregarBloqueios(periodo.inicio, true);
     await carregarLivre(periodo, true);
+    await carregarPedidosPeriodo(periodo, generation);
     if (generation !== state.generation) return;
     await loadMore(generation);
     if (generation === state.generation) await loadCategories(generation);
@@ -187,6 +233,7 @@
         separacoes_pedidos(
           id,
           numero_pedido,
+          cliente_id,
           cliente_nome,
           tipo_evento,
           local_nome,
@@ -214,9 +261,13 @@
     return $("#disponData")?.value || new Date().toISOString().slice(0, 10);
   }
 
+  // 15/11/2026: consulta por período (De / Até) em vez de uma data só. "Até" antes de "De" vira o mesmo dia.
   function selectedPeriod() {
     const inicio = selectedDate();
-    return { inicio, fim: inicio };
+    const campoFim = $("#disponDataFim");
+    let fim = campoFim?.value || inicio;
+    if (fim < inicio) { fim = inicio; if (campoFim) campoFim.value = inicio; }
+    return { inicio, fim };
   }
 
   function diaSeguinte(value) {
@@ -317,6 +368,7 @@
     }
     if (generation !== state.generation) return;
     [...cadastro, ...items].forEach(item => catalogo.set(item.id, item));
+    if (SIMULACAO) reservas.push(...reservasSimuladas([...cadastro, ...items].filter((it) => novos.includes(it.id))));
     novos.forEach(id => materiaisCarregados.add(id));
     state.patrimonios.push(...patrimonios);
     state.reservas.push(...reservas);
@@ -431,9 +483,29 @@
     }
   }
 
-  // Pedidos com reserva na data (entre as linhas carregadas), na ordem do número
+  // 18/11/2026: TODOS os pedidos que seguram móveis no período aparecem como coluna logo de cara, mesmo que nenhum item
+  // da primeira tela seja deles (antes só apareciam conforme a lista ia carregando, o que confundia).
+  let pedidosPeriodo = [];
+  async function carregarPedidosPeriodo(periodo, generation) {
+    pedidosPeriodo = [];
+    if (!sb()) return;
+    try {
+      let query = sb().from("separacoes_pedidos")
+        .select("id,numero_pedido,cliente_id,cliente_nome,tipo_evento,local_nome,data_hora,data_evento,data_evento_fim,data_entrega,data_coleta,status,status_comercial,encerrado_operacional_em")
+        .in("status_comercial", ["pre_reserva", "aprovado", "enviado", "finalizado"]).is("encerrado_operacional_em", null)
+        .or(`data_coleta.gte.${periodo.inicio},data_evento.gte.${periodo.inicio}`);
+      if (empresaId()) query = query.eq("empresa_id", empresaId());
+      const { data, error } = await query.limit(1000);
+      if (error) throw error;
+      if (generation !== state.generation) return;
+      pedidosPeriodo = (data || []).filter((p) => normalize(p.status) !== "cancelado").map((p) => ({ ...p, ...periodoPedido(p) }))
+        .filter((p) => p.inicio && p.inicio <= periodo.fim && p.fim >= periodo.inicio);
+    } catch (e) { console.warn("[Disponibilidade] pedidos do período:", e.message || e); }
+  }
+  // Pedidos com reserva no período (todos os do período + os das linhas carregadas), na ordem do número
   function pedidosDaData(rows, periodo) {
     const mapa = new Map();
+    pedidosPeriodo.forEach((p) => mapa.set(p.id, p));
     rows.forEach((row) => (row.reservas || []).forEach((r) => {
       const p = r.separacoes_pedidos || {};
       if (!p.id || r.inicio > periodo.fim || r.fim < periodo.inicio) return;
@@ -455,22 +527,123 @@
     return kits;
   }
   const STATUS_PEDIDO = { pre_reserva: "Pré-reserva", aprovado: "Reservado", enviado: "Reservado", finalizado: "Reservado" };
-  function cabecalhoTabela(pedidos) {
+  // 15/11/2026: na visão por pedido, o cabeçalho mostra só a foto e o nome do cliente; os detalhes aparecem num cartão
+  // ao passar o mouse (ou com o foco do teclado). Foto = catálogo do cliente (clientes_empresas.catalogo_logo_url).
+  const fotosClientes = new Map(); // chave "id:<uuid>" ou "nome:<nome>" -> url ("" = sem foto)
+  const chaveFoto = (p) => p.cliente_id ? "id:" + p.cliente_id : "nome:" + String(p.cliente_nome || "").trim().toLowerCase();
+  const iniciaisCli = (nome) => String(nome || "?").trim().split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]).join("").toUpperCase() || "?";
+  let pedidosCabecalho = [];
+  async function carregarFotosClientes(pedidos) {
+    const faltam = pedidos.filter((p) => !fotosClientes.has(chaveFoto(p)));
+    if (!faltam.length || !sb()) return;
+    faltam.forEach((p) => fotosClientes.set(chaveFoto(p), ""));
+    const url = (c) => /^https?:\/\//i.test(c?.catalogo_logo_url || "") ? c.catalogo_logo_url : "";
+    try {
+      const ids = [...new Set(faltam.map((p) => p.cliente_id).filter(Boolean))];
+      const nomes = [...new Set(faltam.filter((p) => !p.cliente_id && p.cliente_nome).map((p) => p.cliente_nome))];
+      if (ids.length) {
+        const { data } = await sb().from("clientes_empresas").select("id,catalogo_logo_url").eq("empresa_id", empresaId()).in("id", ids);
+        (data || []).forEach((c) => fotosClientes.set("id:" + c.id, url(c)));
+      }
+      if (nomes.length) {
+        const { data } = await sb().from("clientes_empresas").select("nome_razao,catalogo_logo_url").eq("empresa_id", empresaId()).in("nome_razao", nomes);
+        (data || []).forEach((c) => fotosClientes.set("nome:" + String(c.nome_razao || "").trim().toLowerCase(), url(c)));
+      }
+    } catch (_) { return; }
+    if (visao === "pedidos" && pedidos === pedidosCabecalho) cabecalhoTabela(pedidos, true);
+  }
+  function cartaoPedidoHtml(p) {
+    const st = normalize(p.status_comercial);
+    const linha = (rot, val) => val ? '<div><dt>' + rot + "</dt><dd>" + escapeHtml(val) + "</dd></div>" : "";
+    return '<strong>Pedido ' + escapeHtml(p.numero_pedido || "–") + "</strong>" +
+      (st === "pre_reserva" ? '<span class="dispon-ped-st">Pré-reserva</span>' : "") +
+      "<dl>" + linha("Cliente", p.cliente_nome) + linha("Evento", p.tipo_evento) + linha("Local", p.local_nome) +
+      linha("Período", formatDate(p.inicio) + (p.fim && p.fim !== p.inicio ? " a " + formatDate(p.fim) : "")) +
+      linha("Situação", STATUS_PEDIDO[st] || p.status_comercial) + "</dl>";
+  }
+  // 15/11/2026: cartão branco com os detalhes ao passar o mouse em Total, Reservado, Manutenção, Disponível e nas
+  // células dos pedidos. Usa só o que a tela já calculou (mesma conta dos números).
+  const nomeItem = (it) => String(it?.descricao_total || it?.produto || "Item").replace(/\s*\(L\)[\s\S]*$/, "");
+  const qtd = (n, um, varios) => number(n) + " " + (Number(n) === 1 ? um : varios);
+  function pedidosDaLinha(row) {
+    const periodo = selectedPeriod(), mapa = new Map();
+    (row.reservas || []).forEach((r) => {
+      const p = r.separacoes_pedidos || {};
+      if (!p.id || r.inicio > periodo.fim || r.fim < periodo.inicio) return;
+      if (!mapa.has(p.id)) mapa.set(p.id, { p, inicio: r.inicio, fim: r.fim, pecas: 0, kits: new Map() });
+      const x = mapa.get(p.id);
+      x.pecas += Number(r.quantidade_componente || 0);
+      if (!row.kit && r.item_id && String(r.item_id) !== String(row.item.id)) { // a peça foi pedida dentro de um kit
+        const k = nomeItem(catalogo.get(r.item_id)); x.kits.set(k, (x.kits.get(k) || 0) + Number(r.quantidade_solicitada || 0));
+      }
+    });
+    return [...mapa.values()].map((x) => ({ ...x, uso: row.kit ? usoDoPedido(row, x.p.id) : x.pecas }))
+      .sort((a, b) => String(a.p.numero_pedido || "").localeCompare(String(b.p.numero_pedido || ""), "pt-BR", { numeric: true }));
+  }
+  const linhaPedido = (x, row) => {
+    const pre = normalize(x.p.status_comercial) === "pre_reserva";
+    const viaKit = x.kits && x.kits.size ? '<small class="dispon-cartao-kit">Dentro de: ' + [...x.kits].map(([k, n]) => escapeHtml(k) + " (" + number(n) + " kit" + (n === 1 ? "" : "s") + ")").join(", ") + "</small>" : "";
+    return '<li' + (pre ? ' class="is-pre"' : "") + '><span><b>Pedido ' + escapeHtml(x.p.numero_pedido || "–") + "</b> · " + escapeHtml(x.p.cliente_nome || "") + (pre ? ' <span class="dispon-ped-st">Pré-reserva</span>' : "") +
+      "<small>" + escapeHtml([x.p.tipo_evento, x.p.local_nome, x.inicio ? formatDate(x.inicio) + (x.fim && x.fim !== x.inicio ? " a " + formatDate(x.fim) : "") : ""].filter(Boolean).join(" · ")) + "</small>" + viaKit + "</span>" +
+      "<em>" + number(x.uso) + (row.kit ? " kit" + (x.uso === 1 ? "" : "s") : "") + "</em></li>";
+  };
+  function cartaoCelulaHtml(row, det) {
+    const it = row.item, kit = row.kit, un = kit ? ["kit", "kits"] : ["peça", "peças"];
+    const titulo = '<strong>' + escapeHtml(nomeItem(it)) + "</strong>";
+    const comps = row.componentes || [];
+    const tabelaComp = (col, rot) => kit && comps.length ? '<p class="dispon-cartao-sub">Peças do kit</p><ul class="dispon-cartao-lista">' + comps.map((c) =>
+      "<li><span>" + escapeHtml(nomeItem(c.item)) + "<small>" + c.porKit + " por kit</small></span><em>" + number(c[col]) + " " + rot + "</em></li>").join("") + "</ul>" : "";
+    if (det === "total") return titulo + '<p class="dispon-cartao-num">' + qtd(row.total, ...un) + " no estoque</p>" +
+      (kit ? '<p class="dispon-cartao-txt">Quantos kits completos dá para montar com as peças cadastradas.</p>' + tabelaComp("total", "em estoque") : '<p class="dispon-cartao-txt">Quantidade cadastrada no item (Cadastro de Itens).</p>');
+    if (det === "manutencao") {
+      const contagem = kit ? comps.some((c) => bloqueadosContagem.has(c.item?.id)) : bloqueadosContagem.has(it.id);
+      return titulo + '<p class="dispon-cartao-num">' + qtd(row.manutencao, ...un) + " fora de uso</p>" +
+        '<p class="dispon-cartao-txt">Peças em manutenção, aguardando retorno ou com avaria registrada na Gestão do acervo.</p>' +
+        (contagem ? '<p class="dispon-cartao-alerta">Bloqueado: aguardando a contagem geral na Gestão do acervo.</p>' : "") + tabelaComp("manutencao", "fora de uso");
+    }
+    if (det === "reservado" || det.startsWith("pedido:")) {
+      let lista = pedidosDaLinha(row);
+      if (det.startsWith("pedido:")) { const p = pedidosCabecalho[Number(det.slice(7))]; lista = lista.filter((x) => x.p.id === p?.id); }
+      const somaPre = lista.filter((x) => normalize(x.p.status_comercial) === "pre_reserva").reduce((s, x) => s + x.uso, 0);
+      const somaConf = lista.reduce((s, x) => s + x.uso, 0) - somaPre;
+      const resumo = det === "reservado" && lista.length ? '<p class="dispon-cartao-resumo"><span>' + number(somaConf) + " reservad" + (kit ? "o" : "a") + (somaConf === 1 ? "" : "s") + "</span>" + (somaPre ? '<span class="pre">' + number(somaPre) + " em pré-reserva</span>" : "") + "</p>" : "";
+      return titulo + (det === "reservado" ? '<p class="dispon-cartao-num">' + qtd(row.reservado, ...un) + " reservad" + (kit ? "o" : "a") + (row.reservado === 1 ? "" : "s") + " no período</p>" + resumo : "") +
+        (lista.length ? '<ul class="dispon-cartao-lista">' + lista.map((x) => linhaPedido(x, row)).join("") + "</ul>" : '<p class="dispon-cartao-txt">Nenhum pedido usa este item no período.</p>') +
+        (kit && det === "reservado" ? '<p class="dispon-cartao-txt">Num kit, conta também as peças usadas por outros kits.</p>' : "");
+    }
+    const lim = row.limitante?.item;
+    return titulo + '<p class="dispon-cartao-num">' + qtd(row.disponivel, ...un) + " livre" + (row.disponivel === 1 ? "" : "s") + "</p>" +
+      '<dl class="dispon-cartao-conta"><div><dt>No estoque</dt><dd>' + number(row.total) + "</dd></div><div><dt>Fora de uso</dt><dd>− " + number(row.manutencao) + "</dd></div><div><dt>Reservado</dt><dd>− " + number(row.reservado) + '</dd></div><div class="tot"><dt>Disponível</dt><dd>' + number(row.disponivel) + "</dd></div></dl>" +
+      (kit && lim ? '<p class="dispon-cartao-txt">Quem limita: ' + escapeHtml(nomeItem(lim)) + (row.limitante.data ? " em " + formatDate(row.limitante.data) : "") + ".</p>" : "") +
+      (row.disponivel <= 0 ? '<p class="dispon-cartao-alerta">Sem peças livres no período.</p>' : "");
+  }
+  function cartaoAberto() {
+    let c = document.getElementById("disponPedidoCartao");
+    if (!c) { c = document.createElement("div"); c.id = "disponPedidoCartao"; c.className = "dispon-ped-cartao"; c.setAttribute("role", "tooltip"); document.body.append(c); }
+    return c;
+  }
+  function posicionarCartao(c, alvo) {
+    c.hidden = false;
+    const r = alvo.getBoundingClientRect(), w = c.offsetWidth, h = c.offsetHeight;
+    c.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + "px";
+    c.style.top = (r.bottom + 8 + h > innerHeight - 8 ? Math.max(8, r.top - h - 8) : r.bottom + 8) + "px";
+  }
+
+  function cabecalhoTabela(pedidos, soFotos) {
     const tr = $("#disponCabecalho");
     if (!tr) return;
-    const colPedido = (p) => {
-      const st = normalize(p.status_comercial);
-      const dica = ["Pedido " + (p.numero_pedido || ""), p.cliente_nome, p.tipo_evento, p.local_nome, "de " + formatDate(p.inicio) + " a " + formatDate(p.fim), STATUS_PEDIDO[st] || p.status_comercial].filter(Boolean).join(" · ");
-      return '<th class="dispon-quantity-cell dispon-col-pedido' + (st === "pre_reserva" ? " is-pre" : "") + '" title="' + escapeHtml(dica) + '"><span class="dispon-ped-num">Pedido ' + escapeHtml(p.numero_pedido || "–") + '</span><span class="dispon-ped-cli">' + escapeHtml(p.cliente_nome || "") + "</span>" + (st === "pre_reserva" ? '<span class="dispon-ped-st">Pré-reserva</span>' : "") + "</th>";
+    pedidosCabecalho = pedidos;
+    const colPedido = (p, i) => {
+      const st = normalize(p.status_comercial), foto = fotosClientes.get(chaveFoto(p)) || "";
+      const rotulo = ["Pedido " + (p.numero_pedido || ""), p.cliente_nome].filter(Boolean).join(" · ");
+      return '<th class="dispon-quantity-cell dispon-col-pedido' + (st === "pre_reserva" ? " is-pre" : "") + (i === 0 ? " dispon-divisao" : "") + '" tabindex="0" data-pedido-col="' + i + '" aria-label="' + escapeHtml(rotulo) + '">' +
+        '<span class="dispon-ped-cab"><span class="dispon-ped-foto" aria-hidden="true">' + (foto ? '<img src="' + escapeHtml(foto) + '" alt="" onerror="this.remove()">' : "") + "<span>" + escapeHtml(iniciaisCli(p.cliente_nome)) + "</span></span>" +
+        '<span class="dispon-ped-nome">' + escapeHtml(p.cliente_nome || "Pedido " + (p.numero_pedido || "")) + "</span></span></th>";
     };
-    tr.innerHTML = "<th>Foto</th><th>Item</th><th>Categoria</th>" + '<th class="dispon-quantity-cell">Total</th>' +
-      (visao === "pedidos"
-        ? '<th class="dispon-quantity-cell">Manutencao</th>' + (pedidos.length ? pedidos.map(colPedido).join("") : '<th class="dispon-quantity-cell dispon-col-pedido">Pedidos<span class="dispon-ped-cli">nenhum na data</span></th>')
-        : '<th class="dispon-quantity-cell">Reservado na data</th><th class="dispon-quantity-cell">Manutencao</th>') +
-      '<th class="dispon-quantity-cell">Disponivel</th><th>Status</th>';
-  }
-  function marcarVisao() {
-    document.querySelectorAll("[data-dispon-visao]").forEach((b) => { const on = b.dataset.disponVisao === visao; b.classList.toggle("ativa", on); b.setAttribute("aria-pressed", String(on)); });
+    tr.innerHTML = '<th class="dispon-fixa dispon-fixa-1">Foto</th><th class="dispon-fixa dispon-fixa-2">Item</th><th>Categoria</th>' + '<th class="dispon-quantity-cell">Total</th>' +
+      '<th class="dispon-quantity-cell">Manutencao</th><th class="dispon-quantity-cell">Reservado</th><th class="dispon-quantity-cell dispon-fixa dispon-fixa-3">Disponivel</th>' + (pedidos.length ? pedidos.map(colPedido).join("") : '<th class="dispon-quantity-cell dispon-col-pedido dispon-divisao">Pedidos<span class="dispon-ped-cli">nenhum no período</span></th>');
+    if (visao === "pedidos" && !soFotos) carregarFotosClientes(pedidos);
+    if (soFotos) agendarCabecalho();
   }
 
   function buildRows() {
@@ -478,37 +651,34 @@
     state.rows = state.itens.map(item => ({ item, ...calcularItem(item, periodo) }));
   }
 
+  const FILTROS_ITEM = [["disponCategoria", "categoria", "Categoria"], ["disponSubcategoria", "subcategoria", "Subcategoria"], ["disponCor", "cor", "Cor"], ["disponMaterial", "material", "Material"], ["disponEstilo", "estilo", "Estilo"], ["disponSetor", "setor_estoque", "Setor"]];
+  // Opções dos filtros (18/11/2026): valores distintos de todos os itens da empresa, não só dos já carregados.
   async function loadCategories(generation) {
-    if (!$("#disponCategoria")) return; // o filtro de categoria saiu da tela (out/2026)
-    const categories = new Set();
+    const valores = Object.fromEntries(FILTROS_ITEM.map(([, campo]) => [campo, new Set()]));
     for (let offset = 0; ; offset += 1000) {
-      let query = sb().from("itens").select("categoria").order("id");
+      let query = sb().from("itens").select("categoria,subcategoria,cor,material,estilo,setor_estoque").order("id");
       if (empresaId()) query = query.eq("empresa_id", empresaId());
       const { data, error } = await query.range(offset, offset + 999);
       if (generation !== state.generation) return;
-      if (error) { console.warn("[Disponibilidade] categorias:", error); return; }
-      (data || []).forEach(item => { if (item.categoria) categories.add(item.categoria); });
+      if (error) { console.warn("[Disponibilidade] filtros:", error); return; }
+      (data || []).forEach((item) => FILTROS_ITEM.forEach(([, campo]) => { const v = String(item[campo] || "").trim(); if (v) valores[campo].add(v); }));
       if ((data || []).length < 1000) break;
     }
-    const select = $("#disponCategoria");
-    if (!select) return;
-    const selected = select.value;
-    select.innerHTML = '<option value="">Todas</option>' + [...categories].sort().map(cat =>
-      '<option value="' + escapeHtml(cat) + '">' + escapeHtml(cat) + '</option>').join("");
-    select.value = selected;
+    FILTROS_ITEM.forEach(([id, campo, rotulo]) => {
+      const select = document.getElementById(id); if (!select) return;
+      const atual = select.value;
+      select.innerHTML = `<option value="">${rotulo}</option>` + [...valores[campo]].sort((a, b) => a.localeCompare(b, "pt-BR")).map((v) => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
+      select.value = atual;
+    });
   }
 
-  function fillCategories() {
-    const select = $("#disponCategoria");
-    if (!select) return;
-    const selected = select.value;
-    const categories = [...new Set([...Array.from(select.options).map(option => option.value), ...state.itens.map((item) => item.categoria)].filter(Boolean))].sort();
-    select.innerHTML = `<option value="">Todas</option>` + categories.map((cat) => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join("");
-    select.value = selected;
-  }
+  function fillCategories() {}
 
+  const ID_FILTROS = ["disponCategoria", "disponSubcategoria", "disponCor", "disponMaterial", "disponEstilo", "disponSetor", "disponTipo", "disponStatus", "disponReserva"];
   function filtroAtivo() {
-    return Boolean(normalize($("#disponBusca")?.value) || $("#disponCategoria")?.value || $("#disponStatus")?.value);
+    const algum = ID_FILTROS.some((id) => document.getElementById(id)?.value);
+    const limpar = $("#disponLimparFiltros"); if (limpar) limpar.hidden = !algum;
+    return Boolean(normalize($("#disponBusca")?.value) || algum);
   }
 
   // Busca, categoria e status filtram o que já foi carregado (sem recarregar do banco); só a data recarrega.
@@ -525,14 +695,18 @@
 
   function filteredRows() {
     const term = normalize($("#disponBusca")?.value);
-    const category = $("#disponCategoria")?.value || "";
     const status = $("#disponStatus")?.value || "";
+    const tipo = $("#disponTipo")?.value || "";
+    const reserva = $("#disponReserva")?.value || "";
+    const porCampo = FILTROS_ITEM.map(([id, campo]) => [campo, document.getElementById(id)?.value || ""]).filter(([, v]) => v);
     return state.rows.filter((row) => {
       const item = row.item;
-      const haystack = normalize([item.codigo, item.produto, item.descricao_total, item.categoria, item.setor_estoque].join(" "));
+      const haystack = normalize([item.codigo, item.referencia, item.produto, item.descricao_total, item.categoria, item.subcategoria, item.cor, item.material, item.setor_estoque].join(" "));
       return (!term || haystack.includes(term))
-        && (!category || item.categoria === category)
-        && (!status || row.status === status);
+        && porCampo.every(([campo, v]) => String(item[campo] || "").trim() === v)
+        && (!tipo || String(item.tipo || "") === tipo)
+        && (!status || row.status === status)
+        && (!reserva || (reserva === "com" ? Number(row.reservado) > 0 : !(Number(row.reservado) > 0)));
     });
   }
 
@@ -552,8 +726,7 @@
     if (visao === "pedidos") append = false;
     const pedidos = visao === "pedidos" ? pedidosDaData(rows.slice(0, state.visibleCount), selectedPeriod()) : [];
     cabecalhoTabela(pedidos);
-    marcarVisao();
-    const colunas = 6 + (visao === "pedidos" ? Math.max(1, pedidos.length) + 1 : 2);
+    const colunas = 5 + (visao === "pedidos" ? Math.max(1, pedidos.length) + 2 : 2);
     const tbody = $("#disponTabela");
     const start = append ? tbody.querySelectorAll(".dispon-row").length : 0;
     const pageRows = rows.slice(start, state.visibleCount);
@@ -563,12 +736,15 @@
       const item = row.item;
       const photo = itemPhoto(item);
       const itemName = item.descricao_total || item.produto || "-";
-      const limitante = row.limitante?.item;
-      const nota = row.erro || (row.kit
-        ? `Kits completos · Limite: ${limitante?.descricao_total || limitante?.produto || "componente"}` : "");
+      // nome na 1ª linha, medidas "(L) … (A) … (P) …" na 2ª (15/11/2026: sem o código/tipo e sem "Kits completos · Limite")
+      const partesNome = String(itemName).match(/^(.*?)\s*(\(L\)[\s\S]*)$/);
+      const nomeLinha = partesNome && partesNome[1] ? partesNome[1] : itemName;
+      const medidasLinha = partesNome && partesNome[1] ? partesNome[2] : "";
+      const nota = row.erro || "";
+      const celDisponivel = `<td class="dispon-quantity-cell dispon-fixa dispon-fixa-3" data-det="disponivel"><strong class="dispon-quantity dispon-quantity-available ${row.disponivel <= 0 ? 'dispon-quantity-empty' : ''}">${number(row.disponivel)}</strong></td>`;
       return `
-        <tr class="dispon-row" data-item-id="${escapeHtml(item.id)}">
-          <td>
+        <tr class="dispon-row" data-item-id="${escapeHtml(item.id)}" data-status="${escapeHtml(row.status || "")}" title="${escapeHtml(statusLabel(row.status))}">
+          <td class="dispon-fixa dispon-fixa-1">
             <div class="dispon-photo">
               ${photo
                 ? `<img src="${escapeHtml(photo)}" alt="${escapeHtml(itemName)}" loading="lazy">`
@@ -576,22 +752,19 @@
               }
             </div>
           </td>
-          <td>
-            <button type="button" class="dispon-item-link" data-item-id="${escapeHtml(item.id)}">
-              <span class="dispon-item-name">${escapeHtml(itemName)}</span>
-              <span class="dispon-item-code">${escapeHtml(item.codigo || "-")} - ${escapeHtml(item.tipo || "Item")}</span>
+          <td class="dispon-fixa dispon-fixa-2">
+            <div class="dispon-item-link dispon-item-sem-detalhe">
+              <span class="dispon-item-name">${escapeHtml(nomeLinha)}</span>
+              ${medidasLinha ? `<span class="dispon-item-medidas">${escapeHtml(medidasLinha)}</span>` : ""}
               ${nota ? `<span class="dispon-kit-note">${escapeHtml(nota)}</span>` : ""}
-            </button>
+            </div>
           </td>
-          <td>${escapeHtml(item.categoria || "-")}</td>
-          <td class="dispon-quantity-cell"><span class="dispon-quantity">${number(row.total)}</span></td>
-          ${visao === "pedidos" ? `
-          <td class="dispon-quantity-cell"><span class="dispon-quantity ${row.manutencao > 0 ? 'dispon-quantity-maintenance' : ''}">${number(row.manutencao)}</span></td>
-          ${pedidos.length ? pedidos.map((p) => { const q = usoDoPedido(row, p.id); return `<td class="dispon-quantity-cell dispon-cel-pedido">${q ? `<span class="dispon-quantity dispon-quantity-reserved${normalize(p.status_comercial) === "pre_reserva" ? " is-pre" : ""}" title="Pedido ${escapeHtml(p.numero_pedido || "")}${row.kit ? " · kits comprometidos" : ""}">${number(q)}</span>` : '<span class="dispon-sem">–</span>'}</td>`; }).join("") : '<td class="dispon-quantity-cell"><span class="dispon-sem">–</span></td>'}` : `
-          <td class="dispon-quantity-cell"><span title="${row.kit ? 'Capacidade de kits comprometida por reservas dos componentes, inclusive em outros kits.' : 'Maior quantidade reservada simultaneamente no período.'}" class="dispon-quantity ${row.reservado > 0 ? 'dispon-quantity-reserved' : ''}">${number(row.reservado)}</span></td>
-          <td class="dispon-quantity-cell"><span class="dispon-quantity ${row.manutencao > 0 ? 'dispon-quantity-maintenance' : ''}">${number(row.manutencao)}</span></td>`}
-          <td class="dispon-quantity-cell"><strong class="dispon-quantity dispon-quantity-available ${row.disponivel <= 0 ? 'dispon-quantity-empty' : ''}">${number(row.disponivel)}</strong></td>
-          <td><span class="dispon-badge ${row.status}">${statusLabel(row.status)}</span></td>
+          <td class="dispon-categoria">${escapeHtml(item.categoria || "-")}</td>
+          <td class="dispon-quantity-cell" data-det="total"><span class="dispon-quantity">${number(row.total)}</span></td>
+          <td class="dispon-quantity-cell" data-det="manutencao"><span class="dispon-quantity ${row.manutencao > 0 ? 'dispon-quantity-maintenance' : ''}">${number(row.manutencao)}</span></td>
+          <td class="dispon-quantity-cell" data-det="reservado"><span class="dispon-quantity ${row.reservado > 0 ? 'dispon-quantity-reserved' : ''}">${number(row.reservado)}</span></td>
+          ${celDisponivel}
+          ${pedidos.length ? pedidos.map((p, i) => { const q = usoDoPedido(row, p.id); return `<td class="dispon-quantity-cell dispon-cel-pedido${i === 0 ? " dispon-divisao" : ""}"${q ? ` data-det="pedido:${i}"` : ""}>${q ? `<span class="dispon-quantity dispon-quantity-reserved${normalize(p.status_comercial) === "pre_reserva" ? " is-pre" : ""}">${number(q)}</span>` : '<span class="dispon-sem">–</span>'}</td>`; }).join("") : '<td class="dispon-quantity-cell dispon-divisao"><span class="dispon-sem">–</span></td>'}
         </tr>
       `;
     }).join("") || `<tr><td colspan="${colunas}" class="dispon-empty">Nenhum item encontrado.</td></tr>`;
@@ -733,10 +906,10 @@
       state.generation++;
       state.hasMore = false;
       state.loading = false;
-      $("#disponTabela").innerHTML = "";
-      $("#disponMais").hidden = true;
-      $("#disponErro").textContent = error.message;
-      $("#disponErro").hidden = false;
+      const tb = $("#disponTabela"), mais = $("#disponMais"), erro = $("#disponErro");
+      if (tb) tb.innerHTML = "";
+      if (mais) mais.hidden = true;
+      if (erro) { erro.textContent = error.message; erro.hidden = false; }
       window.alerta?.(error.message, "Disponibilidade", "erro");
     }
   }
@@ -776,25 +949,38 @@
       $("#disponReservasPeriodo").textContent = "Pedidos que utilizam as peças no período";
     });
     $("#disponData")?.addEventListener("change", scheduleReset);
-    ["disponBusca", "disponCategoria", "disponStatus"].forEach((id) => {
+    $("#disponDataFim")?.addEventListener("change", scheduleReset);
+    $("#disponLimparFiltros")?.addEventListener("click", () => { ID_FILTROS.forEach((id) => { const el = document.getElementById(id); if (el) el.value = ""; }); scheduleFiltro(); });
+    ["disponBusca", ...ID_FILTROS].forEach((id) => {
       document.getElementById(id)?.addEventListener("input", scheduleFiltro);
       document.getElementById(id)?.addEventListener("change", scheduleFiltro);
     });
 
-    $("#disponTabela")?.addEventListener("click", (event) => {
-      const button = event.target.closest("[data-item-id]");
-      if (!button) return;
-      abrirDetalheItem(button.dataset.itemId);
-    });
+    // 15/11/2026: a tela "Reservas no período" (detalhe do item) foi removida a pedido; clicar no item não abre nada.
 
     $("#btnVoltarDispon")?.addEventListener("click", voltarParaLista);
-    document.querySelectorAll("[data-dispon-visao]").forEach((b) => b.addEventListener("click", () => {
-      if (visao === b.dataset.disponVisao) return;
-      visao = b.dataset.disponVisao;
-      try { localStorage.setItem("dispon_visao", visao); } catch (_) {}
-      render(false);
-    }));
-    marcarVisao();
+    // cartão com os detalhes do pedido ao passar o mouse (ou focar) no cabeçalho da coluna do pedido
+    const mostrarCartao = (th) => {
+      const p = pedidosCabecalho[Number(th.dataset.pedidoCol)]; if (!p) return;
+      const c = cartaoAberto(); c.innerHTML = cartaoPedidoHtml(p); c.classList.toggle("is-pre", normalize(p.status_comercial) === "pre_reserva"); posicionarCartao(c, th);
+    };
+    const esconderCartao = () => { const c = document.getElementById("disponPedidoCartao"); if (c) c.hidden = true; };
+    const cab = $("#disponCabecalho");
+    cab?.addEventListener("mouseover", (e) => { const th = e.target.closest("[data-pedido-col]"); if (th) mostrarCartao(th); });
+    cab?.addEventListener("mouseleave", esconderCartao);
+    cab?.addEventListener("mouseout", (e) => { if (!e.relatedTarget?.closest?.("[data-pedido-col]")) esconderCartao(); });
+    cab?.addEventListener("focusin", (e) => { const th = e.target.closest("[data-pedido-col]"); if (th) mostrarCartao(th); });
+    cab?.addEventListener("focusout", esconderCartao);
+    const tab = $("#disponTabela");
+    const mostrarCelula = (td) => {
+      const id = td.closest("tr[data-item-id]")?.dataset.itemId, row = state.rows.find((r) => String(r.item.id) === String(id));
+      if (!row) return;
+      const det = td.dataset.det, pPed = det.startsWith("pedido:") ? pedidosCabecalho[Number(det.slice(7))] : null;
+      const c = cartaoAberto(); c.innerHTML = cartaoCelulaHtml(row, det); c.classList.toggle("is-pre", normalize(pPed?.status_comercial) === "pre_reserva"); posicionarCartao(c, td.querySelector(".dispon-quantity") || td);
+    };
+    tab?.addEventListener("mouseover", (e) => { const td = e.target.closest("td[data-det]"); if (td) mostrarCelula(td); });
+    tab?.addEventListener("mouseout", (e) => { const de = e.target.closest("td[data-det]"); if (de && !de.contains(e.relatedTarget)) esconderCartao(); });
+    document.addEventListener("scroll", esconderCartao, { capture: true, passive: true, signal: scrollEvents?.signal });
   }
 
   function voltarParaLista() {
@@ -825,7 +1011,17 @@
 
   let cabecalhoFixo=null,observadorTabela=null,medidorTabela=null,frameCabecalho=0;
   function agendarCabecalho(){if(!frameCabecalho)frameCabecalho=requestAnimationFrame(()=>{frameCabecalho=0;atualizarCabecalhoFixo();});}
+  // 15/11/2026: Foto, Item e Disponível ficam presos no canto esquerdo ao arrastar a tabela para o lado.
+  // As posições vêm da largura real das duas primeiras colunas (o nome do item quebra linha e muda a largura).
+  function posicionarColunasFixas(){
+    const wrap=$('.dispon-table-wrap'),ths=$('#disponCabecalho')?.children;
+    if(!wrap||!ths||ths.length<2)return;
+    const w1=ths[0].getBoundingClientRect().width,w2=ths[1].getBoundingClientRect().width;
+    wrap.style.setProperty('--fx2',w1+'px');wrap.style.setProperty('--fx3',(w1+w2)+'px');
+    wrap.classList.toggle('dispon-rolado',wrap.scrollLeft>2);
+  }
   function atualizarCabecalhoFixo(){
+    posicionarColunasFixas();
     const wrap=$('.dispon-table-wrap'),head=$('#disponCabecalho'),page=$('.dispon-page');
     if(!wrap||!head||!page||detalheAtual||!head.getClientRects().length){if(cabecalhoFixo)cabecalhoFixo.hidden=true;return;}
     const tabela=wrap.querySelector('table'),rect=wrap.getBoundingClientRect(),hr=head.getBoundingClientRect();
@@ -840,7 +1036,9 @@
     const html=head.parentElement.outerHTML;
     if(cabecalhoFixo.dataset.conteudo!==html){cabecalhoFixo.innerHTML='<table>'+html+'</table>';cabecalhoFixo.dataset.conteudo=html;cabecalhoFixo.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));}
     const clone=cabecalhoFixo.querySelector('table');Object.assign(clone.style,{width:tabela.getBoundingClientRect().width+'px',marginLeft:(rect.left-esquerda-wrap.scrollLeft)+'px'});
-    const originais=[...head.children];cabecalhoFixo.querySelectorAll('th').forEach((th,i)=>{const largura=originais[i]?.getBoundingClientRect().width||0;const estilo=getComputedStyle(originais[i]);for(const prop of ['fontFamily','fontSize','fontWeight','lineHeight','letterSpacing','textTransform','textAlign','verticalAlign','whiteSpace','paddingTop','paddingRight','paddingBottom','paddingLeft','color'])th.style[prop]=estilo[prop];th.style.width=largura+'px';th.style.minWidth=largura+'px';th.style.maxWidth=largura+'px';});
+    const originais=[...head.children];cabecalhoFixo.querySelectorAll('th').forEach((th,i)=>{th.style.transform='';if(originais[i]?.classList.contains('dispon-fixa')){th.style.position='relative';th.style.zIndex='2';th.style.background='#fff';}const largura=originais[i]?.getBoundingClientRect().width||0;const estilo=getComputedStyle(originais[i]);for(const prop of ['fontFamily','fontSize','fontWeight','lineHeight','letterSpacing','textTransform','textAlign','verticalAlign','whiteSpace','paddingTop','paddingRight','paddingBottom','paddingLeft','color'])th.style[prop]=estilo[prop];th.style.width=largura+'px';th.style.minWidth=largura+'px';th.style.maxWidth=largura+'px';});
+    // colunas fixas também no cabeçalho flutuante: cada uma vai para onde a original está na tela
+    cabecalhoFixo.querySelectorAll('th').forEach((th,i)=>{if(!originais[i]?.classList.contains('dispon-fixa'))return;const d=originais[i].getBoundingClientRect().left-th.getBoundingClientRect().left;if(Math.abs(d)>0.5)th.style.transform='translateX('+d+'px)';});
   }
   function onListScroll(event) {
     agendarCabecalho();
@@ -892,12 +1090,15 @@
     state.initialized = true;
     const inputDate = $("#disponData");
     if (inputDate && !inputDate.value) inputDate.value = new Date().toISOString().slice(0, 10);
+    const inputFim = $("#disponDataFim");
+    if (inputFim && !inputFim.value) inputFim.value = inputDate?.value || new Date().toISOString().slice(0, 10);
     scrollEvents = new AbortController();
     scrollPositions = new WeakMap();
     document.addEventListener("scroll", onListScroll, {
       capture: true, passive: true, signal: scrollEvents.signal
     });
     bindEvents();
+    avisoSimulacao();
     ativarArrasteHorizontal();
     window.addEventListener('resize',agendarCabecalho,{signal:scrollEvents.signal});
     const wrap=$('.dispon-table-wrap');if(wrap){observadorTabela=new MutationObserver(agendarCabecalho);observadorTabela.observe(wrap,{childList:true,subtree:true});medidorTabela=new ResizeObserver(agendarCabecalho);medidorTabela.observe(wrap);}
@@ -911,6 +1112,7 @@
     clearTimeout(filterTimer);
     observadorTabela?.disconnect();medidorTabela?.disconnect();observadorTabela=null;medidorTabela=null;
     cancelAnimationFrame(frameCabecalho);frameCabecalho=0;cabecalhoFixo?.remove();cabecalhoFixo=null;
+    document.getElementById("disponPedidoCartao")?.remove();
     scrollEvents?.abort();
     scrollEvents = null;
     state.generation++;

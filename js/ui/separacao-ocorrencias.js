@@ -3,6 +3,8 @@
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const estados={acervo:'Aguardando Gestão do Acervo',comercial:'Aguardando Comercial',triagem:'Solução disponível · confirmar na Triagem',resolvida:'Resolvida'};
  const fotosChat=new Map();
+ const raizChat=document.currentScript?.src?new URL('../../',document.currentScript.src):null;
+ let recursosChat;
  async function rpc(sb,n,args){const r=await sb.rpc(n,args);if(r.error)throw Error(r.error.message);return r.data;}
  function dialogo(titulo){
   const d=document.createElement('dialog');d.className='so-dialog';d.innerHTML=`<header><h2>${esc(titulo)}</h2><button type="button" data-fechar aria-label="Fechar">×</button></header><div data-corpo></div>`;
@@ -23,13 +25,10 @@
   const hora=/^\d{2}:\d{2}/.exec(o.pedido_hora_entrega||'')?.[0]||'—';
   return `<span class="so-pedido-card-topo"><span class="so-pedido-agenda"><strong>${esc(hora)}</strong><span>Entrega</span></span><span class="so-pedido-numero">Pedido #${esc(o.pedido_numero)}</span></span><span class="so-pedido-cliente"><span class="so-avatar so-pedido-avatar">${esc(iniciais)}${foto?`<img src="${esc(foto)}" alt="Foto de ${esc(o.cliente)}">`:''}</span><span class="so-pedido-identidade"><strong>${esc(o.cliente)}</strong><small>${esc(o.pedido_local||'Local não informado')}</small></span></span>`;
  }
- function anexosChat(o,empresa){
-  if(!o.foto_path)return '';
-  const avaria=fotosChat.get(`${empresa}:${o.id}:${o.foto_path}`);
-  return `<div class="so-chat-anexos"><figure>${avaria?`<button type="button" data-chat-foto aria-label="Ampliar foto da avaria"><img src="${esc(avaria)}" alt="Foto da avaria ou problema" loading="lazy"></button>`:'<span class="so-ajuda">Não foi possível carregar a foto da avaria. Reabra a ocorrência para tentar novamente.</span>'}<figcaption>Foto da avaria / problema</figcaption></figure></div>`;
- }
+ function caminhosFotos(o){return [...new Set([o.foto_path,...(o.fotos_paths||[])].filter(Boolean))];}
+ function anexosChat(o,empresa){return '<div class="so-chat-anexos">'+caminhosFotos(o).map(path=>{const u=fotosChat.get(`${empresa}:${o.id}:${path}`);return u?`<figure><button type="button" data-chat-foto aria-label="Ampliar foto"><img src="${esc(u)}" alt="Foto do problema" loading="lazy"></button></figure>`:'';}).join('')+'</div>';}
  function conversa(o,sb,empresa,fotosNoChat=false){
-  const historico=o.historico?.length?o.historico:[{acao:'reportar',texto:o.observacao,em:o.criado_em,por:o.criado_por}];
+  const historico=[...(o.conversa_ia||[]).map(m=>({texto:m.texto,em:m.em,equipe:m.papel==='ia'?'Assistente de estoque (IA)':'Triagem',por:m.papel==='pessoa'?o.criado_por:null})),...(o.historico?.length?o.historico:[{acao:'reportar',texto:o.observacao,em:o.criado_em,por:o.criado_por}])];
   return historico.map(h=>{
    const equipe=h.equipe||(h.acao==='reportar'||h.anterior==='triagem'?'Triagem':h.anterior==='comercial'?'Comercial':'Estoque');
    const nome=h.nome||equipe,iniciais=nome.split(/\s+/).slice(0,2).map(n=>n[0]).join('');
@@ -68,13 +67,14 @@
   });
   await Promise.allSettled(lista.filter(o=>o.foto_path).map(async o=>{
    const sec=Array.from(host.querySelectorAll('[data-ocorrencia]')).find(s=>s.dataset.ocorrencia===o.id),alvo=sec.querySelector('[data-avaria]');
-   try{const r=await sb.storage.from('separacao-ocorrencias').createSignedUrl(o.foto_path,3600);if(r.error)throw r.error;const u=new URL(r.data.signedUrl);if(!['https:','http:'].includes(u.protocol))throw Error('Foto inválida');alvo.innerHTML=`<button type="button"><img src="${esc(u.href)}" alt="Foto da avaria ou problema"></button>`;alvo.querySelector('img').onerror=()=>{alvo.textContent='Não foi possível carregar a foto.';};alvo.querySelector('button').onclick=()=>{const d=dialogo('Foto da avaria / problema');d.querySelector('[data-corpo]').innerHTML=`<img class="so-foto" src="${esc(u.href)}" alt="Foto da avaria ou problema">`;};}catch{alvo.textContent='Não foi possível carregar a foto. Reabra a ocorrência para tentar novamente.';}
+   try{await Promise.all(caminhosFotos(o).map(async path=>{const r=await sb.storage.from('separacao-ocorrencias').createSignedUrl(path,3600);if(r.error)throw r.error;fotosChat.set(`${empresa}:${o.id}:${path}`,r.data.signedUrl);}));alvo.innerHTML=anexosChat(o,empresa);alvo.querySelectorAll('button').forEach(b=>b.onclick=()=>{const d=dialogo('Foto do problema');d.querySelector('[data-corpo]').innerHTML=`<img class="so-foto" src="${esc(b.querySelector('img').src)}" alt="Foto do problema">`;});}catch{alvo.textContent='Fotos indisponíveis. Reabra para tentar novamente.';}
   }));
+
  }
  async function painelPedidos(opcoes,lista){
   const {host,sb,empresa,fila}=opcoes;
   host._soLayoutCleanup?.();
-  if(!lista.length){host.innerHTML='<p class="so-vazio">Nenhuma ocorrência nesta fila.</p>';return;}
+  if(!lista.length){host.innerHTML='<p class="so-vazio">'+(opcoes.resolvidas?'Nenhum problema de separação resolvido ainda.':'Nenhuma ocorrência nesta fila.')+'</p>';return;}
   const grupos=new Map();lista.forEach(o=>{const chave=o.pedido_id||o.pedido_numero;if(!grupos.has(chave))grupos.set(chave,[]);grupos.get(chave).push(o);});
   let chave=host.dataset.soSelecionado;if(!grupos.has(chave))chave=grupos.keys().next().value;
   host.dataset.soSelecionado=chave;
@@ -116,14 +116,17 @@
    }catch{}
   },10000);
  }
- async function painel({host,sb,empresa,fila='acervo',pedido=null,item=null,ocorrencia=null,layout=null}){
+ // resolvidas=true (16/11/2026): mostra os problemas já resolvidos (histórico), do mais recente para o mais antigo
+ async function painel({host,sb,empresa,fila='acervo',pedido=null,item=null,ocorrencia=null,layout=null,resolvidas=false}){
   host.innerHTML='<p role="status">Carregando ocorrências…</p>';
   try{
    const todas=await listar(sb,empresa,pedido);
-   const lista=todas.filter(o=>(!item||o.item_id===item)&&(!ocorrencia||o.id===ocorrencia)&&(fila==='triagem'||o.estado===fila));
+   const lista=resolvidas
+    ?todas.filter(o=>o.estado==='resolvida'&&(!item||o.item_id===item)&&(!ocorrencia||o.id===ocorrencia)).sort((a,b)=>String(b.atualizado_em||b.criado_em||'').localeCompare(String(a.atualizado_em||a.criado_em||'')))
+    :todas.filter(o=>(!item||o.item_id===item)&&(!ocorrencia||o.id===ocorrencia)&&(fila==='triagem'||o.estado===fila||o.id===ocorrencia));
    const badge=document.querySelector(`[data-aba="ocorrencias"] .tab-badge`);if(badge)badge.textContent=todas.filter(o=>o.estado==='acervo').length||'';
    if(host.closest('.so-dialog-tabela')){await painelConversa({host,sb,empresa,fila,pedido,item,ocorrencia},lista);return;}
-   if(layout==='pedidos'){await painelPedidos({host,sb,empresa,fila,pedido,item,ocorrencia,layout},lista);return;}
+   if(layout==='pedidos'){await painelPedidos({host,sb,empresa,fila,pedido,item,ocorrencia,layout,resolvidas},lista);return;}
    host.innerHTML=`<div class="so-painel">${host.closest("dialog")?'':'<div class="so-painel-topo"><h3>Ocorrências da separação</h3></div>'}${fila==='comercial'?'<p class="so-ajuda">Negocie a solução com o cliente. Verifique substituição, disponibilidade em outros pedidos ou sublocação. Para alterar os itens, solicite à Triagem a liberação para o Comercial. Registre a solução para a Triagem confirmar o recebimento.</p>':''}<div class="so-table-wrap" tabindex="0" role="region" aria-label="Ocorrências da separação"><table class="so-table"><thead><tr><th scope="col">Foto</th><th scope="col">Item</th><th scope="col">Pedido / Cliente</th><th scope="col">Problema enviado pela Triagem</th><th scope="col">Resposta do Estoque</th><th scope="col">Qtd.</th><th scope="col">Situação</th></tr></thead><tbody>${lista.map(o=>`<tr data-ocorrencia="${esc(o.id)}" data-so-linha tabindex="0" aria-selected="false"><td><div class="so-item-foto">${fotoItem(o)}<span>Sem foto</span></div></td><td class="so-item-col"><strong>${esc(o.item_nome)}</strong>${o.codigo?`<small>${esc(o.codigo)}</small>`:''}</td><td><strong>Pedido ${esc(o.pedido_numero)}</strong><small>${esc(o.cliente)}</small></td><td class="so-problema-col"><strong>${esc(o.motivo_nome)}</strong>${o.observacao?`<p>${esc(o.observacao)}</p>`:''}${o.foto_path?'<button type="button" data-foto>Foto do problema</button>':''}</td><td class="so-resposta-col">${respostaEstoque(o)}</td><td class="so-qtd-col">${esc(o.quantidade)}</td><td><span class="so-estado" data-estado="${esc(o.estado)}">${estados[o.estado]}</span></td></tr>`).join('')||'<tr><td colspan="7" class="so-vazio">Nenhuma ocorrência nesta fila.</td></tr>'}</tbody></table></div>${lista.some(o=>acoes(o,fila))?`<footer class="so-painel-rodape">${lista.length>1?'<p class="so-selecao-ajuda">Selecione uma linha para agir sobre a ocorrência.</p>':''}${lista.map(o=>`<div class="so-rodape-grupo" data-ocorrencia="${esc(o.id)}" data-so-grupo hidden><div class="so-acoes">${acoes(o,fila)||'<span class="so-sem-acao">Nenhuma ação disponível nesta etapa.</span>'}</div></div>`).join('')}</footer>`:''}<p class="so-erro" role="status"></p></div>`;
    const selecionar=id=>{
     host.querySelectorAll('[data-so-linha]').forEach(l=>l.setAttribute('aria-selected',String(l.dataset.ocorrencia===id)));
@@ -159,68 +162,59 @@
   if(fila==='triagem'&&o.estado==='triagem')return botao('resolvida','Confirmar solução e recebimento')+botao('acervo','Problema continua');
   return '';
  }
- async function reportar({sb,empresa,pedido,linha,item,quantidade,nome,aoSalvar}){
-  const d=dialogo('Reportar problema');d.querySelector('[data-corpo]').innerHTML='<p>Carregando tipos de problema…</p>';
-  try{
-   const r=await sb.from('logistica_motivos').select('id,nome').eq('empresa_id',empresa).eq('etapa','separacao').eq('ativo',true).order('nome');if(r.error)throw r.error;
-   const tipos=r.data||[];
-   if(!tipos.length){d.querySelector('[data-corpo]').innerHTML='<p>Cadastre ou ative os tipos de problema em Parâmetros → Motivos → Tipos de problema da separação.</p>';return;}
-   d.querySelector('[data-corpo]').innerHTML=`<p>${esc(nome)}</p><form class="so-report-form"><div class="so-report-col"><fieldset class="so-tipos"><legend>Tipo de problema</legend><div>${tipos.map(m=>`<label class="so-tipo"><input type="radio" name="motivo" value="${esc(m.id)}" required><span>${esc(m.nome)}</span></label>`).join('')}</div></fieldset><label>Quantidade afetada<input name="quantidade" type="number" min="0.001" step="any" max="${Number(quantidade)}" value="${Math.min(1,Number(quantidade))}" required></label></div><div class="so-report-col"><label>Observação<textarea name="observacao" maxlength="3000"></textarea></label><div class="so-anexo"><span class="so-anexo-titulo">Foto <small>opcional</small></span><input name="foto" type="file" accept="image/jpeg,image/png,image/webp" hidden aria-label="Anexar foto do problema"><button type="button" class="so-anexo-escolher" data-escolher-foto><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><circle cx="9" cy="10" r="2"/><path d="m4 18 5-5 4 4 3-3 5 5M12 2v5M9.5 4.5h5"/></svg><span><strong>Anexar foto</strong><small>JPG, PNG ou WebP · até 5 MB</small></span><span class="so-anexo-mais" aria-hidden="true">+</span></button><div class="so-anexo-preview" hidden><img alt="Prévia da foto do problema"><div><strong data-foto-nome></strong><small data-foto-tamanho></small></div><button type="button" data-remover-foto aria-label="Remover foto" title="Remover foto">×</button></div><p class="so-anexo-erro" role="status"></p></div></div><p class="so-erro" role="status"></p><footer><button type="submit">Enviar para Gestão do Acervo</button></footer></form>`;
-   const campoFoto=d.querySelector('[name=foto]'),escolherFoto=d.querySelector('[data-escolher-foto]'),previa=d.querySelector('.so-anexo-preview');
-   let previaUrl=null;
-   const limparPrevia=()=>{if(previaUrl)URL.revokeObjectURL(previaUrl);previaUrl=null;previa.querySelector('img').removeAttribute('src');};
-   escolherFoto.onclick=()=>campoFoto.click();
-   campoFoto.onchange=()=>{
-    limparPrevia();const arquivo=campoFoto.files[0],erro=d.querySelector('.so-anexo-erro');erro.textContent='';
-    if(arquivo&&(!['image/jpeg','image/png','image/webp'].includes(arquivo.type)||arquivo.size>5242880)){
-     erro.textContent='Escolha uma foto JPG, PNG ou WebP de até 5 MB.';campoFoto.value='';
-    }
-    const foto=campoFoto.files[0];previa.hidden=!foto;escolherFoto.hidden=!!foto;
-    if(foto){previaUrl=URL.createObjectURL(foto);previa.querySelector('img').src=previaUrl;d.querySelector('[data-foto-nome]').textContent=foto.name;d.querySelector('[data-foto-tamanho]').textContent=foto.size<1048576?Math.max(1,Math.round(foto.size/1024))+' KB':(foto.size/1048576).toLocaleString('pt-BR',{maximumFractionDigits:1})+' MB';}
-   };
-   d.querySelector('[data-remover-foto]').onclick=()=>{campoFoto.value='';campoFoto.onchange();escolherFoto.focus();};
-   d.addEventListener('close',limparPrevia,{once:true});
-   d.querySelector('form').onsubmit=async ev=>{
-    ev.preventDefault();const f=ev.currentTarget,b=f.querySelector('[type=submit]');b.disabled=true;
-    try{
-     const foto=f.elements.foto.files[0];let caminho=null;
-     if(foto){if(!['image/jpeg','image/png','image/webp'].includes(foto.type)||foto.size>5242880)throw Error('Escolha uma foto JPG, PNG ou WebP de até 5 MB.');
-      caminho=empresa+'/'+crypto.randomUUID()+'.'+({'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[foto.type]);
-      const up=await sb.storage.from('separacao-ocorrencias').upload(caminho,foto,{contentType:foto.type,upsert:false});if(up.error)throw up.error;
-     }
-     await rpc(sb,'separacao_ocorrencia_criar',{p_empresa:empresa,p_pedido:pedido,p_linha:linha,p_item:item,p_motivo:f.elements.motivo.value,p_quantidade:Number(f.elements.quantidade.value),p_observacao:f.elements.observacao.value,p_foto:caminho});
-     d.close();window.alerta?.('Problema enviado à Gestão do Acervo.','Ocorrência registrada','sucesso');aoSalvar?.();document.dispatchEvent(new CustomEvent('separacao-ocorrencias-atualizadas'));
-    }catch(e){d.querySelector('.so-erro').textContent=e.message;}finally{b.disabled=false;}
-   };
-  }catch(e){d.querySelector('[data-corpo]').innerHTML=`<p class="so-erro">${esc(e.message)}</p>`;}
- }
+ async function reportar(opcoes){return window.SeparacaoAssistente.abrir(opcoes);}
  async function sinalizar({sb,empresa,pedido,host}){
   host.dataset.soPedido=pedido;
   try{const lista=await listar(sb,empresa,pedido);if(!host.isConnected||host.dataset.soPedido!==pedido)return;
    host.querySelectorAll('[data-so-item]').forEach(el=>{const abertas=lista.filter(o=>o.item_id===el.dataset.soItem&&o.estado!=='resolvida');const l=abertas.filter(o=>o.estado!=='triagem');el.textContent=l.length?estados[l[0].estado]+(l.length>1?` · ${l.length} problemas`:''):'';/* nov/2026: o botão de acompanhar só aparece no item com problema aberto, piscando em vermelho */const bt=el.parentElement?.querySelector('[data-ver-ocorrencias]');if(bt){bt.hidden=!abertas.length;bt.classList.toggle('is-ativo',!!abertas.length);}});
   }catch(e){console.warn('Ocorrências da separação:',e.message);}
  }
- function abrirPainel(opcoes){
-  const d=dialogo('Ocorrências da separação');d.classList.add('so-dialog-tabela');
-  const rodape=document.createElement('footer');rodape.className='so-dialog-rodape';
-  const fechar=d.querySelector('[data-fechar]');fechar.textContent='Fechar';rodape.append(fechar);d.append(rodape);
-  const host=d.querySelector('[data-corpo]');painel({...opcoes,host});
-  let carregando=false;
-  const timer=setInterval(async()=>{
-   if(carregando||!d.open||document.hidden)return;carregando=true;
-   try{
-    const lista=await listar(opcoes.sb,opcoes.empresa,opcoes.pedido||null);if(!d.open)return;
-    host.querySelectorAll('.so-detalhe').forEach(sec=>{
-     const o=lista.find(o=>o.id===sec.dataset.ocorrencia);if(!o)return;
-     const log=sec.querySelector('.so-chat-mensagens'),html=conversa(o,opcoes.sb,opcoes.empresa);
-     if(log.innerHTML!==html){const fim=log.scrollHeight-log.scrollTop-log.clientHeight<60;log.innerHTML=html;log.querySelectorAll('.so-avatar img').forEach(img=>img.onerror=()=>img.remove());if(fim)log.scrollTop=log.scrollHeight;}
-     const estado=sec.querySelector('.so-estado');estado.dataset.estado=o.estado;estado.textContent=estados[o.estado];
-     const form=sec.querySelector('.so-chat-form');if(form){form.querySelector('textarea').disabled=o.estado==='resolvida';form.querySelector('[type=submit]').disabled=o.estado==='resolvida';}
-    });
-   }catch{/* Uma falha temporária de rede não apaga a mensagem em edição. */}finally{carregando=false;}
-  },10000);
-  d.addEventListener('close',()=>clearInterval(timer),{once:true});return d;
+ async function abrirPainel(opcoes){
+  try{
+   if(!window.EasyLocAssistenteSolicitacao){
+    recursosChat||=new Promise((ok,erro)=>{
+     const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('styles/assistente-solicitacao.css?v=20261117-chat-unico',raizChat);document.head.append(css);
+     const script=document.createElement('script');script.src=new URL('js/ui/assistente-solicitacao.js?v=20261117-chat-unico',raizChat);script.onload=ok;script.onerror=()=>erro(Error('N?o foi poss?vel abrir o chat.'));document.head.append(script);
+    });await recursosChat;
+   }
+   const {sb,empresa,pedido,item,ocorrencia}=opcoes,fila=opcoes.fila||'triagem';
+   const todas=await listar(sb,empresa,pedido||null),lista=todas.filter(o=>(!item||o.item_id===item)&&(fila==='triagem'||o.estado===fila||o.id===ocorrencia));
+   let atual=lista.find(o=>o.id===ocorrencia)||lista[0];
+   if(!atual){window.alerta?.('Nenhuma ocorr?ncia nesta fila.','Acompanhar problema','aviso');return;}
+   let ativa=true,d,timer;
+   const mensagens=async o=>{
+    await Promise.allSettled(caminhosFotos(o).map(async path=>{const r=await sb.storage.from('separacao-ocorrencias').createSignedUrl(path,3600);if(r.error)throw r.error;fotosChat.set(`${empresa}:${o.id}:${path}`,r.data.signedUrl);}));
+    const ia=(o.conversa_ia||[]).filter(m=>m.texto||m.fotos?.length).map(m=>({papel:m.papel,texto:m.texto||'',em:m.em,autor:m.papel==='ia'?'Auxiliar de estoque ? IA':'Triagem',fotos:m.fotos}));
+    const hist=(o.historico?.length?o.historico:[{acao:'reportar',texto:o.observacao,em:o.criado_em}]).map(h=>{
+     const equipe=h.equipe||(h.acao==='reportar'||h.anterior==='triagem'?'Triagem':h.anterior==='comercial'?'Comercial':'Estoque');
+     return {papel:equipe.toLowerCase()===fila||(fila==='acervo'&&equipe==='Estoque')?'pessoa':'ia',autor:[h.nome,equipe].filter(Boolean).join(' ? '),texto:h.texto||'',em:h.em,...(h.acao==='reportar'?{fotos:caminhosFotos(o).map(path=>fotosChat.get(`${empresa}:${o.id}:${path}`)).filter(Boolean)}:{})};
+    });return [...ia,...hist];
+   };
+   const barra=()=>`${lista.length>1?`<select aria-label="Ocorr?ncia" data-chat-ocorrencia>${lista.map(o=>`<option value="${esc(o.id)}" ${o.id===atual.id?'selected':''}>${esc(o.item_nome)} ? ${esc(o.motivo_nome)}</option>`).join('')}</select>`:''}<span class="so-estado" data-estado="${esc(atual.estado)}">${esc(estados[atual.estado]||atual.estado)}</span><div class="so-acoes">${acoes(atual,fila)}</div>`;
+   const atualizar=async()=>{const novas=await listar(sb,empresa,pedido||null);atual=novas.find(o=>o.id===atual.id)||atual;return mensagens(atual);};
+   d=await window.EasyLocAssistenteSolicitacao.abrir({
+    tipo:'separacao',titulo:'Reportar problema ? '+atual.item_nome,assistente:'Auxiliar de estoque ? IA',ctx:opcoes.ctx||await window.aguardarContexto(),
+    dados:{pedido_id:atual.pedido_id||pedido,linha_id:atual.linha_id,item_id:atual.item_id},
+    chave:'ocorrencia:'+atual.id,persistir:false,recomecar:false,anexos:false,somenteLeitura:atual.estado==='resolvida',
+    mensagens:await mensagens(atual),acoesHtml:barra(),
+    enviarMensagem:async texto=>{
+     await rpc(sb,'separacao_ocorrencia_mensagem',{p_empresa:empresa,p_id:atual.id,p_texto:texto,p_equipe:fila});
+     document.dispatchEvent(new CustomEvent('separacao-ocorrencias-atualizadas'));return atualizar();
+    },
+    aoFechar:()=>{ativa=false;clearInterval(timer);},
+    acao:async ev=>{
+     if(ev.type==='change'&&ev.target.matches('[data-chat-ocorrencia]')){await abrirPainel({...opcoes,ocorrencia:ev.target.value});return;}
+     const b=ev.target.closest('[data-so-acao]');if(!b||ev.type!=='click')return;
+     const acao=dialogo(b.textContent);acao.querySelector('[data-corpo]').innerHTML='<form><label>An?lise ou solu??o<textarea required minlength="5" maxlength="3000"></textarea></label><p class="so-erro" role="status"></p><footer><button type="submit">Confirmar</button></footer></form>';
+     acao.querySelector('form').onsubmit=async e=>{e.preventDefault();const enviar=acao.querySelector('[type=submit]');enviar.disabled=true;try{await rpc(sb,'separacao_ocorrencia_acao',{p_empresa:empresa,p_id:atual.id,p_acao:b.dataset.soAcao,p_texto:acao.querySelector('textarea').value});acao.close();document.dispatchEvent(new CustomEvent('separacao-ocorrencias-atualizadas'));await abrirPainel({...opcoes,ocorrencia:atual.id});}catch(e){acao.querySelector('.so-erro').textContent=e.message;}finally{enviar.disabled=false;}};
+    }
+   });
+   let carregando=false;
+   timer=setInterval(async()=>{if(!ativa||!d.isConnected){clearInterval(timer);return;}if(carregando||!d.open||document.hidden)return;carregando=true;try{const msgs=await atualizar();if(!ativa)return;window.EasyLocAssistenteSolicitacao.atualizarMensagens(d,msgs,atual.estado==='resolvida');d.querySelector('.as-contexto').innerHTML=barra();}catch{}finally{carregando=false;}},10000);
+   return d;
+  }catch(e){window.alerta?.(e.message,'Acompanhar problema','erro');console.error(e);}
  }
+
  window.SeparacaoOcorrencias={reportar,painel,abrirPainel,sinalizar};
  document.addEventListener('click',async ev=>{if(!ev.target.closest('[data-ocorrencias-comercial]'))return;
   try{const ctx=await window.aguardarContexto();abrirPainel({sb:window.supabaseClient,empresa:ctx.empresa_id,fila:'comercial'});}catch(e){window.alerta?.(e.message,'Ocorrências','erro');}

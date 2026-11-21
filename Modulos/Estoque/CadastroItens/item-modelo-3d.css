@@ -675,3 +675,65 @@
     min-height: 340px;
   }
 }
+
+/* 15/11/2026: dentro da aba "3D com IA" do item: sem Voltar nem título (a página do item já tem), sem recuo */
+html.ai3d-embutido,html.ai3d-embutido body{background:transparent!important}
+html.ai3d-embutido .ai3d-page{padding:0;background:transparent;min-height:0}
+html.ai3d-embutido .ai3d-back,html.ai3d-embutido .ai3d-kicker,html.ai3d-embutido #ai3dTitle{display:none!important}
+html.ai3d-embutido .ai3d-topbar{align-items:center;margin-bottom:12px}
+
+/* 15/11/2026: etapas numeradas e discretas (verde quando concluída) */
+html:root .ai3d-steps{display:flex;align-items:center;justify-content:center;gap:0;margin:2px 0 18px;padding:0;counter-reset:none}
+html:root .ai3d-steps button{position:relative;flex:0 1 auto;min-height:0;display:inline-flex;align-items:center;gap:8px;padding:4px 10px;border:0;border-radius:999px;background:transparent;color:#8a8f98;font-size:13px;font-weight:500;box-shadow:none;transform:none}
+html:root .ai3d-steps button:hover{transform:none;background:#f3f5f6;border:0}
+html:root .ai3d-steps button+button::before{content:"";position:absolute;right:100%;top:50%;width:28px;height:1px;background:#dfe3e8}
+html:root .ai3d-steps button+button{margin-left:28px}
+html:root .ai3d-step-num{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;flex:none;border-radius:50%;border:1px solid #cfd5dc;background:#fff;color:#6b7280;font-size:12px;font-weight:600}
+html:root .ai3d-steps button.active{background:transparent;color:#1f2020;border:0}
+html:root .ai3d-steps button.active .ai3d-step-num{border-color:#1f2020;background:#1f2020;color:#fff}
+html:root .ai3d-steps button.done{background:transparent;color:#15803d;border:0}
+html:root .ai3d-steps button.done .ai3d-step-num{border-color:#16a34a;background:#16a34a;color:transparent;position:relative}
+html:root .ai3d-steps button.done .ai3d-step-num::after{content:"\2713";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px}
+html:root .ai3d-steps button.done+button::before{background:#16a34a}
+@media(max-width:700px){html:root .ai3d-step-txt{display:none}html:root .ai3d-steps button.active .ai3d-step-txt{display:inline}}
+
+/* Cada etapa mostra só os cards dela */
+html:root .ai3d-page:not([data-stage="foto"]) .ai3d-right>.ai3d-card{display:none}
+html:root .ai3d-page[data-stage="gerar"] .ai3d-right>.ai3d-process-card,
+html:root .ai3d-page[data-stage="medidas"] .ai3d-right>.ai3d-save-card,
+html:root .ai3d-page[data-stage="medidas"] .ai3d-right>.ai3d-model-card,
+html:root .ai3d-page[data-stage="salvar"] .ai3d-right>.ai3d-model-card,
+html:root .ai3d-page[data-stage="salvar"] .ai3d-right>.ai3d-final-card{display:block}
+html:root .ai3d-page[data-stage="foto"] .ai3d-layout{grid-template-columns:minmax(0,1fr)}
+html:root .ai3d-page[data-stage="foto"] .ai3d-left{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+html:root .ai3d-page[data-stage="foto"] .ai3d-left>.ai3d-card{display:flex;flex-direction:column}
+html:root .ai3d-page[data-stage="foto"] .ai3d-left .ai3d-dropzone,html:root .ai3d-page[data-stage="foto"] .ai3d-left .ai3d-bg-preview{flex:1}
+html:root .ai3d-page[data-stage="foto"] .ai3d-left .ai3d-actions,html:root .ai3d-page[data-stage="foto"] .ai3d-left #ai3dGenerateBtn{margin-top:auto}
+html:root .ai3d-page:not([data-stage="foto"]) .ai3d-layout{grid-template-columns:minmax(0,1fr) minmax(280px,320px)}
+html:root .ai3d-right{align-content:start}
+.ai3d-final-embutido{display:none}
+@media(max-width:900px){html:root .ai3d-page[data-stage="foto"] .ai3d-left,html:root .ai3d-page:not([data-stage="foto"]) .ai3d-layout{grid-template-columns:1fr}}
+
+/* Dentro da página do item: sem "Salvar GLB" (o Salvar do topo do item grava) e sem a faixa de título */
+html.ai3d-embutido .ai3d-topbar,html.ai3d-embutido #ai3dSaveTop,html.ai3d-embutido #ai3dSaveBtn,html.ai3d-embutido .ai3d-final-texto{display:none!important}
+html.ai3d-embutido .ai3d-final-embutido{display:block}
+/* status em lista saiu: as etapas numeradas já mostram o andamento */
+html:root .ai3d-status-card{display:none!important}
+html:root .ai3d-steps button{text-transform:none!important;letter-spacing:normal!important;border-bottom:0!important;box-shadow:none!important}
+/* embutida: sem a faixa vazia do título no topo */
+html.ai3d-embutido body,html.ai3d-embutido .ai3d-page{padding-top:0!important;margin-top:0!important}
+html.ai3d-embutido .ai3d-page::before,html.ai3d-embutido .ai3d-page::after{display:none!important;content:none!important}
+/* o tema força o 1º header da página como faixa de título: aqui ele some de verdade */
+html:root:is(#ia3d#ia3d#ia3d#ia3d,html).ai3d-embutido body .ai3d-page>header.ai3d-topbar{display:none!important}
+/* coluna da direita sempre ao lado do 3D (a regra antiga de <=1320px a jogava para baixo em 4 colunas) */
+@media(min-width:901px){html:root .ai3d-page:not([data-stage="foto"]) .ai3d-right{grid-column:auto;grid-template-columns:1fr}}
+/* medidas reais: uma por linha (rótulo à esquerda, campo à direita) */
+html:root .ai3d-measure-grid{display:grid!important;grid-template-columns:1fr!important;gap:8px}
+html:root .ai3d-measure-grid label{display:grid!important;grid-template-columns:1fr 120px;align-items:center;gap:10px;font-size:12.5px;letter-spacing:normal!important;text-transform:none!important}
+html:root .ai3d-measure-grid input{min-height:36px;width:100%}
+html:root:is(#ia3d#ia3d#ia3d#ia3d,html).ai3d-embutido,html:root:is(#ia3d#ia3d#ia3d#ia3d,html).ai3d-embutido body{background:#fff!important}
+html:root:is(#ia3d#ia3d#ia3d#ia3d,html).ai3d-embutido body .ai3d-page{background:#fff!important}
+html:root .ai3d-page[data-stage="salvar"] #ai3dAdjustBtn{display:none}
+/* área do 3D menor (e sem vh: dentro da aba a altura do quadro acompanha o conteúdo) */
+html:root .ai3d-viewer{min-height:0!important;height:320px!important}
+@media(max-width:620px){html:root .ai3d-viewer{height:260px!important}}

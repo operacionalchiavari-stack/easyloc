@@ -1,8 +1,9 @@
 <!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Funcionários | Chiavari</title>
-<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
-<script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script><link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30"><link rel="stylesheet" href="cadastro-funcionarios.css?v=20261103-voltar-esquerda">
+<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script><link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30"><link rel="stylesheet" href="cadastro-funcionarios.css?v=20261111-voz">
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script></head>
 <body><main class="main cadastros-page"><p id="funcMessage" role="status" hidden></p>    <section id="funcionariosView" class="cadastro-view">
       <header id="funcCabecalho" class="section-head">
@@ -77,6 +78,7 @@
           <label hidden>Status *<select id="funcStatus" class="tw-field" required><option>Ativo</option><option>Inativo</option></select></label>
           <label>E-mail<input required id="funcEmail" class="tw-field" type="email"></label>
           <label>Contato de emergência<input id="funcTelefone" data-mascara="telefone" class="tw-field"></label>
+          <div class="func-voz-campo"><span class="func-voz-rotulo">Voz para as reuniões</span><div id="funcVozBox"></div></div>
           <fieldset class="permissions-box">
             <legend>Permissões por módulo</legend>
             <div id="permissionsGrid" class="permissions-grid"></div>
@@ -92,4 +94,4 @@
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/alerta.js?v=20261027-modal"></script><script src="../../../js/core/context.js?v=20261026-limpeza"></script><script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script><script src="../../../js/core/campoProtegido.js?v=20261023-cofre"></script>
   <script src="../../../js/core/google.config.js"></script><script src="../../../js/core/google.js"></script>
-  <script src="cadastro-funcionarios.js?v=20261103-alerta-topo"></script></body></html>
+  <script src="../../../js/ui/vozReuniao.js?v=20261111-reunioes"></script><script src="cadastro-funcionarios.js?v=20261111-voz"></script></body></html>

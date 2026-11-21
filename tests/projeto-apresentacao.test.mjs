@@ -1,6 +1,27 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {estilosImpressaoPedido} from '../Modulos/Comercial/Catalogo/projeto-apresentacao.mjs';
+
+test('documentos de impressao preservam as cores globais e rejeitam CSS invalido',()=>{
+ const anterior=globalThis.window;
+ try{
+  globalThis.window={__COMPANY_THEME:{cor_sidebar:'#123456',cor_destaque:'#246b48'}};
+  for(const horizontal of [false,true]){
+   const css=estilosImpressaoPedido(horizontal);
+   assert.ok(css.includes('--color-sidebar:#123456'));
+   assert.ok(css.includes('--el-button-primary-bg:#246b48'));
+  }
+  globalThis.window.__COMPANY_THEME.cor_sidebar='red;}body{display:none';
+  assert.ok(estilosImpressaoPedido().includes('--color-sidebar:#5a5a55'));
+ }finally{if(anterior===undefined)delete globalThis.window;else globalThis.window=anterior;}
+});
 import {dadosApresentacao,reordenarItens,documentoApresentacao,geralHtml,pedidoPreviewHtml,listaConferenciaPedidoHtml} from '../Modulos/Comercial/Catalogo/projeto-apresentacao.mjs';
+
+test('sublocado exibe reposicao do cadastro nas colunas comerciais',()=>{
+ const model=dadosApresentacao({dados:{ambientes:[{id:'a',nome:'Sala',itens:[],renders:[]}],terceirizados:[{id:'t',ambiente_id:'a',nome:'Mesa parceira',quantidade:2,valor:100,valor_reposicao:780}]}},()=>null);
+ assert.equal(model.terceirizados[0].reposicao,780);
+ assert.match(geralHtml(model,{editar:true,sublocados:true}),/780,00/);
+});
 test('agrega quantidades reais, preserva ambientes e a ordem e escapa texto',()=>{
  const projeto={noivos:'A < B',dados:{ambientes:[{id:'a',nome:'Cerimônia',itens:[{item_id:'x',quantidade:120},{item_id:'y',quantidade:2},{item_id:'x',quantidade:3}],renders:[{url:'https://example.com/render.jpg'}]},{id:'b',nome:'Bar',itens:[{item_id:'x',quantidade:4}]}]}};
  const find=id=>({name:id,photo:'',specs:[{label:'Código',value:'REF'}]});

@@ -1,10 +1,10 @@
-/* Remove o lote de demonstração DEMO-SISTEMA-20261031 seguindo as ligações (FK).
+/* Remove o lote de demonstração do sistema (DEMO_LOTE, padrão DEMO-SISTEMA-20261114) seguindo as ligações (FK).
    node Scripts/remover-demo.cjs            -> ensaio (desfaz no fim)
    node Scripts/remover-demo.cjs --aplicar  -> grava */
 const fs=require('node:fs'),path=require('node:path');
 const {execFileSync}=require('node:child_process'),{Client}=require('pg');
 const raiz=path.resolve(__dirname,'..');
-const empresa='bb1260f0-99cd-4d17-ab9b-23c299b4c50b',lote='DEMO-SISTEMA-20261031';
+const empresa='bb1260f0-99cd-4d17-ab9b-23c299b4c50b',lote=process.env.DEMO_LOTE||'DEMO-SISTEMA-20261114';
 const aplicar=process.argv.includes('--aplicar');
 const ident=n=>'"'+n.replace(/"/g,'""')+'"';
 async function conectar(){
@@ -79,7 +79,7 @@ async function conectar(){
   console.log('Sem FK, ligados a registros DEMO:',JSON.stringify(extras));
   console.log('Ficariam com a ligação apagada (set null):',setnull.length?JSON.stringify(setnull.slice(0,20)):'nenhum');
   // dados reais que dependem de demo? pedidos/clientes não-demo
-  const realPed=(await db.query(`select count(*) n from separacoes_pedidos where id::text=any($1) and coalesce(observacoes->>'demo_lote','')<>$2`,[idsDe('separacoes_pedidos'),lote])).rows[0].n;
+  const realPed=(await db.query(`select count(*) n from separacoes_pedidos where id::text=any($1) and coalesce(observacoes->>'demo_lote',observacoes->>'demo_diretoria','')<>$2`,[idsDe('separacoes_pedidos'),lote])).rows[0].n;
   console.log('Pedidos sem marca DEMO no conjunto:',realPed);
   if(Number(realPed)>0)throw Error('Há pedido real no conjunto; revise antes.');
   // apagar

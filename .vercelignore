@@ -23,3 +23,6 @@ android
 .vscode
 .agents
 .claude
+
+# Dados locais de ferramentas
+.codex-payroll

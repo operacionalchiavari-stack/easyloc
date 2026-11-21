@@ -331,3 +331,5 @@ body.catalogo-equipe .produto{align-items:center;text-align:center}
 body.catalogo-equipe .produto-foto{align-self:stretch}
 body.catalogo-equipe .produto-estoque{justify-content:center}
 body.catalogo-equipe .produto .cores{justify-content:center;align-self:center}
+/* 20/11/2026: Helena aberta pelo módulo "Agentes de IA" do app: a equipe tem as abas Catálogo e Helena. */
+body.catalogo-equipe.catalogo-equipe-helena:not(.sem-abas) .app-abas{display:grid!important}

@@ -43,34 +43,63 @@
 
 html:root #main-content #contratosPage > .contratos-header {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center !important;
 }
 
 html:root #main-content #contratosPage > .contratos-header > div:first-child {
-  grid-column: 1 / -1;
+  grid-column: 2;
   grid-row: 1;
   width: 100%;
-  padding: 34px 220px 22px !important;
+  padding: 34px 0 22px !important;
   text-align: center !important;
 }
 
+html:root #main-content #contratosPage > .contratos-header > .contratos-abas {
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  margin: 0;
+  min-width: 0;
+}
+
 html:root #main-content #contratosPage #contratoNovoModelo {
-  grid-column: 2;
+  grid-column: 3;
   grid-row: 1;
   justify-self: end;
   align-self: center;
-  margin-top: 12px;
+  margin-top: 0;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1100px) {
+  html:root #main-content #contratosPage > .contratos-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
   html:root #main-content #contratosPage > .contratos-header > div:first-child {
+    grid-column: 1 / -1;
     padding: 34px 0 22px !important;
   }
 
+  html:root #main-content #contratosPage > .contratos-header > .contratos-abas {
+    grid-row: 2;
+  }
+
   html:root #main-content #contratosPage #contratoNovoModelo {
+    grid-column: 2;
     grid-row: 2;
     margin-top: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  html:root #main-content #contratosPage > .contratos-header > .contratos-abas {
+    grid-column: 1 / -1;
+  }
+
+  html:root #main-content #contratosPage #contratoNovoModelo {
+    grid-column: 1 / -1;
+    grid-row: 3;
   }
 }
 
@@ -479,3 +508,13 @@ html:root #main-content #contratosPage #contratoNovoModelo {
 }
 
 .contratos-assinatura-empresa{background:#fff;border:1px solid #e1e5eb;border-radius:16px;padding:24px;margin:20px 0}.contratos-assinatura-empresa label{display:block;margin:12px 0}.contratos-assinatura-empresa input{max-width:420px}.contratos-assinatura-empresa img{display:block;max-width:280px;max-height:120px;margin:16px 0;object-fit:contain}.contratos-assinatura-empresa img[hidden]{display:none}.contratos-assinatura-empresa button{margin:6px 6px 0 0}
+/* Aba Regras do pedido (18/11/2026) */
+.contratos-abas{display:flex;gap:4px;margin:0 0 16px}
+.contratos-layout[hidden],.contratos-regras[hidden],#contratoNovoModelo[hidden]{display:none!important}
+.contratos-regras{padding:4px 0 24px}
+.contratos-regras-card{max-width:980px;margin:0 auto;background:#fff;border:1px solid #e3e7ec;border-radius:16px;padding:20px 22px;box-shadow:0 0 8px rgba(15,23,42,.08)}
+.contratos-regras-card h2{margin:0 0 6px;font:600 17px Inter,system-ui,sans-serif;color:#1f2020}
+.contratos-regras-card p{margin:0 0 14px;font-size:13px;color:#4f4f4f;line-height:1.5}
+.contratos-regras-card textarea{width:100%;box-sizing:border-box;min-height:360px;resize:vertical;padding:12px 14px;border:1px solid #dfe4ea;border-radius:12px;font:400 14px/1.6 Inter,system-ui,sans-serif;color:#1f2020;background:#fff}
+.contratos-regras-rodape{display:flex;align-items:center;justify-content:flex-end;gap:14px;margin-top:12px}
+.contratos-regras-rodape span{font-size:13px;color:#4f4f4f}

@@ -35,6 +35,7 @@ try{
  assert.match(primeira,/Sofá Um em Lounge: 2 → 5/);assert.match(primeira,/Kelly Decor · decorador/);
  assert.match(await page.locator('.cpj-hist-linha').nth(1).innerText(),/Jonatan Falck · equipe/);
  assert.match(primeira,/^\d{2}:\d{2}/,'mostra a hora');
+ assert.ok(await page.locator('.cpj-hist-autor .cpj-hist-foto').count()>0,'cada alteração mostra a foto (ou as iniciais) de quem fez');
  console.log('ok 1 - aba Histórico lista as alterações por dia, com hora, descrição e quem fez');
  await page.locator('[data-cpj-hist-filtro="item"]').click();
  assert.equal(await page.locator('.cpj-hist-linha').count(),1,'filtro Itens');

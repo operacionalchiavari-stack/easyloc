@@ -639,3 +639,94 @@ html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-hero-linha>.dis
 .dispon-floating-header{position:fixed;z-index:45;overflow:hidden;background:#fff;border-bottom:1px solid #dce3ea;pointer-events:none}.dispon-floating-header[hidden]{display:none!important}.dispon-floating-header table{table-layout:fixed;border-collapse:collapse;margin:0}.dispon-floating-header th{box-sizing:border-box;background:#fff!important;text-align:left;padding:18px 16px;border-bottom:1px solid #dce3ea;white-space:normal}.dispon-floating-header th.dispon-quantity-cell{text-align:center}.dispon-floating-header .dispon-ped-cli{display:block;font-size:11px;font-weight:500;margin-top:2px}.dispon-floating-header .dispon-ped-num{display:block}
 
 .dispon-table-wrap{cursor:grab}.dispon-table-wrap.dispon-arrastando,.dispon-table-wrap.dispon-arrastando *{cursor:grabbing!important;user-select:none!important}.dispon-table-wrap :is(input,select,textarea,button:not(.dispon-item-link)){cursor:auto}
+.dispon-item-sem-detalhe{cursor:default!important;text-align:left}
+
+/* 15/11/2026: medidas na linha de baixo do nome; categoria sem negrito */
+.dispon-item-medidas{display:block;margin-top:3px;color:var(--dispon-muted,#6b6b6b);font-size:12.5px}
+html:root:is(#dc#dc#dc#dc#dc#dc#dc#dc,html) .dispon-table-wrap td.dispon-categoria{font-weight:400!important}
+/* 15/11/2026: coluna do item mais estreita (o nome quebra linha), sobra espaço para as colunas dos pedidos */
+html:root:is(#dw#dw#dw#dw#dw#dw#dw#dw,html) .dispon-table-wrap :is(th,td):nth-child(1){width:124px;min-width:124px}
+html:root:is(#dw#dw#dw#dw#dw#dw#dw#dw,html) .dispon-table-wrap :is(th,td):nth-child(2){width:240px;min-width:200px;max-width:260px}
+html:root:is(#dw#dw#dw#dw#dw#dw#dw#dw,html) .dispon-table-wrap :is(th,td):nth-child(3){width:140px;min-width:120px;max-width:160px}
+.dispon-item-name{overflow-wrap:anywhere}
+/* 15/11/2026: títulos das colunas de quantidade centralizados com os números */
+html:root:is(#dq#dq#dq#dq#dq#dq#dq#dq,html) .dispon-table-wrap :is(th,td).dispon-quantity-cell,
+html:root:is(#dq#dq#dq#dq#dq#dq#dq#dq,html) .dispon-floating-header th.dispon-quantity-cell{text-align:center!important}
+/* cabeçalho da coluna do pedido: só foto + nome do cliente; detalhes no cartão ao passar o mouse */
+html:root:is(#dq#dq#dq#dq#dq#dq#dq#dq,html) .dispon-table-wrap th.dispon-col-pedido{white-space:normal;cursor:default;text-transform:none;letter-spacing:0;min-width:110px;max-width:150px;vertical-align:middle}
+.dispon-ped-cab{display:inline-flex;flex-direction:column;align-items:center;gap:5px;max-width:140px}
+.dispon-ped-foto{position:relative;width:34px;height:34px;border-radius:50%;overflow:hidden;background:#eaf0fa;color:#123f86;display:grid;place-items:center;font:600 12px Inter,sans-serif;flex:0 0 auto}
+.dispon-ped-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.dispon-ped-nome{font:500 12px/1.25 Inter,sans-serif;color:#1f2020;text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dispon-col-pedido.is-pre .dispon-ped-foto{box-shadow:0 0 0 2px #f2c94c}
+.dispon-col-pedido:focus-visible{outline:2px solid #123f86;outline-offset:-2px}
+.dispon-floating-header .dispon-ped-cab{display:inline-flex;flex-direction:column;align-items:center;gap:5px}
+.dispon-ped-cartao{position:fixed;z-index:60;min-width:220px;max-width:300px;padding:12px 14px;background:#fff;border:1px solid #e3e7ec;border-radius:10px;box-shadow:0 10px 30px rgba(15,23,42,.16);font:13px/1.4 Inter,sans-serif;color:#1f2020;pointer-events:none}
+.dispon-ped-cartao[hidden]{display:none}
+.dispon-ped-cartao strong{font-weight:600;font-size:14px;margin-right:6px}
+.dispon-ped-cartao dl{margin:8px 0 0;display:grid;gap:4px}
+.dispon-ped-cartao dl div{display:grid;grid-template-columns:72px 1fr;gap:8px}
+.dispon-ped-cartao dt{color:#6b6b6b;font-size:12px}.dispon-ped-cartao dd{margin:0}
+
+/* cartão de detalhes das células (Total, Reservado, Manutenção, Disponível, pedidos) */
+.dispon-table-wrap td[data-det] .dispon-quantity{cursor:help}
+.dispon-ped-cartao{max-width:340px}
+.dispon-cartao-num{margin:6px 0 0;font-weight:600;font-size:15px;color:#123f86}
+.dispon-cartao-txt{margin:6px 0 0;color:#4f4f4f;font-size:12.5px}
+.dispon-cartao-sub{margin:10px 0 4px;color:#6b6b6b;font-size:11px;letter-spacing:.06em;text-transform:uppercase}
+.dispon-cartao-alerta{margin:8px 0 0;padding:6px 8px;border-radius:8px;background:#fdecec;color:#b42318;font-size:12.5px}
+.dispon-cartao-lista{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.dispon-cartao-lista li{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.dispon-cartao-lista li small{display:block;color:#6b6b6b;font-size:11.5px}
+.dispon-cartao-lista li em{font-style:normal;font-weight:600;white-space:nowrap}
+.dispon-cartao-lista b{font-weight:600}
+.dispon-cartao-conta{margin:8px 0 0;display:grid;gap:3px}
+.dispon-cartao-conta div{display:flex;justify-content:space-between;gap:12px}
+.dispon-cartao-conta dt{color:#6b6b6b}.dispon-cartao-conta dd{margin:0;font-variant-numeric:tabular-nums}
+.dispon-cartao-conta .tot{border-top:1px solid #e3e7ec;padding-top:4px;font-weight:600}.dispon-cartao-conta .tot dt{color:#1f2020}
+
+.dispon-sim-aviso{margin:0 0 12px;padding:10px 14px;border:1px solid #f0d58a;border-radius:10px;background:#fdf6dd;color:#5c4400;font:13px/1.4 Inter,sans-serif}
+.dispon-sim-aviso code{font-size:12px;background:#fff;padding:1px 5px;border-radius:4px}
+
+/* 15/11/2026: linha discreta separando os totais (Total · Manutenção · Reservado · Disponível) das colunas dos pedidos */
+html:root:is(#dd#dd#dd#dd#dd#dd#dd#dd,html) .dispon-table-wrap :is(th,td).dispon-divisao,
+html:root:is(#dd#dd#dd#dd#dd#dd#dd#dd,html) .dispon-floating-header th.dispon-divisao{border-left:1px solid #dbe1e8!important}
+
+/* 15/11/2026: Foto, Item e Disponível presos no canto esquerdo ao rolar a tabela para o lado */
+html:root:is(#dfx#dfx#dfx#dfx#dfx#dfx#dfx#dfx,html) .dispon-table-wrap :is(th,td).dispon-fixa{position:sticky;z-index:2}
+html:root:is(#dfx#dfx#dfx#dfx#dfx#dfx#dfx#dfx,html) .dispon-table-wrap thead th.dispon-fixa{z-index:5;background:#fff!important}
+html:root:is(#dfx#dfx#dfx#dfx#dfx#dfx#dfx#dfx,html) .dispon-table-wrap .dispon-fixa-1{left:0}
+html:root:is(#dfx#dfx#dfx#dfx#dfx#dfx#dfx#dfx,html) .dispon-table-wrap .dispon-fixa-2{left:var(--fx2,124px)}
+html:root:is(#dfx#dfx#dfx#dfx#dfx#dfx#dfx#dfx,html) .dispon-table-wrap .dispon-fixa-3{left:var(--fx3,364px)}
+.dispon-table-wrap td.dispon-fixa{background:#fff}
+.dispon-table-wrap tbody tr:nth-child(even) td.dispon-fixa{background:#fafbfc}
+.dispon-table-wrap .dispon-row:hover td.dispon-fixa{background:#f8fafc}
+/* a linha que separa os totais dos pedidos fica do lado direito do Disponível; com a tabela rolada ganha uma sombra leve */
+html:root:is(#dfx#dfx#dfx#dfx#dfx#dfx#dfx#dfx,html) .dispon-table-wrap :is(th,td).dispon-divisao{border-left:0!important}
+html:root:is(#dfx#dfx#dfx#dfx#dfx#dfx#dfx#dfx,html) .dispon-table-wrap:has(.dispon-col-pedido) :is(th,td).dispon-fixa-3{box-shadow:inset -1px 0 0 #dbe1e8}
+html:root:is(#dfx#dfx#dfx#dfx#dfx#dfx#dfx#dfx,html) .dispon-table-wrap.dispon-rolado:has(.dispon-col-pedido) :is(th,td).dispon-fixa-3{box-shadow:inset -1px 0 0 #dbe1e8,6px 0 8px -6px rgba(15,23,42,.18)}
+
+/* 15/11/2026: cartão de pedido em pré-reserva em amarelo; no Reservado, pré-reservas destacadas e "dentro de qual kit" */
+.dispon-ped-cartao.is-pre{background:#fdf6dd;border-color:#f0d58a}
+.dispon-ped-cartao.is-pre .dispon-cartao-num{color:#7a5a00}
+.dispon-cartao-lista li.is-pre{background:#fdf6dd;border-radius:8px;padding:5px 7px;margin:0 -7px}
+.dispon-cartao-kit{color:#123f86!important}
+.dispon-cartao-resumo{margin:6px 0 0;display:flex;flex-wrap:wrap;gap:6px;font-size:12px}
+.dispon-cartao-resumo span{padding:2px 8px;border-radius:999px;background:#eef2f6;color:#1f2020}
+.dispon-cartao-resumo span.pre{background:#fdf6dd;color:#7a5a00}
+/* a sombra da divisão não pode apagar a linha de baixo do cabeçalho */
+html:root:is(#dfx#dfx#dfx#dfx#dfx#dfx#dfx#dfx,html) .dispon-table-wrap:has(.dispon-col-pedido) thead th.dispon-fixa-3{box-shadow:inset -1px 0 0 #dbe1e8,inset 0 -1px 0 #e3e7ec}
+html:root:is(#dfx#dfx#dfx#dfx#dfx#dfx#dfx#dfx,html) .dispon-table-wrap.dispon-rolado:has(.dispon-col-pedido) thead th.dispon-fixa-3{box-shadow:inset -1px 0 0 #dbe1e8,inset 0 -1px 0 #e3e7ec,6px 0 8px -6px rgba(15,23,42,.18)}
+
+/* 15/11/2026: período De / Até no lugar de uma data só */
+html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-hero-linha>.dispon-hero-filtros label:nth-child(-n+2){flex:0 0 150px}
+/* busca no lado direito do título (o lado esquerdo ficou com De e Até) */
+html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-hero-linha>.dispon-hero-busca{display:flex;justify-content:flex-end;width:100%}
+html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-hero-linha>.dispon-hero-busca label{display:grid;gap:4px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4f4f4f;width:100%;max-width:300px;min-width:0}
+html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-hero-linha>.dispon-hero-busca .el-input{height:38px!important;min-height:38px!important;padding:6px 10px!important;font-size:13px;text-transform:none;letter-spacing:0;width:100%}
+
+/* Filtros numa linha simples (18/11/2026) */
+html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-filtros-linha{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 10px}
+html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-filtros-linha .el-select{width:auto;min-width:0;max-width:170px;height:32px!important;min-height:32px!important;padding:4px 26px 4px 10px!important;font:400 12.5px Inter,system-ui,sans-serif;border-radius:999px;background-color:#fff;color:#1f2020}
+html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-filtros-linha .el-select:not([value=""]):has(option:checked:not([value=""])){border-color:#123f86;background-color:#eaf0fa}
+html:root:is(#dh#dh#dh#dh#dh#dh#dh#dh,html) .dispon-page .dispon-filtros-limpar{border:0;background:none;color:#123f86;font:600 12.5px Inter,system-ui,sans-serif;cursor:pointer;padding:4px 6px}

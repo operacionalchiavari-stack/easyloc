@@ -570,6 +570,10 @@ function Locais_enableEdit() {
 }
 
 function Locais_closeModal() {
+  if(['pedido','central-pedidos'].includes(new URLSearchParams(location.search).get('origem')) && window.parent!==window){
+    window.parent.postMessage({tipo:'pedido-cadastro-retorno',id:window.__pedidoCadastroSalvoId||null},location.origin);return;
+  }
+
   mostrarListaLocais();
 }
 
@@ -750,6 +754,7 @@ const payload = {
   endereco: document.getElementById("locais-endereco").value,
   numero_endereco: document.getElementById("locaisNumeroEndereco").value,
   ponto_referencia: document.getElementById("locaisPontoReferencia").value,
+  particularidades: document.getElementById("locaisParticularidades")?.value.trim() || null,
   status: document.getElementById("locaisStatus").value,
   ultima_locacao: normalizarDataUltimaLocacao(
     document.getElementById("locaisUltimaLocacao").value
@@ -779,10 +784,11 @@ if (doc) {
     let query = supabase.from("locais_empresas");
     let result;
 
+    const localSalvoId=localAtualId||crypto.randomUUID();
     if (localAtualId) {
       result = await query.update(payload).eq("id", localAtualId);
     } else {
-      result = await query.insert(payload);
+      result = await query.insert({...payload,id:localSalvoId});
     }
 
     if (result.error) {
@@ -790,8 +796,10 @@ if (doc) {
       return;
     }
 
+    localAtualId=localSalvoId;
+    window.__pedidoCadastroSalvoId=localSalvoId;
     Locais_closeModal();
-    Locais_carregar();
+    if(!["pedido","central-pedidos"].includes(new URLSearchParams(location.search).get("origem")))Locais_carregar();
 
   } catch (err) {
     mostrarAlerta(err.message || "Erro ao salvar local");
@@ -860,6 +868,8 @@ function abrirDetalhesLocal(local) {
 
   if (campos.numero) campos.numero.value = local.numero_endereco || "";
   if (campos.referencia) campos.referencia.value = local.ponto_referencia || "";
+  const particularidades = document.getElementById("locaisParticularidades");
+  if (particularidades) particularidades.value = local.particularidades || "";
 
   if (campos.ultimaLocacao) campos.ultimaLocacao.value = local.ultima_locacao || "";
   if (campos.status) campos.status.value = local.status || "Ativo";
@@ -943,6 +953,7 @@ async function Locais_carregar() {
   endereco,
   numero_endereco,
   ponto_referencia,
+  particularidades,
   tipo_pessoa,
   inscricao_estadual,
   ultima_locacao,
@@ -1254,7 +1265,15 @@ window.__locaisMostrarAlerta = mostrarAlerta;
 
 // inicialização
 // inicialização
-Locais_carregar();
+if(new URLSearchParams(location.search).get('origem')==='central-pedidos'){
+  mostrarDetalhesLocal();
+  document.querySelector('.back-btn')?.setAttribute('title','Voltar para a Central de Pedidos');
+  const parametros=new URLSearchParams(location.search);
+  Locais_abrirDetalhesPorIdOuNome({id:parametros.get('id'),nome:parametros.get('nome')}).catch(e=>mostrarAlerta(e.message));
+}else if(new URLSearchParams(location.search).get('origem')==='pedido'){
+  Locais_openAdd();
+  document.getElementById('locaisNome').value=new URLSearchParams(location.search).get('nome')||'';
+}else Locais_carregar();
 // Etiquetas (Tipo, Canal, Observações...) vêm de Parâmetros > Comercial; sem cadastro ficam as do HTML.
 window.EasyLocEtiquetas?.aplicar("local", { filtros: { locaisStyleFilter: "tipo", locaisBudgetFilter: "orcamento" } });
 

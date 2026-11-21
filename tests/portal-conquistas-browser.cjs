@@ -1,0 +1,202 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),{chromium}=require('playwright');
+(async()=>{
+ const browser=await chromium.launch({channel:'msedge',headless:true});
+ try{
+  const page=await browser.newPage({viewport:{width:1500,height:1000}}),errors=[];
+  page.on('pageerror',e=>errors.push(e.message));
+  const styles=[...fs.readFileSync('dashboard.html','utf8').matchAll(/<link\b[^>]*>/g)].map(m=>m[0]).filter(s=>/stylesheet/.test(s)).join('\n');
+  const BASE='http://portal-conquistas.teste/';
+  await page.route('**/*',r=>{
+   const u=r.request().url();
+   if(u===BASE)return r.fulfill({contentType:'text/html',body:`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${styles}<style>#portalInicio{display:block!important;position:relative!important;inset:auto!important;margin:0!important;width:100%;padding-bottom:40px}.revelar{opacity:1!important;transform:none!important}</style></head><body class="portal-shell"><main id="portalInicio"></main></body></html>`});
+   if(u===BASE+'foto.svg')return r.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60"><rect width="60" height="60" fill="#bdad97"/><circle cx="30" cy="23" r="11" fill="#f7f3ec"/><path d="M9 60a21 25 0 0 1 42 0" fill="#f7f3ec"/></svg>'});
+   if(u===BASE+'inexistente.jpg')return r.fulfill({status:404,body:''});
+   if(u.startsWith(BASE)){const f=path.join(process.cwd(),decodeURIComponent(new URL(u).pathname));if(fs.existsSync(f)&&fs.statSync(f).isFile())return r.fulfill({body:fs.readFileSync(f),contentType:path.extname(f)==='.css'?'text/css':path.extname(f)==='.jpg'?'image/jpeg':path.extname(f)==='.png'?'image/png':'text/javascript'});}
+   return /fonts\.(googleapis|gstatic)\.com/.test(u)?r.continue():r.abort();
+  });
+  await page.goto(BASE);
+  await page.addScriptTag({content:fs.readFileSync('js/ui/portalMural.js','utf8').replace('window.portalMural = { mostrar: mostrar };','window.portalMural = { mostrar: mostrar, metasTeste:metasSetoresHtml, iniciarTeste:iniciarConquistasSetores, simulacaoTeste:simularMetasSetores, visaoTeste:metasSetoresVisaoHtml };')});
+  const dados={mes:'2026-11',ano:2026,setores:['Marcenaria','Acabamento e Pintura','Almoxarifado','Costura','Forração','Limpeza de Estofados','Solda'].map((setor,i)=>({setor,status:i<2?true:i<5?false:null,motivo:i>=5?'Sem meta cadastrada':'',historicoDisponivel:i!==6,historico:i===6?[]:[{mes:'2026-01',status:true},{mes:'2026-02',status:i<2},{mes:'2026-03',status:null},{mes:'2026-12',status:true}],indicadores:i>=5?[]:[{nome:'Produção',real:120,meta:100,unidade:'itens',atingiu:true},{nome:'Qualidade',real:i<2?95:87,meta:90,unidade:'%',atingiu:i<2},{nome:'Uso do teto de gastos',real:50,meta:100,unidade:'%',atingiu:true}]}))};
+  dados.equipes=dados.setores.slice(0,6).map((s,i)=>({setor:i===4?'  FORRACAO  ':s.setor,equipe:Array.from({length:i===2?12:3},(_,n)=>({id:i+'-'+n,nome:['Ana Silva','Bia Lima','Caio Souza'][n%3]+' '+n,foto:n===0?BASE+'foto.svg':n===1?BASE+'inexistente.jpg':n===2?'javascript:alert(1)':BASE+'foto.svg'}))}));
+  dados.premiacoes={itens:[...Array.from({length:5},(_,i)=>({nome:i===1?'Colega <script>teste</script>':'Colega premiado '+i,titulo:'Presente recebido',mes:'2026-10',foto:i===1?BASE+'inexistente.jpg':BASE+'assets/demo/equipe/integrante-0'+(i+1)+'.jpg'})),{titulo:'Foto somente do produto',foto:BASE+'foto.svg'},{nome:'Inválido',foto:'javascript:alert(1)'}]};
+  dados.equipes[0].equipe[0].nome='  CÓLEGA PREMIADO 0  ';
+  dados.premiacoes.itens[2].setor='Forração';
+  const render=async d=>page.evaluate(d=>{document.getElementById('portalInicio').innerHTML=portalMural.metasTeste(d);portalMural.iniciarTeste();},d);
+  await render(dados);await page.evaluate(()=>document.fonts.ready);
+  assert.equal(await page.locator('.conquista-card,.conquistas-capa').count(),0,'sem cards grandes ou capa');
+  assert.equal(await page.locator('.quadro-setor').count(),7);
+  assert.equal(await page.locator('.premiacoes-item:not([data-premiacoes-copia])').count(),5,'galeria usa as fotos de quem recebeu a premiação');
+  assert.equal(await page.locator('.quadro-premiacoes script').count(),0,'títulos escapados');
+  assert.match(await page.locator('.premiacoes-item:not([data-premiacoes-copia])').first().innerText(),/Colega premiado 0.*Presente recebido.*out 2026/s);
+  assert.equal(await page.locator('.premiacoes-item:not([data-premiacoes-copia]) .premiacoes-setor').nth(0).innerText(),'Marcenaria','setor vem da equipe do RH');
+  assert.equal(await page.locator('.premiacoes-item:not([data-premiacoes-copia]) .premiacoes-setor').nth(1).innerText(),'Setor não informado','não inventa setor sem vínculo no RH');
+  assert.equal(await page.locator('.premiacoes-item:not([data-premiacoes-copia]) .premiacoes-setor').nth(2).innerText(),'Forração');
+  assert.doesNotMatch(await page.locator('#metasSetores').innerText(),/Cada taça dourada representa|Seu esforço merece ser celebrado|Fotos ilustrativas · simulação|Premiação de exemplo|Foto somente do produto/);
+  assert.ok(await page.locator('.quadro-premiacoes').evaluate(el=>el.getBoundingClientRect().top>el.parentElement.querySelector('.quadro-metas').getBoundingClientRect().bottom),'vitrine abaixo do acompanhamento dos setores');
+  assert.equal(await page.locator('article.quadro-setor').count(),7,'um card por setor');
+  assert.equal(await page.locator('.quadro-setor-topo h3').count(),7);
+  assert.equal(await page.locator('.quadro-setor-identidade > h3 + .quadro-equipe').count(),6,'fotos junto ao nome, sem inventar equipe onde não há cadastro');
+  assert.equal(await page.locator('.quadro-equipe-avatar').count(),27);
+  assert.equal(await page.locator('.quadro-equipe-avatar img[src^="javascript:"]').count(),0);
+  const avatar=page.locator('.quadro-equipe-avatar').first();
+  assert.match(await avatar.getAttribute('title'),/Ana Silva/);
+  assert.equal(await avatar.evaluate(el=>getComputedStyle(el).borderRadius),'50%');
+  await page.waitForFunction(()=>[...document.querySelectorAll('.quadro-equipe img')].every(img=>img.complete));
+  assert.equal(await page.locator('.quadro-equipe img[src$="inexistente.jpg"]').count(),0,'fotos indisponíveis mostram as iniciais');
+  assert.equal(await page.locator('.quadro-tabela').count(),0);
+  assert.equal(await page.locator('.quadro-setor').first().locator('.quadro-taca').count(),12);
+  assert.equal(await page.locator('.quadro-setor').first().locator('.quadro-taca.ganho').count(),2,'conquistas de meses fechados');
+  assert.equal(await page.locator('.quadro-setor').first().locator('.quadro-total').innerText(),'2 troféus no ano');
+  assert.equal(await page.locator('.quadro-taca[data-quadro-mes="11"].ganho').count(),0,'mês futuro não ganha troféu');
+  assert.equal(await page.locator('.quadro-taca.parcial').count(),2,'meta do mês ainda aberta não vira conquista confirmada');
+  assert.equal(await page.locator('.quadro-setor > .quadro-tabela-caixa + .quadro-detalhe').count(),7,'taças e metas no mesmo card');
+  assert.equal(await page.locator('.quadro-detalhe').count(),7);
+  assert.equal(await page.locator('.quadro-toolbar,.quadro-legenda,.quadro-detalhe-topo,.quadro-situacao').count(),0,'sem textos e rótulos repetidos');
+  assert.equal(await page.locator('.quadro-detalhe h3').count(),0,'nome do setor fica apenas no topo do card');
+  for(const classe of ['ganho','parcial']){
+   const estilo=await page.locator('.quadro-taca.'+classe).first().evaluate(el=>{const s=getComputedStyle(el);return {fundo:s.backgroundColor,borda:s.borderTopColor,sombra:s.boxShadow};});
+   assert.deepEqual(estilo,{fundo:'rgba(0, 0, 0, 0)',borda:'rgba(0, 0, 0, 0)',sombra:'none'},'taças sem card amarelo em '+classe);
+  }
+  assert.notEqual(await page.locator('.quadro-taca.ganho .trofeu-copo').first().evaluate(el=>getComputedStyle(el).fill),await page.locator('.quadro-taca.sem-registro .trofeu-copo').first().evaluate(el=>getComputedStyle(el).fill),'conquistas continuam destacadas pela taça dourada');
+  assert.equal(await page.locator('.quadro-tabela + .quadro-detalhe').count(),0);
+  const almox=page.locator('.quadro-setor').filter({hasText:'Almoxarifado'});
+  const almoxAtual=almox.locator('[data-quadro-mes="10"]');
+  const almoxDetalhe=page.locator('#'+await almoxAtual.getAttribute('aria-controls'));
+  for(const width of [1500,1024,768,390,320]){
+   await page.setViewportSize({width,height:1000});
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'sem rolagem lateral '+width);
+   assert.ok(await almox.locator('.quadro-setor-identidade').evaluate(el=>{
+    const nome=el.querySelector('h3').getBoundingClientRect(),equipe=el.querySelector('.quadro-equipe').getBoundingClientRect();
+    return nome.right<=equipe.left&&equipe.top<nome.bottom&&equipe.bottom>nome.top;
+   }),'equipe na mesma linha do setor em '+width);
+   await almoxAtual.click();
+   assert.equal(await almoxAtual.getAttribute('aria-pressed'),'true');
+   assert.equal(await page.locator('.quadro-taca[aria-pressed="true"]').count(),7);
+   assert.match(await almoxDetalhe.innerText(),/Qualidade.*87%.*90%.*Em busca/s);
+   assert.match(await almoxDetalhe.getAttribute('aria-label'),/Almoxarifado.*novembro 2026/s);
+   assert.equal(await almoxDetalhe.locator('.quadro-timeline li').count(),3);
+   await almox.locator('[data-quadro-mes="0"]').click();
+   assert.match(await almoxDetalhe.innerText(),/não contém o detalhamento/s);
+   assert.match(await almoxDetalhe.getAttribute('aria-label'),/Almoxarifado.*janeiro 2026.*fechamento confirmado/s);
+   assert.equal(await almoxDetalhe.locator('.quadro-timeline li').count(),0,'não usa metas atuais no mês antigo');
+   await almoxAtual.click();
+   if(width===1500||width===390)await page.locator('#metasSetores').screenshot({path:`.tmp/portal-conquistas-${width}.png`});
+   if(width<600)assert.ok(await almox.locator('.quadro-tabela-caixa').evaluate(el=>el.scrollWidth>el.clientWidth));
+  }
+  await almoxAtual.focus();await page.keyboard.press('ArrowLeft');assert.match(await almoxDetalhe.getAttribute('aria-label'),/outubro/);
+  await page.keyboard.press('End');assert.match(await almoxDetalhe.getAttribute('aria-label'),/dezembro.*Mês futuro/s);
+  await render({mes:'2026-11',setores:[dados.setores[6]]});assert.match(await page.locator('.quadro-total').innerText(),/Histórico indisponível/);
+  const fechado={...dados.setores[2],historico:[{mes:'2026-01',status:true,indicadores:[{nome:'Contagem',real:105,meta:100,unidade:'%',atingiu:true}]}]};
+  await render({mes:'2026-11',setores:[fechado]});await page.locator('[data-quadro-mes="0"]').click();assert.match(await page.locator('.quadro-detalhe').innerText(),/Contagem.*105%.*100%/s);
+  await render({setores:[]});assert.equal(await page.locator('.metas-vazio').isVisible(),true);
+  assert.match(await page.locator('.premiacoes-vazio').innerText(),/Central de Metas/);
+  await render({premiacoes:{itens:[],indisponivel:true}});assert.match(await page.locator('.premiacoes-vazio').innerText(),/Não foi possível/);
+  const antes=JSON.stringify(dados);
+  const sim=await page.evaluate(d=>portalMural.simulacaoTeste(d),dados);
+  assert.equal(JSON.stringify(dados),antes,'a simulação não altera os dados originais');
+  assert.equal(sim.simulacao,true);assert.equal(sim.setores.length,7);
+  assert.deepEqual(sim.premiacoes,dados.premiacoes,'simulação mantém as entregas reais e não inventa premiações');
+  assert.equal(sim.equipes.length,7,'todos os setores têm integrantes de exemplo');
+  assert.ok(sim.equipes.every(g=>g.equipe.length>=3&&g.equipe.every(p=>p.nome.includes('exemplo')&&p.foto.startsWith(BASE+'assets/demo/equipe/'))),'fotos ilustrativas locais apenas para a simulação');
+  assert.ok(sim.setores.every(s=>s.historico.length===10),'janeiro a outubro têm exemplos completos');
+  const fechamentos=sim.setores.flatMap(s=>s.historico);
+  assert.ok(fechamentos.filter(h=>h.status).length/fechamentos.length>.8,'maioria das metas atingida');
+  assert.ok(fechamentos.some(h=>!h.status),'também há exemplos pendentes');
+  assert.ok(fechamentos.every(h=>h.status===h.indicadores.every(i=>i.atingiu===true)),'troféus coerentes com indicadores simulados');
+  await page.evaluate(d=>{document.getElementById('portalInicio').innerHTML=portalMural.visaoTeste(d);portalMural.iniciarTeste();},dados);
+  assert.equal(await page.locator('#metasSetores').getAttribute('data-metas-simulacao'),'true');
+  assert.match(await page.locator('.quadro-demo').innerText(),/Dados fictícios/);
+  assert.equal(await page.locator('.quadro-equipe-avatar').count(),27,'integrantes de exemplo aparecem na simulação');
+  assert.equal(await page.locator('.quadro-setor-identidade > .quadro-equipe').count(),7,'fotos em todos os setores da simulação');
+  assert.equal(await page.locator('.premiacoes-item:not([data-premiacoes-copia])').count(),5,'fotos de entregas cadastradas também aparecem na simulação');
+  assert.equal(await page.locator('.premiacoes-item:not([data-premiacoes-copia]) .premiacoes-setor').first().innerText(),'Marcenaria','premiações reais mantêm o setor do RH durante a simulação');
+  assert.equal(await page.locator('.premiacoes-previa,.premiacoes-convite').count(),0,'remove os textos solicitados');
+  await page.evaluate(()=>document.querySelectorAll('.premiacoes-item:not([data-premiacoes-copia]) .premiacoes-foto img').forEach(img=>img.loading='eager'));
+  await page.waitForFunction(()=>[...document.querySelectorAll('.premiacoes-item:not([data-premiacoes-copia]) .premiacoes-foto img')].length===4&&[...document.querySelectorAll('.premiacoes-item:not([data-premiacoes-copia]) .premiacoes-foto img')].every(img=>img.complete&&img.naturalWidth>0));
+  await page.setViewportSize({width:1500,height:1000});
+  await page.locator('.quadro-premiacoes').scrollIntoViewIfNeeded();
+  await page.locator('.premiacoes-grade').focus();
+  const galeriaInicio=await page.locator('.premiacoes-grade').evaluate(el=>el.scrollLeft);
+  await page.locator('[data-premiacoes-proxima]').click();
+  await page.waitForFunction(inicio=>document.querySelector('.premiacoes-grade').scrollLeft>inicio+10,galeriaInicio);
+  await page.locator('[data-premiacoes-anterior]').click();
+  await page.waitForFunction(inicio=>Math.abs(document.querySelector('.premiacoes-grade').scrollLeft-inicio)<1,galeriaInicio);
+  await page.locator('[data-premiacoes-pausa]').click();assert.equal(await page.locator('[data-premiacoes-pausa]').innerText(),'Reproduzir fotos');
+  await page.locator('[data-premiacoes-pausa]').click();
+  await page.evaluate(()=>document.activeElement.blur());await page.mouse.move(0,0);
+  await page.waitForFunction(inicio=>document.querySelector('.premiacoes-grade').scrollLeft>inicio+3,galeriaInicio,{timeout:3000});
+  assert.equal(await page.locator('[data-premiacoes-copia]').count(),15,'cópias preenchem a faixa durante toda a volta');
+  assert.ok(await page.locator('[data-premiacoes-copia]').evaluateAll(els=>els.every(el=>el.inert&&el.getAttribute('aria-hidden')==='true')),'repetições não duplicam a leitura acessível');
+  await page.locator('[data-premiacoes-pausa]').click();
+  const ciclo=await page.locator('.premiacoes-grade').evaluate(el=>{
+   const primeiro=el.querySelector('.premiacoes-item:not([data-premiacoes-copia])');
+   const ciclo=primeiro.offsetLeft-el.firstElementChild.offsetLeft;
+   el.scrollLeft=2*ciclo-3;el.dispatchEvent(new Event('scroll'));return ciclo;
+  });
+  await page.locator('[data-premiacoes-pausa]').click();await page.evaluate(()=>document.activeElement.blur());await page.mouse.move(0,0);
+  await page.waitForFunction(c=>document.querySelector('.premiacoes-grade').scrollLeft<c*1.5,ciclo,{timeout:4000});
+  const amostras=await page.locator('.premiacoes-grade').evaluate(el=>new Promise(resolve=>{
+   const valores=[],inicio=performance.now();
+   function ler(){valores.push(el.scrollLeft);if(performance.now()-inicio<550)requestAnimationFrame(ler);else resolve(valores);}
+   requestAnimationFrame(ler);
+  }));
+  const passos=amostras.slice(1).map((v,i)=>(v-amostras[i]+ciclo)%ciclo);
+  assert.ok(passos.every(p=>p<5),'continua na emenda sem salto entre as fotos');
+  assert.ok(passos.filter(p=>p>.01).length>8&&passos.reduce((total,p)=>total+p,0)>8,'movimento contínuo em vez de aguardar entre os slides: '+JSON.stringify(passos));
+  await page.evaluate(()=>document.querySelectorAll('.quadro-equipe img').forEach(img=>img.loading='eager'));
+  await page.waitForFunction(()=>[...document.querySelectorAll('.quadro-equipe img')].length===27&&[...document.querySelectorAll('.quadro-equipe img')].every(img=>img.complete&&img.naturalWidth>0));
+  assert.equal(await page.locator('.quadro-taca.ganho').count(),fechamentos.filter(h=>h.status).length);
+  assert.equal(await page.locator('.quadro-taca[data-quadro-mes="11"].ganho').count(),0);
+  for(const width of [1500,1024,768,390,320]){
+   await page.setViewportSize({width,height:1000});
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+   if(width===1500||width===390){
+    await page.locator('#metasSetores').screenshot({path:`.tmp/portal-metas-simulacao-${width}.png`});
+    await page.locator('.quadro-premiacoes').screenshot({path:`.tmp/portal-premiacoes-${width}.png`});
+   }
+  }
+  await page.locator('[data-metas-demo="false"]').click();
+  assert.equal(await page.locator('#metasSetores').getAttribute('data-metas-simulacao'),'false');
+  assert.equal(await page.locator('.quadro-demo').count(),0);
+  assert.equal(await page.locator('.premiacoes-previa').count(),0);
+  assert.equal(await page.locator('.premiacoes-item:not([data-premiacoes-copia])').count(),5,'mantém somente as entregas cadastradas');
+  await page.evaluate(()=>{window.__destino='';window.shellNavigate=url=>__destino=url;window.EasyLocPermissions={hasPermission:()=>true};});
+  await render(dados);await page.locator('[data-premiacoes-abrir]').click();
+  assert.equal(await page.evaluate(()=>__destino),'Modulos/Chiavari/CentralMetas/central.html');
+  assert.equal(await page.locator('.quadro-taca.parcial').count(),2,'restaura os resultados reais');
+  assert.equal(await page.locator('.quadro-equipe-avatar').count(),27,'equipe permanece ao sair da simulação');
+  assert.equal(await page.locator('.quadro-equipe img[src*="assets/demo/equipe/"]').count(),0,'dados reais não recebem as fotos da simulação');
+  assert.equal(await page.locator('.quadro-setor-identidade > .quadro-equipe').count(),6,'restaura somente as equipes cadastradas');
+  assert.equal(await page.evaluate(()=>sessionStorage.getItem('portal_metas_simulacao')),'false');
+  await page.locator('[data-metas-demo="true"]').click();
+  assert.equal(await page.locator('#metasSetores').getAttribute('data-metas-simulacao'),'true');
+  const semEntregas={...dados,premiacoes:{itens:[]}};
+  await page.evaluate(d=>{document.getElementById('portalInicio').innerHTML=portalMural.visaoTeste(d);portalMural.iniciarTeste();},semEntregas);
+  assert.equal(await page.locator('.premiacoes-item:not([data-premiacoes-copia])').count(),4,'simulação sem entregas reais apresenta quatro cenas de exemplo');
+  assert.match(await page.locator('.premiacoes-item:not([data-premiacoes-copia])').nth(2).innerText(),/Carlos Santos.*Marcenaria.*Fone sem fio/s,'setor aparece logo abaixo do nome nos exemplos');
+  assert.equal(await page.locator('.premiacoes-item:not([data-premiacoes-copia]) .premiacoes-foto img[src*="assets/demo/entregas/"]').count(),4);
+  await page.evaluate(()=>document.querySelectorAll('.premiacoes-item:not([data-premiacoes-copia]) .premiacoes-foto img').forEach(img=>img.loading='eager'));
+  await page.waitForFunction(()=>[...document.querySelectorAll('.premiacoes-item:not([data-premiacoes-copia]) .premiacoes-foto img')].length===4&&[...document.querySelectorAll('.premiacoes-item:not([data-premiacoes-copia]) .premiacoes-foto img')].every(img=>img.complete&&img.naturalWidth>0));
+  assert.equal(await page.locator('.premiacoes-previa,.premiacoes-convite').count(),0,'mantém a galeria sem os textos removidos');
+  for(const width of [1500,390]){
+   await page.setViewportSize({width,height:1000});
+   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+   await page.locator('.quadro-premiacoes').screenshot({path:`.tmp/portal-entregas-exemplo-${width}.png`});
+  }
+  await page.locator('[data-metas-demo="false"]').click();
+  assert.equal(await page.locator('.premiacoes-item:not([data-premiacoes-copia]) .premiacoes-foto img[src*="assets/demo/entregas/"]').count(),0,'fotos de exemplo não aparecem nos dados reais');
+  assert.equal(await page.locator('.premiacoes-vazio').count(),1,'dados reais continuam sem inventar entregas');
+  await page.emulateMedia({reducedMotion:'reduce'});await render(dados);
+  assert.equal(await page.locator('[data-premiacoes-pausa]').innerText(),'Reproduzir fotos','troca automática respeita movimento reduzido');
+  await page.locator('.quadro-premiacoes').scrollIntoViewIfNeeded();
+  const parado=await page.locator('.premiacoes-grade').evaluate(el=>new Promise(resolve=>{const inicio=el.scrollLeft;let n=0;function ler(){if(++n<10)requestAnimationFrame(ler);else resolve(Math.abs(el.scrollLeft-inicio));}requestAnimationFrame(ler);}));
+  assert.ok(parado<1,'movimento reduzido mantém a faixa parada');
+  await render({...dados,premiacoes:{itens:[dados.premiacoes.itens[0],dados.premiacoes.itens[2]]}});
+  assert.equal(await page.locator('[data-premiacoes-copia]').count(),6,'duas fotos também completam a faixa em telas largas');
+  await page.evaluate(()=>portalMural.iniciarTeste());
+  assert.equal(await page.locator('[data-premiacoes-copia]').count(),6,'reinicialização não acumula cópias nem animações');
+  await render({...dados,premiacoes:{itens:[dados.premiacoes.itens[0]]}});
+  assert.equal(await page.locator('[data-premiacoes-copia]').count(),0,'uma única entrega permanece estática');
+  assert.deepEqual(errors,[]);console.log('OK: quadro anual compacto, 12 taças por setor, seleção de mês, timeline, histórico sem valores inventados, teclado e celular.');
+ }finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exitCode=1;});

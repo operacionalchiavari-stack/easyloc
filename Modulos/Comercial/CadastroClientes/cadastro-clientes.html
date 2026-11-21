@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Cadastro de Clientes</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
-  <link rel="stylesheet" href="cadastro-clientes.css?v=20261031-equipes">
+  <link rel="stylesheet" href="cadastro-clientes.css?v=20261118-desconto-fixo">
 </head>
 <body>
 <div class="container el-page">
@@ -182,6 +183,7 @@
         <label>Confirmar nova senha</label>
         <input class="el-input" id="catalogoSenhaConfirmacao" type="password" minlength="8" autocomplete="new-password" placeholder="Digite a mesma senha" readonly>
       </div>
+      <div class="cliente-condicoes">
       <section class="cliente-bv" aria-labelledby="clienteBvTitulo">
         <div><h4 id="clienteBvTitulo">Comissão do decorador · BV</h4></div>
         <div class="form-group el-field"><label for="clienteBvRecebe">Recebe BV?</label><select id="clienteBvRecebe" class="el-select" disabled><option value="false">Não recebe</option><option value="true">Sim, recebe BV</option></select></div>
@@ -191,6 +193,14 @@
         <div class="form-group el-field"><label for="clienteBvAprovadoPor">Quem aprovou <span class="cliente-bv-obrig">*</span></label><input id="clienteBvAprovadoPor" class="el-input" maxlength="120" list="clienteBvPessoas" autocomplete="off" readonly></div>
         <datalist id="clienteBvPessoas"></datalist>
       </section>
+      <!-- Condição especial do decorador (18/11/2026): desconto fixo em todo pedido; não acumula como o BV -->
+      <section class="cliente-bv cliente-desconto" aria-labelledby="clienteDescontoTitulo">
+        <div><h4 id="clienteDescontoTitulo">Condição especial · desconto fixo</h4><p>Desconto sobre a locação em <b>todo pedido</b> deste cliente. Diferente do BV, não acumula: se não for usado num pedido, não passa para o próximo.</p></div>
+        <div class="form-group el-field"><label for="clienteDescontoAtivo">Tem desconto fixo?</label><select id="clienteDescontoAtivo" class="el-select" disabled><option value="false">Não tem</option><option value="true">Sim, tem desconto fixo</option></select></div>
+        <div class="form-group el-field"><label for="clienteDescontoPercentual">Desconto na locação (%)</label><input id="clienteDescontoPercentual" class="el-input" type="number" min="0" max="100" step="0.01" value="0" readonly><small>Exemplo: 20% de R$ 10.000,00 = R$ 2.000,00 de desconto em cada pedido.</small></div>
+        <div class="form-group el-field cliente-bv-inteiro"><label for="clienteDescontoObservacao">Por que tem essa condição? <span class="cliente-bv-obrig">*</span></label><textarea id="clienteDescontoObservacao" class="el-textarea" rows="3" maxlength="1000" readonly placeholder="Ex.: parceria fechada em reunião de novembro/2026, válida para todos os eventos."></textarea></div>
+      </section>
+      </div>
       <!-- Equipes de que este cliente faz parte (clientes-equipes.js) -->
       <section class="cliente-equipes" id="clienteEquipesBloco" aria-label="Equipes"></section>
       <!-- ENDEREÇO COM GOOGLE PLACES -->
@@ -297,7 +307,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
-<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
 <script src="../../../js/core/listPager.js?v=20261026-rolagem"></script>
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
@@ -305,8 +315,8 @@
 <script src="../../../js/core/google.js"></script>
 <script src="../../../js/core/campoProtegido.js?v=20261023-cofre-doc"></script>
 <script src="../../../js/core/etiquetasCadastro.js?v=20261026"></script>
-<script src="../../../js/ui/complexidade-cadastros.js?v=20261107-teste-usuario"></script>
-<script src="cadastro-clientes.js?v=20261107-teste-usuario"></script>
+<script src="../../../js/ui/complexidade-cadastros.js?v=20261114-automatica"></script>
+<script src="cadastro-clientes.js?v=20261118-desconto-fixo"></script>
 <script src="clientes-equipes.js?v=20261031-equipes"></script>
 <script>
   // Dentro do dashboard abre pelo shell (histórico + permissão); aberta sozinha, navega direto.
@@ -316,6 +326,6 @@
   }
 </script>
 <script>lucide.createIcons();</script>
-<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
 </body>
 </html>

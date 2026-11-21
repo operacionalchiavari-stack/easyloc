@@ -3,7 +3,7 @@ import {
   CONTRATO_TAG_GROUPS,
   contratoMarkupParaHtml,
   escapeHtml,
-} from "../../../js/core/contracts.mjs";
+} from "../../../js/core/contracts.mjs?v=20261118-rg-ie";
 
 const state = {
   supabase: null,
@@ -512,6 +512,32 @@ function bindEvents(){
   });
 }
 
+// Aba "Regras do pedido" (18/11/2026): texto fixo no fim de todo pedido (comercial_avisos_pedido.regras_pedido).
+async function iniciarRegrasPedido(){
+  const page = $("contratosPage"), regras = $("contratosRegras"), texto = $("contratosRegrasTexto"), salvar = $("contratosRegrasSalvar"), status = $("contratosRegrasStatus");
+  if(!page || !regras || !texto) return;
+  const layout = page.querySelector(".contratos-layout"), novo = $("contratoNovoModelo");
+  page.querySelectorAll("[data-contratos-aba]").forEach((aba) => aba.addEventListener("click", () => {
+    const r = aba.dataset.contratosAba === "regras";
+    page.querySelectorAll("[data-contratos-aba]").forEach((b) => { const on = b === aba; b.classList.toggle("is-active", on); b.setAttribute("aria-selected", String(on)); });
+    regras.hidden = !r; if(layout) layout.hidden = r; if(novo) novo.hidden = r;
+  }));
+  try{
+    const { data, error } = await state.supabase.rpc("comercial_avisos_pedido_ler", { p_empresa: state.empresaId });
+    if(error) throw error;
+    texto.value = data?.regras || "";
+  }catch(e){ status.textContent = "Não foi possível carregar: " + (e.message || e); }
+  salvar.addEventListener("click", async () => {
+    salvar.disabled = true; status.textContent = "Salvando…";
+    try{
+      const { error } = await state.supabase.rpc("comercial_regras_pedido_salvar", { p_empresa: state.empresaId, p_texto: texto.value });
+      if(error) throw error;
+      status.textContent = "Salvo. Vale para todos os pedidos daqui pra frente.";
+    }catch(e){ status.textContent = "Não foi possível salvar: " + (e.message || e); }
+    finally{ salvar.disabled = false; }
+  });
+}
+
 export async function initContratos(){
   if(state.initialized) return;
   state.initialized = true;
@@ -530,6 +556,7 @@ export async function initContratos(){
 
   await carregarModelos();
   await iniciarAssinaturaEmpresa();
+  await iniciarRegrasPedido();
   window.lucide?.createIcons?.();
   window.finalizarCarregamentoModulo?.();
 }

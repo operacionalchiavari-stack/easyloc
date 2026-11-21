@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Almoxarifado</title>
+  <script src="../../js/core/limpezaDados.js?v=20261026"></script><script src="../../js/core/systemZoom.js?v=20261108"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="tw-globals.css?v=20261116-almox">
+  <link rel="stylesheet" href="tw-central-os.css?v=20261116-almox">
+  <link rel="stylesheet" href="almoxarifado.css?v=20261116-almox">
+  <link rel="stylesheet" href="tw-rh.css?v=20261116-almox">
+  <link rel="stylesheet" href="tw-design-system.css?v=20261116-almox">
+  <link rel="stylesheet" href="almox-recebimento.css?v=20261116-almox">
+  <link rel="stylesheet" href="../Producao/materiais-triagem.css?v=20261116-modal-triagem">
+  <link rel="stylesheet" href="almox-acervo.css?v=20261116-almox">
+  <link rel="stylesheet" href="almox-layout.css?v=20261116-acoes-apos-historico">
+  <link rel="stylesheet" href="almox-operacoes-ui.css?v=20261116-aviso-saldo">
+</head>
+<body>
+<main class="main almoxarifado-page">
+
+    <section id="almoxState" class="almox-state tw-card">
+      <i data-lucide="loader-circle"></i>
+      <strong>Carregando almoxarifado...</strong>
+    </section>
+
+    <section id="almoxContent" class="hidden">
+      <section id="areaCirculos" class="reference-goal-circles" aria-label="Metas por setor"></section>
+      <div class="almox-topbar">
+      <nav class="detail-tabs almox-tabs" aria-label="Abas do almoxarifado">
+        <button class="active" type="button" data-tab="stock">Insumos</button>
+        <button type="button" data-tab="toseparate">A separar<b id="toSeparateBadge" class="almox-tab-badge" hidden>0</b></button>
+        <button type="button" data-tab="receiving">Pedidos a receber<b id="badgeRecebimento" class="almox-tab-badge"></b></button>
+        <button type="button" data-tab="purchases">Solicitações de compra<b id="purchasesBadge" class="almox-tab-badge" hidden>0</b></button>
+        <button type="button" data-tab="count">Contagem mensal</button>
+        <button type="button" data-tab="supplier-links">Vínculos de insumos</button>
+        <button type="button" data-tab="epi">EPI<b class="almox-tab-badge" hidden>0</b></button>
+        <button type="button" data-tab="movements">Histórico</button>
+      <div class="almox-toolbar" aria-label="Ações do almoxarifado"><div class="almox-compact-actions almox-tab-actions" aria-label="Ações rápidas do almoxarifado">
+          <button id="entryBtn" class="btn almox-entry-action" type="button" data-permission="Registrar entrada" title="Entrada (F2)">Entrada <kbd>F2</kbd></button>
+          <button id="exitBtn" class="btn almox-exit-action" type="button" data-permission="Registrar saida" title="Saída (F3)">Saída <kbd>F3</kbd></button>
+          <button id="withdrawalBtn" class="btn almox-withdrawal-action" type="button" title="Retirada (F4)">Retirada <kbd>F4</kbd></button>
+          <button id="newMaterialBtn" class="btn btn-secondary" type="button" data-permission="Editar material">Cadastro de insumos</button>
+        </div>
+
+</div>
+        <div id="almoxTabTools" class="almox-tab-tools">
+          <div class="almox-tab-toolset" data-tab-tools="stock"></div>
+          <div class="almox-tab-toolset hidden" data-tab-tools="movements"></div>
+          <div class="almox-tab-toolset hidden" data-tab-tools="count"></div>
+          <div class="almox-tab-toolset hidden" data-tab-tools="locations"></div>
+        </div>
+      </nav>
+
+      </div>
+      <section id="materialNcPanel" class="tw-card almox-nc-panel hidden" aria-label="Material não conforme na produção"></section>
+      <section id="rncDecisionPanel" class="tw-card almox-nc-panel hidden" aria-label="Decisões de Compras sobre RNC para cumprir"></section>
+      <section id="almoxTabScreenHost" class="almox-tab-screen-host"></section>
+      <section id="stockTab" class="almox-tab-panel">
+        <section class="almox-stock-layout">
+          <div class="almox-left-column">
+            <section class="tw-card almox-table-card almox-reference-panel">
+              <div class="almox-material-toolbar"><div class="almox-th-search"><input id="globalSearch" class="tw-field" type="search" placeholder="Buscar material, código ou localização..." aria-label="Buscar material"></div>
+        <div class="almox-tab-actions almox-tab-actions-end" aria-label="Recebimento e cadastro">
+          <button id="manageAddressesBtn" class="btn btn-secondary" type="button" aria-expanded="false" aria-controls="almoxAddressManagement">Gerenciar endereços</button>
+          <button id="topMaterialRegistrationBtn" class="btn btn-primary" type="button" data-permission="Editar material">Cadastro de insumos</button>
+        </div>
+              </div>
+              <section id="almoxAddressManagement" class="almox-modal hidden" aria-hidden="true">
+                <div class="almox-modal-backdrop" data-close-modal></div>
+                <article class="almox-modal-card address-manager-card" role="dialog" aria-modal="true" aria-labelledby="addressManagerTitle">
+                  <header class="almox-modal-head"><h2 id="addressManagerTitle">Gerenciar endereços</h2><button class="icon-btn" type="button" data-close-modal aria-label="Fechar">×</button></header>
+                  <section id="locationsTab" class="almox-address-panel"></section>
+                  <footer class="almox-modal-actions"><button class="btn btn-secondary" type="button" data-close-modal>Fechar</button><button class="btn btn-primary" type="button" data-location-add>Novo endereço</button></footer>
+                </article>
+              </section>
+              <div class="almox-table-wrap">
+                <table class="almox-table">
+                  <thead>
+                    <tr>
+                      <th>Código</th>
+                      <th>Produto</th>
+                      <th>Categoria</th>
+                      <th>Endereço</th>
+                      <th>Disponível</th>
+                                            <th><button class="stock-column-action" type="button" data-stock-summary-all="pre">Pré-reserva</button></th>
+                      <th><button class="stock-column-action" type="button" data-stock-summary-all="reserved">Reservado</button></th>
+                      <th><button class="stock-column-action" type="button" data-stock-summary-all="consumed">Consumido</button></th>
+                      <th><button class="stock-column-action" type="button" data-stock-summary-all="incoming">Aguardando chegada</button></th>
+                      <th><button class="stock-column-action" type="button" data-stock-summary-all="loaned">Retirado</button></th>
+                    </tr>
+                  </thead>
+                  <tbody id="materialsBody"></tbody>
+                </table>
+              </div>
+              <footer class="table-footer">
+                <span id="materialsResultCount">Nenhum material encontrado</span>
+                <nav id="materialsPagination" class="pagination" aria-label="Paginação de materiais"></nav>
+                <select id="pageSizeSelect" class="page-size" aria-label="Itens por página">
+                  <option value="10">10 por página</option>
+                  <option value="20">20 por página</option>
+                  <option value="50">50 por página</option>
+                </select>
+              </footer>
+            </section>
+
+          </div>
+
+        </section>
+      </section>
+
+      <section id="materialWorkspaceTab" class="almox-modal hidden" data-tab-screen aria-hidden="true">
+        <div class="almox-modal-backdrop" data-close-modal></div>
+        <article class="reference-form-panel reference-material-modal" role="dialog" aria-modal="true" aria-labelledby="referenceMaterialTitle">
+          <header class="reference-panel-header"><h2 id="referenceMaterialTitle">Cadastro de insumos</h2><button class="icon-btn" type="button" data-close-modal aria-label="Fechar"><i data-lucide="x"></i></button></header>
+          <form id="referenceMaterialForm" class="reference-form-grid">
+            <label class="full">Nome gerado<input id="refMaterialName" class="tw-field" disabled placeholder="Preencha as perguntas abaixo"></label>
+            <label>Tipo<select id="refMaterialTipo" class="tw-field" required><option value="">Selecione o tipo</option></select><small id="refMaterialCodeHint" class="ref-material-code-hint">O código sai do tipo (ex.: BRR-001). Tipos em Parâmetros → Almoxarifado.</small></label>
+            <label>Especificação<input id="refMaterialEspecificacao" class="tw-field" placeholder="Ex.: LINHO BEGE" autocomplete="off"></label>
+            <label>Comprimento (mm)<input id="refMaterialComprimento" class="tw-field" type="number" min="0" step="0.01" placeholder="Opcional"></label>
+            <label>Largura (mm)<input id="refMaterialLargura" class="tw-field" type="number" min="0" step="0.01" placeholder="Opcional"></label>
+            <label>Espessura (mm)<input id="refMaterialEspessura" class="tw-field" type="number" min="0" step="0.01" placeholder="Opcional"></label>
+            <label>Diâmetro (mm)<input id="refMaterialDiametro" class="tw-field" type="number" min="0" step="0.01" placeholder="Opcional"></label>
+            <label>Parede (mm)<input id="refMaterialParede" class="tw-field" type="number" min="0" step="0.01" placeholder="Opcional"></label>
+            <label>Diâmetro interno (mm)<input id="refMaterialDiametroInterno" class="tw-field" type="number" min="0" step="0.01" placeholder="Opcional"></label>
+            <label>Diâmetro externo (mm)<input id="refMaterialDiametroExterno" class="tw-field" type="number" min="0" step="0.01" placeholder="Opcional"></label>
+            <label class="full">Observação complementar<input id="refMaterialComplemento" class="tw-field" placeholder="Opcional — algo a mais pra identificar o insumo" autocomplete="off"></label>
+            <div class="movement-picker-field category-picker-field">
+              <span>Categoria</span>
+              <input id="refMaterialCategory" type="hidden">
+              <button id="refMaterialCategoryTrigger" class="movement-picker-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                <span id="refMaterialCategoryIcon" class="movement-picker-avatar category-picker-avatar"><i data-lucide="shapes"></i></span>
+                <span><strong id="refMaterialCategoryLabel">Selecione</strong><small>Categoria do insumo</small></span>
+                <i data-lucide="chevron-down"></i>
+              </button>
+              <div id="refMaterialCategoryDropdown" class="movement-picker-dropdown category-picker-dropdown hidden">
+                <div id="refMaterialCategoryOptions" class="category-picker-grid" role="listbox"></div>
+              </div>
+            </div>
+            <label>Unidade<select id="refMaterialUnit" class="tw-field" required><option value="">Selecione</option><option value="UN">UN (Unidade)</option><option value="M">M (Metro)</option><option value="M²">M² (Metro quadrado)</option><option value="KG">KG (Quilo)</option><option value="L">L (Litro)</option><option value="PAR">PAR (Par)</option><option value="CX">CX (Caixa)</option><option value="RL">RL (Rolo)</option><option value="PCT">PCT (Pacote)</option></select></label>
+            <label>Estoque atual<input id="refMaterialStock" class="tw-field" type="number" min="0" step="0.01" value="0"></label>
+            <label>Estoque mínimo<input id="refMaterialMinimum" class="tw-field" type="number" min="0" step="0.01" value="0"></label>
+            <label>Estoque ideal<input id="refMaterialIdeal" class="tw-field" type="number" min="0" step="0.01" value="0" title="Com a compra automática ligada, ao chegar no mínimo pede-se o que falta para o ideal"></label>
+            <label>Valor de custo<input id="refMaterialCost" class="tw-field" type="number" min="0" step="0.01" value="0"></label>
+            <label>Status<select id="refMaterialStatus" class="tw-field"><option value="disponivel">Ativo</option><option value="inativo">Inativo</option></select></label>
+            <label class="ref-material-lote"><span><input id="refMaterialExigeLote" type="checkbox"> Exige lote</span><small>No recebimento, o lote deste item é obrigatório (vai para a rastreabilidade e o certificado).</small></label>
+            <label class="ref-material-lote"><span><input id="refMaterialEpi" type="checkbox"> É EPI</span><small>A saída deste item para uma pessoa vira entrega de EPI na ficha dela, com a próxima troca calculada.</small></label>
+            <div id="refMaterialEpiBox" class="ref-material-epi full hidden"><label>Número do CA *<input id="refMaterialEpiCa" class="tw-field"></label><label>Validade do CA<input id="refMaterialEpiCaVal" class="tw-field" type="date"></label><label>Troca a cada (dias)<input id="refMaterialEpiTroca" class="tw-field" type="number" min="0" step="1" placeholder="vazio = sem troca programada"></label></div>
+            <label class="full">Observações<textarea id="refMaterialNotes" class="tw-field" placeholder="Observações do item"></textarea></label>
+          </form>
+          <footer class="reference-form-actions"><button class="btn btn-secondary" type="button" data-close-modal>Cancelar</button><button id="clearReferenceMaterialBtn" class="btn btn-secondary" type="button">Limpar</button><button id="saveReferenceMaterialBtn" class="btn btn-primary" type="button">Salvar insumo</button></footer>
+        </article>
+      </section>
+      <section id="movementWorkspaceTab" class="almox-tab-panel almox-inline-workspace hidden">
+        <div class="reference-operation-grid">
+          <article id="referenceMovementPanel" class="reference-form-panel reference-movement-panel is-entry">
+            <header class="reference-panel-header movement-panel-header">
+              <div class="movement-mode-switch" aria-label="Tipo de movimentação">
+                <button id="movementEntryModeBtn" class="active" type="button" data-movement-mode="entrada"><i data-lucide="arrow-down-to-line"></i> Entrada</button>
+                <button id="movementExitModeBtn" type="button" data-movement-mode="saida"><i data-lucide="arrow-up-from-line"></i> Saída</button>
+              </div>
+              <input id="refMovementType" type="hidden" value="entrada">
+              <div id="refMovementResponsible" class="movement-header-operator" aria-label="Usuário responsável pelo registro">
+                <span id="refMovementResponsibleLabel">Registrado por</span>
+                <div class="movement-operator-identity"><span id="refMovementResponsibleAvatar" class="movement-operator-avatar">--</span><span><strong id="refMovementResponsibleName">Usuário conectado</strong><small>Identificado automaticamente</small></span></div>
+              </div>
+            </header>
+            <form id="referenceMovementForm" class="reference-movement-body">
+              <p id="manualEntryNotice" class="manual-entry-notice">Compras acompanhadas de nota fiscal devem ser registradas em Recebimento de Mercadorias.</p>
+              <div class="reference-items-table">
+                <table><thead><tr><th>Qtd</th><th>Produto</th><th>Vlr Unit</th><th>Total</th><th></th></tr></thead><tbody id="referenceMovementItems"></tbody></table>
+                <datalist id="referenceMaterialDatalist"></datalist>
+                <button id="addReferenceMovementItem" class="btn btn-secondary" type="button">+ Adicionar item</button>
+                <div class="reference-purchase-total">Total da compra: R$ <strong id="referenceMovementTotal">0,00</strong></div>
+              </div>
+              <div id="referenceExitFields" class="reference-form-grid">
+                <div class="movement-picker-field">
+                  <span>Solicitante</span>
+                  <input id="refMovementRequester" type="hidden">
+                  <button id="refMovementRequesterTrigger" class="movement-picker-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span id="refMovementRequesterAvatar" class="movement-picker-avatar"><i data-lucide="user"></i></span>
+                    <span><strong id="refMovementRequesterName">Selecione</strong><small id="refMovementRequesterSector">Escolha quem solicitou</small></span>
+                    <i data-lucide="chevron-down"></i>
+                  </button>
+                  <div id="refMovementRequesterDropdown" class="movement-picker-dropdown hidden">
+                    <label><i data-lucide="search"></i><input id="refMovementRequesterSearch" autocomplete="off" placeholder="Buscar pessoa..."></label>
+                    <div id="refMovementRequesterOptions" class="movement-picker-options" role="listbox"></div>
+                  </div>
+                </div>
+                <div id="refMovementDestination" class="movement-destination-field" data-sector-id="">
+                  <span id="refMovementDestinationLabel">Destino</span>
+                  <div><i data-lucide="building-2"></i><strong id="refMovementDestinationName">Selecione o solicitante</strong></div>
+                </div>
+                <label id="refMovementPurposeField">Finalidade<select id="refMovementPurpose" class="tw-field"><option value="">Selecione</option><option>Manutenção interna</option><option>Uso interno</option></select></label>
+                <div id="refMovementOpField" class="movement-op-field hidden">
+                  <span>Ordem de produção *</span>
+                  <input id="refMovementOp" type="hidden">
+                  <div class="movement-op-search"><i data-lucide="search"></i><input id="refMovementOpSearch" autocomplete="off" placeholder="Digite o número do pedido"></div>
+                  <div id="refMovementOpOptions" class="movement-op-options hidden" role="listbox"></div>
+                </div>
+                <div id="refMovementScrapDimensionsField" class="movement-scrap-dimensions-group hidden">
+                  <label>Comprimento (mm) *<input id="refMovementScrapComprimento" class="tw-field" type="number" min="0" step="0.01" placeholder="Opcional"></label>
+                  <label>Largura (mm) *<input id="refMovementScrapLargura" class="tw-field" type="number" min="0" step="0.01" placeholder="Opcional"></label>
+                  <label>Espessura (mm) *<input id="refMovementScrapEspessura" class="tw-field" type="number" min="0" step="0.01" placeholder="Opcional"></label>
+                </div>
+                <div id="refMovementScrapPhotoField" class="movement-op-field hidden">
+                  <span>Foto do desenho com as medidas *</span>
+                  <label id="refMovementScrapPhotoDrop" class="movement-photo-drop">
+                    <input id="refMovementScrapPhoto" type="file" accept="image/*" class="hidden">
+                    <img id="refMovementScrapPhotoPreview" class="hidden" alt="Pré-visualização da sobra">
+                    <span id="refMovementScrapPhotoHint"><i data-lucide="image-plus"></i>Clique ou arraste uma foto da sobra aqui</span>
+                  </label>
+                </div>
+              </div>
+              <label class="reference-notes-field">Observações<textarea id="refMovementNotes" class="tw-field"></textarea></label>
+            </form>
+            <footer class="reference-form-actions"><button id="saveReferenceMovementBtn" class="btn btn-primary" type="button">Salvar movimentação</button></footer>
+          </article>
+          <article class="reference-form-panel reference-history-panel">
+            <header class="reference-panel-header">
+              <h2>Histórico recente</h2>
+              <label class="reference-compact-search"><i data-lucide="search"></i><input id="referenceHistorySearch" type="search" placeholder="Buscar movimentação..."></label>
+            </header>
+            <div class="almox-table-wrap reference-recent-table">
+              <table class="almox-table"><thead><tr><th>Data</th><th>Tipo</th><th>Produto</th><th>Qtd</th><th>Pedido</th><th>Solicitante</th></tr></thead><tbody id="referenceMovementHistory"></tbody></table>
+            </div>
+          </article>
+        </div>
+      </section>
+      <section id="withdrawalsWorkspaceTab" class="almox-modal hidden" data-tab-screen aria-hidden="true">
+        <div class="almox-modal-backdrop" data-close-modal></div>
+        <article class="almox-modal-card almox-withdrawal-modal" role="dialog" aria-modal="true" aria-label="Retirada">
+          <div class="reference-operation-grid">
+          <article id="loanPanel" class="reference-form-panel reference-movement-panel is-loan">
+            <header class="reference-panel-header movement-panel-header">
+              <div><h2>Nova Retirada</h2></div>
+              <div class="movement-header-operator" aria-label="Responsável pela entrega">
+                <span>Responsável pela entrega</span>
+                <div class="movement-operator-identity"><span id="loanResponsavelAvatar" class="movement-operator-avatar">--</span><span><strong id="loanResponsavelName">Usuário conectado</strong><small>Identificado automaticamente</small></span></div>
+              </div>
+            </header>
+            <form id="loanForm" class="reference-movement-body">
+              <div class="reference-form-grid">
+                <div class="movement-picker-field">
+                  <span>Pessoa que retirou</span>
+                  <input id="loanRetiradoPor" type="hidden">
+                  <button id="loanRetiradoPorTrigger" class="movement-picker-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+                    <span id="loanRetiradoPorAvatar" class="movement-picker-avatar"><i data-lucide="user"></i></span>
+                    <span><strong id="loanRetiradoPorName">Selecione</strong><small id="loanRetiradoPorSector">Quem ficou com o item</small></span>
+                    <i data-lucide="chevron-down"></i>
+                  </button>
+                  <div id="loanRetiradoPorDropdown" class="movement-picker-dropdown hidden">
+                    <label><i data-lucide="search"></i><input id="loanRetiradoPorSearch" autocomplete="off" placeholder="Buscar pessoa..."></label>
+                    <div id="loanRetiradoPorOptions" class="movement-picker-options" role="listbox"></div>
+                  </div>
+                </div>
+                <div id="loanSectorField" class="movement-destination-field" data-sector-id="">
+                  <span>Setor</span>
+                  <div><i data-lucide="building-2"></i><strong id="loanSectorName">Selecione quem retirou</strong></div>
+                </div>
+                <div id="loanOpField" class="movement-op-field hidden">
+                  <span>Ordem de produção *</span>
+                  <input id="loanOp" type="hidden">
+                  <div class="movement-op-search"><i data-lucide="search"></i><input id="loanOpSearch" autocomplete="off" placeholder="Digite o número do pedido"></div>
+                  <div id="loanOpOptions" class="movement-op-options hidden" role="listbox"></div>
+                </div>
+                <label>Previsão de devolução<input id="loanExpectedReturn" class="tw-field" type="date"></label>
+              </div>
+              <div class="reference-items-table">
+                <table><thead><tr><th>Qtd</th><th>Produto</th><th></th></tr></thead><tbody id="loanItems"></tbody></table>
+                <button id="addLoanItem" class="btn btn-secondary" type="button">+ Adicionar item</button>
+              </div>
+              <label class="reference-notes-field">Observações<textarea id="loanNotes" class="tw-field"></textarea></label>
+            </form>
+            <footer class="reference-form-actions"><button id="saveLoanBtn" class="btn btn-primary" type="button">Registrar retirada</button></footer>
+          </article>
+          <article class="reference-form-panel reference-history-panel">
+            <header class="reference-panel-header">
+              <h2>Retiradas registradas</h2>
+              <label class="reference-compact-search"><i data-lucide="search"></i><input id="loanSearch" type="search" placeholder="Buscar retirada..."></label>
+            </header>
+            <div class="almox-table-wrap reference-recent-table">
+              <table class="almox-table">
+                <thead><tr><th>Produto</th><th>Retirado</th><th>Devolvido</th><th>Pendente</th><th>Pessoa</th><th>Observação</th><th>Status</th><th></th></tr></thead>
+                <tbody id="loanItemsTableBody"></tbody>
+              </table>
+            </div>
+          </article>
+          </div>
+        </article>
+      </section>
+      <section id="movementsTab" class="almox-tab-panel hidden">
+        <div class="history-layout"><aside class="history-types-panel" aria-label="Tipos de movimentação"><h3>Tipos</h3><nav id="historyTypes" class="history-types-list" aria-label="Filtrar histórico por tipo"></nav></aside>
+        <section class="tw-card almox-history-panel">
+          <div class="almox-table-wrap"><table class="almox-table almox-history-table"><colgroup><col class="history-date"><col class="history-event"><col class="history-material"><col class="history-quantity"><col class="history-balance"><col class="history-address"><col class="history-reference"><col class="history-owner"></colgroup><thead><tr><th>Hora</th><th>Movimento</th><th class="history-material-heading"><label class="history-material-search"><span>Material</span><input id="unifiedHistorySearch" class="tw-field" type="search" placeholder="Buscar material..." aria-label="Buscar no histórico"></label></th><th>Quantidade</th><th>Saldo</th><th>Endereço</th><th>Pedido / referência</th><th>Responsável</th></tr></thead><tbody id="unifiedHistoryBody"></tbody></table></div>
+          <footer class="almox-history-footer"><span id="historyLoadedInfo"></span><button id="historyLoadMoreBtn" class="btn btn-secondary" type="button">Carregar mais</button></footer>
+        </section>
+        </div>
+      </section>
+      <section id="countTab" class="almox-tab-panel hidden"></section>
+            <section id="toseparateTab" class="almox-tab-panel hidden"></section>
+      <section id="purchasesTab" class="almox-tab-panel hidden" aria-label="Solicitações de compra"></section>
+      <section id="receivingTab" class="almox-tab-panel hidden" aria-label="Recebimento de mercadorias"></section>
+      <section id="epiTab" class="almox-tab-panel hidden" aria-label="EPI: entregas e trocas"></section>
+      <section id="supplierLinksTab" class="almox-tab-panel hidden" aria-label="Vínculos de fornecedores"></section>
+      <section id="goodsReceiptCenter" class="goods-receipt-center hidden">
+        <header class="goods-receipt-header">
+          <div><button id="backToWarehouseBtn" class="receipt-back" type="button"><i data-lucide="arrow-left"></i> Voltar ao Almoxarifado</button><div class="receipt-tabs-row"><nav class="receipt-tabs" role="tablist" aria-label="Recebimentos"><button type="button" class="is-active" role="tab" data-receipt-tab="pendentes">A receber <b id="receiptTabCountPendentes">0</b></button><button type="button" role="tab" data-receipt-tab="recebidas">Recebidas <b id="receiptTabCountRecebidas">0</b></button></nav><label class="reference-compact-search receipt-tabs-search"><i data-lucide="search"></i><input id="receiptSearch" type="search" placeholder="Buscar por fornecedor, pedido, nota, chave ou material..."></label></div><h1>Recebimento de mercadorias</h1><p>Importação, conferência e entrada de compras no estoque</p></div>
+          <button id="newGoodsReceiptBtn" class="btn btn-primary" type="button"><i data-lucide="plus"></i> Novo recebimento</button>
+        </header>
+        <section id="goodsReceiptDashboard">
+          <div id="receiptMetrics" class="receipt-metrics"></div>
+          <div class="receipt-filters">
+            
+            <input id="receiptPeriod" class="tw-field" type="month" aria-label="Período">
+            <select id="receiptSupplierFilter" class="tw-field" aria-label="Fornecedor"><option value="">Todos os fornecedores</option></select>
+            <select id="receiptStatusFilter" class="tw-field" aria-label="Status"><option value="">Todos os status</option></select>
+            <select id="receiptResponsibleFilter" class="tw-field" aria-label="Responsável"><option value="">Todos os responsáveis</option></select>
+            <button id="clearReceiptFilters" class="btn btn-secondary" type="button"><i data-lucide="x"></i> Limpar</button>
+          </div>
+          <div class="receipt-list-card"><table class="receipt-list-table"><thead><tr><th>Origem / NF-e</th><th>Fornecedor</th><th>CNPJ</th><th>Compra / emissão</th><th>Recebimento</th><th>Itens</th><th>Valor total</th><th>Responsável</th><th>Status</th><th>Ações</th></tr></thead><tbody id="receiptListBody"></tbody></table></div>
+        </section>
+        <section id="goodsReceiptWorkflow" class="goods-receipt-workflow hidden">
+          <nav id="receiptSteps" class="receipt-steps" aria-label="Etapas do recebimento"></nav>
+          <div id="receiptStepContent" class="receipt-step-content"></div>
+          <footer class="receipt-workflow-footer"><button id="previousReceiptStep" class="btn btn-secondary" type="button"><i data-lucide="arrow-left"></i> Voltar</button><span id="receiptAutosaveState">Rascunho salvo automaticamente</span><button id="nextReceiptStep" class="btn btn-primary" type="button">Continuar</button></footer>
+        </section>
+      </section>
+    </section>
+  </main>
+
+  <section id="invoiceEntryModal" class="almox-modal hidden" data-tab-screen aria-hidden="true">
+    <div class="almox-modal-backdrop" data-close-modal></div>
+    <article class="almox-modal-card invoice-modal-card" role="dialog" aria-modal="true" aria-labelledby="invoiceEntryTitle">
+      <header class="almox-modal-head">
+        <div><h2 id="invoiceEntryTitle">Recebimento de Nota Fiscal</h2><p>Importe a nota, confira os itens e confirme apenas o que foi recebido.</p></div>
+        <button class="icon-btn" type="button" data-close-modal aria-label="Fechar"><i data-lucide="x"></i></button>
+      </header>
+      <div class="invoice-receipt-body">
+        <section class="invoice-note-card">
+          <div class="almox-section-head">
+            <h2>Dados da Nota</h2>
+            <input id="invoiceXmlInput" class="hidden" type="file" accept=".xml,text/xml,application/xml">
+          </div>
+          <div class="invoice-note-grid">
+            <label class="full">Leitor de código de barras / QR Code
+              <div class="invoice-barcode-field">
+                <i data-lucide="scan-line"></i>
+                <input id="invoiceBarcodeInput" class="tw-field" placeholder="Aponte o leitor ou digite o código da nota">
+              </div>
+            </label>
+            <label class="full">Chave de acesso da NF<input id="invoiceAccessKey" class="tw-field" maxlength="44" placeholder="44 dígitos da chave de acesso"></label>
+            <button id="importXmlBtn" class="btn btn-secondary" type="button"><i data-lucide="file-up"></i> Importar XML</button>
+            <button id="searchInvoiceBtn" class="btn btn-primary" type="button"><i data-lucide="search"></i> Buscar Nota</button>
+          </div>
+          <div class="invoice-summary-grid">
+            <label>Fornecedor<input id="invoiceSupplier" class="tw-field" readonly></label>
+            <label>CNPJ<input id="invoiceCnpj" class="tw-field" readonly></label>
+            <label>Número da Nota<input id="invoiceNumber" class="tw-field" readonly></label>
+            <label>Série<input id="invoiceSeries" class="tw-field" readonly></label>
+            <label>Data da emissão<input id="invoiceIssueDate" class="tw-field" readonly></label>
+            <label>Valor total<input id="invoiceTotal" class="tw-field" readonly></label>
+          </div>
+        </section>
+
+        <section class="invoice-check-card">
+          <div class="almox-section-head">
+            <h2>Conferência de Recebimento</h2>
+            <span id="invoiceImportState" class="muted-line">Nenhuma nota importada.</span>
+          </div>
+          <div class="almox-table-wrap invoice-table-wrap">
+            <table class="almox-table invoice-table">
+              <thead>
+                <tr>
+                  <th>Produto da Nota</th>
+                  <th>Quantidade NF</th>
+                  <th>Quantidade Recebida</th>
+                  <th>Material correspondente</th>
+                  <th>Localização</th>
+                  <th>Status</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="invoiceItemsBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+      <footer class="invoice-receipt-footer">
+        <div>
+          <span>Itens da Nota</span>
+          <strong id="invoiceItemsCount">0</strong>
+        </div>
+        <div>
+          <span>Itens Conferidos</span>
+          <strong id="invoiceCheckedCount">0</strong>
+        </div>
+        <div>
+          <span>Itens com Divergência</span>
+          <strong id="invoiceDivergenceCount">0</strong>
+        </div>
+        <div>
+          <span>Valor Total</span>
+          <strong id="invoiceFooterTotal">R$ 0,00</strong>
+        </div>
+        <button id="confirmInvoiceReceiptBtn" class="btn btn-primary" type="button">Confirmar Recebimento</button>
+      </footer>
+    </article>
+  </section>
+
+  <section id="locationCreateModal" class="almox-modal hidden" aria-hidden="true">
+    <div class="almox-modal-backdrop" data-close-modal></div>
+    <article class="almox-modal-card compact location-create-card" role="dialog" aria-modal="true" aria-labelledby="locationCreateTitle">
+      <header class="almox-modal-head">
+        <div><h2 id="locationCreateTitle">Novo endereço</h2></div>
+        <button class="icon-btn" type="button" data-close-modal aria-label="Fechar"><i data-lucide="x"></i></button>
+      </header>
+      <form id="locationCreateForm" class="location-create-form">
+        <label>Código<input id="locationCreateCode" class="tw-field" required placeholder="Ex.: A-01-01" autocomplete="off"></label>
+        <label>Setor<select id="locationCreateSector" class="tw-field"><option value="">Sem setor</option></select></label>
+        <label>Situação<select id="locationCreateStatus" class="tw-field"><option value="ativo">Ativo</option><option value="inativo">Inativo</option></select></label>
+      </form>
+      <footer class="almox-modal-actions">
+        <button class="btn btn-secondary" type="button" data-close-modal>Cancelar</button>
+        <button class="btn btn-primary" type="submit" form="locationCreateForm">Cadastrar endereço</button>
+      </footer>
+    </article>
+  </section>
+
+  <section id="entryModal" class="almox-modal hidden" aria-hidden="true" data-tab-screen>
+    <div class="almox-modal-backdrop" data-close-modal></div>
+    <article class="almox-modal-card compact operation-workspace-card" role="dialog" aria-label="Entrada">
+      <div class="operation-workspace-grid">
+        <article class="reference-form-panel reference-movement-panel is-entry operation-entry-exit-panel">
+          <header class="reference-panel-header movement-panel-header">
+            <div><h2>Nova Entrada</h2></div>
+            <div class="movement-header-operator" aria-label="Responsável pela entrada">
+              <span>Responsável pela entrada</span>
+              <div class="movement-operator-identity"><span id="entryResponsibleAvatar" class="movement-operator-avatar">--</span><span><strong id="entryResponsibleName">Usuário conectado</strong><small>Identificado automaticamente</small></span></div>
+            </div>
+          </header>
+      <form id="entryForm" class="entry-return-form">
+        <input id="entryMaterialId" type="hidden">
+        <label class="span-2">Material<input id="entryMaterial" class="tw-field" list="entryMaterialList" autocomplete="off" placeholder="Digite o nome ou o código do material"></label>
+        <datalist id="entryMaterialList"></datalist>
+        <label>Quantidade<input id="entryQty" class="tw-field" type="number" step="0.001" min="0.001" value="1"></label>
+        <label>Valor unitário (R$)<input id="entryUnitValue" class="tw-field" type="number" step="0.01" min="0" placeholder="Mantém o custo atual"></label>
+        <button id="entryAddItemBtn" class="btn btn-secondary entry-add-item" type="button">Adicionar material</button>
+        <div class="entry-cart-wrap"><table class="entry-cart-table"><thead><tr><th>Material</th><th>Quantidade</th><th>Valor unitário</th><th></th></tr></thead><tbody id="entryCartBody"></tbody></table><p id="entryCartEmpty" class="exit-cart-empty">Adicione os materiais para registrar a entrada.</p></div>
+        <label>Motivo<select id="entryReason" class="tw-field" required><option value="Devolução da produção">Devolução da produção</option><option value="Compra avulsa">Compra avulsa</option><option value="Estoque inicial">Estoque inicial</option><option value="Outro">Outro</option></select></label>
+        <label>Pedido de origem<select id="entryOp" class="tw-field"><option value="">Carregando pedidos...</option></select></label>
+
+        <label class="span-2">Observação<textarea id="entryNotes" class="tw-field" rows="3"></textarea></label>
+        <input id="entryScrapPhoto" type="file" hidden><input id="entryScrapLength" type="hidden"><input id="entryScrapWidth" type="hidden"><input id="entryScrapThickness" type="hidden">
+        <div id="entryScrapPhotoPreview" hidden></div>
+        <div id="entryScrapFields" hidden></div>
+      </form>
+      <footer class="almox-modal-actions">
+        <button class="btn btn-secondary" type="button" data-close-modal>Cancelar</button>
+        <button id="saveEntryBtn" class="btn btn-primary" type="button">Registrar entrada</button>
+      </footer>
+        </article>
+        <article class="reference-form-panel operation-history-panel">
+          <header class="operation-history-heading"><h2>Entradas registradas</h2><input id="entryHistorySearch" class="tw-field" type="search" placeholder="Buscar material ou referência" aria-label="Buscar no histórico"></header>
+          <div class="operation-history-list"><table><thead><tr><th>Data</th><th>Material / referência</th><th>Quantidade</th><th>Responsável</th></tr></thead><tbody id="entryHistoryBody"></tbody></table></div>
+        </article>
+      </div>
+    </article>
+  </section>
+
+  <section id="invoiceDivergenceModal" class="almox-modal hidden" aria-hidden="true">
+    <div class="almox-modal-backdrop"></div>
+    <article class="almox-modal-card compact" role="dialog" aria-modal="true" aria-labelledby="invoiceDivergenceTitle">
+      <header class="almox-modal-head">
+        <div><h2 id="invoiceDivergenceTitle">Divergência encontrada</h2><p>Informe o motivo para registrar no histórico do recebimento.</p></div>
+      </header>
+      <form id="invoiceDivergenceForm" class="almox-form-grid">
+        <label class="full">Motivo
+          <select id="invoiceDivergenceReason" class="tw-field" required>
+            <option value="">Selecione</option>
+            <option>Material Faltando</option>
+            <option>Material Danificado</option>
+            <option>Entrega Parcial</option>
+            <option>Quantidade Maior</option>
+            <option>Produto Diferente</option>
+            <option>Outro</option>
+          </select>
+        </label>
+        <label class="full">Observação<textarea id="invoiceDivergenceNote" class="tw-field" rows="3"></textarea></label>
+      </form>
+      <footer class="almox-modal-actions">
+        <button id="cancelDivergenceBtn" class="btn btn-secondary" type="button">Cancelar</button>
+        <button id="saveDivergenceBtn" class="btn btn-primary" type="button">Salvar divergência</button>
+      </footer>
+    </article>
+  </section>
+
+  <section id="exitModal" class="almox-modal hidden" data-tab-screen aria-hidden="true">
+    <div class="almox-modal-backdrop" data-close-modal></div>
+    <article class="almox-modal-card compact operation-workspace-card supermarket-exit-card" role="dialog" aria-modal="true" aria-label="Saída">
+      <div class="operation-workspace-grid">
+        <article class="reference-form-panel reference-movement-panel is-exit operation-entry-exit-panel">
+          <header class="reference-panel-header movement-panel-header">
+            <div><h2>Nova Saída</h2></div>
+            <div class="movement-header-operator" aria-label="Responsável pela saída">
+              <span>Responsável pela saída</span>
+              <div class="movement-operator-identity"><span id="exitResponsibleAvatar" class="movement-operator-avatar">--</span><span><strong id="exitReleaseUser">Usuário conectado</strong><small>Identificado automaticamente</small></span></div>
+            </div>
+          </header>
+      <form id="exitForm" class="almox-form-grid supermarket-exit-form">
+        <input id="exitMaterial" type="hidden">
+        <input id="exitQty" type="hidden"><input id="exitUnit" type="hidden">
+        <div class="full exit-top-row">
+          <label class="exit-scanner-label">Código do material<div class="exit-scanner-field"><i data-lucide="scan-barcode"></i><input id="exitScanCode" class="tw-field" list="exitMaterialOptions" autocomplete="off" placeholder="Bipe ou pesquise manualmente"><button id="exitScanBtn" class="btn btn-secondary" type="button">Adicionar</button></div><datalist id="exitMaterialOptions"></datalist></label>
+          <label>Destino<select id="exitPurpose" class="tw-field" required><option value="op">Pedido</option><option value="os">O.S.</option></select></label>
+          <label id="exitOpField">Pedido relacionado<select id="exitOp" class="tw-field"><option value="">Carregando pedidos em produção...</option></select></label>
+          <label id="exitServiceOrderField" class="hidden">O.S. relacionada<select id="exitServiceOrder" class="tw-field"><option value="">Selecione a O.S.</option></select></label>
+        </div>
+        <div id="exitScannedMaterial" class="full exit-scanned-material hidden"></div>
+        <div class="full exit-cart-wrap"><table class="exit-cart-table"><thead><tr><th>Qtd.</th><th>Item</th><th>Valor</th></tr></thead><tbody id="exitCartBody"></tbody></table><div id="exitCartEmpty" class="exit-cart-empty">Bipe o primeiro material para iniciar a saída.</div></div>
+        <div id="exitWarning" class="full almox-warning quantity-stock-warning hidden" role="alert" aria-live="polite"></div>
+        <div class="full exit-cart-summary"><strong id="exitCartMaterials">0 materiais</strong><span id="exitCartUnits">0 unidades</span></div>
+        <label class="full">Observação (opcional)<textarea id="exitNote" class="tw-field" rows="2"></textarea></label>
+      </form>
+      <footer class="almox-modal-actions">
+        <button class="btn btn-secondary" type="button" data-close-modal>Cancelar</button>
+        <button id="saveExitBtn" class="btn btn-primary" type="button"><i data-lucide="key-round"></i> Identificar solicitante</button>
+      </footer>
+        </article>
+        <article class="reference-form-panel operation-history-panel">
+          <header class="operation-history-heading"><h2>Saídas registradas</h2><input id="exitHistorySearch" class="tw-field" type="search" placeholder="Buscar material ou referência" aria-label="Buscar no histórico"></header>
+          <div class="operation-history-list"><table><thead><tr><th>Data</th><th>Material / referência</th><th>Quantidade</th><th>Responsável</th></tr></thead><tbody id="exitHistoryBody"></tbody></table></div>
+        </article>
+      </div>
+    </article>
+  </section>
+
+  <section id="warehouseMoveModal" class="almox-modal hidden" aria-hidden="true"><div class="almox-modal-backdrop" data-close-modal></div><article class="almox-modal-card compact barcode-operation-card" role="dialog" aria-modal="true"><header class="almox-modal-head"><div><h2>Movimentar volume</h2><p>Transfira ou fraccione um volume mantendo lote e rastreabilidade.</p></div><button class="icon-btn" type="button" data-close-modal><i data-lucide="x"></i></button></header><div class="barcode-mode-switch"><button type="button" class="active" data-move-mode="transfer">Transferir</button><button type="button" data-move-mode="split">Fracionar</button></div><label class="barcode-main-field">Bipe o volume<input id="warehouseMoveVolumeCode" class="tw-field" autocomplete="off" placeholder="VOL-00000000"></label><div id="warehouseMoveVolumeResult" class="barcode-result hidden"></div><div id="warehouseTransferFields"><label>Bipe a nova localização<input id="warehouseMoveLocationCode" class="tw-field" autocomplete="off" placeholder="Ex.: A-03-02"></label></div><div id="warehouseSplitFields" class="hidden"><label>Quantidade por novo volume<input id="warehouseSplitQuantity" class="tw-field" type="number" min="0.001" step="0.001"></label><label>Número de volumes<input id="warehouseSplitCount" class="tw-field" type="number" min="1" step="1"></label><p id="warehouseSplitSummary" class="muted-line"></p></div><footer class="almox-modal-actions"><button class="btn btn-secondary" type="button" data-close-modal>Cancelar</button><button id="confirmWarehouseMoveBtn" class="btn btn-primary" type="button">Confirmar transferência</button></footer></article></section>
+  <section id="warehouseSetupModal" class="almox-modal hidden" aria-hidden="true"><div class="almox-modal-backdrop" data-close-modal></div><article class="almox-modal-card compact barcode-operation-card" role="dialog" aria-modal="true"><header class="almox-modal-head"><div><h2>Etiquetas e endereços</h2><p>Cadastre embalagens bipáveis e localizações físicas.</p></div><button class="icon-btn" type="button" data-close-modal><i data-lucide="x"></i></button></header><div class="physical-setup-grid"><form id="barcodeSetupForm"><h3>Código de material</h3><label>Material<select id="barcodeSetupMaterial" class="tw-field" required></select></label><label>Código de barras<input id="barcodeSetupCode" class="tw-field" required></label><label>Unidades por bip<input id="barcodeSetupUnits" class="tw-field" type="number" min="0.001" step="0.001" value="1" required></label><button id="saveBarcodeSetupBtn" class="btn btn-primary" type="button">Salvar código</button></form><form id="locationSetupForm"><h3>Localização</h3><label>Código<input id="locationSetupCode" class="tw-field" placeholder="A-03-02" required></label><label>Nome<input id="locationSetupName" class="tw-field"></label><label>Descrição<input id="locationSetupDescription" class="tw-field"></label><button id="saveLocationSetupBtn" class="btn btn-primary" type="button">Salvar localização</button></form></div></article></section>
+
+  <section id="qrModal" class="almox-modal hidden" aria-hidden="true">
+    <div class="almox-modal-backdrop" data-close-modal></div>
+    <article class="almox-modal-card qr-card" role="dialog" aria-modal="true" aria-labelledby="qrModalTitle">
+      <header class="almox-modal-head">
+        <div><h2 id="qrModalTitle">Ler QR Code</h2><p id="qrModalSubtitle">Aponte a câmera ou digite o código manualmente.</p></div>
+        <button class="icon-btn" type="button" data-close-modal aria-label="Fechar"><i data-lucide="x"></i></button>
+      </header>
+      <div class="qr-body">
+        <video id="qrVideo" playsinline muted></video>
+        <label>Código manual<input id="qrManualInput" class="tw-field" placeholder="Digite ou cole o código"></label>
+        <div id="qrReservationResult" class="qr-reservation-result hidden">
+          <div class="material-name">
+            <strong id="qrResultMaterial"></strong>
+            <span id="qrResultOp"></span>
+          </div>
+          <button id="confirmWithdrawBtn" class="btn btn-primary" type="button">Confirmar retirada</button>
+        </div>
+      </div>
+      <footer class="almox-modal-actions">
+        <button class="btn btn-secondary" type="button" data-close-modal>Cancelar</button>
+        <button id="openQrCodeBtn" class="btn btn-primary" type="button">Abrir registro</button>
+      </footer>
+    </article>
+  </section>
+
+  <section id="labelModal" class="almox-modal hidden" aria-hidden="true">
+    <div class="almox-modal-backdrop" data-close-modal></div>
+    <article class="almox-modal-card compact label-print-card" role="dialog" aria-modal="true" aria-labelledby="labelModalTitle">
+      <header class="almox-modal-head">
+        <div><h2 id="labelModalTitle">Etiqueta do pacote</h2><p>Etiqueta térmica 50 x 70 mm — o QR identifica este pacote especificamente.</p></div>
+        <button class="icon-btn" type="button" data-close-modal aria-label="Fechar"><i data-lucide="x"></i></button>
+      </header>
+      <div class="label-preview-wrap">
+        <div class="label-print-body" id="labelPrintBody"></div>
+      </div>
+      <footer class="almox-modal-actions">
+        <button class="btn btn-secondary" type="button" data-close-modal>Fechar</button>
+        <button id="printLabelBtn" class="btn btn-primary" type="button"><i data-lucide="printer"></i> Imprimir</button>
+      </footer>
+    </article>
+  </section>
+
+  <section id="separationPackageModal" class="almox-modal hidden" aria-hidden="true">
+    <div class="almox-modal-backdrop" data-close-modal></div>
+    <article class="almox-modal-card compact" role="dialog" aria-modal="true" aria-labelledby="separationPackageModalTitle">
+      <header class="almox-modal-head">
+        <div><h2 id="separationPackageModalTitle">Novo volume</h2><p id="separationPackageModalSubtitle">Informe a quantidade separada neste pacote.</p></div>
+        <button class="icon-btn" type="button" data-close-modal aria-label="Fechar"><i data-lucide="x"></i></button>
+      </header>
+      <div class="separation-package-form">
+        <input type="hidden" id="separationPackageId">
+        <input type="hidden" id="separationPackageOrderId">
+        <input type="hidden" id="separationPackageMaterialId">
+        <div class="separation-package-summary">
+          <div><span>Material</span><strong id="separationPackageMaterialName">-</strong></div>
+          <div><span>Quantidade solicitada</span><strong id="separationPackageNecessario">-</strong></div>
+          <div><span>Já separada</span><strong id="separationPackageSeparado">-</strong></div>
+          <div><span>Falta separar</span><strong id="separationPackageRestante" class="metric-danger">-</strong></div>
+        </div>
+        <div class="separation-package-fields">
+          <label>Quantidade deste pacote
+            <input id="separationPackageQty" class="tw-field" type="number" min="0" step="any" placeholder="0" autocomplete="off">
+          </label>
+          <label>Tipo de embalagem
+            <select id="separationPackageTipo" class="tw-field">
+              <option value="Pacote">Pacote</option>
+              <option value="Volume">Volume</option>
+              <option value="Caixa">Caixa</option>
+              <option value="Saco">Saco</option>
+            </select>
+          </label>
+        </div>
+        <p id="separationPackageHint" class="separation-package-hint"></p>
+      </div>
+      <footer class="almox-modal-actions">
+        <button class="btn btn-secondary" type="button" data-close-modal>Cancelar</button>
+        <button id="saveSeparationPackageBtn" class="btn btn-secondary" type="button">Salvar pacote</button>
+        <button id="saveAndPrintSeparationPackageBtn" class="btn btn-primary" type="button">Salvar e imprimir etiqueta</button>
+      </footer>
+    </article>
+  </section>
+
+  <section id="imageModal" class="almox-modal hidden" aria-hidden="true">
+    <div class="almox-modal-backdrop" data-close-modal></div>
+    <article class="image-modal-card" role="dialog" aria-modal="true">
+      <button class="icon-btn" type="button" data-close-modal aria-label="Fechar"><i data-lucide="x"></i></button>
+      <img id="expandedImage" alt="Imagem ampliada">
+    </article>
+  </section>
+
+  <section id="stockAllocationModal" class="almox-modal hidden" data-tab-screen aria-hidden="true">
+    <div class="almox-modal-backdrop" data-close-modal></div>
+    <article class="almox-modal-card compact stock-allocation-modal-card" role="dialog" aria-modal="true" aria-labelledby="stockAllocationTitle">
+      <header class="almox-modal-head">
+        <div><h2 id="stockAllocationTitle">Reservas do material</h2><p id="stockAllocationSubtitle"></p></div>
+        <button class="icon-btn" type="button" data-close-modal aria-label="Fechar"><i data-lucide="x"></i></button>
+      </header>
+      <div id="stockAllocationList" class="stock-allocation-list"></div>
+      <footer class="almox-modal-actions"><button class="btn btn-secondary" type="button" data-close-modal>Fechar</button></footer>
+    </article>
+  </section>
+
+  <section id="movementPinModal" class="almox-modal hidden" aria-hidden="true">
+    <div id="movementPinBackdrop" class="almox-modal-backdrop"></div>
+    <article class="movement-pin-card" role="dialog" aria-modal="true" aria-labelledby="movementPinTitle">
+      <button id="cancelMovementPinBtn" class="icon-btn movement-pin-close" type="button" aria-label="Cancelar"><i data-lucide="x"></i></button>
+      <div id="movementPinAvatar" class="movement-pin-avatar">--</div>
+      <span id="movementPinKicker">AUTORIZAÇÃO DE SAÍDA</span>
+      <h2 id="movementPinTitle">Solicite a senha do solicitante</h2>
+      <p>Peça para <strong id="movementPinRequesterName">o solicitante</strong> informar sua senha de quatro dígitos.</p>
+      <label>Senha do solicitante
+        <input id="movementPinInput" type="password" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="off" aria-describedby="movementPinError" placeholder="• • • •">
+      </label>
+      <small id="movementPinError" class="movement-pin-error" aria-live="polite"></small>
+      <button id="confirmMovementPinBtn" class="btn btn-primary" type="button">Autorizar saída</button>
+      <em>Pressione Enter para confirmar</em>
+    </article>
+  </section>
+
+  <script src="https://unpkg.com/lucide@1.66.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+  <script src="../../js/core/supabase.js"></script>
+  <script src="../../js/core/context.js?v=20261026-limpeza"></script>
+  <script src="../../js/core/permissions.js"></script>
+  <script src="tw-global-alert.js?v=20261116-almox"></script>
+  <script src="tw-report-print.js?v=20261116-almox"></script>
+  <script src="almox-exemplos.js?v=20261120-real"></script>
+  <script src="almox-api.js?v=20261116-linhas-compactas"></script>
+  <script src="../Estoque/Compras/compras-fotos.js?v=20261116-simulacao-almox"></script>
+  <script src="almox-detalhes.js?v=20261116-linhas-compactas"></script>
+  <script src="almox-acervo.js?v=20261116-linhas-compactas"></script>
+  <script src="almox-epi.js?v=20261116-colaboradores-coluna"></script>
+  <script src="almox-vinculos.js?v=20261116-fornecedores-coluna"></script>
+  <script src="almoxarifado.js?v=20261116-alerta-global-saldo"></script>
+  <script src="../Estoque/Compras/nfe-xml-parser.js?v=20261116-almox"></script>
+  <script src="almox-recebimento.js?v=20261116-linhas-compactas"></script>
+  <script type="module" src="almox-producao.mjs?v=20261116-modal-triagem"></script>
+  <script src="almox-entrada-saida.js?v=20261116-saldos-so-pesquisa"></script>
+  <script src="almox-operacoes-ui.js?v=20261116-linhas-compactas"></script>
+</body>
+</html>

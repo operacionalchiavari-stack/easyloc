@@ -61,7 +61,7 @@ body :is(#main-content, .el-page) td .status { display:inline-flex; align-items:
 .el-alert__icon svg { width:16px; height:16px; stroke-width:2.4; }
 .el-alert h4 { margin:0 0 3px; font-size:15px; line-height:1.15; font-weight:600; color:var(--el-color-title); }
 .el-alert p { margin:0; font-size:13px; font-weight:600; line-height:1.35; color:var(--el-color-muted); overflow-wrap:anywhere; white-space:pre-line; }
-.el-alert button { min-height:34px; padding:0 14px; font-size:13px; font-weight:600; border-radius:var(--el-radius-xs); }
+html:root .el-alert button.btn { min-height:26px!important; height:auto!important; padding:4px 9px!important; font-size:11px!important; line-height:1.2!important; font-weight:600; border-radius:var(--el-radius-xs); }
 .el-alert__progress { position:absolute; inset:auto 0 0; height:3px; background:var(--alert-color); opacity:.28; transform-origin:left; animation:elAlertTimer var(--alert-duration,4000ms) linear forwards; }
 @keyframes elAlertTimer { to { transform:scaleX(0); } }
 .el-alert-confirm { position:fixed; inset:0; z-index:1000002; display:grid; place-items:center; padding:22px; background:rgba(31,32,32,0.16); }
@@ -210,3 +210,7 @@ body :is(#main-content, .el-page) :is(.table-wrapper,.table-wrap) + .easyloc-lis
 :is(#main-content, .el-page) .stat-body small { font-size:10px!important; line-height:1.15!important; }
 
 .el-alert-confirm.el-alert-confirm--top{align-items:start;justify-items:center;overflow-y:auto;padding-top:max(22px,env(safe-area-inset-top));box-sizing:border-box}
+
+html:root .el-alert:has(>.el-alert__close){grid-template-columns:30px minmax(0,1fr);padding-right:36px}
+html:root .el-alert button.el-alert__close{position:absolute;top:6px;right:6px;display:grid;place-items:center;width:22px!important;height:22px!important;min-width:22px!important;min-height:22px!important;padding:0!important;border:0!important;border-radius:5px;background:transparent!important;color:#66717e!important;font-size:19px!important;line-height:1!important;box-shadow:none!important}
+html:root .el-alert button.el-alert__close:hover{background:#eef1f4!important;color:#1f2020!important}

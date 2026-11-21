@@ -32,9 +32,12 @@ const RENDERS = [
   const app = express();
   app.get('/host-pedido.html', (req, res) => {
     const renders = req.query.renders ? RENDERS : [];
-    res.type('html').send(`<!doctype html><html><body style="margin:0">
+    res.type('html').send(`<!doctype html><html><body style="margin:0"><script src="/js/core/linkPagamento.js"></script>
 <script>
-  window.__PEDIDO_ATUAL_ID='ped-salvo';window.__pedidoGravarProjetoComercial=async p=>{window.__projetoGravado=p;return true;};
+  const rpcOriginal=window.supabaseClient.rpc.bind(window.supabaseClient);window.supabaseClient.rpc=(n,a)=>n==='pagamento_link_obter'?Promise.resolve({data:{slug:'link-teste',pin:'123456',pagamentos:0},error:null}):rpcOriginal(n,a);
+  window.__publicacao=[];window.__PEDIDO_ATUAL_ID='ped-salvo';window.__pedidoGravarProjetoComercial=async p=>{if(window.__retardarGravacao)await new Promise(r=>window.__liberarGravacao=r);if(window.__falharGravacao)throw Error('Falha simulada de sincronização');window.__projetoGravado=p;window.__publicacao.push('projeto');return true;};
+  window.__pedidoLinkPlantas=async plantas=>{await new Promise(r=>setTimeout(r,80));window.__plantasLink=plantas;window.__publicacao.push('plantas');return true;};
+  window.__pedidoAbrirLink=({preparar}={})=>window.EasyLocLinkPagamento.abrir({empresaId:'company',pedidoId:window.__PEDIDO_ATUAL_ID,numero:'2178',preparar:async()=>{await preparar?.();window.__linkAbertoCom=structuredClone(window.__projetoGravado);window.__linkPlantas=structuredClone(window.__plantasLink);window.__publicacao.push('link');}});
   window.__pedidoClienteAtual = { nome: 'Lis Baêtas', foto: 'https://fixture/lis.png' };
   const projeto = { id: 'ped-1', noivos: 'Lis Baêtas', data_evento: '2026-11-11', data_evento_fim: '2026-11-13', local_evento: 'Vale dos Desejos', status: 'rascunho',
     dados: { ambientes: [{ id: 'a1', nome: 'Lounge', itens: [{ item_id: '1', quantidade: 2 }], renders: ${JSON.stringify(renders)}, notas: '' }], plantas: [] } };
@@ -76,7 +79,7 @@ const RENDERS = [
     return { context, page, cat, frame, errors };
   }
 
-  // 1) Sem imagens: Ver pedido e PDF, sem botão de renderizar.
+  // Sem cenas: o botão permanece visível e explica por que está desabilitado.
   {
     const { context, cat, frame, errors } = await abrir('');
     assert.equal(await cat.locator('.pa-geral-footer, [data-cpj="ver-pedido-comercial"], [data-cpj="enviar"]').count(), 0, 'Lista Completa sem Ver pedido e PDF e sem Salvar pedido');
@@ -96,7 +99,9 @@ const RENDERS = [
     assert.equal(await d.locator('.cpj-order-notice').count(), 0, 'no pedido do Comercial não há o card de prévia');
     assert.equal((await d.locator('.cpj-order-kind').textContent()).trim(), 'PEDIDO Nº 2178', 'número no lugar de Prévia do pedido');
     assert.equal((await d.locator('.cpj-order-brand .cpj-order-status').textContent()).trim(), 'Pré-reserva até 05/11/2026', 'status ao lado da logo');
-    assert.deepEqual(r.amb, ['Lounge']); assert.deepEqual(r.botoes, ['Imprimir', 'Gerar PDF'], 'sem imagens: sem botão de renderizar');
+    assert.deepEqual(r.amb, ['Lounge']); assert.deepEqual(r.botoes, ['Link do pedido', 'Imprimir', 'Gerar PDF', 'Renderizar com IA']);
+    assert.equal(await d.locator('[data-pedido-renderizar]').isDisabled(),true,'sem cenas salvas, botão visível e desabilitado');
+    assert.match(await d.locator('[data-pedido-renderizar]').getAttribute('title'),/Adicione uma composição/);
     const fin = await d.evaluate((el) => ({ resumo: el.querySelector('.cpj-order-financeiro-resumo')?.innerText || '', pag: el.querySelector('.cpj-order-financeiro-parcelas')?.innerText || '' }));
     assert.match(fin.resumo, /Valor de locação[\s\S]*700,00[\s\S]*Frete[\s\S]*Montagem[\s\S]*Total do pedido[\s\S]*1\.000,00/, 'resumo do pedido no fim: ' + fin.resumo);
     assert.ok(!/Desconto/.test(fin.resumo), 'linha zerada não aparece');
@@ -113,13 +118,15 @@ const RENDERS = [
   // 2) Com prints do 3D: "Renderizar projeto com IA" renderiza os 2 prints com cena, nada mais.
   {
     const { context, page, cat, frame, errors } = await abrir('?renders=1');
+    assert.equal(await cat.locator('.cpj-geral-botoes [data-cpj="renderizar-projeto"]').isVisible(),true,'renderizar também aparece na Lista Completa');
+    assert.match(await cat.locator('.cpj-geral-botoes [data-cpj="renderizar-projeto"]').innerText(),/Renderizar com IA \(2 imagens\)/);
     await frame().evaluate(() => window.abrirPedidoComercialPedido());
     const d = cat.locator('.cpj-aba-pedido'); await d.waitFor({ timeout: 10000 });
     const botao = d.locator('[data-pedido-renderizar]');
     assert.equal((await botao.textContent()).trim(), 'Renderizar com IA (2 imagens)', 'conta só os prints com cena');
     assert.equal(await d.locator('.cpj-order-renders img').count(), 4);
     await botao.click();
-    await frame().waitForFunction(() => window.__ia.length === 2 && !document.querySelector('[data-pedido-renderizar]'), null, { timeout: 30000 });
+    await frame().waitForFunction(() => window.__ia.length === 2 && document.querySelector('[data-pedido-renderizar]')?.textContent.includes('Renderizar novamente') && !document.querySelector('[data-pedido-renderizar]').disabled, null, { timeout: 30000 });
     const r = await frame().evaluate(() => ({
       politicas: window.__ia.map((c) => c.name + ':' + c.body?.scene?.referencePolicy),
       imgs: [...document.querySelectorAll('.cpj-aba-pedido .cpj-order-renders img')].map((i) => i.getAttribute('src')),
@@ -136,6 +143,43 @@ const RENDERS = [
     assert.deepEqual(rs.map((x) => x.cena?.tipo || null), ['ia', 'ia', 'ia', null]);
     assert.deepEqual(rs.slice(0, 2).map((x) => x.cena.url), ['https://fixture/cenas/c1.json', 'https://fixture/cenas/c2.json'], 'a cena continua guardada (editor de cena)');
     console.log('ok 5 - Renderizar projeto: 2 prints viram renderização de IA (estúdio), IA e print sem cena intactos, gravado no pedido');
+    assert.equal((await botao.innerText()).trim(),'Renderizar novamente com IA (3 imagens)','o botão continua disponível depois de renderizar');
+    await frame().evaluate(()=>window.abrirProjetoComercialPedido());
+    const refazer=cat.locator('.cpj-geral-botoes [data-cpj="renderizar-projeto"]');
+    assert.equal(await refazer.innerText(),'Renderizar novamente com IA (3 imagens)');
+    await refazer.click();
+    await frame().waitForFunction(()=>window.__ia.length===5 && document.querySelector('[data-cpj="renderizar-projeto"]')?.disabled===false,null,{timeout:30000});
+    const refeitas=await page.evaluate(()=>window.__sincronizados.at(-1).dados.ambientes[0].renders);
+    assert.equal(refeitas[3].url,rs[3].url,'imagem sem cena nunca é sobrescrita');
+    assert.deepEqual(refeitas.slice(0,3).map(r=>r.cena.url),RENDERS.slice(0,3).map(r=>r.cena.url),'refaz a partir das cenas originais');
+    assert.ok(refeitas.slice(0,3).every((r,i)=>r.url!==rs[i].url),'substitui as três imagens de IA e preserva as cenas 3D');
+    console.log('ok 5b - botão permanece e permite refazer imagens de IA a partir das cenas originais');
+    await frame().evaluate(()=>window.abrirPedidoComercialPedido());await d.waitFor();
+    await frame().evaluate(()=>document.documentElement.style.setProperty('--el-color-on-accent','#162e43'));
+    assert.equal(await d.locator('[data-pedido-link]').evaluate(el=>getComputedStyle(el).color),'rgb(255, 255, 255)','texto do link permanece branco com qualquer cor de texto do tema');
+    await d.locator('[data-pedido-link]').click();
+    await page.waitForFunction(()=>window.__linkAbertoCom?.dados?.ambientes[0]?.renders.length===4);
+    const publicacao=await page.evaluate(()=>({projeto:window.__linkAbertoCom,plantas:window.__linkPlantas,ordem:window.__publicacao}));
+    assert.deepEqual(publicacao.projeto.dados.ambientes[0].renders.map(r=>r.url),refeitas.map(r=>r.url),'link abre com as renderizações atuais gravadas');
+    assert.deepEqual(publicacao.plantas,[],'sem plantas, limpa também a cópia do link');
+    assert.equal(publicacao.ordem.at(-1),'link','aguarda salvar projeto e plantas antes de exibir o link');
+    await page.locator('.elp-dialog .elp-codigo').waitFor();
+    assert.match(await page.locator('.elp-dialog input[aria-label="Link de pagamento"]').inputValue(),/p=link-teste$/,'o botão abre a janela real com link e código');
+    await page.locator('.elp-dialog [data-elp-fechar]').click();
+    await page.evaluate(()=>{window.__retardarGravacao=true;});
+    await d.locator('[data-pedido-link]').click();
+    await page.locator('.elp-dialog[open]').waitFor();
+    assert.match(await page.locator('.elp-dialog').innerText(),/Atualizando pedido e imagens/,'janela aparece antes de terminar a gravação');
+    assert.equal(await page.locator('.elp-dialog .elp-codigo').count(),0,'não oferece link antes de confirmar a sincronização');
+    await page.waitForFunction(()=>typeof window.__liberarGravacao==='function');
+    await page.evaluate(()=>{window.__retardarGravacao=false;window.__liberarGravacao();});
+    await page.locator('.elp-dialog .elp-codigo').waitFor();await page.locator('.elp-dialog [data-elp-fechar]').click();
+    await page.evaluate(()=>{window.__falharGravacao=true;});
+    await d.locator('[data-pedido-link]').click();
+    await page.locator('.elp-dialog .elp-erro').waitFor();assert.match(await page.locator('.elp-erro').innerText(),/Falha simulada/);
+    await page.evaluate(()=>{window.__falharGravacao=false;});
+    await page.locator('.elp-dialog [data-elp-tentar]').click();await page.locator('.elp-dialog .elp-codigo').waitFor();await page.locator('.elp-dialog [data-elp-fechar]').click();
+    console.log('ok 5c - clique abre a janela real imediatamente; aguarda gravação, mostra erro e permite tentar novamente');
     const removidos = await frame().evaluate(() => JSON.parse(sessionStorage.getItem('mockdb') || '{}').removed || []);
     assert.deepEqual(removidos, [], 'arquivos originais do projeto preservados ao editar o pedido comercial');
     console.log('ok 6 - os arquivos dos prints antigos saem do Storage');
@@ -160,6 +204,11 @@ const RENDERS = [
     const fim = await tamanhos('.cpj-order-render-group img');
     assert.equal(fim.length, 4); assert.equal(new Set(fim).size, 1, 'fotos no final: todas do mesmo tamanho ' + fim);
     console.log('ok 7 - layout horizontal: fotos ao lado, PDF deitado; volta para Fotos no final');
+    await frame().evaluate(()=>window.abrirProjetoComercialPedido());
+    await cat.locator('[data-cpj-render="r1"] [data-cpj="render-remover"]').click();
+    await page.waitForFunction(()=>window.__projetoGravado?.dados?.ambientes[0]?.renders.length===3);
+    assert.equal(await page.evaluate(()=>window.__projetoGravado.dados.ambientes[0].renders.some(r=>r.id==='r1')),false,'remoção da imagem já fica salva para o link existente');
+    console.log('ok 8 - link aguarda publicação atual e remoção de renderização é persistida');
     assert.deepEqual(errors, [], errors.join('\n'));
     await context.close();
   }

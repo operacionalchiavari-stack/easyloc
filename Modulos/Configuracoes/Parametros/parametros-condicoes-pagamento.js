@@ -81,9 +81,12 @@
       const i = itens.findIndex((x) => x.id === li.dataset.id);
       if (e.target.matches('[data-subir],[data-descer]')) {
         const j = e.target.matches('[data-subir]') ? i - 1 : i + 1; if (j < 0 || j >= itens.length) return;
-        [itens[i], itens[j]] = [itens[j], itens[i]];
-        await Promise.all(itens.map((x, k) => (x.ordem === k + 1 ? null : sb.from('comercial_condicoes_pagamento').update({ ordem: k + 1 }).eq('id', x.id).then(() => { x.ordem = k + 1; }))));
-        pintar(); aviso('Ordem salva.');
+        const ordenados=[...itens];[ordenados[i],ordenados[j]]=[ordenados[j],ordenados[i]];
+        lista.querySelectorAll('button').forEach(b=>b.disabled=true);
+        try{const {error}=await sb.rpc('comercial_condicoes_reordenar',{p_empresa:empresa,p_ids:ordenados.map(x=>x.id)});if(error)throw error;itens=ordenados.map((x,k)=>({...x,ordem:k+1}));aviso('Ordem salva.');}
+        catch(err){aviso('Não foi possível ordenar: '+err.message,true);}
+        finally{pintar();}
+
       }
       if (e.target.matches('[data-excluir]')) {
         const ok = typeof window.confirmarGlobal === 'function' ? await window.confirmarGlobal('Excluir a condição "' + itens[i].nome + '"? Pedidos que já usaram continuam com ela gravada.', 'Excluir condição', { confirmarTexto: 'Excluir', cancelarTexto: 'Voltar' }) : confirm('Excluir esta condição?');

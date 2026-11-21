@@ -87,9 +87,9 @@ const QR = "/* qrcodejs falso */ window.QRCode = function(el, o){ const c = docu
   assert.ok((await page.textContent("#separacaoQrItens")).includes("Parte do kit: Sofá Becca (kit)"));
   console.log("ok 1 - kit vira os componentes (2 corpos, 6 almofadas), sem a linha do kit");
   await page.locator('#separacaoQrItens [data-reportar-problema]').first().click();
-  await page.locator('.so-dialog').waitFor();
-  assert.match(await page.locator('.so-dialog').innerText(),/Cadastre ou ative os tipos/);
-  await page.click('.so-dialog [data-fechar]');
+  await page.getByText(/Cadastre os tipos de problema da separação/).waitFor();
+  assert.equal(await page.locator('.so-dialog').count(),0,'sem abrir fluxo vazio quando não há tipos cadastrados');
+  await page.getByRole('button',{name:'Fechar alerta',exact:true}).last().click();
 
   await page.locator('#btnFinalizarSeparacao').click();await page.locator('.separacao-pendencias-dialog[open]').waitFor();
   assert.equal(await page.locator('.separacao-pendencias-dialog tbody tr').count(),3);assert.match(await page.locator('.separacao-pendencias-dialog').innerText(),/Almofada/);await page.locator('.separacao-pendencias-dialog button').click();

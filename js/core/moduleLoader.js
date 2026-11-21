@@ -25,6 +25,18 @@ window.moduleLoadingIndicator = (() => {
   return { show, hide };
 })();
 
+/* Live Server (computador local) injeta o script de recarga em cada </svg> de um HTML sem </body> (as telas
+   antigas são fragmentos), mas avisa ao navegador o tamanho do arquivo contando UMA injeção só: com dois ou mais
+   </svg>, o fim da tela chega cortado (15/11/2026: a Disponibilidade perdeu a tabela). Uma injeção só é removida
+   (não serve para nada dentro de innerHTML); mais de uma vira erro claro em vez de uma tela pela metade.
+   Regra: fragmento de tela antiga não tem </svg>, </head> nem </body> escritos (tests/fragmentos-live-server.test.cjs). */
+const MARCA_LIVE_SERVER = /<!-- Code injected by live-server -->\s*<script>[\s\S]*?<\/script>\s*/g;
+function removerInjecaoLiveServer(html, origem){
+  const qtd = (html.match(/<!-- Code injected by live-server -->/g) || []).length;
+  if(qtd > 1) throw new Error("A tela " + origem + " chegou cortada pelo Live Server: o arquivo tem " + qtd + " pontos de injeção (</svg>, </head> ou </body>). Tire essas marcas do HTML da tela.");
+  return qtd ? html.replace(MARCA_LIVE_SERVER, "") : html;
+}
+
 window.carregarNaMain = async function (
   htmlPath,
   jsPath,
@@ -182,7 +194,7 @@ delete window.__caminhoesEventosAtivos;
     ===================== */
     const response = await fetch(htmlPath);
     if(!response.ok) throw new Error("A tela não foi encontrada (" + response.status + ").");
-    const html = await response.text();
+    const html = removerInjecaoLiveServer(await response.text(), htmlPath);
 
     main.innerHTML = html;
     normalizarBotoesGlobais(main);
@@ -274,7 +286,7 @@ script.onload = () => {
     const aviso = document.createElement("div");
     aviso.setAttribute("role", "alert");
     aviso.style.cssText = "margin:32px auto;max-width:560px;padding:20px 24px;border:1px solid #f1c4c0;border-radius:12px;background:#fdf1f0;color:#7a1f17;font:15px/1.5 Inter,system-ui,sans-serif";
-    aviso.innerHTML = "<strong>Não foi possível abrir esta tela.</strong><br>" + (navigator.onLine ? "Confira se o sistema está no ar (no computador local: o Live Server ligado) e tente de novo." : "Sem conexão com a internet.");
+    aviso.innerHTML = "<strong>Não foi possível abrir esta tela.</strong><br>" + (/live server/i.test(err?.message || "") ? String(err.message).replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" })[c]) : navigator.onLine ? "Confira se o sistema está no ar (no computador local: o Live Server ligado) e tente de novo." : "Sem conexão com a internet.");
     if(main){ main.innerHTML = ""; main.append(aviso); }
   }
 finally{

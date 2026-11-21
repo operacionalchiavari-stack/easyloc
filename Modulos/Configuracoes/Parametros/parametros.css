@@ -275,3 +275,64 @@ html:root #parametrosPagina .pr-painel-cards #logisticaManualParametros{margin-t
 
 /* Nov/2026: App do Montador · dias à frente (dois números lado a lado) */
 .pr-app-montador .pr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,280px));gap:14px;margin:6px 0 10px}
+.ia-parametros{display:grid;grid-template-columns:260px minmax(0,1fr);gap:20px}.ia-parametros nav{display:grid;align-content:start;gap:8px}.ia-parametros nav button{text-align:left;border:1px solid #dce4ed;border-radius:12px;background:#fff;padding:14px;cursor:pointer}.ia-parametros nav button[aria-pressed=true]{border-color:#469572;background:#edf8f1}.ia-parametros nav strong,.ia-parametros nav small{display:block}.ia-parametros nav small{font-size:12px;color:#65758a;margin-top:5px}.ia-parametros form{display:grid;gap:20px}.ia-parametros .pr-campo{display:grid;gap:8px}.ia-parametros textarea{width:100%;box-sizing:border-box;resize:vertical;line-height:1.55;padding:12px;border:1px solid #dce4ed;border-radius:10px;font:inherit}.ia-parametros .pr-acoes{flex-wrap:wrap}@media(max-width:760px){.ia-parametros{grid-template-columns:1fr}.ia-parametros nav{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Abas em uma linha; telas estreitas mantem a navegacao por rolagem. */
+html:root #parametrosPagina .pr-abas{flex-wrap:nowrap;gap:14px;overflow-x:auto;align-items:flex-end;padding-bottom:8px}
+.pr-abas-equipe-ia{display:contents}
+html:root #parametrosPagina .pr-abas-grupo{flex:none}
+html:root #parametrosPagina .pr-abas-botoes{flex-wrap:nowrap}
+html:root #parametrosPagina .pr-abas button{white-space:nowrap;padding:10px;font-size:12px}
+
+/* Navegação dos parâmetros por assunto. */
+.pr-layout{display:grid;grid-template-columns:224px minmax(0,1fr);align-items:start;gap:28px}
+.pr-menu{position:sticky;top:16px;min-width:0;background:#fff;border:1px solid #e0e6ed;border-radius:16px;padding:16px 12px;box-shadow:0 3px 14px #142c4010}
+.pr-menu summary{display:none}
+html:root #parametrosPagina .pr-menu .pr-abas{display:flex;flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:20px;overflow:visible;padding:0;margin:0!important}
+html:root #parametrosPagina .pr-menu .pr-abas-grupo{display:flex;flex-direction:column;gap:6px;width:100%}
+html:root #parametrosPagina .pr-menu .pr-abas-rotulo{padding:0 10px;font-size:10px;line-height:1.5;letter-spacing:.08em;color:#7c8795}
+html:root #parametrosPagina .pr-menu .pr-abas-botoes{display:flex;flex-direction:column;gap:3px}
+html:root #parametrosPagina .pr-menu .pr-abas button{width:100%;box-sizing:border-box;text-align:left;white-space:normal;line-height:1.4;padding:10px 12px;border:1px solid transparent;border-radius:9px;background:transparent;color:#465467;font:500 13px Inter,sans-serif;box-shadow:none;letter-spacing:0;text-transform:none;min-height:0}
+html:root #parametrosPagina .pr-menu .pr-abas button:hover{background:#f3f6f8;color:#203b35}
+html:root #parametrosPagina .pr-menu .pr-abas button[aria-selected=true]{background:#e9f4ed;border-color:#cfe4d7;color:#246b48;font-weight:600}
+html:root #parametrosPagina .pr-menu .pr-abas button:focus-visible{outline:2px solid #469572;outline-offset:2px}
+.pr-conteudo{min-width:0}
+.pr-secao-cabecalho{margin:0 0 18px;padding:0 0 14px;border-bottom:1px solid #dfe5ec}
+.pr-secao-cabecalho>span{display:block;margin-bottom:5px;color:#7c8795;font:500 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase}
+.pr-secao-cabecalho>h3{margin:0;font:600 20px Inter,sans-serif;color:#243447}
+@media(max-width:800px){
+ .pr-layout{grid-template-columns:minmax(0,1fr);gap:20px}
+ .pr-menu{position:static;padding:0}
+ .pr-menu summary{display:flex;flex-direction:column;gap:4px;position:relative;padding:14px 42px 14px 16px;cursor:pointer;list-style:none}
+ .pr-menu summary::-webkit-details-marker{display:none}
+ .pr-menu summary>span{font:500 11px Inter,sans-serif;color:#7c8795}
+ .pr-menu summary>strong{font:600 14px Inter,sans-serif;color:#246b48}
+ .pr-menu summary::after{content:'⌄';position:absolute;right:18px;top:20px;font-size:20px;color:#637586}
+ .pr-menu details[open] summary{border-bottom:1px solid #e5ebf0}
+ .pr-menu details[open] summary::after{transform:rotate(180deg)}
+ html:root #parametrosPagina .pr-menu .pr-abas{padding:16px!important;gap:16px}
+}
+
+/* O menu lateral usa controles de secao, sem a aparencia das abas globais. */
+html:root:is(#prMenu#prMenu#prMenu,html) #parametrosPagina .pr-menu .pr-abas{align-items:stretch!important;gap:16px!important}
+html:root:is(#prMenu#prMenu#prMenu,html) #parametrosPagina .pr-menu .pr-abas button{justify-content:flex-start!important;text-align:left!important;text-transform:none!important;white-space:normal!important;min-height:36px!important;padding:8px 12px!important;border:1px solid transparent!important;border-radius:9px!important;letter-spacing:0!important;font:500 13px/1.4 Inter,sans-serif!important;background:transparent!important;color:#465467!important}
+html:root:is(#prMenu#prMenu#prMenu,html) #parametrosPagina .pr-menu .pr-abas button[aria-selected=true]{background:#e9f4ed!important;border-color:#cfe4d7!important;color:#246b48!important;font-weight:600!important}
+html:root:is(#prMenu#prMenu#prMenu,html) #parametrosPagina .pr-menu .pr-abas button:hover{background:#f3f6f8!important}
+@media(max-width:800px){html:root:is(#prMenu#prMenu#prMenu,html) #parametrosPagina .pr-menu .pr-abas{padding:16px!important}}
+
+/* 15/11/2026: pós-venda: categorias do formulário da ligação */
+.pr-pv-cat{border:1px solid #e3e7ec;border-radius:12px;padding:12px 14px;margin:0 0 14px;background:#fbfcfd}
+.pr-pv-cat-topo{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pr-pv-cat-nome{flex:1;max-width:360px;font-weight:600!important;font-size:15px!important}
+.pr-pv-cat-topo small{color:#6b6b6b}
+.pr-pv-cat-topo .pr-pv-ordem{margin-left:auto}
+.pr-pv-cat .pr-pv-pergunta{background:#fff}
+.pr-pv-nova-perg{margin-top:4px}
+.pr-pv-mover{margin-top:8px;display:inline-flex;align-items:center;gap:6px}
+.pr-sinais-lista{display:grid;gap:12px;margin:20px 0}
+.pr-sinal-regra{display:grid;grid-template-columns:minmax(180px,1.4fr) minmax(170px,1fr) minmax(130px,.7fr);gap:18px;align-items:center;padding:14px;border:1px solid #dce4ec;border-radius:10px;background:#fff}
+.pr-sinal-regra>label{display:flex;flex-direction:column;gap:7px;font-size:14px;min-width:0}
+.pr-sinal-regra>label:first-child{display:block;font-weight:600}
+.pr-sinal-regra input[type=number],.pr-sinal-regra select{width:100%;min-width:0;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#24364e;font:inherit}
+.pr-sinal-regra input[type=checkbox]{width:18px;height:18px;vertical-align:middle;margin-right:8px}
+@media(max-width:700px){.pr-sinal-regra{grid-template-columns:1fr}.pr-sinal-regra>label{font-size:14px}}

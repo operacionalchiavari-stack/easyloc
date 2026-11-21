@@ -24,7 +24,7 @@ const mockSupabase = `
       eq(c, v){ linhas = linhas.filter((l) => !(c in l) || String(l[c]) === String(v)); return q; },
       in(c, vs){ linhas = linhas.filter((l) => vs.map(String).includes(String(l[c]))); return q; },
       single(){ unico = true; return q; }, maybeSingle(){ unico = true; return q; },
-      update(){ return q; }, insert(){ return q; }, upsert(p){ window.__gravado = p; return q; }, delete(){ return q; },
+      update(){ return q; }, insert(){ return q; }, upsert(p){ window.__gravado = p; banco[tabela] = [p]; return q; }, delete(){ return q; },
       then(ok, erro){ return Promise.resolve({ data: unico ? (linhas[0] || null) : linhas, error: null }).then(ok, erro); }
     };
     return q;
@@ -80,6 +80,14 @@ const mockSupabase = `
   assert.deepStrictEqual(await page.evaluate(() => window.__salvo), { p_empresa: "e1", p_automatica: true, p_edita_financeiro: true });
   await page.screenshot({ path: process.env.SHOT || require("os").tmpdir() + "/param-almox.png" });
   console.log("ok 2 - ligar e salvar chama almox_compra_config_salvar (compra automática + almoxarifado lança pagamento) e mostra as solicitações abertas");
+  await page.waitForFunction(()=>!document.getElementById('btnSalvarJustificativasContagem').disabled);
+  await page.fill('#almoxJustificativasContagem','curt');await page.click('#btnSalvarJustificativasContagem');
+  assert.match(await page.textContent('#almoxJustificativasStatus'),/5 caracteres/);
+  await page.fill('#almoxJustificativasContagem','Perda identificada\nErro na entrada\nPerda identificada');
+  await page.click('#btnSalvarJustificativasContagem');
+  await page.waitForFunction(()=>document.getElementById('almoxJustificativasStatus').textContent==='Justificativas salvas.');
+  assert.deepStrictEqual(await page.evaluate(()=>({empresa:__gravado.empresa_id,chave:__gravado.chave,valor:__gravado.valor})),{empresa:'e1',chave:'contagem_justificativas',valor:['Perda identificada','Erro na entrada']});
+  assert.strictEqual(await page.inputValue('#almoxJustificativasContagem'),'Perda identificada\nErro na entrada');
   assert.deepStrictEqual(erros, []);
   console.log("todos os testes passaram");
   await browser.close();

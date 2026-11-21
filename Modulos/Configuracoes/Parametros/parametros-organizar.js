@@ -62,6 +62,7 @@
     const cronVis = [...host.querySelectorAll(':scope>section.pr-card')].find(s => /cronograma/i.test(s.querySelector('h3')?.textContent || ''));
     const modos = host.querySelector('.pr-separacao-modos');
     const setoresSep = host.querySelector('.pr-separacao-setores');
+    const gruposSep = host.querySelector('.pr-grupos-separacao');
     const uber = host.querySelector('.pr-uber-faixas');
     const divergencias = host.querySelector('.pr-divergencias');
     const carregCam = host.querySelector('.pr-carregamento-caminhao');
@@ -103,6 +104,7 @@
         opCegas,
         titulo(modos, 'Modos de separação'),
         titulo(setoresSep, 'Setores da separação'),
+        titulo(gruposSep, 'Grupos de separação'),
         titulo(divergencias, 'Divergências de contagem'),
         titulo(carregCam, 'Carregamento sem caminhão programado'),
         titulo(qualidade, 'Inventário · colunas da contagem')
@@ -120,7 +122,6 @@
     const sobras = [...host.children].filter(n => !n.hidden && !n.classList.contains('pr-grupo') && (n.textContent.trim() || n.querySelector('input,select,button')));
     host.replaceChildren(...grupos.filter(g => g.querySelector('.pr-card')));
     if (sobras.length) host.append(grupo('Outros', sobras));
-    atualizarSumario();
   };
 
   // ---- Outras abas: títulos e cards ------------------------------------------------------------------------------
@@ -155,45 +156,13 @@
   }
 
   // ---- Índice da aba ---------------------------------------------------------------------------------------------
-  let sumario, agendado = 0;
+  let agendado = 0;
   function painelVisivel() { return [...document.querySelectorAll('#parametrosPagina [role=tabpanel]')].find(p => !p.hidden && !p.closest('[hidden]')); }
-  function cardsDe(raiz) {
-    return [...raiz.querySelectorAll('.pr-card, .escala-parametros-card, .ps > section')]
-      .filter(c => !c.hidden && !c.parentElement.closest('.pr-card') && c.querySelector(':scope>h1,:scope>h2,:scope>h3'));
-  }
-  function nomeCard(c) { return c.dataset.prCard || c.querySelector(':scope>h1,:scope>h2,:scope>h3').textContent.trim(); }
-  function atualizarSumario() {
-    if (!sumario) return;
-    const p = painelVisivel();
-    const mostrar = v => { if (sumario.hidden !== !v) sumario.hidden = !v; };
-    if (!p) { mostrar(false); return; }
-    const grupos = [...p.querySelectorAll('.pr-grupo')];
-    const blocos = grupos.length ? grupos.map(g => [g.dataset.prGrupo, cardsDe(g)]) : [['', cardsDe(p)]];
-    const total = blocos.reduce((t, b) => t + b[1].length, 0);
-    if (total < 2) { mostrar(false); if (sumario.innerHTML) sumario.innerHTML = ''; return; }
-    blocos.forEach(([, cards]) => cards.forEach(c => { if (!c.id) c.id = 'pr-card-' + slug(nomeCard(c)); }));
-    const html = '<span class="pr-sumario-rotulo">Nesta aba</span>' + blocos.filter(b => b[1].length).map(([g, cards]) =>
-      '<div class="pr-sumario-grupo">' + (g ? '<strong>' + g + '</strong>' : '') + cards.map(c => '<a href="#' + c.id + '" data-ir="' + c.id + '">' + nomeCard(c) + '</a>').join('') + '</div>').join('');
-    if (sumario.innerHTML !== html) sumario.innerHTML = html;
-    mostrar(true);
-  }
-  function agendar() { cancelAnimationFrame(agendado); agendado = requestAnimationFrame(() => { const p = painelVisivel(); if (p) organizarPainel(p.id.replace('pr-painel-', '')); atualizarSumario(); }); }
+  function agendar() { cancelAnimationFrame(agendado); agendado = requestAnimationFrame(() => { const p = painelVisivel(); if (p) organizarPainel(p.id.replace('pr-painel-', '')); }); }
   window.prParametrosAoTrocar = agendar;
 
   function iniciar() {
-    const abas = document.querySelector('#parametrosPagina .pr-abas');
-    if (!abas) return;
-    sumario = document.createElement('nav');
-    sumario.className = 'pr-sumario'; sumario.id = 'prSumario'; sumario.hidden = true;
-    sumario.setAttribute('aria-label', 'Assuntos desta aba');
-    abas.after(sumario);
-    sumario.addEventListener('click', e => {
-      const a = e.target.closest('[data-ir]'); if (!a) return;
-      e.preventDefault();
-      const alvo = document.getElementById(a.dataset.ir);
-      alvo?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      alvo?.classList.remove('pr-card-destaque'); void alvo?.offsetWidth; alvo?.classList.add('pr-card-destaque');
-    });
+    if (!document.getElementById('parametrosPagina')) return;
     new MutationObserver(agendar).observe(document.getElementById('parametrosPagina'), { childList: true, subtree: true, attributes: true, attributeFilter: ['hidden'] });
     agendar();
   }

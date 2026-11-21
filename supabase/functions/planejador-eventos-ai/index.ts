@@ -1,3 +1,4 @@
+import { instrucoesEmpresa } from '../_shared/ia-config.ts';
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
@@ -196,7 +197,7 @@ async function gerarComOpenAI(input: PlannerInput) {
       temperature: 0.2,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: systemPrompt() },
+        { role: "system", content: systemPrompt()+await instrucoesEmpresa(input.empresa_id,"planejador") },
         { role: "user", content: userPrompt(input) },
       ],
     }),

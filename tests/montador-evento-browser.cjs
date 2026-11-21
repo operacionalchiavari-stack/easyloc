@@ -15,6 +15,7 @@ async function main(){
    await page.route('https://**/*',r=>r.fulfill({body:''}));await page.route('**/gas-cliente.js*',r=>r.fulfill({body:''}));await page.route('**/operacao-sem-motor.js*',r=>r.fulfill({body:''}));
    await page.addInitScript(()=>{
     localStorage.setItem('easyloc:limpeza-dados','20261026-zerado');if(!sessionStorage.getItem('fixture:inicializado')){localStorage.removeItem('montadorToken');sessionStorage.setItem('fixture:inicializado','1');}window.chamadas=[];window.falhaItens=!localStorage.getItem('fixture:falhaTestada');window.falhaUber=!localStorage.getItem('fixture:uberTestado');
+    window.supabaseClient={auth:{onAuthStateChange:()=>({data:{subscription:{unsubscribe(){}}}})},rpc:async(n,a)=>n==='mont_assistente_contexto'?{data:{empresa_id:'e1',usuario_id:'u1',nome:'Ana',etapa:a.p_etapa==='volta'?'desmontagem':'montagem',pedido:'123',local:'Jardim',relatos:[]}}:{data:null}};
     Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition(ok){ok({coords:{latitude:-23,longitude:-46,accuracy:10}});}}});
     const data=new Date().toLocaleDateString('en-CA');
     const etapas=[{id:'montagem',pedido:'123',cliente:'Evento Jardim',local:'Espaço Jardim',caminhao:'Caminhão 01',dataEvento:'01/11/2026',confirmadoDecorador:true,etapa:'montagem',operacao:'montagem',dataISO:data,horario:'08:00',responsavel:'Ana Silva',equipe:['Ana Silva','Bruno'],free:{quantidade:1,pessoas:[{nome:'Carlos Free',miniatura:location.origin+'/fixture.png'}]},trocas:[],info:{},outrasEtapas:[{etapa:'Carregamento',dataISO:data,horario:'06:00'}]},{id:'volta',pedido:'124',cliente:'Outro evento',etapa:'desmontagem',operacao:'desmontagem',dataISO:data,horario:'18:00',responsavel:'Ana Silva',equipe:[],trocas:[],sacolasMontagem:[],info:{},outrasEtapas:[]}];
@@ -102,7 +103,7 @@ async function main(){
    await page.click('[data-etapa-aba="lista"]');
    assert.ok(await page.locator('#etapaConferencia').isVisible(),'aba Lista mostra a conferência dos itens');
    assert.equal(await page.locator('#etapaAba_lista .passo').count(),1,'aba Lista só com a lista');
-   await page.click('[data-etapa-aba="info"]');await page.locator('#etapaAssistente').waitFor();
+   await page.click('[data-etapa-aba="info"]');await page.locator('#etapaAssistenteIa [data-chat-montagem]').waitFor();assert.equal(await page.locator('#etapaAssistente').count(),0);
    await page.click('[data-etapa-aba="equipe"]');assert.equal(await page.locator('#passo_posicionamento').count(),0);
    assert.equal(await page.getByText('Outras etapas do pedido',{exact:true}).count(),0);assert.equal(await page.getByText('Decorador confirmou',{exact:true}).count(),0);
    assert.ok(await page.evaluate(()=>{const b=document.getElementById('btnVoltar').getBoundingClientRect(),c=document.getElementById('etapaEtiquetas').getBoundingClientRect();return Math.abs(b.top+b.height/2-c.top-c.height/2)<3;}));
@@ -142,13 +143,10 @@ async function main(){
    await page.locator('.apontamento-tempo-final').waitFor();assert.equal(await page.evaluate(()=>estado.apontamento),null);
    await page.locator('#btnVoltar').click();await page.locator('#telaInicio.ativa').waitFor();
    await page.locator('#telaInicio .etapa').filter({hasText:'Evento Amanhã'}).click();
-   await page.getByRole('button',{name:'Ver foto de Evento Amanhã',exact:true}).waitFor();
-   const cabecaAmanha=await page.locator('#etapaCabeca .cabeca').evaluate(e=>({cor:getComputedStyle(e).backgroundColor,borda:getComputedStyle(e).borderTopWidth,raio:getComputedStyle(e).borderRadius}));
-   assert.equal(cabecaAmanha.cor,cabeca.cor);assert.equal(cabecaAmanha.borda,cabeca.borda);assert.equal(cabecaAmanha.raio,'20px');
-   await page.screenshot({path:path.join(os.tmpdir(),`montador-cabeca-amanha-${width}.png`)});
+   await page.locator('#etapaEquipe').waitFor();assert.match(await page.locator('#toast').innerText(),/não para hoje/,'avisa que a etapa é de outra data');assert.equal(await page.locator('#etapaCabeca').isVisible(),false,'montagem usa o cabeçalho compacto');
    await page.locator('#btnVoltar').click();
    await page.locator('#telaInicio .etapa').filter({hasText:'Outro evento'}).click();assert.equal(await page.locator('#etapaInfo').count(),1);assert.equal(await page.locator('#regProgresso').count(),1);assert.equal(await page.locator('#etapaConferencia').count(),0);assert.equal(await page.locator('#telaEtapa').evaluate(e=>e.classList.contains('evento-linear')),false);
-   assert.equal(await page.locator('#etapaCabeca .cabeca').evaluate(e=>getComputedStyle(e).backgroundColor),cabeca.cor);
+   assert.equal(await page.locator('#etapaCabeca').isVisible(),false,'desmontagem também usa cabeçalho compacto');
    await page.goto(`http://127.0.0.1:${server.address().port}/Modulos/Chiavari/Cronograma/montador.html?sistema=1&etapa=montagem`);
    await page.waitForFunction(()=>estado.token==='fixture-sistema'&&estado.etapaAberta==='montagem');
    assert.equal(await page.evaluate(()=>localStorage.getItem('montadorToken')),'fixture');

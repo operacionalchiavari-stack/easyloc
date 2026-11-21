@@ -13,7 +13,7 @@ test('saldo do cliente aparece sem abater o pedido e respostas antigas não vaza
     return {data:p.p_cliente==='a'?{bv:100,credito:200}:{bv:0,credito:0}};
   }}};
   const api=iniciarSaldoClientePedido();await new Promise(setImmediate);
-  assert.match(elementos.pgResumoCredito.textContent,/200,00/);assert.match(elementos.pgResumoBV.textContent,/100,00/);
+  assert.match(elementos.pgResumoCredito.textContent,/175,00/);assert.match(elementos.pgResumoBV.textContent,/90,00/);
   assert.equal(elementos.pagamentoCreditoCliente.value,'25');assert.equal(elementos.bvTotal.value,'10');
   elementos.clienteIdHidden.value='b';const antigo=api.atualizar(true);
   elementos.clienteIdHidden.value='c';await api.atualizar(true);

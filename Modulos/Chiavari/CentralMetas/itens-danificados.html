@@ -2,17 +2,18 @@
 <html data-theme-legacy lang="pt-BR">
 <head>
 <link rel="stylesheet" href="../../../styles/tokens.css?v=20261019-globais">
-<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
-<script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js?v=20261108-zoom-padrao"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
 <link rel="stylesheet" href="ciencia-danos.css?v=20261018-inter">
 <script src="ciencia-danos.js?v=20261014-rh"></script>
-  <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="central"></script>
+  <script src="central-dados.js?v=20261120-supabase"></script><script src="../gas-cliente.js?v=20261120-sem-servidor" data-projeto="central" data-sem-motor></script>
 <base target="_top">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="os-visualizacao.js?v=20261024-historico-tabela"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/context.js?v=20261026-limpeza"></script><script src="os-historico.js?v=20261024-1"></script><script src="os-operacao.js?v=20261024-1"></script><script src="os-exemplos.js?v=20261024-solicitante-foto"></script>
+<script src="os-visualizacao.js?v=20261115-titulo-os"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/context.js?v=20261026-limpeza"></script><script src="os-historico.js?v=20261024-1"></script><script src="os-operacao.js?v=20261116-solicitante"></script><script src="os-exemplos.js?v=20261024-solicitante-foto"></script>
 <title>Ordens de serviço</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1276,6 +1277,15 @@ body.modo-painel .cabecalho-barra{ display:none; }
 </style>
 <link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261024-abas-globais">
 <link rel="stylesheet" href="../../../styles/theme-compat.css?v=20261019-globais">
+<style id="os-solicitante-limite">
+html:root:is(#osf#osf#osf,html) body td.col-solicitante{min-width:0!important;overflow:hidden}
+html:root:is(#osf#osf#osf,html) body .os-solicitante{min-width:0;max-width:100%;overflow:hidden}
+html:root:is(#osf#osf#osf,html) body .os-solicitante-info{flex:1 1 0;min-width:0;overflow:hidden}
+html:root:is(#osf#osf#osf,html) body .os-solicitante-info strong,
+html:root:is(#osf#osf#osf,html) body .os-solicitante-info small{display:block;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+</style>
+<style id="os-fotos-menores">html:root:is(#osf#osf#osf,html) body .fluxo-passo:not(.sem-setor){display:inline-flex;align-items:center;gap:7px;max-width:none;padding:5px 12px 5px 10px!important;border-radius:8px;border:1px solid color-mix(in srgb,var(--cor,#87929b) 40%,#fff);background:linear-gradient(180deg,#fff 0%,var(--cor-suave,#f3f4f5) 100%);box-shadow:0 1px 2px rgba(15,23,42,.06);font-size:12.5px;font-weight:500!important;letter-spacing:.01em;line-height:1.3;white-space:nowrap}html:root:is(#osf#osf#osf,html) body .fluxo-passo:not(.sem-setor)::before{content:none;display:none}html:root:is(#osf#osf#osf,html) body .os-col-origem .os-pedido-origem{display:inline-block;margin:0;font-size:13px;color:#1f2020;white-space:nowrap}html:root:is(#osf#osf#osf,html) body .fluxo-passo.passado{opacity:.6}html:root:is(#osf#osf#osf,html) body .os-num-card{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:26px;padding:0 9px;border-radius:7px;background:#eaf0fa;border:1px solid #c9d6ec;color:#123f86!important;font-weight:600;font-size:13px;font-variant-numeric:tabular-nums}html:root:is(#osf#osf#osf,html) body .fluxo-passo{color:var(--cor-texto,var(--cor,#58636d))!important}.os-cabecalho-oculto[hidden]{display:none!important}/* 15/11/2026: fotos menores nas tabelas de O.S (poupar espaço) */html:root:is(#osf#osf#osf,html) body .col-foto{width:68px!important;min-width:0!important}html:root:is(#osf#osf#osf,html) body .os-abertas th.col-foto{width:68px!important}html:root:is(#osf#osf#osf,html) body .os-item-foto{width:52px!important;height:52px!important;border-radius:6px!important}html:root:is(#osf#osf#osf,html) body .os-solicitante-foto{width:36px!important;height:36px!important;flex-basis:36px!important;font-size:12px!important}</style>
+<link rel="stylesheet" href="../../Producao/ordens-navegacao.css?v=20261116-pagina-direta">
 </head>
 
 <body>
@@ -1329,7 +1339,8 @@ body.modo-painel .cabecalho-barra{ display:none; }
   </div>
 
   <section class="cartao">
-    <div class="cartao-cabecalho">
+    <!-- 15/11/2026: título "O.S em aberto" e a contagem saíram (pedido do usuário); o elemento fica escondido porque o JS escreve nele -->
+    <div class="cartao-cabecalho os-cabecalho-oculto" hidden>
       <h2 class="cartao-titulo">O.S em aberto</h2>
       <span class="cartao-subtitulo" id="subtituloTabela">Clique numa linha para selecionar</span>
     </div>
@@ -1775,7 +1786,7 @@ function servidor(nome){
   if(nome==="itensDanificadosIndicadores")return window.OSOperacao.indicadores();
   if(!window.OSGestaoAcervo&&nome==="itensDanificadosAbertas")return window.OSOperacao.abertas();
   if(!window.OSGestaoAcervo&&nome==="buscarOSConcluidas")return window.OSOperacao.concluidas(arguments[1]);
-  if(!window.OSGestaoAcervo && /^(salvar|darBaixa|encaminhar|atualizarData|adicionar|remover|cadastrar)/i.test(nome))return Promise.reject(new Error("Gerencie as ordens pela Gestão do acervo."));
+  if(!window.OSGestaoAcervo && !/^danoCiencia/.test(nome))return Promise.reject(new Error("Gerencie as ordens pela Gestão do acervo."));
   const argumentos = Array.prototype.slice.call(arguments, 1);
   return new Promise(function(resolver, rejeitar){
     google.script.run
@@ -2036,7 +2047,7 @@ function htmlSolicitante(os){
   const nome=String(os.nome||'N\u00e3o informado');
   const iniciais=nome.trim().split(/\s+/).slice(0,2).map(p=>p[0]).join('');
   const foto=/^https?:/.test(os.solicitante_foto||'')?'<img src="'+escapar(os.solicitante_foto)+'" alt="'+escapar(nome)+'" loading="lazy">':escapar(iniciais);
-  return '<div class="os-solicitante"><span class="os-solicitante-foto">'+foto+'</span><div><strong>'+escapar(nome)+'</strong><small>'+escapar(String(os.data||'').slice(0,10))+(os.horaEnvio?' \u00b7 '+escapar(os.horaEnvio):'')+'</small></div></div>';
+  return '<div class="os-solicitante"><span class="os-solicitante-foto">'+foto+'</span><div class="os-solicitante-info"><strong title="'+escapar(nome)+'">'+escapar(nome)+'</strong><small>'+escapar(String(os.data||'').slice(0,10))+(os.horaEnvio?' \u00b7 '+escapar(os.horaEnvio):'')+'</small></div></div>';
 }
 
 function htmlNomeItem(item){
@@ -2093,10 +2104,10 @@ function render(){
             '<span class="item-extra-tablet">' + escapar(os.nome) + (os.pedido ? " · Pedido " + escapar(os.pedido) : "") + "</span>" +
             '<span class="item-extra">O.S ' + escapar(os.os || "—") + " · " + escapar(os.qtd || 1) + " un." + (os.onde ? " · " + escapar(os.onde) : "") + "</span>" +
           "</td>" +
-          '<td class="col-os m-oculta" style="color:#1672c7!important">' + escapar(os.os) + "</td>" +
+          '<td class="col-os m-oculta">' + (os.os ? '<span class="os-num-card">' + escapar(os.os) + '</span>' : '') + "</td>" +
           '<td class="col-qtd m-oculta">' + escapar(os.qtd) + "</td>" +
           "<td>" + htmlFluxo(os.fluxo) + "</td>" +
-          '<td class="m-oculta os-col-origem">' + '<span class="os-origem-linha">'+etiquetaOnde(os.onde)+htmlCienciaOrigem(os)+'</span>' + (os.pedido?'<small class="os-pedido-origem">Pedido #'+escapar(os.pedido)+'</small>':'') + '</td>' +
+          '<td class="m-oculta os-col-origem">' + (os.pedido?'<span class="os-pedido-origem">Pedido '+escapar(os.pedido)+'</span>':'—') + '</td>' +
           '<td class="col-detalhes m-oculta t1-oculta" title="' + escapar(os.detalhes) + '">' + escapar(os.detalhes) + "</td>" +
           "<td>" + htmlDataUrgencia(os) + "</td>" +
         "</tr>"
@@ -2731,7 +2742,7 @@ function carregarConcluidas(pagina){
 
       el("tabelaConcluidas").innerHTML = (res.dados || []).length
         ? res.dados.map(function(os){
-            return '<tr><td class="col-solicitante">'+htmlSolicitante(os)+'</td><td class="col-foto">'+(/^https?:/.test(os.foto_url||'')?'<img class="os-item-foto" src="'+escapar(os.foto_url)+'" alt="'+escapar(os.item)+'" loading="lazy">':'<span class="os-foto-vazia">Sem foto</span>')+'</td><td class="col-item">'+htmlNomeItem(os.item)+'</td><td class="col-os" style="color:#1672c7!important">'+escapar(os.os)+'</td><td class="col-qtd">'+escapar(os.qtd)+'</td><td>'+htmlFluxo(os.fluxo)+'</td><td class="os-col-origem"><span class="os-origem-linha">'+etiquetaOnde(os.onde)+htmlCienciaOrigem(os)+'</span>'+(os.pedido?'<small class="os-pedido-origem">Pedido #'+escapar(os.pedido)+'</small>':'')+'</td><td class="col-detalhes">'+escapar(os.detalhes)+'</td><td class="col-data">'+escapar(String(os.dataConclusao||'').slice(0,10))+'</td></tr>';
+            return '<tr><td class="col-solicitante">'+htmlSolicitante(os)+'</td><td class="col-foto">'+(/^https?:/.test(os.foto_url||'')?'<img class="os-item-foto" src="'+escapar(os.foto_url)+'" alt="'+escapar(os.item)+'" loading="lazy">':'<span class="os-foto-vazia">Sem foto</span>')+'</td><td class="col-item">'+htmlNomeItem(os.item)+'</td><td class="col-os">'+(os.os?'<span class="os-num-card">'+escapar(os.os)+'</span>':'')+'</td><td class="col-qtd">'+escapar(os.qtd)+'</td><td>'+htmlFluxo(os.fluxo)+'</td><td class="os-col-origem">'+(os.pedido?'<span class="os-pedido-origem">Pedido '+escapar(os.pedido)+'</span>':'—')+'</td><td class="col-detalhes">'+escapar(os.detalhes)+'</td><td class="col-data">'+escapar(String(os.dataConclusao||'').slice(0,10))+'</td></tr>';
           }).join("")
         : '<tr><td colspan="9"><div class="mensagem">Nenhuma O.S concluída encontrada.</div></td></tr>';
 
@@ -3152,5 +3163,6 @@ setTimeout(function(){
   carregarFuncionarios().catch(function(){});
 }, 1500);
 </script>
+<script type="module" src="../../Producao/ordens-navegacao.mjs?v=20261116-pagina-direta"></script>
 </body>
 </html>

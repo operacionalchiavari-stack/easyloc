@@ -492,3 +492,10 @@ entrypoint = "./functions/pagamento-link/index.ts"
 enabled = true
 verify_jwt = false
 entrypoint = "./functions/app-push/index.ts"
+
+# Central de Metas, Operação, Premiações e Meu Bônus (nov/2026; substitui o projeto "central" do servidor antigo).
+# As telas internas exigem o login da equipe + 2FA (conferido no código); o Meu Bônus usa CPF + PIN do RH.
+[functions.central-metas]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/central-metas/index.ts"

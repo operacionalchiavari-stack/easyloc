@@ -1,0 +1,38 @@
+/* Uma página com rolagem natural e margens compactas para O.P. e O.S. */
+html.ord-native{height:auto!important;min-height:100%;overflow-y:auto!important}
+html.ord-native body.ord-native-page{height:auto!important;min-height:100%;overflow:visible!important;margin:0!important;padding:0 14px 28px!important;box-sizing:border-box}
+html:root:is(#ord-native#ord-native,html) body.ord-native-page main.producao-page{width:100%!important;max-width:none!important;margin:0!important;padding:0!important;min-width:0;box-sizing:border-box}
+html:root:is(#ord-native#ord-native,html) body.ord-native-page :is(.separacao-header,.producao-topo-detalhe,header.cabecalho){display:flex!important;flex-wrap:wrap;align-items:center!important;gap:12px 18px!important;min-height:64px;margin:0 0 14px!important;padding:8px 0!important;border:0!important;border-bottom:1px solid #e3e7ec!important}
+html:root:is(#ord-native#ord-native,html) body.ord-native-page :is(.separacao-header,.producao-topo-detalhe,header.cabecalho)::after{display:none!important}
+html:root:is(#ord-native#ord-native,html) body.ord-native-page :is(.separacao-title-block,.producao-topo-detalhe>h1,.cabecalho-titulo){display:none!important}
+.ord-native-tabs{display:flex;align-items:center;flex-wrap:wrap;gap:6px;min-width:0;margin-right:auto}
+.ord-native-tabs a{position:relative;display:block;padding:12px 10px;border-bottom:2px solid transparent;color:#526176;text-decoration:none;font:600 14px/1.5 Inter,system-ui,sans-serif;letter-spacing:.035em;text-transform:uppercase;white-space:nowrap}
+.ord-native-tabs a[aria-current=page]{color:#1f6b45;border-bottom-color:#2f8a5c}
+.ord-native-tabs a[hidden]{display:none}
+.ord-native-tabs a:focus-visible{outline:2px solid #3b82f6;outline-offset:2px;border-radius:4px}
+.ord-native-badge{position:absolute;top:0;right:-2px;min-width:18px;padding:0 5px;border-radius:999px;background:#e60012;color:white;text-align:center;font:700 11px/18px Inter,system-ui,sans-serif;animation:ord-native-pulse 1.15s ease-in-out infinite}
+.ord-native-badge[hidden]{display:none}
+@keyframes ord-native-pulse{50%{transform:scale(1.1);opacity:.75}}
+html:root:is(#ord-native#ord-native,html) body.ord-native-page .separacao-header>.separacao-search{flex:0 1 380px!important;width:380px!important;max-width:100%!important;margin:0!important;min-width:0!important}
+html:root:is(#ord-native#ord-native,html) body.ord-native-page .separacao-header>.producao-setor{flex:0 1 190px;width:190px;margin:0!important}
+html:root:is(#ord-native#ord-native,html) body.ord-native-page :is(.separacao-board-card,.producao-kanban){padding:0!important;margin:0!important}
+html:root:is(#ord-native#ord-native,html) body.ord-native-page .separacao-board-card{border:0!important;background:transparent!important;box-shadow:none!important;overflow:visible!important}
+html:root:is(#ord-native#ord-native,html) body.ord-native-page .producao-kanban{gap:14px!important;align-items:stretch;overflow:visible!important}
+html:root:is(#ord-native#ord-native,html) body.ord-native-page .separacao-lane{min-height:calc(100vh - 100px);height:auto!important;max-height:none!important;grid-template-rows:auto 1fr;overflow:visible!important}
+html:root:is(#ord-native#ord-native,html) body.ord-native-page .separacao-lane-list{height:auto!important;max-height:none!important;overflow:visible!important;border-radius:0 0 16px 16px}
+html:root:is(#ord-native#ord-native,html) body.ord-native-page .cabecalho-barra{margin:0!important;padding:0!important;border:0!important;justify-self:auto;min-width:0}
+html:root:is(#ord-native#ord-native,html) body.ord-native-page #acoesTopo{display:flex!important;align-items:center;flex-wrap:wrap;gap:10px}
+html:root:is(#ord-native#ord-native,html) body.ord-native-page #acoesTopo>#filtros{display:flex!important;width:auto;position:static!important;margin:0!important;padding:0!important}
+html:root:is(#ord-native#ord-native,html) body.ord-native-page #acoesTopo>.status-atualizacao{position:static!important;display:inline-flex;align-items:center;gap:6px;margin:0!important;padding:0!important;white-space:nowrap}
+html:root:is(#ord-native#ord-native,html) body.ord-native-page #acoesTopo .multi-lista{left:auto;right:0}
+@media(max-width:850px){
+ html.ord-native body.ord-native-page{padding:0 10px 20px!important}
+ .ord-native-tabs{flex-basis:100%}
+ .ord-native-tabs a{font-size:14px;white-space:normal}
+ html:root:is(#ord-native#ord-native,html) body.ord-native-page .separacao-header>.separacao-search{flex:1 1 180px!important;width:auto!important}
+ html:root:is(#ord-native#ord-native,html) body.ord-native-page .separacao-header>.producao-setor{flex:0 1 150px;width:150px}
+ html:root:is(#ord-native#ord-native,html) body.ord-native-page .separacao-lane{min-height:260px}
+}
+@media(prefers-reduced-motion:reduce){.ord-native-badge{animation:none}}
+
+html:root:is(#ord-native#ord-native,html) body.ord-native-page .separacao-lane>header{border-radius:16px 16px 0 0}

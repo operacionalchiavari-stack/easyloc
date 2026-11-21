@@ -31,7 +31,7 @@ const XML = `<?xml version="1.0" encoding="UTF-8"?><nfeProc><NFe><infNFe Id="NFe
     });
     await context.route(/cdn\.jsdelivr|fonts\.g|unpkg|cdnjs/, (r) => r.fulfill({ body: '', contentType: 'text/javascript' }));
     await context.addInitScript((produtos) => {
-      sessionStorage.setItem('empresa_id', 'emp-1');
+      sessionStorage.setItem('empresa_id','emp-1');sessionStorage.setItem('login_ok','1');window.__CONTEXT={empresa_id:'emp-1',usuario_id:'u1'};window.aguardarContexto=async()=>__CONTEXT;window.EasyLocPermissions={hasPermission:()=>true};
       const nomes = Object.fromEntries(produtos.map((p) => [p.ID, p]));
       window.__rpc = []; window.__editaFin = true;
       const db = window.__db = {
@@ -79,21 +79,23 @@ const XML = `<?xml version="1.0" encoding="UTF-8"?><nfeProc><NFe><infNFe Id="NFe
       };
       window.supabaseClient = {
         rpc: async (nome, args) => { window.__rpc.push([nome, JSON.parse(JSON.stringify(args))]); try { return { data: fn[nome] ? fn[nome](args) : [], error: null }; } catch (e) { return { data: null, error: { message: e.message } }; } },
-        from: () => { const q = { select: () => q, eq: () => q, order: () => q, limit: () => q, then: (ok) => Promise.resolve({ data: [], error: null }).then(ok) }; return q; },
+        from: (tabela) => { const q = { select: () => q, eq: () => q, order: () => q, limit: () => q, then: (ok) => Promise.resolve({ data: tabela==='warehouse_materials'?produtos.map(p=>({id:p.ID,codigo:p.Codigo,nome:p.Produto,unidade:p.Unidade,status:'disponivel',quantidade_disponivel:p.EstoqueAtual})):[], error: null }).then(ok) }; return q; },
         auth: { getSession: async () => ({ data: { session: null } }) },
       };
     }, produtos);
+    await context.route('**/js/core/**',r=>r.fulfill({body:'',contentType:'text/javascript'}));
     const chamadas = (nome) => page.evaluate((n) => window.__rpc.filter((x) => x[0] === n).map((x) => x[1]), nome);
     const fluxo = page.locator('#recebFluxoView');
 
-    await page.goto(`http://localhost:${server.address().port}/Modulos/Chiavari/Almoxarifado/almoxarifado.html?aba=recebimento`);
-    await page.waitForFunction(() => document.querySelectorAll('#tbodyRecebPedidos tr').length === 2 && document.querySelector('#tab-recebimento.active'), null, { timeout: 15000 });
+    await page.goto(`http://localhost:${server.address().port}/Modulos/Almoxarifado/almoxarifado.html?aba=recebimento`);
+    await page.waitForFunction(() => document.querySelectorAll('#tbodyRecebPedidos tr').length === 2 && document.querySelector('#tab-recebimento')?.getClientRects().length, null, { timeout: 15000 }).catch(async e=>{console.error('DIAGNOSTICO',await page.locator('body').innerText());throw e;});
     assert.equal((await page.locator('#badgeRecebimento').innerText()).trim(), '2');
-    assert.match(await page.locator('#tbodyRecebPedidos tr').first().innerText(), /PC-000007[\s\S]*Tintas Sul[\s\S]*TINTA LACA CAQUI \(10 LT\)/);
+    assert.match(await page.locator('#tbodyRecebPedidos tr').first().innerText(), /Tintas Sul[\s\S]*PC-000007[\s\S]*TINTA LACA CAQUI · 10 LT/);
     console.log('ok 1 - aba Recebimento: pedidos de Compras a receber, com badge e link direto (?aba=recebimento)');
 
     // ---------- com XML
-    const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('[data-receb-nova-xml]').click()]);
+    await page.locator('[data-receb-pedido=ped-7]').click();
+    const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('.receb-escolha [data-receb-xml=ped-7]').click()]);
     await chooser.setFiles({ name: 'nota.xml', mimeType: 'application/xml', buffer: Buffer.from(XML) });
     await page.waitForSelector('#recebPreviaIniciar');
     assert.equal(await page.inputValue('#recebPreviaPedido'), 'ped-7', 'pedido achado pelo CNPJ da nota');
@@ -141,7 +143,8 @@ const XML = `<?xml version="1.0" encoding="UTF-8"?><nfeProc><NFe><infNFe Id="NFe
     await page.fill('[data-parc="1"] [data-parc-campo="valor"]', '174');
     await page.selectOption('[data-fin="forma"]', 'pix');
     await fluxo.getByRole('button', { name: 'Concluir recebimento' }).click();
-    await page.waitForSelector('#recebFluxoView .badge-ok:has-text("Concluído")');
+    await page.locator('#recebRegistrosSection .badge-ok').first().waitFor().catch(async e=>{console.error('DADOS',await page.evaluate(()=>({text:document.body.innerText,rpcs:window.__rpc.slice(-3),db:window.__db.recs.map(r=>({id:r.id,status:r.status}))})));throw e;});
+    await page.locator('#tbodyRecebLista [data-receb-abrir]').first().click();await page.waitForSelector('#recebFluxoView .badge-ok:has-text("Concluído")');
     const concl = (await chamadas('almox_receb_concluir'))[0];
     assert.deepEqual(concl.p_financeiro.parcelas, [{ vencimento: '2026-11-20', valor: 174 }, { vencimento: '2026-12-20', valor: 174 }]);
     assert.equal(concl.p_financeiro.forma, 'pix'); assert.equal(concl.p_financeiro.total, 348);
@@ -152,11 +155,11 @@ const XML = `<?xml version="1.0" encoding="UTF-8"?><nfeProc><NFe><infNFe Id="NFe
 
     // ---------- sem XML, parâmetro desligado
     await page.evaluate(() => { window.__editaFin = false; });
-    await fluxo.getByRole('button', { name: 'Fechar' }).click();
+    await fluxo.locator('[data-receb-voltar]').first().click();await page.locator('[data-receb-lista=pedidos]').click();
     await page.waitForFunction(() => document.querySelectorAll('#tbodyRecebPedidos tr').length === 1);
     assert.equal((await page.locator('#badgeRecebimento').innerText()).trim(), '1');
-    assert.match(await page.locator('#tbodyRecebLista').innerText(), /R-00001[\s\S]*NF 12345\/1[\s\S]*Concluído/);
-    await page.locator('#tbodyRecebPedidos').getByRole('button', { name: 'Sem XML' }).click();
+    assert.match(await page.locator('#tbodyRecebLista').innerText(), /R-00001[\s\S]*12345[\s\S]*Recebido/);
+    await page.locator('#tbodyRecebPedidos [data-receb-pedido=ped-8]').click();await page.locator('.receb-escolha [data-receb-manual=ped-8]').click();
     await page.waitForSelector('#recebManualDialog[open]');
     await page.locator('#recebManualDialog').getByRole('button', { name: 'Iniciar recebimento' }).click();
     assert.ok(await page.locator('#recebManualDialog[open]').count(), 'sem número da nota não inicia');
@@ -173,14 +176,14 @@ const XML = `<?xml version="1.0" encoding="UTF-8"?><nfeProc><NFe><infNFe Id="NFe
     assert.match(await page.locator('.receb-fin').innerText(), /Ficam com Compras/);
     assert.equal(await page.locator('[data-fin]').count(), 0);
     await fluxo.getByRole('button', { name: 'Concluir recebimento' }).click();
-    await page.waitForSelector('#recebFluxoView .badge-ok:has-text("Concluído")');
+    await page.waitForFunction(()=>window.__db.recs.length===2&&window.__db.recs[1].status==='concluido');await page.locator('#recebRegistrosSection .badge-ok').first().waitFor();
     assert.equal((await chamadas('almox_receb_concluir'))[1].p_financeiro, null);
     console.log('ok 5 - sem XML: começa na conferência e, sem o parâmetro, valores e pagamento ficam com Compras');
 
     await page.setViewportSize({ width: 420, height: 900 });
     // a barra de abas do Almoxarifado já rola de lado no celular; aqui vale só a tela do recebimento
-    assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#tab-recebimento *')].filter((e) => !e.closest('.table-wrap, .receb-steps') && e.getBoundingClientRect().right > innerWidth + 1).map((e) => e.className)), [], 'recebimento sem nada saindo da tela no celular');
-    assert.deepEqual(errors, []);
+    assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll('#tab-recebimento *')].filter((e) => !e.closest('.table-wrap, .almox-table-wrap, .receb-steps') && e.getBoundingClientRect().right > innerWidth + 1).map((e) => e.className)), [], 'recebimento sem nada saindo da tela no celular');
+    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'página cabe no celular');assert.deepEqual(errors, []);
     console.log('todos os testes passaram');
   } finally { await browser.close(); server.close(); }
 })().catch((e) => { console.error(e); process.exitCode = 1; });

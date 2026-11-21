@@ -54,25 +54,25 @@ export function iniciarEntradaComercial(vitrine){
   financeiro.setAttribute('aria-label','Financeiro e programação de pagamentos');
   const programacao=tela.querySelector('.pagamento-card');
   const resumo=tela.querySelector('.pedido-financeiro');
-  // Frete e Montagem (out/2026, pedido do usuário): ficam no Financeiro e pagamentos, na coluna da direita, logo abaixo do
-  // "Resumo do pedido" (os próprios cartões do pedido, com caminhões, volume, distância, ajuste manual e montagem).
-  if(programacao)financeiro.append(programacao);
-  if(resumo)financeiro.append(resumo);
+  const principal=document.createElement('div');principal.className='pedido-financeiro-principal';
+  const detalhes=document.createElement('section');detalhes.className='pedido-financeiro pedido-financeiro-detalhes';
+  detalhes.setAttribute('aria-label','Montagem, frete, BV e desconto no pedido');
+  principal.append(detalhes);if(programacao)principal.append(programacao);
+  financeiro.append(principal);
+  if(resumo){resumo.classList.add('pedido-financeiro-resumo');financeiro.append(resumo);}
   tela.append(financeiro);
-  // Três colunas (out/2026, pedido do usuário): parcelas | Frete em cima e Resumo embaixo | Montagem em cima e BV embaixo.
-  // O card do BV é criado por pedido.bv.mjs; o observador põe cada card na sua coluna, não importa a ordem.
+  // Só o resumo fica à direita. Os cartões existentes mantêm seus eventos e dados ao mudar de coluna.
   if(resumo){
-    const colA=document.createElement('div');colA.className='pf-col pf-col-a';
-    const colB=document.createElement('div');colB.className='pf-col pf-col-b';
-    resumo.append(colA,colB);
     const organizar=()=>{
-      [['#cardLogisticaPedido',colA],['.resumo-card',colA],['#cardMontagemPedido',colB],['.pedido-bv-card',colB]].forEach(([sel,col])=>{
-        // reanexa na ordem certa (o observador só olha os filhos diretos, então não entra em laço)
-        const el=resumo.querySelector(sel);if(el)col.append(el);
+      [['#cardMontagemPedido',detalhes],['#cardLogisticaPedido',detalhes],['.pedido-bv-card',detalhes],['#cardDescontoPedido',detalhes],['.resumo-card',resumo]].forEach(([sel,col])=>{
+        const el=financeiro.querySelector(sel);if(el&&el.parentElement!==col)col.append(el);
       });
     };
     organizar();
+    // O BV pode terminar de carregar depois da montagem da tela.
     new MutationObserver(organizar).observe(resumo,{childList:true});
+    const ajustarTopo=()=>financeiro.style.setProperty('--pedido-resumo-top',`${trilha.offsetHeight+16}px`);
+    ajustarTopo();new ResizeObserver(ajustarTopo).observe(trilha);
   }
   const contrato=document.createElement('section');contrato.className='pedido-etapa-contrato';contrato.hidden=true;
   contrato.setAttribute('aria-label','Contrato do pedido');
@@ -245,6 +245,8 @@ export function iniciarEntradaComercial(vitrine){
   const moeda=texto=>Number(String(texto||'').replace(/[^\d,.-]/g,'').replace(/\./g,'').replace(',','.'))||0;
   const reais=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
   function pendenciaFinanceiro(){
+    const erroDesconto=window.__pedidoValidarDescontoComercial?.();
+    if(erroDesconto)return erroDesconto;
     const parcelas=[...document.querySelectorAll('#cronogramaParcelas tr')].filter(row=>row.querySelector('.pg-valor'));
     const total=moeda(document.getElementById('pgValorFinal')?.textContent || document.getElementById('resumoTotalGeral')?.textContent);
     const programado=parcelas.reduce((s,row)=>s+moeda(row.querySelector('.pg-valor')?.textContent),0);

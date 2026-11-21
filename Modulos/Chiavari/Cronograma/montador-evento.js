@@ -18,6 +18,7 @@
  function ativo(){return estado.apontamento?.idEtapa===estado.etapaAberta;}
  function mover(ids,pai){ids.forEach(id=>{if(el(id))pai.append(el(id));});}
  function preparar(){
+  window.MontagemAssistente?.limpar();
   const tela=el('telaEtapa');mover(['etapaInfo','etapaPedido','etapaTrocas'],tela);el('eventoDetalhes')?.remove();el('etapaConferencia')?.remove();
   if(el('regProgresso')&&!el('etapaRegistros').contains(el('regProgresso')))el('regProgresso').remove();
   mover(['etapaNavegacao','etapaCabeca','apontamentoEtapa','etapaTituloPagina','etapaFotoEquipe','etapaEquipe','etapaUber','etapaFrete','etapaInfo','etapaTrocas','etapaSacolas','etapaPedido','etapaRegistros'],tela);
@@ -40,6 +41,7 @@
   return true;
  }
  function montar(e){
+  window.MontagemAssistente?.montar(e,estado.token).catch(err=>console.warn('Assistente de montagem indisponivel',err));
   carregarFotos(e);
   sincronizarInicio(e);
   if(e.operacao!=='montagem'){

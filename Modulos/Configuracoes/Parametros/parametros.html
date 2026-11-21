@@ -5,12 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Parâmetros</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js?v=20261115-periodo"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
   <link rel="stylesheet" href="../../../styles/escala-parametros.css?v=20261027">
-  <link rel="stylesheet" href="parametros.css?v=20261108-app-montador">
-<script src="parametros-fluxo-pedidos.js?v=20261102-periodo-reserva"></script>
+  <link rel="stylesheet" href="parametros.css?v=20261116-sinalizacoes">
+  <link rel="stylesheet" href="../../../styles/festive-themes.css?v=20261115-periodo">
+<script src="parametros-fluxo-pedidos.js?v=20261108-auditoria"></script>
 </head>
 <body>
 <div id="parametrosPagina" class="container el-page">
@@ -18,16 +20,26 @@
     <h2>Parâmetros</h2>
   </div>
 
-<nav class="pr-abas" role="tablist" aria-label="Parâmetros da empresa">
+<div class="pr-layout">
+<aside class="pr-menu"><details id="prMenuNavegacao" open><summary><span>Menu de parâmetros</span><strong id="prMenuAtual">Dados da empresa</strong></summary>
+<nav class="pr-abas" role="tablist" aria-orientation="vertical" aria-label="Parâmetros da empresa">
   <div class="pr-abas-grupo" role="presentation"><span class="pr-abas-rotulo" aria-hidden="true">Empresa</span><div class="pr-abas-botoes" role="presentation"><button type="button" role="tab" id="pr-tab-dados" aria-controls="pr-painel-dados" aria-selected="true" data-parametro-aba="dados">Dados da empresa</button><button type="button" role="tab" id="pr-tab-tributacao" aria-controls="pr-painel-tributacao" aria-selected="false" data-parametro-aba="tributacao">Impostos</button><button type="button" role="tab" id="pr-tab-identidade" aria-controls="pr-painel-identidade" aria-selected="false" data-parametro-aba="identidade">Identidade visual</button></div></div>
   <div class="pr-abas-grupo" role="presentation"><span class="pr-abas-rotulo" aria-hidden="true">Vendas</span><div class="pr-abas-botoes" role="presentation"><button type="button" role="tab" id="pr-tab-comercial" aria-controls="pr-painel-comercial" aria-selected="false" data-parametro-aba="comercial">Comercial</button><button type="button" role="tab" id="pr-tab-catalogo" aria-controls="pr-painel-catalogo" aria-selected="false" data-parametro-aba="catalogo">Catálogo</button><button type="button" role="tab" id="pr-tab-financeiro" aria-controls="pr-painel-financeiro" aria-selected="false" data-parametro-aba="financeiro">Financeiro</button></div></div>
-  <div class="pr-abas-grupo" role="presentation"><span class="pr-abas-rotulo" aria-hidden="true">Operação</span><div class="pr-abas-botoes" role="presentation"><button type="button" role="tab" id="pr-tab-logistica" aria-controls="pr-painel-logistica" aria-selected="false" data-parametro-aba="logistica">Logística e operação</button><button type="button" role="tab" id="pr-tab-almoxarifado" aria-controls="pr-painel-almoxarifado" aria-selected="false" data-parametro-aba="almoxarifado">Almoxarifado</button><button type="button" role="tab" id="pr-tab-producao" aria-controls="pr-painel-producao" aria-selected="false" data-parametro-aba="producao">Produção</button></div></div>
+  <div class="pr-abas-grupo" role="presentation"><span class="pr-abas-rotulo" aria-hidden="true">Operação</span><div class="pr-abas-botoes" role="presentation"><button type="button" role="tab" id="pr-tab-logistica" aria-controls="pr-painel-logistica" aria-selected="false" data-parametro-aba="logistica">Logística e operação</button><button type="button" role="tab" id="pr-tab-acervo" aria-controls="pr-painel-acervo" aria-selected="false" data-parametro-aba="acervo">Acervo</button><button type="button" role="tab" id="pr-tab-almoxarifado" aria-controls="pr-painel-almoxarifado" aria-selected="false" data-parametro-aba="almoxarifado">Almoxarifado</button><button type="button" role="tab" id="pr-tab-producao" aria-controls="pr-painel-producao" aria-selected="false" data-parametro-aba="producao">Produção</button><button type="button" role="tab" id="pr-tab-complexidade" aria-controls="pr-painel-complexidade" aria-selected="false" data-parametro-aba="complexidade">Complexidade</button><button type="button" role="tab" id="pr-tab-ocorrencias" aria-controls="pr-painel-ocorrencias" aria-selected="false" data-parametro-aba="ocorrencias">Ocorrências</button></div></div>
+  <div class="pr-abas-equipe-ia" role="presentation">
   <div class="pr-abas-grupo" role="presentation"><span class="pr-abas-rotulo" aria-hidden="true">Equipe e acesso</span><div class="pr-abas-botoes" role="presentation"><button type="button" role="tab" id="pr-tab-rh" aria-controls="pr-painel-rh" aria-selected="false" data-parametro-aba="rh">Recursos humanos</button><button type="button" role="tab" id="pr-tab-seguranca" aria-controls="pr-painel-seguranca" aria-selected="false" data-parametro-aba="seguranca">Segurança</button></div></div>
+<div class="pr-abas-grupo" role="presentation"><span class="pr-abas-rotulo">Inteligência artificial</span><div class="pr-abas-botoes"><button type="button" role="tab" id="pr-tab-ia" aria-controls="pr-painel-ia" aria-selected="false" data-parametro-aba="ia">Agentes de IA</button></div></div>
+  </div>
 </nav>
+</details></aside>
+<div class="pr-conteudo">
+<section id="pr-painel-ia" role="tabpanel" aria-labelledby="pr-tab-ia" hidden></section>
 <div id="parametrosEmpresa" class="pr-empresa"><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-dados" aria-labelledby="pr-tab-dados"  data-empresa-secao="dados"></section><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-tributacao" aria-labelledby="pr-tab-tributacao" hidden data-empresa-secao="tributacao"></section><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-logistica" aria-labelledby="pr-tab-logistica" hidden data-empresa-secao="logistica"></section><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-financeiro" aria-labelledby="pr-tab-financeiro" hidden data-empresa-secao="financeiro"></section><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-comercial" aria-labelledby="pr-tab-comercial" hidden data-empresa-secao="comercial"></section><section class="pr-empresa-painel pr-card" role="tabpanel" id="pr-painel-identidade" aria-labelledby="pr-tab-identidade" hidden data-empresa-secao="identidade"></section><div class="pr-acoes"><span id="empresaParametrosStatus" role="status">Carregando...</span><button type="button" class="btn primary" id="salvarEmpresaParametros" disabled>Salvar</button></div></div>
 <section id="pr-painel-rh" role="tabpanel" aria-labelledby="pr-tab-rh" hidden></section>
 <section id="pr-painel-seguranca" class="ps" role="tabpanel" aria-labelledby="pr-tab-seguranca" hidden><p>Carregando segurança...</p></section>
 <section id="pr-painel-producao" role="tabpanel" aria-labelledby="pr-tab-producao" hidden><p>Carregando produção...</p></section>
+<section id="pr-painel-complexidade" role="tabpanel" aria-labelledby="pr-tab-complexidade" hidden><p>Carregando complexidade...</p></section>
+<section id="pr-painel-ocorrencias" role="tabpanel" aria-labelledby="pr-tab-ocorrencias" hidden><p>Carregando ocorrências...</p></section>
 <section id="pr-painel-catalogo" role="tabpanel" aria-labelledby="pr-tab-catalogo" hidden>
   <form id="formCatalogoParametros" class="pr-form" novalidate>
     <p class="pr-ajuda pr-cat-intro">O que o catálogo mostra e para quem. A regra vale para o catálogo no computador e no celular e para a Helena. Visitantes são quem entra em "Explorar o catálogo", sem login.</p>
@@ -38,6 +50,7 @@
     </div>
   </form>
 </section>
+<section id="pr-painel-acervo" role="tabpanel" aria-labelledby="pr-tab-acervo" hidden></section>
 <section id="pr-painel-almoxarifado" role="tabpanel" aria-labelledby="pr-tab-almoxarifado" hidden>
   <form id="formAlmoxParametros" class="pr-form" novalidate>
     <section class="pr-card">
@@ -54,6 +67,23 @@
       <span id="almoxParametrosStatus" role="status"></span>
       <button type="submit" class="btn primary" id="btnSalvarAlmox">Salvar parâmetros do almoxarifado</button>
     </div>
+  </form>
+  <form id="formJustificativasContagem" class="pr-form">
+    <section class="pr-card">
+      <h3>Justificativas de divergência de contagem</h3>
+      <label class="pr-campo" for="almoxJustificativasContagem">Justificativas (uma por linha)</label>
+      <textarea id="almoxJustificativasContagem" class="tw-field" rows="6" style="width:100%;font-size:14px" aria-describedby="almoxJustificativasAjuda"></textarea>
+      <p id="almoxJustificativasAjuda" class="pr-ajuda">Estas opções aparecem na Contagem mensal do Almoxarifado. Cada justificativa deve ter pelo menos 5 caracteres.</p>
+      <div class="pr-acoes"><span id="almoxJustificativasStatus" role="status"></span><button type="submit" class="btn primary" id="btnSalvarJustificativasContagem" disabled>Salvar justificativas</button></div>
+    </section>
+  </form>
+  <form id="formTetoGastos" class="pr-form">
+    <section class="pr-card">
+      <h3>Teto de gastos por setor</h3>
+      <p class="pr-ajuda">Percentual do faturamento do mês (pedidos reservados com evento no mês) que cada setor pode gastar no Almoxarifado. O teto entra no bônus do Almoxarifado na Central de Metas. Os setores vêm de Recursos humanos.</p>
+      <div class="pr-teto-tabela" id="almoxTetoTabela"><p>Carregando…</p></div>
+      <div class="pr-acoes"><span id="almoxTetoStatus" role="status"></span><button type="submit" class="btn primary" id="btnSalvarTeto" disabled>Salvar teto de gastos</button></div>
+    </section>
   </form>
 </section>
 <section id="pr-painel-operacao" role="tabpanel" aria-labelledby="pr-tab-operacao" hidden>
@@ -126,51 +156,55 @@
   </form>
 </section>
 </div>
+</div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
-<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/companyTheme.js?v=20261115-paleta-menu"></script>
+<script src="../../../js/ui/festiveScene.js?v=20261115"></script>
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/google.config.js"></script>
 <script src="../../../js/core/google.js"></script>
 <script src="../../../js/empresa/empresa.utils.js?v=20261019-parametros"></script>
-<script src="../../../js/empresa/empresa.api.js?v=20261019-parametros"></script>
+<script src="../../../js/empresa/empresa.api.js?v=20261108-auditoria"></script>
 <script src="../../../js/empresa/empresa.sections.dados.js?v=20261021-utf8"></script>
-<script src="../../../js/empresa/empresa.sections.tributacao.js?v=20261019-parametros"></script>
+<script src="../../../js/empresa/empresa.sections.tributacao.js?v=20261108-auditoria"></script>
 <script src="../../../js/empresa/empresa.sections.comercial.js?v=20261029-cronograma"></script>
-<script src="../../../js/empresa/empresa.logistica.frete.js?v=20261021-textos"></script>
+<script src="../../../js/empresa/empresa.logistica.frete.js?v=20261108-auditoria"></script>
 <script src="../../../js/empresa/empresa.logistica.montagem.js?v=20261021-textos"></script>
 <script src="../../../js/empresa/empresa.sections.logistica.js?v=20261019-parametros"></script>
-<script src="../../../js/empresa/empresa.sections.financeiro.js?v=20261107-baixa-manual-qr"></script>
-<script src="../../../js/empresa/empresa.sections.identidade.js?v=20261019-parametros"></script>
+<script src="../../../js/empresa/empresa.sections.financeiro.js?v=20261111-previstos"></script>
+<script src="../../../js/empresa/empresa.sections.identidade.js?v=20261115-periodo"></script>
 <script src="../../../js/empresa/empresa.logistica-manual.js?v=20261021-comercial"></script>
-<script src="../../../js/logistica/escala-parametros.js?v=20261027-gestao"></script>
+<script src="../../../js/logistica/escala-parametros.js?v=20261108-auditoria"></script>
 <script src="parametros-cronograma-visual.js?v=20261027"></script>
 <script src="parametros-modos-separacao.js?v=20261027"></script>
-<script src="parametros-setores-separacao.js?v=20261029-setores"></script>
-<script src="parametros-motivos-logistica.js?v=20261103-problemas-separacao"></script>
-<script src="parametros-qualidade-acervo.js?v=20261105-contagem-cega"></script><script src="parametros-etiquetas.js?v=20261026"></script><script src="parametros-rh.js?v=20261105-ideia-celebracao"></script><script src="parametros-empresa.js?v=20261108-app-montador"></script>
-<script src="../../../js/shared/complexidade.js?v=20261102-personalizacao"></script>
-<script src="parametros-complexidade.js?v=20261102-personalizacao"></script>
-<script src="parametros.js?v=20261028-organizado"></script>
+<script src="parametros-setores-separacao.js?v=20261108-auditoria"></script>
+<script src="parametros-motivos-logistica.js?v=20261108-auditoria"></script>
+<script src="parametros-qualidade-acervo.js?v=20261105-contagem-cega"></script><script src="parametros-etiquetas.js?v=20261026"></script><script src="parametros-rh.js?v=20261108-auditoria"></script><script src="parametros-menu.js?v=20261108-sem-cabecalho"></script><script src="parametros-ia.js?v=20261108-limites"></script><script src="parametros-empresa.js?v=20261118-confirmar-datas"></script>
+<script src="../../../js/shared/complexidade.js?v=20261114-automatica"></script>
+<script src="parametros-complexidade.js?v=20261114-cores"></script><script src="parametros-ocorrencias.js?v=20261114-ocorrencias"></script>
+<script src="parametros.js?v=20261108-auditoria"></script>
 <script src="parametros-uber.js?v=20261029-uber"></script>
-<link rel="stylesheet" href="../../Comercial/produtividade.css?v=20261031">
-<script src="../../Comercial/produtividade.js?v=20261031"></script>
-<script src="parametros-motivos-cancelamento.js?v=20261031-papeis"></script>
-<script src="parametros-acompanhamento.js?v=20261105-avisos-pedido"></script>
-<script src="parametros-condicoes-pagamento.js?v=20261101"></script>
-<script src="parametros-posvenda.js?v=20261029-posvenda"></script>
-<script src="parametros-divergencias.js?v=20261108-app-montador"></script>
-<script src="parametros-organizar.js?v=20261108-app-montador"></script>
-<script src="parametros-catalogo.js?v=20261021-catalogo2"></script>
+<link rel="stylesheet" href="../../Comercial/produtividade.css?v=20261115-foto-cliente">
+<script src="../../Comercial/produtividade.js?v=20261115-foto-cliente"></script>
+<script src="parametros-motivos-cancelamento.js?v=20261118-motivos-bv"></script>
+<script src="parametros-acompanhamento.js?v=20261105-avisos-pedido"></script><script src="parametros-confirmar-datas.js?v=20261118-confirmar-datas"></script><script src="parametros-assinatura.js?v=20261115-assinatura"></script>
+<script src="parametros-condicoes-pagamento.js?v=20261108-auditoria"></script>
+<script src="parametros-posvenda.js?v=20261115-categorias"></script>
+<script src="parametros-divergencias.js?v=20261108-auditoria"></script>
+<script src="parametros-organizar.js?v=20261115-grupos-separacao"></script>
+<script src="parametros-catalogo.js?v=20261108-auditoria"></script>
 <script src="../../../js/core/doisFatores.js?v=20261023-2fa"></script>
 <script src="parametros-backup.js?v=20261024-nuvem"></script>
 <script src="parametros-seguranca.js?v=20261023-2fa"></script>
-<script src="parametros-almoxarifado.js?v=20261022-recebimento"></script>
-<script type="module" src="parametros-insumos-custos.mjs?v=20261102-insumos"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+<script src="parametros-almoxarifado.js?v=20261120-teto"></script><script src="parametros-central-metas.js?v=20261120-central"></script>
+<script type="module" src="parametros-insumos-custos.mjs?v=20261116-almox-tipos"></script><script type="module" src="parametros-personalizacoes.mjs?v=20261115-tipos"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
 <script type="module" src="parametros-producao.mjs?v=20261022-ordens"></script>
+<script src="../../../js/estoque/acervo-sinalizacoes.js?v=20261116"></script><script src="parametros-acervo.js?v=20261116-permissoes"></script>
 </body>
 </html>

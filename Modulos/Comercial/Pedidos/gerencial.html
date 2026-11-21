@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Panorama dos Eventos</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
+  <link rel="stylesheet" href="../../../styles/planilha.css?v=20261030">
+  <link rel="stylesheet" href="../comercial-relatorios.css?v=20261030c">
+  <link rel="stylesheet" href="gerencial.css?v=20261119-panorama">
+<script src="../../../js/app/relatorio-app.js?v=20261120-agentes2" data-titulo="Panorama dos Eventos" data-esconder="#gVoltar, #gerPage .ge-titulo"></script>
+</head>
+<body>
+<div class="container el-page cr-page" id="gerPage">
+  <div class="header-list ge-topo">
+    <button type="button" class="btn secondary ge-voltar" id="gVoltar">← Central de Pedidos</button>
+    <h2 class="ge-titulo"><small>Pedidos e entregas</small>Panorama dos Eventos</h2>
+    <div class="ge-filtros">
+      <label>De <input type="date" id="gDe"></label>
+      <label>Até <input type="date" id="gAte"></label>
+      <label>Situação <select id="gStatus"><option value="reservados">Reservados e realizados</option><option value="todos">Todos (com orçamentos)</option></select></label>
+    </div>
+  </div>
+  <main id="gConteudo"><div class="cr-vazio">Carregando…</div></main>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/google.config.js"></script>
+<script src="../../../js/core/google.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
+<script src="../../../js/core/permissions.js?v=20261030-comercial-relatorios"></script>
+<script src="../comercial-relatorios.js?v=20261030"></script>
+<script src="gerencial.js?v=20261119-panorama"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
+</body>
+</html>

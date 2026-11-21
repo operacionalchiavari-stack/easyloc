@@ -1,6 +1,8 @@
 // Uma projeção dos dados existentes, compartilhada por Geral, apresentação e PDF.
 // As medidas saem do nome gerado ("... (L) 2.40 m (A) 0.75 m (P) 1.10 m") porque já aparecem na linha de baixo, com as siglas.
 import { textoParaHtml, CONTRATO_ESTILOS } from '../../../js/core/contracts.mjs';
+import {aplicarExibicaoFinanceira} from '../../../js/pedido/pedido.exibicao-financeiro.mjs?v=20261118-fixo';
+import {linhasDescontoComercial,totalDescontoComercial} from '../../../js/pedido/pedido.desconto-area.mjs?v=20261118-resumo-areas';
 const MEDIDA_RE = /\s*\((?:L|A|P)\)\s*[\d.,]+\s*m\b/gi;
 const semMedidas = nome => String(nome || '').replace(MEDIDA_RE, '').replace(/\s{2,}/g, ' ').trim();
 // Mesmo formato do cadastro: "(L) 2.50 m (A) 1.00 m (P) 0.60 m". Usa o trecho do próprio nome gerado; sem ele, monta a partir
@@ -14,13 +16,14 @@ function medidasComSiglas(nome, dims){
 }
 // Personalizações por item (out/2026): o catálogo do pedido comercial registra aqui as personalizações cadastradas
 // (Estoque > Personalizações), pra Lista Completa oferecer a escolha e a prévia mostrar o nome. Sem registro, nada aparece.
-const PERSONALIZACOES = { porItem: new Map(), nome: new Map() };
+const PERSONALIZACOES = { porItem: new Map(), nome: new Map(), descricao: new Map() };
 // Cada uma: { id, vinculo_id, nome, preco_base, tipos_cartela } (personalizacao_lista).
 export function definirPersonalizacoes(lista = []){
-  PERSONALIZACOES.porItem.clear(); PERSONALIZACOES.nome.clear();
+  PERSONALIZACOES.porItem.clear(); PERSONALIZACOES.nome.clear(); PERSONALIZACOES.descricao.clear();
   for(const p of lista){
     const id = String(p.id), item = String(p.vinculo_id);
     PERSONALIZACOES.nome.set(id, p.nome);
+    if(p.descricao) PERSONALIZACOES.descricao.set(id, String(p.descricao));
     if(!PERSONALIZACOES.porItem.has(item)) PERSONALIZACOES.porItem.set(item, []);
     PERSONALIZACOES.porItem.get(item).push({ id, nome: p.nome, tipo:p.tipo, precoBase: p.preco_base ?? null, tiposCartela: p.tipos_cartela || [] });
   }
@@ -37,6 +40,7 @@ function persDaLinha(linha){
   const valor = Number(linha.personalizacao_valor);
   return { personalizacaoId,
     personalizacaoNome: personalizacaoId ? (PERSONALIZACOES.nome.get(personalizacaoId) || linha.personalizacao_nome || 'Personalização') : '',
+    personalizacaoDescricao: personalizacaoId ? (PERSONALIZACOES.descricao.get(personalizacaoId) || linha.personalizacao_descricao || '') : '',
     personalizacaoEscolhas: personalizacaoId && linha.personalizacao_escolhas && typeof linha.personalizacao_escolhas === 'object' ? linha.personalizacao_escolhas : {},
     personalizacaoValor: personalizacaoId && Number.isFinite(valor) && linha.personalizacao_valor !== null && linha.personalizacao_valor !== undefined ? valor : null };
 }
@@ -54,7 +58,7 @@ export function dadosApresentacao(project, findItem){
         grupos.set(id, { id, quantidade, nome: item?.name || linha.nome || 'Item indisponível no catálogo',
           nomeCompleto: semMedidas(item?.fullName || item?.name || linha.nome) || 'Item indisponível no catálogo',
           observacao: String(linha.observacao || '').slice(0,1000),
-          foto: item?.photo || '', referencia: item?.referencia || item?.specs?.find(s => s.label === 'Código')?.value || '',
+          foto: linha.personalizacao_foto || item?.photo || '', referencia: item?.referencia || item?.specs?.find(s => s.label === 'Código')?.value || '',
           categoria: item?.catLabel || '', tipo: item?.tipo || '', personalizable: Boolean(item?.personalizable), medidas: medidasComSiglas(item?.fullName, item?.dims),
           preco: Number.isFinite(item?.rentalPrice) ? item.rentalPrice : null,
           reposicao: Number.isFinite(item?.replacementPrice) ? item.replacementPrice : null,
@@ -68,7 +72,7 @@ export function dadosApresentacao(project, findItem){
     // comuns (sem o nome da empresa parceira nem o custo). Só o documento do pedido mostra (pedidoPreviewHtml).
     terceirizados: (Array.isArray(project.dados?.terceirizados) ? project.dados.terceirizados : []).map(t => ({ ambienteId: t.ambiente_id || '', id: 't:' + (t.id || t.terceirizado_id || ''), tercId: t.id || '',
       quantidade: Math.max(1, Number(t.quantidade) || 1), nome: t.nome || 'Item', nomeCompleto: t.nome || 'Item', observacao: '', foto: t.foto || '', referencia: t.codigo || '',
-      categoria: '', tipo: '', personalizable: false, medidas: t.medidas || '', preco: Number.isFinite(Number(t.valor)) ? Number(t.valor) : null, reposicao: null,
+      categoria: '', tipo: '', personalizable: false, medidas: t.medidas || '', preco: Number.isFinite(Number(t.valor)) ? Number(t.valor) : null, reposicao: t.valor_reposicao == null ? null : Number(t.valor_reposicao),
       personalizacaoId: '', personalizacaoNome: '', personalizacaoEscolhas: {}, personalizacaoValor: null, opcoesPersonalizacao: [], terceirizado: true })),
     // Serviços adicionais do pedido comercial (out/2026).
     servicos: (Array.isArray(project.dados?.servicos) ? project.dados.servicos : []).map(s => ({ nome: s.nome || 'Serviço', quantidade: Number(s.quantidade) || 1, valor: Number(s.valor) || 0, data: s.data || '', hora: s.hora || '' })),
@@ -80,19 +84,27 @@ export function dadosApresentacao(project, findItem){
 // — vem da tela do pedido (ao vivo) ou do pedido salvo (Central). Projeto do decorador não tem: nada aparece.
 const COMPONENTES_PAGAMENTO = { locacao: 'Locação', frete: 'Frete', montagem: 'Montagem' };
 const dataBr = v => v ? String(v).slice(0, 10).split('-').reverse().join('/') : '—';
+const dataHorarioHtml=(data,hora)=>data?`<span class="cpj-order-data">${esc(dataBr(data))}</span>${hora?`<span class="cpj-order-hora">às ${esc(hora)}</span>`:''}`:'—';
 export function financeiroPedidoSalvo(pedido){
   const obs = pedido?.observacoes || {};
   const v = obs.valores && typeof obs.valores === 'object' ? obs.valores : null;
-  const total = Number(v?.total ?? pedido?.valor_total) || 0;
-  const resumo = v ? [['Locação', v.locacao], ['Frete', v.frete], ['Montagem', v.montagem]].filter(([, x]) => Number(x) > 0).map(([rotulo, valor]) => ({ rotulo, valor: Number(valor) })) : [];
+  const bruto = Number(v?.total ?? pedido?.valor_total) || 0;
+  const cfg=obs.pagamento_config||{},positivo=x=>Math.max(0,Number(x)||0);
+  const bv=positivo(cfg.descontoBV)+positivo(cfg.abatidoBV),credito=positivo(cfg.creditoCliente),comercial=totalDescontoComercial(cfg),convertido=positivo(cfg.descontoBvPedido??cfg.descontoPedido);
+  const total=Math.max(0,Math.round((bruto-bv-credito-comercial-convertido)*100)/100);
+  const linhas=v?.customizacoes!==undefined?[['Locação',v.locacao_bv],['Customizações',v.customizacoes],['Itens sublocados',v.terceirizados],['Serviços adicionais',v.servicos],['Frete',v.frete],['Montagem',v.montagem]]:v?[['Locação',v.locacao],['Frete',v.frete],['Montagem',v.montagem]]:[];
+  const resumo=linhas.filter(([,x])=>Number(x)>0).map(([rotulo,valor])=>({rotulo,valor:Number(valor)}));
   const lista = [obs.parcelas_financeiras, obs.financeiro?.parcelas_financeiras, obs.pagamento?.parcelas_financeiras, pedido?.parcelas_financeiras].find(Array.isArray) || [];
   const parcelas = lista.filter(p => Number(p?.valor) > 0).map(p => ({ componente: p.componente || 'locacao', numero: p.numero, tipo: p.tipo, vencimento: p.vencimento, valor: Number(p.valor), metodo: p.metodo, status: p.status }));
-  return (total > 0 || parcelas.length) ? { resumo, total, parcelas } : null;
+  resumo.push(...linhasDescontoComercial(cfg));
+  for(const [rotulo,valor] of [['BV aplicado',bv],['Crédito aplicado',credito]])if(valor)resumo.push({rotulo,valor:-valor});
+  if(convertido)resumo.push({rotulo:'Desconto especial',valor:-convertido,tipo:'bv_convertido'});
+  return (bruto > 0 || parcelas.length) ? aplicarExibicaoFinanceira({resumo,total,parcelas},v||{},{...(obs.exibicao_financeiro||{}),tem_fixo:!!cfg.descontoFixo}) : null;
 }
 function financeiroPedidoHtml(model){
   const f = model.financeiro;
   // model.pagamentosSlot: pedido digital (o link do pedido), a lista de pagamentos entra no lugar da programação
-  if(!f || (!(f.total > 0) && !f.parcelas?.length)) return model.pagamentosSlot ? `<div class="cpj-order-financeiro">${model.pagamentosSlot}</div>` : '';
+  if(!f || (!(f.total > 0) && !f.parcelas?.length&&!f.resumo?.length)) return model.pagamentosSlot ? `<div class="cpj-order-financeiro">${model.pagamentosSlot}</div>` : '';
   const resumo = (f.resumo || []).filter(l => Number(l.valor) !== 0);
   const blocoResumo = `<section class="cpj-order-financeiro-resumo"><h2>Resumo do pedido</h2><dl>${resumo.map(l => `<div><dt>${esc(l.rotulo)}</dt><dd>${dinheiro.format(l.valor)}</dd></div>`).join('')}<div class="is-total"><dt>Total do pedido</dt><dd>${dinheiro.format(Number(f.total) || 0)}</dd></div></dl></section>`;
   const grupos = Object.keys(COMPONENTES_PAGAMENTO).map(c => [c, (f.parcelas || []).filter(p => (p.componente || 'locacao') === c)]).filter(([, ps]) => ps.length);
@@ -141,9 +153,9 @@ function personalizacaoHtml(item, editar){
   if(editar && item.personalizacaoId) return `<span class="pa-pers-chip"><span class="pa-pers-txt"><b>${esc(item.personalizacaoNome)}</b>${escolha ? ` — ${esc(escolha)}` : ''}${valor}</span><button type="button" class="pa-pers-trocar" data-cpj-personalizar aria-label="Trocar a personalização de ${nome}">Trocar</button><button type="button" class="pa-pers-tirar" data-cpj-personalizar-tirar aria-label="Tirar a personalização de ${nome}" title="Tirar a personalização">×</button></span>`;
   if(editar && opcoes.length) return `<button type="button" class="pa-pers-btn" data-cpj-personalizar aria-label="Personalizar ${nome}">✦ Personalizar</button>`;
   if(editar && item.personalizable) return `<button type="button" class="pa-pers-btn" data-customize-item="${esc(item.id)}" aria-label="Personalizar ${nome}">✦ Personalizar</button>`;
-  return item.personalizacaoNome ? `<small class="pa-personalizacao-txt">Personalização: ${esc(item.personalizacaoNome)}${escolha ? ` — ${esc(escolha)}` : ''}</small>` : '';
+  return item.personalizacaoNome ? `<small class="pa-personalizacao-txt">Personalização: ${esc(item.personalizacaoNome)}${escolha ? ` — ${esc(escolha)}` : ''}</small>${item.personalizacaoDescricao ? `<small class="pa-personalizacao-txt pa-personalizacao-desc">${esc(item.personalizacaoDescricao)}</small>` : ''}` : '';
 }
-function linhas(amb, ordenar = false, editar = false, qtdEditavel = editar){
+function linhas(amb, ordenar = false, editar = false, qtdEditavel = editar, transferir = false){
   return amb.itens.map(item => {
     const remover = editar ? `<button type="button" class="cpj-icon-btn pa-remover" data-cpj="item-remover" aria-label="Excluir ${esc(item.nomeCompleto || item.nome)} do ambiente" title="Excluir item">×</button>` : '';
     const quantidade=`<td class="pa-quantidade">${qtdEditavel ? `<input class="pa-qtd-input" type="number" min="1" max="999" value="${item.quantidade}" data-cpj-qtd-input aria-label="Quantidade de ${esc(item.nomeCompleto || item.nome)}">` : `<b>${item.quantidade}</b>`}${remover}${ordenar ? '' : '<small>un.</small>'}</td>`;
@@ -155,20 +167,20 @@ function linhas(amb, ordenar = false, editar = false, qtdEditavel = editar){
     const destaque = (editar || qtdEditavel) && /^componente$/i.test(String(item.tipo || '').trim()) ? ' class="pa-linha-componente"' : '';
     return `<tr${destaque} data-pa-item="${esc(item.id)}" data-pa-amb="${esc(amb.id)}"${editar || qtdEditavel ? ` data-cpj-item="${esc(item.id)}"` : ''}>
       ${ordenar ? `<td class="pa-ordem"><button type="button" data-pa-drag aria-label="Ordenar ${esc(nome)}. Use as setas para cima e para baixo." title="Arraste ou use ↑ e ↓">⠿</button></td>${quantidade}` : ''}
-      <td class="pa-miniatura">${foto(item.foto)}</td><td class="pa-descricao"><strong>${esc(nome)}</strong>${item.medidas ? `<small class="pa-medidas">${esc(item.medidas)}</small>` : ""}${personalizacaoHtml(item, editar || qtdEditavel)}${!ordenar && item.categoria ? `<small>${esc(item.categoria)}</small>` : ''}${item.referencia ? `<small>Cód. ${esc(item.referencia)}</small>` : ''}${observacao}</td>${valoresTd(item)}
+      <td class="pa-miniatura">${foto(item.foto)}</td><td class="pa-descricao"><strong>${esc(nome)}</strong>${item.medidas ? `<small class="pa-medidas">${esc(item.medidas)}</small>` : ""}${personalizacaoHtml(item, editar || qtdEditavel)}${!ordenar && item.categoria ? `<small>${esc(item.categoria)}</small>` : ''}${item.referencia ? `<small>Cód. ${esc(item.referencia)}</small>` : ''}${observacao}${transferir ? `<button type="button" class="pa-transferir" data-cpj="item-transferir" aria-label="Transferir ${esc(nome)} para outro ambiente">⇄ Transferir de ambiente</button>` : ''}</td>${valoresTd(item)}
       ${ordenar ? '' : quantidade}</tr>`;
   }).join('');
 }
 // Item sublocado (nov/2026): na Lista Completa fica junto dos itens do ambiente, com cor própria e " - Sublocação" no nome
 // (sem o nome da empresa parceira). Quantidade e valor editáveis; os campos usam data-terc-* (tratados em catalogo-projetos).
-function linhaTerc(item, amb, editavel){
+function linhaTerc(item, amb, editavel, transferir=false){
   const nome = (item.nomeCompleto || item.nome) + ' - Sublocação';
   const total = (Number(item.preco) || 0) * item.quantidade;
   return `<tr class="pa-linha-sublocacao" data-terc-id="${esc(item.tercId)}" data-pa-amb="${esc(amb.id)}">
     <td class="pa-ordem"></td>
     <td class="pa-quantidade">${editavel ? `<input class="pa-qtd-input" type="number" min="1" max="9999" value="${item.quantidade}" data-terc-campo="quantidade" aria-label="Quantidade de ${esc(nome)}"><button type="button" class="cpj-icon-btn pa-remover" data-cpj="terc-remover" aria-label="Excluir ${esc(nome)}" title="Excluir item">×</button>` : `<b>${item.quantidade}</b>`}</td>
-    <td class="pa-miniatura">${foto(item.foto)}</td><td class="pa-descricao"><strong>${esc(nome)}</strong>${item.medidas ? `<small class="pa-medidas">${esc(item.medidas)}</small>` : ''}${item.referencia ? `<small>Cód. ${esc(item.referencia)}</small>` : ''}</td>
-    <td class="pa-valor">${moeda(null)}</td><td class="pa-valor">${editavel ? `<input class="pa-valor-input" type="number" min="0" step="0.01" value="${(Number(item.preco) || 0).toFixed(2)}" data-terc-campo="valor" aria-label="Valor de ${esc(nome)}">` : moeda(item.preco)}</td><td class="pa-valor pa-valor-total"><b>${dinheiro.format(total)}</b></td></tr>`;
+    <td class="pa-miniatura">${foto(item.foto)}</td><td class="pa-descricao"><strong>${esc(nome)}</strong>${item.medidas ? `<small class="pa-medidas">${esc(item.medidas)}</small>` : ''}${item.referencia ? `<small>Cód. ${esc(item.referencia)}</small>` : ''}${transferir ? `<button type="button" class="pa-transferir" data-cpj="terc-transferir" aria-label="Transferir ${esc(nome)} para outro ambiente">⇄ Transferir de ambiente</button>` : ''}</td>
+    <td class="pa-valor">${moeda(item.reposicao)}</td><td class="pa-valor">${editavel ? `<input class="pa-valor-input" type="number" min="0" step="0.01" value="${(Number(item.preco) || 0).toFixed(2)}" data-terc-campo="valor" aria-label="Valor de ${esc(nome)}">` : moeda(item.preco)}</td><td class="pa-valor pa-valor-total"><b>${dinheiro.format(total)}</b></td></tr>`;
 }
 function tabela(amb, ordenar = false){
   return amb.itens.length ? `<table class="pa-itens" aria-label="Itens de ${esc(amb.nome)}"><thead><tr>${ordenar?'<th scope="col"><span class="pa-sr">Ordenar</span></th><th scope="col" class="pa-quantidade">Qtd.</th>':''}<th scope="col"><span class="pa-sr">Foto</span></th><th scope="col">Item</th>${valoresTh()}${ordenar?'':'<th scope="col">Qtd.</th>'}</tr></thead><tbody>${linhas(amb,ordenar)}</tbody></table>` : '<p class="pa-vazio">Nenhum item neste ambiente.</p>';
@@ -190,7 +202,7 @@ export function geralHtml(model, { editar = false, titulos = true, quantidade = 
   return `<div class="pa-geral">
     ${!ambientes.length ? '<p class="pa-vazio">Este projeto ainda não possui itens adicionados.</p>' : `<table class="pa-itens" aria-label="Itens do projeto por ambiente">
       <thead><tr><th scope="col"><span class="pa-sr">Ordenar</span></th><th scope="col" class="pa-quantidade">Qtd.</th><th scope="col"><span class="pa-sr">Foto</span></th><th scope="col">Item</th>${valoresTh()}${fotoLado ? '<th scope="col" class="pa-foto-ambiente-col"><span class="pa-sr">Foto do ambiente</span></th>' : ''}</tr></thead>
-      ${ambientes.map(amb=>`<tbody class="pa-grupo" aria-label="${esc(amb.nome)}" data-pa-grupo="${esc(amb.id)}">${titulos ? `<tr><td colspan="${fotoLado ? COLS - 1 : COLS}" class="pa-ambiente-titulo${moverAmbientes ? ' pa-ambiente-movel' : ''}">${moverAmbientes ? `<button type="button" class="pa-ambiente-alca" data-pa-drag-amb aria-label="Mover o ambiente ${esc(amb.nome)} com todos os itens. Use as setas para cima e para baixo." title="Arraste para mudar a ordem dos ambientes (ou use ↑ e ↓)">⠿</button>` : ''}<h3>${esc(amb.nome)}</h3>${acoesAmbiente ? acoesAmbiente(amb) : ''}</td>${fotoLado ? '<td class="pa-foto-ambiente-topo" aria-hidden="true"></td>' : ''}</tr>` : ''}${amb.itens.length || tercDe(amb).length ? (fotoLado ? COLHEAD_GERAL.replace(' aria-hidden="true">', '>').replace(/<td/g, '<td aria-hidden="true"').replace('</tr>', foto(amb, amb.itens.length + tercDe(amb).length + 1) + '</tr>') : COLHEAD_GERAL) + linhas(amb,true,editar,editar || quantidade) + tercDe(amb).map(t => linhaTerc(t, amb, editar || quantidade)).join('') : `<tr class="pa-ambiente-vazio"><td colspan="${4 + VALOR_COLS}">Nenhum móvel neste ambiente ainda. Use o Catálogo (F2) ou ＋ Componente.</td>${foto(amb, 1)}</tr>`}${extra(amb)}</tbody>`).join('')}
+      ${ambientes.map(amb=>`<tbody class="pa-grupo" aria-label="${esc(amb.nome)}" data-pa-grupo="${esc(amb.id)}">${titulos ? `<tr><td colspan="${fotoLado ? COLS - 1 : COLS}" class="pa-ambiente-titulo${moverAmbientes ? ' pa-ambiente-movel' : ''}">${moverAmbientes ? `<button type="button" class="pa-ambiente-alca" data-pa-drag-amb aria-label="Mover o ambiente ${esc(amb.nome)} com todos os itens. Use as setas para cima e para baixo." title="Arraste para mudar a ordem dos ambientes (ou use ↑ e ↓)">⠿</button>` : ''}<h3>${esc(amb.nome)}</h3>${acoesAmbiente ? acoesAmbiente(amb) : ''}</td>${fotoLado ? '<td class="pa-foto-ambiente-topo" aria-hidden="true"></td>' : ''}</tr>` : ''}${amb.itens.length || tercDe(amb).length ? (fotoLado ? COLHEAD_GERAL.replace(' aria-hidden="true">', '>').replace(/<td/g, '<td aria-hidden="true"').replace('</tr>', foto(amb, amb.itens.length + tercDe(amb).length + 1) + '</tr>') : COLHEAD_GERAL) + linhas(amb,true,editar,editar || quantidade,(editar || quantidade) && model.ambientes.length > 1) + tercDe(amb).map(t => linhaTerc(t, amb, editar || quantidade,(editar || quantidade) && model.ambientes.length > 1)).join('') : `<tr class="pa-ambiente-vazio"><td colspan="${4 + VALOR_COLS}">${esc(typeof vazios === 'string' ? vazios : 'Nenhum móvel neste ambiente ainda. Use o Catálogo (F2) ou ＋ Componente.')}</td>${foto(amb, 1)}</tr>`}${extra(amb)}</tbody>`).join('')}
     </table>`}
     <p class="pa-sr" data-pa-anuncio role="status" aria-live="polite"></p></div>`;
 }
@@ -215,7 +227,10 @@ const AVISOS_PADRAO = {
   pre_reserva: "Pré-reserva: os móveis estão reservados para você até {data}. Depois dessa data, se o pedido não for confirmado, a reserva é liberada."
 };
 let avisosStatus = { ...AVISOS_PADRAO };
-export function definirAvisosStatus(textos){ avisosStatus = { ...AVISOS_PADRAO }; for(const k of Object.keys(AVISOS_PADRAO)) if(textos && String(textos[k] || "").trim()) avisosStatus[k] = String(textos[k]).trim(); }
+export function definirAvisosStatus(textos){ avisosStatus = { ...AVISOS_PADRAO }; for(const k of Object.keys(AVISOS_PADRAO)) if(textos && String(textos[k] || "").trim()) avisosStatus[k] = String(textos[k]).trim();  regrasPedido = String(textos?.regras || "").trim(); }
+// Regras do pedido (18/11/2026): texto fixo de Comercial > Contratos > "Regras do pedido", no fim de todo pedido.
+let regrasPedido = "";
+function regrasPedidoHtml(model){ if(!regrasPedido || model?.semRegras) return ""; return '<section class="cpj-order-regras"><h2>Regras do pedido</h2><div>' + esc(regrasPedido) + '</div></section>'; }
 function avisoStatusHtml(st){
   if(!st || !["orcamento", "pre_reserva"].includes(st.chave)) return "";
   const data = st.ate ? String(st.ate).slice(0, 10).split("-").reverse().join("/") : "a data combinada";
@@ -223,7 +238,7 @@ function avisoStatusHtml(st){
   if(!texto) return "";
   return '<div class="cpj-order-aviso-status is-' + st.chave + '" role="note"><span class="cpj-order-aviso-status-icone" aria-hidden="true">i</span><div><strong>' + (st.chave === "orcamento" ? "Orçamento" : "Pré-reserva") + '</strong><p>' + esc(texto) + '</p></div></div>';
 }
-function cabecalhoPedidoHtml(empresa, decorador, model = {}){
+export function cabecalhoPedidoHtml(empresa, decorador, model = {}){
   const nome = empresa?.nome || 'Chiavari';
   const marca = empresa?.logo_url
     ? `<img class="cpj-order-logo" src="${esc(empresa.logo_url)}" alt="${esc(nome)}" onload="if(this.naturalWidth&amp;&amp;this.naturalWidth/this.naturalHeight&lt;1.6)this.classList.add('is-quadrada')">`
@@ -243,7 +258,7 @@ export function layoutPedido(valor){
   if(valor === 'final' || valor === 'horizontal'){ try{ localStorage.setItem('pedido_layout_pdf', valor); }catch{} return valor; }
   try{ return localStorage.getItem('pedido_layout_pdf') === 'horizontal' ? 'horizontal' : 'final'; }catch{ return 'final'; }
 }
-const layoutSeletorHtml = (atual) => `<div class="cpj-order-layout" role="radiogroup" aria-label="Layout do pedido">${LAYOUTS_PEDIDO.map(([v, r]) => `<button type="button" role="radio" aria-checked="${v === atual}" data-pedido-layout="${v}">${r}</button>`).join('')}</div>`;
+const layoutSeletorHtml = (atual) => `<div class="cpj-order-layout" role="radiogroup" aria-label="Layout do pedido">${LAYOUTS_PEDIDO.map(([v, r]) => `<button type="button" role="radio" aria-checked="${v === atual}" data-pedido-layout="${v}"><span class="cpj-layout-mini ${v === 'horizontal' ? 'is-horizontal' : 'is-vertical'}" aria-hidden="true"><i></i><i></i><i></i><b></b></span><span>${r}</span></button>`).join('')}</div>`;
 const identidadeItemPedido = item => `<strong>${esc(item.nomeCompleto || item.nome)}</strong>${item.medidas ? `<small class="pa-medidas">${esc(item.medidas)}</small>` : ""}${personalizacaoHtml(item, false)}${item.referencia ? `<small>Cód. ${esc(item.referencia)}</small>` : ''}${item.observacao ? `<p class="pa-item-observacao-texto">${esc(item.observacao)}</p>` : ''}`;
 const linhaItemPedido = item => `<tr><td class="cpj-order-qty">${item.quantidade}</td><td class="cpj-order-photo">${foto(item.foto)}</td><td>${identidadeItemPedido(item)}</td>${valoresTd(item,'cpj-order-valor')}</tr>`;
 const COLGROUP_PEDIDO = '<colgroup><col class="cpj-order-col-qty"><col class="cpj-order-col-photo"><col><col class="cpj-order-col-valor"><col class="cpj-order-col-valor"><col class="cpj-order-col-valor"></colgroup>';
@@ -287,9 +302,9 @@ export function pedidoPreviewHtml(model, { decorador = null, empresa = null, lay
         ${model.nome && model.nome !== decorador?.nome ? `<p class="cpj-order-event-cliente">${esc(model.nome)}</p>` : ''}
         <div class="cpj-order-local"><span>Local do evento</span><h2>${esc(model.local || 'Não informado')}</h2>${model.localEndereco ? `<p class="cpj-order-local-endereco">${esc(model.localEndereco)}</p>` : ''}</div>
         <dl class="cpj-order-datas">
-          <div><dt>Data do evento</dt><dd>${esc(model.data ? [model.data, model.dataFim].filter(Boolean).map(dataBr).join(' a ') : '—')}</dd></div>
-          <div><dt>Entrega</dt><dd>${esc(model.evento?.data_entrega ? dataBr(model.evento.data_entrega) + (model.evento.hora_entrega ? ' às ' + model.evento.hora_entrega : '') : '—')}</dd></div>
-          <div><dt>Coleta</dt><dd>${esc(model.evento?.data_coleta ? dataBr(model.evento.data_coleta) + (model.evento.hora_coleta ? ' às ' + model.evento.hora_coleta : '') : '—')}</dd></div>
+          <div><dt>Data do evento</dt><dd>${model.data ? [model.data,model.dataFim].filter(Boolean).map((data,i)=>`<span class="cpj-order-data">${i?'a ':''}${esc(dataBr(data))}</span>`).join('') : '—'}</dd></div>
+          <div><dt>Entrega</dt><dd>${dataHorarioHtml(model.evento?.data_entrega,model.evento?.hora_entrega)}</dd></div>
+          <div><dt>Coleta</dt><dd>${dataHorarioHtml(model.evento?.data_coleta,model.evento?.hora_coleta)}</dd></div>
         </dl>
       </div>
       ${model.semAviso ? "" : `<aside class="cpj-order-notice" role="note"><span class="cpj-order-notice-icon" aria-hidden="true">i</span><div><strong>Esta é uma prévia do pedido</strong><p>Este arquivo reúne os itens escolhidos para o projeto. O pedido oficial será enviado pela nossa equipe comercial, com todas as disponibilidades e os serviços adicionais.</p></div></aside>`}
@@ -301,6 +316,7 @@ export function pedidoPreviewHtml(model, { decorador = null, empresa = null, lay
     ${!horizontal && model.ambientes.some(a => a.imagens?.length) ? `<section class="cpj-order-renders"><h2>Renderizações do projeto</h2>${model.ambientes.filter(a => a.imagens?.length).map(amb => `<section class="cpj-order-render-group"><h3>${esc(amb.nome)}</h3><div>${amb.imagens.map(r => `<figure><img src="${esc(r.url)}" alt="Renderização de ${esc(amb.nome)}" loading="lazy" decoding="async"></figure>`).join('')}</div></section>`).join('')}</section>` : ''}
     ${plantasPedidoHtml(model, horizontal)}
     ${conferencia?'':financeiroPedidoHtml(model)}
+    ${conferencia?'':regrasPedidoHtml(model)}
     ${!conferencia && model.contrato ? `<section class="cpj-order-contrato" aria-label="Contrato anexado"><style>${CONTRATO_ESTILOS}.cpj-order-contrato{margin-top:32px;padding-top:24px;border-top:1px solid #dce1e8;line-height:1.75;overflow-wrap:anywhere}.cpj-order-contrato>h2{margin:0 0 20px}@media print{.cpj-order-contrato{break-before:page;border-top:0}}</style><h2>Contrato de Locação</h2><div>${textoParaHtml(model.contrato)}</div></section>` : ''}
   </article>`;
 }
@@ -311,17 +327,18 @@ export function listaConferenciaPedidoHtml(model,{colunas=[],campos=()=>'',layou
 }
 // Planta do evento (com as legendas das fotos), antes do resumo e das parcelas — out/2026. model.plantas vem pronto
 // (cópia estática da planta inteira feita no catálogo: { nome, w, h, html } com w/h em mm, na proporção da folha).
-// Na tela cabe na largura do papel (--zt); na impressão cada planta vai para uma página só dela (A4 deitado ou em pé,
-// conforme a planta) e cresce até ocupar a página toda (--zp), sem passar da altura.
+// A composição tem sempre formato paisagem e uma única escala, incluindo imagens e legendas.
+// No pedido vertical, gira a composição e o título juntos para imprimir pela borda longa da folha.
 function plantasPedidoHtml(model, horizontal){
-  const plantas = (model.plantas || []).filter(p => p?.html && p.w && p.h);
+  const plantas = (model.plantas || []).filter(p => p?.html && Number(p.w)>0 && Number(p.h)>0 && Number.isFinite(Number(p.w)) && Number.isFinite(Number(p.h)));
   if(!plantas.length) return '';
   const [tw, th] = horizontal ? [269, 170] : [182, 250];
+  const [paginaW,paginaH]=horizontal?[269,182]:[182,269];
+  const zt=Math.min(1,tw/paginaW,th/paginaH).toFixed(4);
   return `<section class="cpj-order-plantas">${plantas.map(p => {
-    const deitada = p.w >= p.h;
-    const [pw, ph] = deitada ? [281, 182] : [194, 268];
-    const zt = Math.min(1, tw / p.w, th / p.h).toFixed(4), zp = Math.min(pw / p.w, ph / p.h).toFixed(4);
-    return `<figure class="cpj-order-planta${deitada ? ' is-deitada' : ' is-em-pe'}"><h2>${esc(plantas.length > 1 ? p.nome : 'Planta do evento')}</h2><div class="cpj-order-planta-folha" style="width:${p.w}mm;height:${p.h}mm;--zt:${zt};--zp:${zp}">${p.html}</div></figure>`;
+    const w=Number(p.w),h=Number(p.h),largura=w,altura=h;
+    const zp=(Math.floor(Math.min(269/largura,172/altura)*10000)/10000).toFixed(4);
+    return `<figure class="cpj-order-planta ${horizontal?'is-pagina-horizontal':'is-pagina-girada'}"><div class="cpj-order-planta-pagina" style="width:${paginaW}mm;height:${paginaH}mm;--zt:${zt}"><div class="cpj-order-planta-conteudo"><h2>${esc(plantas.length > 1 ? p.nome : 'Planta do evento')}</h2><div class="cpj-order-planta-folha" style="width:${largura}mm;height:${altura}mm;--zp:${zp}"><div class="cpj-order-planta-original" style="width:${w}mm;height:${h}mm">${p.html}</div></div></div></div></figure>`;
   }).join('')}</section>`;
 }
 function capaHtml(model){
@@ -349,11 +366,22 @@ export async function imprimirApresentacao(model){
   return imprimirDocumento(documentoApresentacao(model));
 }
 export function estilosImpressaoPedido(horizontal=false){
+  const tema = globalThis.window?.__COMPANY_THEME || {};
+  const cor = (value, fallback) => /^#[0-9a-f]{6}$/i.test(value || '') ? value : fallback;
+  const identidade = ':root{--color-sidebar:'+cor(tema.cor_sidebar,'#5a5a55')+';--el-button-primary-bg:'+cor(tema.cor_destaque,'#7d603d')+'}';
+
   const estilosHorizontal = horizontal ? `@page{size:A4 landscape;margin:0 0 10mm}.cpj-order-amb{padding-top:3mm}.cpj-order-amb{break-inside:avoid-page}.cpj-order-amb-nome{break-after:avoid}` : '';
-  return `@page{size:A4 portrait;margin:0 0 12mm}.cpj-order-table thead.pa-sr{position:static;width:auto;height:auto;overflow:visible;clip-path:none}.cpj-order-table thead.pa-sr th{height:10mm;padding:0;border:0;font-size:0;line-height:0}.cpj-order-render-group,.cpj-order-financeiro{padding-top:6mm}@page plantaDeitada{size:A4 landscape;margin:6mm 0}@page plantaEmPe{size:A4 portrait;margin:6mm 0}.cpj-order-planta.is-deitada{page:plantaDeitada}.cpj-order-planta.is-em-pe{page:plantaEmPe}.cpj-order-paper .cpj-order-planta{margin:0 -6mm;padding:0;break-after:page}.cpj-order-planta h2{margin:0 0 3mm;font-size:13pt}.cpj-order-planta-folha{zoom:var(--zp)!important;box-shadow:none!important}body{margin:0;font-family:Arial,sans-serif;color:#34352f}.cpj-order-paper{padding:0 14mm;box-shadow:none}.cpj-order-paper .cpj-order-letterhead{margin:0 -14mm;padding:9mm 14mm}.cpj-order-notes{padding:0 14mm}.cpj-order-table thead{display:table-header-group}.cpj-order-table tr,figure,.cpj-order-requester{break-inside:avoid}.cpj-order-render-group{break-inside:auto}.cpj-order-render-group>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5mm}.cpj-order-render-group figure{margin:0}.cpj-order-render-group figure:first-child{grid-column:auto}.cpj-order-renders{break-before:auto}.cpj-order-renders>h2,.cpj-order-render-group h3{break-after:avoid}.cpj-order-notes{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:24px;font-size:12px;line-height:1.6}.pa-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}*{print-color-adjust:exact}${estilosHorizontal}`;
+  const estilosPlanta=`@page plantaDeitada{size:A4 landscape;margin:0 0 12mm}
+    @page plantaGirada{size:A4 portrait;margin:0 0 12mm}
+    .cpj-order-planta.is-pagina-horizontal{page:plantaDeitada}
+    .cpj-order-planta.is-pagina-girada{page:plantaGirada}
+    .cpj-order-paper .cpj-order-planta{margin:0;padding:0;break-after:page}
+    .cpj-order-planta-pagina{zoom:1!important}
+    .cpj-order-planta-folha{zoom:var(--zp)!important;box-shadow:none!important}`;
+  return `${identidade}@page{size:A4 portrait;margin:0 0 12mm}.cpj-order-table thead.pa-sr{position:static;width:auto;height:auto;overflow:visible;clip-path:none}.cpj-order-table thead.pa-sr th{height:10mm;padding:0;border:0;font-size:0;line-height:0}.cpj-order-render-group,.cpj-order-financeiro{padding-top:6mm}${estilosPlanta}body{margin:0;font-family:Arial,sans-serif;color:#34352f}.cpj-order-paper{padding:0 14mm;box-shadow:none}.cpj-order-paper .cpj-order-letterhead{margin:0 -14mm;padding:9mm 14mm}.cpj-order-notes{padding:0 14mm}.cpj-order-table thead{display:table-header-group}.cpj-order-table tr,figure,.cpj-order-requester{break-inside:avoid}.cpj-order-render-group{break-inside:auto}.cpj-order-render-group>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4mm}.cpj-order-render-group figure{margin:0}.cpj-order-render-group figure:first-child{grid-column:auto}.cpj-order-renders{break-before:auto}.cpj-order-renders>h2,.cpj-order-render-group h3{break-after:avoid}.cpj-order-notes{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:24px;font-size:12px;line-height:1.6}.pa-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}*{print-color-adjust:exact}${estilosHorizontal}`;
 }
 export async function imprimirPedido(model, { decorador = null, empresa = null, observacao = '', layout = null } = {}){
-  const css = new URL('./catalogo-projetos.css?v=20261107-lista-sublocacao',import.meta.url).href;
+  const css = new URL('./catalogo-projetos.css?v=20261118-varios',import.meta.url).href;
   // Decorador com os valores ocultos (botão do olho no catálogo): o PDF sai sem as colunas de valores.
   const semValores = document.documentElement.classList.contains('catalogo-sem-valores');
   const horizontal = (layout || layoutPedido()) === 'horizontal';
@@ -411,7 +439,7 @@ export function abrirVisualizacaoPedido({ titulo = 'Pedido', model, decorador = 
   }else dialog.showModal();
   return dialog;
 }
-async function imprimirDocumento(html){
+export async function imprimirDocumento(html){
   const frame = document.createElement('iframe');
   frame.title = 'Impressão do documento';
   frame.style.cssText='position:fixed;width:1100px;height:800px;left:-12000px;top:0;border:0';
@@ -445,6 +473,28 @@ export function reordenarItens(amb, origem, destino){
   let pos=outros.findIndex(i=>String(i.item_id)===destino);
   if(de<para) while(pos<outros.length && String(outros[pos].item_id)===destino) pos++;
   outros.splice(pos,0,...grupo); amb.itens=outros; return true;
+}
+
+// Transfere unidades mantendo observações, personalizações e demais dados de cada registro.
+export function transferirItens(ambientes, origemId, destinoId, itemId, quantidade){
+  const origem = ambientes.find(a => String(a.id) === String(origemId));
+  const destino = ambientes.find(a => String(a.id) === String(destinoId));
+  const corresponde = i => String(i.item_id) === String(itemId);
+  const total = origem?.itens.filter(corresponde).reduce((s,i) => s + Number(i.quantidade ?? 1), 0) || 0;
+  if(!origem || !destino || origem === destino || !Number.isInteger(quantidade) || quantidade < 1 || quantidade > total) return false;
+  const assinatura = i => JSON.stringify(Object.keys(i).filter(k => k !== 'quantidade').sort().map(k => [k,i[k]]));
+  let restante = quantidade;
+  for(const linha of [...origem.itens]){
+    if(!corresponde(linha) || !restante) continue;
+    const unidades = Math.min(Number(linha.quantidade ?? 1), restante);
+    const igual = destino.itens.find(i => assinatura(i) === assinatura(linha));
+    if(igual) igual.quantidade = Number(igual.quantidade ?? 1) + unidades;
+    else destino.itens.push({...structuredClone(linha), quantidade:unidades});
+    linha.quantidade = Number(linha.quantidade ?? 1) - unidades;
+    if(!linha.quantidade) origem.itens.splice(origem.itens.indexOf(linha),1);
+    restante -= unidades;
+  }
+  return true;
 }
 
 // Ambientes inteiros (aba Geral): arrastar pela alça do título move o bloco com todos os itens. onMove(origem, destino, depois).

@@ -76,7 +76,7 @@ const mock = () => {
   await page.goto(BASE + "__host.html");
   await page.waitForFunction(() => document.querySelectorAll(".dispon-row").length >= 20);
 
-  const linhas = () => page.$$eval(".dispon-row", rs => rs.map(r => ({ nome: r.querySelector(".dispon-item-name").textContent.trim(), cat: r.children[2].textContent.trim(), status: r.querySelector(".dispon-badge").className.replace("dispon-badge", "").trim(), reservado: r.children[4].textContent.trim() })));
+  const linhas = () => page.$$eval(".dispon-row", rs => rs.map(r => ({ nome: r.querySelector(".dispon-item-name").textContent.trim(), cat: r.children[2].textContent.trim(), status: r.dataset.status, reservado: r.querySelector('td[data-det="reservado"]').textContent.trim() })));
   const esperarFim = () => page.waitForFunction(() => !document.querySelector(".dispon-row") || true).then(() => page.waitForTimeout(700));
 
   assert.equal(await page.locator("#btnSimularSemana, #disponSimulacaoAviso, #disponSimulacaoRoteiro").count(), 0, "simulação removida");
@@ -95,8 +95,9 @@ const mock = () => {
   console.log('ok - botão e rolagem da pagina paginam; indicador encerra e some ao fim da lista');
 
   // só dois filtros (Data e Buscar item), na mesma linha do título, que continua no centro
-  assert.equal(await page.locator("#disponCategoria, #disponStatus").count(), 0, "sem Categoria e Status");
-  const naLinha = await page.evaluate(() => { const r = (s) => document.querySelector(s).getBoundingClientRect(); const t = r(".dispon-hero h1"), d = r("#disponData"), b = r("#disponBusca"), h = r(".dispon-hero"); return { mesmaLinha: Math.abs((d.top + d.bottom) / 2 - (t.top + t.bottom) / 2) < 20 && Math.abs(b.top - d.top) < 2, aEsquerda: b.right < t.left, centro: Math.abs((t.left + t.right) / 2 - (h.left + h.right) / 2) }; });
+  assert.equal(await page.locator(".dispon-hero #disponCategoria, .dispon-hero #disponStatus").count(), 0, "Categoria e Status ficam na linha de filtros, não no título");
+  assert.ok(await page.locator(".dispon-filtros-linha #disponCategoria").count(), "linha de filtros com Categoria");
+  const naLinha = await page.evaluate(() => { const r = (s) => document.querySelector(s).getBoundingClientRect(); const t = r(".dispon-hero h1"), d = r("#disponData"), b = r("#disponBusca"), h = r(".dispon-hero"); return { mesmaLinha: Math.abs((d.top + d.bottom) / 2 - (t.top + t.bottom) / 2) < 20 && Math.abs(b.top - d.top) < 2, aEsquerda: d.right < t.left && b.left > t.right, centro: Math.abs((t.left + t.right) / 2 - (h.left + h.right) / 2) }; });
   assert.ok(naLinha.mesmaLinha && naLinha.aEsquerda, "filtros na linha do título, à esquerda: " + JSON.stringify(naLinha));
   assert.ok(naLinha.centro < 2, "título no centro (" + naLinha.centro + "px)");
   console.log("ok 2 - só Data e Buscar item, na linha do título, que fica no centro");
@@ -138,7 +139,7 @@ const mock = () => {
   await page.fill("#disponData", "2099-11-11"); await page.dispatchEvent("#disponData", "change"); await esperarFim();
   const consulta = await page.evaluate(() => (window.__rpcs || []).filter(r => r.nome === "operacao_livre_periodo").at(-1)?.args);
   assert.deepEqual([consulta.p_inicio, consulta.p_fim], ["2099-11-11", "2099-11-11"]);
-  const disp = await page.$$eval(".dispon-row", rs => Object.fromEntries(rs.map(r => [r.querySelector(".dispon-item-name").textContent.trim(), r.querySelector(".dispon-badge").className.replace("dispon-badge", "").trim()])));
+  const disp = await page.$$eval(".dispon-row", rs => Object.fromEntries(rs.map(r => [r.querySelector(".dispon-item-name").textContent.trim(), r.dataset.status])));
   assert.equal(disp["Cadeira 3"], "indisponivel", "item bloqueado por contagem fica indisponível");
   const c2 = await page.$$eval(".dispon-row", rs => rs.find(r => r.querySelector(".dispon-item-name").textContent.trim() === "Cadeira 2")?.textContent || "");
   assert.match(c2, /\b3\b/, "Cadeira 2 com o disponível do banco (3): " + c2);
@@ -149,12 +150,35 @@ const mock = () => {
   await page.fill("#disponData", "2099-11-10"); await page.dispatchEvent("#disponData", "change"); await esperarFim();
   await page.fill("#disponBusca", ""); await page.dispatchEvent("#disponBusca", "input");
   await page.waitForTimeout(400);
-  await page.click("[data-dispon-visao=pedidos]");
   await page.waitForSelector("th.dispon-col-pedido");
-  const cab = await page.$$eval("#disponCabecalho th", (t) => t.map((x) => x.querySelector(".dispon-ped-num")?.textContent || x.textContent.trim()));
-  assert.ok(!cab.some((t) => /Reservado/.test(t)), "sem a coluna Reservado: " + cab);
+  const cab = await page.$$eval("#disponCabecalho th", (t) => t.map((x) => (x.dataset.pedidoCol ? (x.getAttribute("aria-label") || "").split(" · ")[0] : x.textContent.trim())));
+  assert.ok(!cab.some((t) => /Reservado na data/.test(t)), "sem a coluna Reservado na data: " + cab);
   assert.deepEqual(cab.filter((t) => /^Pedido/.test(t)), ["Pedido 1", "Pedido 2", "Pedido 4", "Pedido 5"]);
-  assert.equal(cab[cab.length - 2], "Disponivel"); assert.equal(cab[cab.indexOf("Pedido 1") - 1], "Manutencao", "pedidos logo antes de Disponível");
+  // cabeçalho do pedido: só foto (iniciais) + nome do cliente; detalhes num cartão ao passar o mouse
+  assert.deepEqual(await page.$$eval("#disponCabecalho [data-pedido-col]", (t) => t.map((x) => x.textContent.replace(/\s+/g, " ").trim())), ["C1Cliente 1", "C2Cliente 2", "C4Cliente 4", "C5Cliente 5"]);
+  await page.hover('#disponCabecalho [data-pedido-col="3"]');
+  const cartao = await page.$eval("#disponPedidoCartao", (c) => !c.hidden && c.innerText);
+  assert.ok(/Pedido 5/.test(cartao) && /Pré-reserva/.test(cartao) && /Cliente 5/.test(cartao), "cartão com os detalhes: " + cartao);
+  assert.equal(await page.$eval("#disponPedidoCartao", (c) => c.classList.contains("is-pre") && getComputedStyle(c).backgroundColor), "rgb(253, 246, 221)", "cartão da pré-reserva em amarelo");
+  await page.mouse.move(5, 5);
+  await page.hover('#disponCabecalho [data-pedido-col="0"]');
+  assert.equal(await page.$eval("#disponPedidoCartao", (c) => c.classList.contains("is-pre")), false, "pedido reservado: cartão branco");
+  await page.mouse.move(5, 5);
+  assert.equal(await page.$eval("#disponPedidoCartao", (c) => c.hidden), true, "cartão some ao tirar o mouse");
+  const alin = await page.evaluate(() => { const th = [...document.querySelectorAll("#disponCabecalho th")].find((t) => t.textContent.trim() === "Total"), r = th.getBoundingClientRect(), c = document.querySelector(".dispon-row td:nth-child(4) .dispon-quantity").getBoundingClientRect(); const s = document.createRange(); s.selectNodeContents(th); const tr = s.getBoundingClientRect(); return Math.round((tr.left + tr.width / 2) - (c.left + c.width / 2)); });
+  assert.ok(Math.abs(alin) <= 2, "título Total centralizado com os números: " + alin);
+  // cartões das células: pedido (na coluna do pedido) e Disponível
+  await page.mouse.move(5, 5);
+  await page.hover('tr[data-item-id="a002"] td[data-det="pedido:3"] .dispon-quantity');
+  const cPed = await page.$eval("#disponPedidoCartao", (c) => !c.hidden && c.innerText);
+  assert.ok(/Pedido 5/.test(cPed) && /Cliente 5/.test(cPed) && /\b3\b/.test(cPed) && !/Pedido 4/.test(cPed), "cartão da célula do pedido: " + cPed);
+  await page.hover('tr[data-item-id="a002"] td[data-det="disponivel"] .dispon-quantity');
+  const cDisp = await page.$eval("#disponPedidoCartao", (c) => !c.hidden && c.innerText);
+  assert.ok(/5 peças livres/.test(cDisp) && /No estoque/.test(cDisp) && /Reservado/.test(cDisp), "cartão do Disponível: " + cDisp);
+  await page.mouse.move(5, 5);
+  assert.deepEqual(cab.slice(cab.indexOf("Manutencao"), cab.indexOf("Manutencao") + 3), ["Manutencao", "Reservado", "Disponivel"], "Manutenção · Reservado (soma) · Disponível");
+  assert.equal(await page.$eval('tr[data-item-id="a002"] td[data-det="reservado"]', (td) => td.textContent.trim()), "5", "Reservado soma os pedidos (2 + 3)");
+  assert.equal(await page.$$eval("#disponCabecalho th.dispon-divisao", (t) => t.length === 1 && t[0].dataset.pedidoCol === "0" && getComputedStyle(document.querySelector("#disponCabecalho th.dispon-fixa-3")).boxShadow !== "none"), true, "linha de divisão entre Disponível e o primeiro pedido"); assert.equal(cab[cab.indexOf("Pedido 1") - 1], "Disponivel", "pedidos depois de Disponível"); assert.equal(cab[cab.length - 1], "Pedido 5");
   const linha = await page.$$eval(".dispon-row", (rs) => { const r = rs.find((x) => x.querySelector(".dispon-item-name").textContent.trim() === "Cadeira 2"); return [...r.querySelectorAll(".dispon-cel-pedido")].map((c) => c.textContent.trim()); });
   assert.deepEqual(linha, ["–", "–", "2", "3"], "Cadeira 2: 2 no pedido 4 e 3 no pedido 5");
   assert.equal(await page.locator("#disponCabecalho th.dispon-col-pedido.is-pre").count(), 1, "pré-reserva sinalizada");
@@ -169,10 +193,40 @@ const mock = () => {
   await page.waitForFunction(()=>{const h=document.querySelector('.dispon-floating-header');if(!h||h.hidden)return false;const a=document.querySelector('#disponCabecalho th'),b=h.querySelector('th');return Math.abs(a.getBoundingClientRect().left-b.getBoundingClientRect().left)<2;});
   await page.setViewportSize({width:1400,height:900});await page.evaluate(()=>{document.querySelector('.dispon-table-wrap').scrollLeft=0;window.scrollTo(0,0);});
   console.log('ok - arraste horizontal com mouse, sem clique acidental e cabecalho alinhado');
+  // Foto, Item e Disponível ficam presos no canto esquerdo ao rolar a tabela para o lado
+  await page.setViewportSize({ width: 720, height: 900 });
+  await page.waitForTimeout(200);
+  const fixas = () => page.evaluate(() => { const w = document.querySelector(".dispon-table-wrap"), wl = w.getBoundingClientRect().left, tr = document.querySelector('tr[data-item-id="a002"]');
+    return { sl: w.scrollLeft, max: w.scrollWidth - w.clientWidth, foto: Math.round(tr.children[0].getBoundingClientRect().left - wl), item: Math.round(tr.querySelector(".dispon-fixa-2").getBoundingClientRect().left - wl), disp: Math.round(tr.querySelector(".dispon-fixa-3").getBoundingClientRect().left - wl), cat: Math.round(tr.children[2].getBoundingClientRect().left - wl), fx2: parseFloat(getComputedStyle(w).getPropertyValue("--fx2")), fx3: parseFloat(getComputedStyle(w).getPropertyValue("--fx3")) }; });
+  const f0 = await fixas();
+  assert.ok(f0.max > 50, "a tabela precisa rolar para o lado neste teste: " + JSON.stringify(f0));
+  await page.evaluate(() => { const w = document.querySelector(".dispon-table-wrap"); w.scrollLeft = w.scrollWidth; });
+  await page.waitForTimeout(200);
+  const f1 = await fixas();
+  assert.equal(f1.foto, 0, "Foto presa na esquerda: " + JSON.stringify(f1));
+  assert.equal(f1.item, f0.item, "Item preso logo depois da foto");
+  assert.ok(Math.abs((f1.disp - f1.item) - (f1.fx3 - f1.fx2)) <= 1, "Disponível preso logo depois do Item: " + JSON.stringify(f1));
+  assert.ok(f1.cat < f0.cat, "as outras colunas rolam por baixo");
+  await page.evaluate(() => { document.querySelector(".dispon-table-wrap").scrollLeft = 0; });
+  console.log("ok 10b - Foto, Item e Disponível ficam fixos ao rolar para o lado");
   if (process.env.SP) { await page.setViewportSize({ width: 1500, height: 900 }); await page.evaluate(() => window.scrollTo(0, 0)); await page.screenshot({ path: process.env.SP + "/dispon-pedidos.png" }); }
-  await page.click("[data-dispon-visao=resumo]");
-  await page.waitForFunction(() => /Reservado na data/.test(document.getElementById("disponCabecalho").textContent));
-  assert.equal(await page.locator("#disponCabecalho th.dispon-col-pedido").count(), 0);
+  assert.equal(await page.locator("[data-dispon-visao]").count(), 0, "só existe a visão com as colunas dos pedidos");
+  await page.waitForFunction(() => document.querySelector('tr[data-item-id="a002"] td[data-det="reservado"]'));
+  await page.hover('tr[data-item-id="a002"] td[data-det="reservado"] .dispon-quantity');
+  const cRes = await page.$eval("#disponPedidoCartao", (c) => !c.hidden && c.innerText);
+  assert.ok(/Pedido 4/.test(cRes) && /Pedido 5/.test(cRes) && /Pré-reserva/.test(cRes), "cartão do Reservado lista os pedidos: " + cRes);
+  assert.ok(/2 reservadas/.test(cRes) && /3 em pré-reserva/.test(cRes), "resumo confirmados × pré-reserva: " + cRes);
+  assert.equal(await page.$$eval("#disponPedidoCartao li.is-pre", (l) => l.length), 1, "a linha da pré-reserva fica amarela");
+  await page.hover('tr[data-item-id="a002"] td[data-det="manutencao"] .dispon-quantity');
+  assert.ok(/fora de uso/.test(await page.$eval("#disponPedidoCartao", (c) => c.innerText)), "cartão da Manutenção");
+  await page.mouse.move(5, 5);
+  // período De / Até: os pedidos de qualquer dia do período aparecem; "Até" antes de "De" vira o mesmo dia
+  await page.fill("#disponData", "2099-11-01"); await page.fill("#disponDataFim", "2099-11-30"); await page.dispatchEvent("#disponDataFim", "change"); await esperarFim();
+  await page.waitForFunction(() => document.querySelectorAll("#disponCabecalho [data-pedido-col]").length === 4);
+  await page.fill("#disponData", "2099-11-20"); await page.fill("#disponDataFim", "2099-11-05"); await page.dispatchEvent("#disponDataFim", "change"); await esperarFim();
+  await page.waitForFunction(() => document.getElementById("disponDataFim").value === "2099-11-20" && document.querySelectorAll("#disponCabecalho [data-pedido-col]").length === 0);
+  await page.fill("#disponData", "2099-11-10"); await page.fill("#disponDataFim", "2099-11-10"); await page.dispatchEvent("#disponDataFim", "change"); await esperarFim();
+  console.log("ok 10c - consulta por período (De / Até)");
   console.log("ok 10 - visão por pedido: uma coluna por pedido da data, antes de Disponível, e volta ao resumo");
 
   // A tabela aumenta; o fim da pagina carrega mais linhas sem rolagem vertical interna.

@@ -1,0 +1,43 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('fs'),{PGlite}=require('@electric-sql/pglite');
+test('agentes por empresa, revisão concorrente e relato acessível à desmontagem autorizada',async()=>{
+ const db=new PGlite(),emp='10000000-0000-0000-0000-000000000001',out='10000000-0000-0000-0000-000000000002',user='20000000-0000-0000-0000-000000000001',ped='30000000-0000-0000-0000-000000000001',mont='40000000-0000-0000-0000-000000000001',desm='40000000-0000-0000-0000-000000000002';
+ try{
+ await db.exec(`create role anon;create role authenticated;create schema auth;create schema storage;
+ create function auth.uid() returns uuid language sql as $$select '${user}'::uuid$$;
+ create function seguranca_2fa_ok() returns boolean language sql as $$select current_setting('test.segundo_fator',true) is distinct from 'nao'$$;
+ create function eh_membro_empresa(uuid) returns boolean language sql as $$select $1='${emp}'::uuid$$;
+ create function funcionario_pode(uuid,uuid,text) returns boolean language sql as $$select current_setting('test.editar',true) is distinct from 'nao'$$;
+ create function funcionario_tabela_permitida(uuid,text,text) returns boolean language sql as $$select current_setting('test.leitura',true) is distinct from 'nao'$$;
+ create table empresas(id uuid primary key);insert into empresas values('${emp}'),('${out}');
+ create table separacoes_pedidos(id uuid primary key,empresa_id uuid,numero_pedido text,cliente_nome text,local_nome text);
+ insert into separacoes_pedidos values('${ped}','${emp}','14','Kelly','Vale dos Desejos');
+ create table operacao_etapas(id uuid primary key,empresa_id uuid,pedido_id uuid,tipo text,data date,observacao text);
+ insert into operacao_etapas values('${mont}','${emp}','${ped}','montagem','2026-11-08','Entrada pela garagem'),('${desm}','${emp}','${ped}','desmontagem','2026-11-09','');
+ create table app_sessoes(empresa_id uuid,usuario_id uuid,nome text);insert into app_sessoes values('${emp}','${user}','Ana');
+ create function app_sessao(text,text) returns app_sessoes language sql as $$select s from app_sessoes s where $1='valido'$$;
+ create function mont_pode_ver(app_sessoes,uuid) returns boolean language sql as $$select current_setting('test.ver',true) is distinct from 'nao'$$;
+ create table operacao_etapa_pessoas(etapa_id uuid,funcionario_id uuid,papel text);
+ create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
+ create table storage.objects(bucket_id text,name text);alter table storage.objects enable row level security;
+ create function storage.foldername(text) returns text[] language sql as $$select string_to_array($1,'/')$$;`);
+ await db.exec(fs.readFileSync('supabase/migrations/20261108001100_agentes_ia_montagem.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20261108001200_montagem_relato_leitura.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20261108001400_ia_agentes_limites.sql','utf8'));
+ const configurar=(versao=null,empresa=emp)=>db.query('select ia_agente_salvar($1,$2,$3,$4,$5,$6) r',[empresa,'montagem','Pergunte com objetividade','Acesso e ferramentas','Fotos dos ambientes',versao]);
+ await assert.rejects(configurar(null,out),/permissão/);
+ const cfg=(await configurar()).rows[0].r;await assert.rejects(configurar(),/outra pessoa/);assert.equal((await configurar(cfg.atualizado_em)).rows[0].r.coletar,'Acesso e ferramentas');
+ const limiteCfg=(await db.query('select * from ia_agentes_config where empresa_id=$1',[emp])).rows[0];assert.match(limiteCfg.limites,/escala/);const editado=(await db.query('select ia_agente_salvar($1,$2,$3,$4,$5,$6,$7) r',[emp,'montagem','Seja objetiva','Acessos','Cuidados',limiteCfg.atualizado_em,'Nao prometer troca sem consultar o responsavel'])).rows[0].r;assert.match(editado.limites,/Nao prometer/);assert.equal((await configurar(editado.atualizado_em)).rows[0].r.limites,editado.limites);
+ await db.exec("set test.editar='nao'");await assert.rejects(configurar(cfg.atualizado_em),/permissão/);await db.exec("set test.editar='sim'");
+ const resumo=Object.fromEntries(['montagem','acessos','desmontagem','cuidados','ocorrencias','melhorias','pendencias'].map(k=>[k,'Informação revisada da equipe']));resumo.pendencias_obrigatorias=[];
+ const conversa=[{papel:'pessoa',texto:'Usar portão lateral na desmontagem'}];
+ const salvar=(r=resumo,versao=null,etapa=mont)=>db.query('select mont_assistente_salvar($1,$2,$3,$4,$5,$6) r',['valido',etapa,JSON.stringify(r),JSON.stringify(conversa),'[]',versao]);
+ await assert.rejects(salvar({...resumo,pendencias_obrigatorias:['Contato do local']}),/indispensáveis/);
+ await assert.rejects(salvar(resumo,null,desm),/durante a montagem/);
+ const salvo=(await salvar()).rows[0].r;await assert.rejects(salvar(),/outra pessoa/);
+ await salvar({...resumo,desmontagem:'Portão lateral depois das 22h'},salvo.atualizado_em);
+ const contexto=(await db.query('select mont_assistente_contexto($1,$2) c',['valido',desm])).rows[0].c;
+ assert.equal(contexto.relatos[0].resumo.desmontagem,'Portão lateral depois das 22h');assert.equal(contexto.relatos[0].historico.length,1);assert.deepEqual(contexto.relatos[0].conversa,conversa);
+ await db.exec("set test.leitura='nao'");assert.equal((await db.query('select mont_relato_pode_ler($1,$2) ok',[emp,mont])).rows[0].ok,false);await db.query("insert into operacao_etapa_pessoas values($1,$2,'responsavel')",[desm,user]);assert.equal((await db.query('select mont_relato_pode_ler($1,$2) ok',[emp,mont])).rows[0].ok,true);
+ await db.exec("set test.ver='nao'");await assert.rejects(db.query('select mont_assistente_contexto($1,$2)',['valido',mont]),/Sem acesso/);await db.exec("set test.ver='sim';set test.segundo_fator='nao'");await assert.rejects(salvar(),/Entre no app/);
+ }finally{await db.close();}
+});

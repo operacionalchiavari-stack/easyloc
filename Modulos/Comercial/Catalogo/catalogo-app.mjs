@@ -51,7 +51,10 @@ const dataLonga = (d) => d ? new Date(String(d).slice(0, 10) + "T00:00:00").toLo
 // Nov/2026: aberto pelo app da equipe (app.html, módulo Catálogo): mostra a volta para o início do app.
 try{ if(new URLSearchParams(location.search).get("app") === "1") sessionStorage.setItem("catalogo_do_app", "1"); }catch(e){}
 const DO_APP = (() => { try{ return sessionStorage.getItem("catalogo_do_app") === "1"; }catch(e){ return false; } })();
-const irAppEquipe = () => { location.href = "../../../app.html"; };
+// 20/11/2026: módulo "Agentes de IA" do app (?agente=helena): a equipe conversa com a Helena (sem ele, a equipe só
+// consulta o catálogo). Só as abas Catálogo e Helena; o "←" volta para a lista dos agentes.
+const AGENTE_HELENA = new URLSearchParams(location.search).get("agente") === "helena";
+const irAppEquipe = () => { location.href = "../../../app.html" + (AGENTE_HELENA ? "#agentes" : ""); };
 const S = {
   sessao: null, empresa: null, decorador: null, itens: [], capas: {},
   aba: "inicio", pilha: [], projeto: null, projetos: [], ambAtivo: null,
@@ -60,6 +63,7 @@ const S = {
 };
 const visitante = () => Boolean(S.sessao?.visitante);
 const equipe = () => Boolean(S.sessao && !S.sessao.token && !S.sessao.visitante);
+const helenaEquipe = () => AGENTE_HELENA && equipe();
 
 // ---------------------------------------------------------------------------------------------------------------
 // Itens (mesma montagem do catálogo do computador — o motor 3D e a Helena usam estes campos)
@@ -193,16 +197,17 @@ const ABAS = [
 function pintarAbas(){
   const nav = $("appAbas");
   // Nov/2026: a equipe (pelo app ou pelo sistema) não usa a Início nem a Helena: o catálogo começa nas categorias.
-  const abas = ABAS.filter((a) => (!visitante() || !["helena", "projeto"].includes(a.id)) && (!equipe() || !["inicio", "helena"].includes(a.id)));
+  const abas = ABAS.filter((a) => (!visitante() || !["helena", "projeto"].includes(a.id)) && (!equipe() || !["inicio", "helena"].includes(a.id) || (helenaEquipe() && a.id === "helena"))
+    && (!helenaEquipe() || ["catalogo", "helena"].includes(a.id)));
   nav.style.gridTemplateColumns = `repeat(${abas.length},1fr)`;
   nav.innerHTML = abas.map((a) => a.helena
     ? `<button type="button" class="aba aba-helena${S.aba === a.id ? " ativa" : ""}" data-aba="helena" aria-label="Conversar com a Helena"><span class="aba-bola">H</span>${a.rotulo}${S.naoLidas ? `<i class="aba-ponto">${S.naoLidas}</i>` : ""}</button>`
     : `<button type="button" class="aba${S.aba === a.id ? " ativa" : ""}" data-aba="${a.id}" aria-label="${a.rotulo}"${S.aba === a.id ? ' aria-current="page"' : ""}><svg viewBox="0 0 24 24" aria-hidden="true">${ICO[a.ico]}</svg>${a.rotulo}${a.id === "projeto" && totalPecas() ? `<i class="aba-ponto" style="background:var(--grafite)">${totalPecas()}</i>` : ""}</button>`).join("");
   nav.hidden = false;
-  if(equipe()){ nav.hidden = true; nav.style.setProperty("display", "none", "important"); } // a equipe não usa a barra de abas
+  if(equipe() && !helenaEquipe()){ nav.hidden = true; nav.style.setProperty("display", "none", "important"); } // a equipe não usa a barra de abas
 }
 function irParaAba(id){
-  if(equipe() && (id === "inicio" || id === "helena")) id = "catalogo";
+  if(equipe() && (id === "inicio" || (id === "helena" && !helenaEquipe()))) id = "catalogo";
   if(id === "helena"){ abrirHelena(); return; }
   S.aba = id;
   S.pilha.forEach((t) => t.el.remove());
@@ -824,10 +829,10 @@ window.catalogAssistenteProjeto = {
   async verPedido(abrir){
     if(!abrir){ S.previaHelena = null; document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close()); return true; }
     if(!S.projeto) return false;
-    for(const href of ["catalogo-projetos.css?v=20261107-lista-sublocacao", "projeto-apresentacao.css?v=20261107-lista-sublocacao"]){
+    for(const href of ["catalogo-projetos.css?v=20261118-varios", "projeto-apresentacao.css?v=20261115-pers-desc"]){
       if(!document.querySelector(`link[data-previa="${href}"]`)){ const l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; l.dataset.previa = href; document.head.appendChild(l); }
     }
-    const m = await import("./projeto-apresentacao.mjs?v=20261107-lista-sublocacao");
+    const m = await import("./projeto-apresentacao.mjs?v=20261118-fixo");
     await new Promise((r) => setTimeout(r, 360));
     document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close());
     S.previaHelena = m.abrirVisualizacaoPedido({ titulo: S.projeto.noivos || "Pedido", model: m.dadosApresentacao(S.projeto, acharItem),
@@ -898,7 +903,7 @@ async function prepararMotor3D(){
     const host = $("appStudioHost");
     const pecas = [doc.getElementById("catalogStudio"), ...doc.querySelectorAll("dialog[id^='studio']")].filter(Boolean);
     pecas.forEach((p) => host.appendChild(document.importNode(p, true)));
-    const m = await import("./catalogo-studio3d.mjs?v=20261029-disponivel");
+    const m = await import("./catalogo-studio3d.mjs?v=20261118-3d-personalizacao");
     m.initCatalogStudio3D({ items: S.itens, supabase, empresaId: S.sessao.empresa_id, ownerId: S.sessao.cliente_id, token: S.sessao.token });
     ctxHelena.cenaEditor = m.cenaEditor;
   }catch(error){ console.warn("Motor 3D indisponível no app:", error); }
@@ -1006,7 +1011,7 @@ async function iniciar(){
     if(!visitante()){
       const ativo = lerAtivo();
       if(ativo?.id && !equipe()) await usarProjeto(ativo.id, ativo.amb).catch(() => { try{ localStorage.removeItem(chaveAtivo()); }catch{} });
-      if(!equipe()) initCatalogAssistente(Object.assign(ctxHelena, {
+      if(!equipe() || helenaEquipe()) initCatalogAssistente(Object.assign(ctxHelena, {
         supabase, getSession: () => S.sessao, modoPedido: false, notify, temProjetos: true,
         // Fechar a Helena dispara um "voltar" (history); espera ele passar antes de empilhar a tela do item.
         findItem: acharItem, abrirItem: (id) => setTimeout(() => abrirItem(id), 320),
@@ -1022,7 +1027,9 @@ async function iniciar(){
       setTimeout(prepararMotor3D, 1500);
     }
     document.body.classList.toggle("catalogo-equipe", equipe());
+    document.body.classList.toggle("catalogo-equipe-helena", helenaEquipe());
     irParaAba(new URLSearchParams(location.search).get("aba") || (equipe() ? "catalogo" : "inicio"));
+    if(helenaEquipe()) abrirHelena();
     sairAbertura();
   }catch(error){
     console.error(error);

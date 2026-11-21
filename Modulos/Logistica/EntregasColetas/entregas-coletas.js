@@ -115,8 +115,9 @@
     const itens=b.itens.map(p=>{const x={...p,...(atual?.itens.find(x=>x.chave===p.chave)||{}),previsto:p.previsto},app=(s.danosApp||{})[p.chave];if(!entrega&&!atual&&app&&x.danificado==null)x.danificado=Number(app.quantidade)||0;
       const doApp=entrega&&!atual&&(s.entregaApp||{})[p.chave];if(doApp&&x.entregue_local==null&&x.entregue==null){x.conferencia_versao=2;x.entregue_local=Math.min(Number(p.previsto)||0,doApp.entregue);x.danificado=Math.min(doApp.danificado,x.entregue_local);x.desistencia=Math.max(0,(Number(p.previsto)||0)-x.entregue_local);x.doApp=true;}
       return x;});
-    $('ecDetalhe').innerHTML=`<header class="ec-cab"><div class="ec-pedido-identificacao"><small>${titulo().toUpperCase()} · ${dataBr(entrega?p.data_entrega:p.data_coleta)}</small><h2>Pedido #${esc(p.numero_pedido)}${p.extras?.length?` <small class="ec-extras">+ ${esc(p.extras.join(', '))}</small>`:''}</h2><p>${esc(p.cliente_nome)} · ${esc(p.local_nome||'Local não informado')}</p></div>${responsaveisCabecalho()}<button type="button" id="ecImprimir">Imprimir lista de ${titulo().toLowerCase()}</button></header><div class="ec-conteudo">${atual?`<p class="ec-nota">Confirmado em ${horaBr(atual.criado_em)} · ${esc(atual.responsavel)} · versão ${atual.versao}. Uma nova confirmação preserva a versão anterior.</p>`:''}<form id="ecForm"><fieldset ${b.bloqueio?'disabled':''} style="border:0;padding:0;margin:0;min-width:0">${itens.length?tabela(itens):'<p class="ec-vazio">Nenhum item disponível. Na coleta, confirme a entrega primeiro.</p>'}<div class="ec-acoes"><button type="submit" class="ec-primario" ${!itens.length||b.previa?'disabled':''}>${b.previa?'Prévia da coleta':atual?'Salvar nova confirmação':'Confirmar '+titulo().toLowerCase()}</button></div></fieldset></form></div>`;
+    $('ecDetalhe').innerHTML=`<header class="ec-cab"><div class="ec-pedido-identificacao"><small>${titulo().toUpperCase()} · ${dataBr(entrega?p.data_entrega:p.data_coleta)}</small><h2>Pedido #${esc(p.numero_pedido)}${p.extras?.length?` <small class="ec-extras">+ ${esc(p.extras.join(', '))}</small>`:''}</h2><p>${esc(p.cliente_nome)} · ${esc(p.local_nome||'Local não informado')}</p></div></header><div class="ec-conteudo">${atual?`<p class="ec-nota">Confirmado em ${horaBr(atual.criado_em)} · ${esc(atual.responsavel)} · versão ${atual.versao}. Uma nova confirmação preserva a versão anterior.</p>`:''}<form id="ecForm"><fieldset ${b.bloqueio?'disabled':''} style="border:0;padding:0;margin:0;min-width:0">${itens.length?tabela(itens):'<p class="ec-vazio">Nenhum item disponível. Na coleta, confirme a entrega primeiro.</p>'}<div class="ec-acoes"><button type="submit" class="ec-primario" ${!itens.length||b.previa?'disabled':''}>${b.previa?'Prévia da coleta':atual?'Salvar nova confirmação':'Confirmar '+titulo().toLowerCase()}</button></div></fieldset></form></div>`;
     if(s.documento)$('ecDetalhe').querySelector('.ec-pedido-identificacao')?.remove();
+    const cabecalho=$('ecDetalhe').querySelector('.ec-cab');if(cabecalho&&!cabecalho.children.length)cabecalho.remove();
     if(s.documento)window.PedidoConferencia.montar($('ecForm').querySelector('.ec-tabela-wrap'),s.documento,entrega);
     if(window.MontagemRegistros){
       const host=document.createElement('section');host.className='ec-montagem-registros';
@@ -124,7 +125,7 @@
       window.MontagemRegistros.carregar(host,s.sb,s.id,null,s.etapa).catch(e=>{if(host.isConnected)host.textContent=e.message;});
     }
     document.querySelectorAll('#ecForm .ec-tabela tbody tr').forEach(tr=>[...tr.children].forEach((td,i)=>td.dataset.label=tr.closest('table').querySelectorAll('th')[i]?.textContent||''));
-    $('ecImprimir').onclick=()=>{const host=$('ecForm').querySelector('.ec-tabela-wrap');if(s.documento&&host&&window.PedidoConferencia?.escolherImpressao){window.PedidoConferencia.escolherImpressao(host,imprimir);}else imprimir();};
+    if($('ecImprimir'))$('ecImprimir').onclick=()=>{const host=$('ecForm').querySelector('.ec-tabela-wrap');if(s.documento&&host&&window.PedidoConferencia?.escolherImpressao){window.PedidoConferencia.escolherImpressao(host,imprimir);}else imprimir();};
     $('ecForm').onclick=evento=>{
       const link=evento.target.closest('.ec-evidencias a');if(!link)return;
       evento.preventDefault();abrirFoto(link);
@@ -184,7 +185,7 @@
        caixa.hidden=caixa.dataset.motivoTipo==='entregue'?!(q!=null&&falta>0||v.retirado_lista>0):!(Number(v[caixa.dataset.motivoTipo])>0);
       });
       const fotos=$('ecForm').querySelector('[data-fotos-item="'+i+'"]');
-      const obrigatoria=entrega?v.voltou_antes>0:v.danificado>0;
+      const obrigatoria=v.danificado>0;
       if(fotos)fotos.hidden=!(obrigatoria||falta>0||s.novas.some(e=>e.chave===p.chave)||s.evidencias.some(e=>e.chave===p.chave&&e.etapa===s.etapa));
       $('ecForm').querySelectorAll('[data-fotos-item="'+i+'"][data-foto-tipo]').forEach(foto=>{
        const tipo=foto.dataset.fotoTipo,quantidade=tipo==='nao_encontrado'?Math.max(0,falta||0):Number(v[tipo])||0;
@@ -210,10 +211,10 @@
     for(let i=0;i<itens.length;i++){
       const v=itens[i],p=s.base.itens[i];
       if(entrega&&[v.entregue_local,v.desistencia,v.danificado].some(n=>n==null||!Number.isInteger(n)||n<0)){mensagem('Revise as quantidades de '+p.nome);return;}
-      const precisa=entrega?(v.voltou_antes>0||v.desistencia>0||v.danificado>0):v.danificado>0;
+      const precisa=v.danificado>0;
       const tem=s.novas.some(e=>e.chave===p.chave)||s.evidencias.some(e=>e.chave===p.chave&&e.etapa===s.etapa)||(!entrega&&(s.danosApp?.[p.chave]?.fotos||[]).length>0);
       if(entrega&&s.documento){
-       for(const tipo of ['desistencia','danificado']){
+       for(const tipo of ['danificado']){
         const temFoto=s.novas.some(e=>e.chave===p.chave&&e.descricao===tipo)||s.evidencias.some(e=>e.chave===p.chave&&e.etapa===s.etapa&&(!['desistencia','danificado','nao_encontrado'].includes(e.descricao)||e.descricao===tipo));
         if(Number(v[tipo])>0&&!temFoto){mensagem('Adicione uma foto de '+(tipo==='desistencia'?'desistencia':'dano')+': '+p.nome);$('ecForm').querySelector('[data-evidencia="'+i+'"][data-foto-tipo="'+tipo+'"]')?.focus();return;}
        }

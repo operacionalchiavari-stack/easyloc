@@ -1,9 +1,12 @@
-import { iniciarSaldoClientePedido } from './pedido.saldo-cliente.mjs';
+import {redistribuirParcelas} from "./pedido.parcelas-auto.mjs?v=20261109";
+import { iniciarSaldoClientePedido } from './pedido.saldo-cliente.mjs?v=20261117-card-abatimentos';
 /* =====================================================
    PAGAMENTO - EASYLOC
 ===================================================== */
 
 import { formatCurrency } from "./pedido.utils.mjs";
+import { colorirValor } from './pedido.valores-ui.mjs';
+import {AREAS_DESCONTO,baseAreaDesconto,descontoNaBaseBV,descontarComponente,descontosPorArea,totalDescontoComercial} from './pedido.desconto-area.mjs?v=20261118-resumo-areas';
 
 export function initPagamento(){
   const metodoEl = document.getElementById("pagamentoMetodo");
@@ -12,6 +15,7 @@ export function initPagamento(){
   const dataEntradaEl = document.getElementById("pagamentoDataBase");
   const diaFixoEl = document.getElementById("pagamentoDiaFixo");
   const descontoComercialEl = document.getElementById("pagamentoDescontoComercial");
+  const camposDesconto=Array.from(document.querySelectorAll('[data-desconto-area]'));
   const bvTotalEl = document.getElementById("bvTotal");
   const bvAbatidoEl = document.getElementById("bvAbatido");
   const creditoClienteEl = document.getElementById("pagamentoCreditoCliente");
@@ -33,6 +37,7 @@ export function initPagamento(){
 
   const btnLimpar = document.getElementById("btnLimparProgramacao");
   let cronogramaManual = false;
+  let usoSaldoConta = false;
 
   if(!tbody){
     console.warn("Tabela de pagamento nao encontrada");
@@ -43,6 +48,7 @@ export function initPagamento(){
 
   const moneyValue = (el) => {
     if(!el) return 0;
+    if(el.type === 'number' || typeof el.value === 'number') return Math.max(0, Number(el.value) || 0);
     const raw = String(el.value ?? el.innerText ?? "")
       .replace("R$", "")
       .replace(/\./g, "")
@@ -56,6 +62,13 @@ export function initPagamento(){
     const date = new Date(`${value}T00:00:00`);
     if(Number.isNaN(date.getTime())) return "-";
     return date.toLocaleDateString("pt-BR");
+  };
+
+  const configDescontos=()=>{
+    if(!camposDesconto.length)return {descontoComercial:moneyValue(descontoComercialEl)};
+    const descontosAreas=Object.fromEntries(camposDesconto.map(el=>[el.dataset.descontoArea,moneyValue(el)]));
+    const ativos=Object.keys(descontosAreas).filter(area=>descontosAreas[area]>0);
+    return {descontosAreas,descontoComercial:totalDescontoComercial({descontosAreas}),descontoComercialArea:ativos.length===1?ativos[0]:null};
   };
 
   const addMonths = (value, months, fixedDay) => {
@@ -208,15 +221,16 @@ export function initPagamento(){
 
   // Valor de cada divisão; descontos, BV e créditos abatem primeiro da locação, depois do frete e da montagem.
   const valoresPorComponente = () => {
-    const { totalPedido, totalDescontos, totalCreditos, valorFinal } = calcularTotais();
+    const { totalPedido, totalDescontos, totalCreditos, valorFinal,descontoComercial } = calcularTotais();
     const v = window.__PEDIDO_VALORES;
     if(!v) return { locacao: valorFinal, frete: 0, montagem: 0 };
     const brutos = { locacao: Number(v.locacao) || 0, frete: Number(v.frete) || 0, montagem: Number(v.montagem) || 0 };
     const soma = brutos.locacao + brutos.frete + brutos.montagem;
     if(Math.abs(soma - totalPedido) > 0.01) brutos.locacao = Math.max(0, totalPedido - brutos.frete - brutos.montagem);
-    let abater = totalDescontos + totalCreditos;
+    const aposComercial=descontarComponente(brutos,configDescontos());
+    let abater = totalDescontos + totalCreditos-descontoComercial;
     const r = {};
-    COMPONENTES.forEach(([k]) => { const parte = Math.min(Math.max(brutos[k], 0), abater); r[k] = centavos(Math.max(brutos[k], 0) - parte); abater -= parte; });
+    COMPONENTES.forEach(([k]) => { const parte = Math.min(Math.max(aposComercial[k], 0), abater); r[k] = centavos(Math.max(aposComercial[k], 0) - parte); abater -= parte; });
     return r;
   };
 
@@ -341,6 +355,7 @@ export function initPagamento(){
         </div>
       </td>
     `;
+    [...tr.cells].forEach((td,i)=>td.dataset.rotulo=['Parcela','Vencimento','Valor','Status','Forma','Cobrança','Ações'][i]);
     atualizarLinhaVisual(tr);
     return tr;
   };
@@ -475,14 +490,59 @@ export function initPagamento(){
     });
   };
 
+  // Desconto fixo do decorador (18/11/2026): % sobre a locação em todo pedido, vindo do cadastro do cliente
+  // (Condição especial · desconto fixo). Preenche sozinho o desconto da locação e acompanha o valor da locação;
+  // se alguém digitar outro valor, vale o digitado. Fica gravado no pedido (pagamento_config.descontoFixo), então
+  // mudar o cadastro depois não altera pedidos já feitos. Pedido salvo antes disto não recebe o desconto sozinho.
+  let fixo = { pct: 0, cliente_id: null, manual: false }, fixoSalvo = null;
+  const campoFixo = () => camposDesconto.find((el) => el.dataset.descontoArea === 'locacao');
+  const notaFixo = () => {
+    const campo = campoFixo(); if(!campo) return null;
+    let nota = document.getElementById('descontoFixoNota');
+    if(!nota){
+      nota = document.createElement('div'); nota.id = 'descontoFixoNota'; nota.className = 'pedido-desconto-fixo-nota';
+      // 18/11/2026: o desconto fixo pode não aparecer no pedido/resumo (a locação já sai com o desconto).
+      nota.innerHTML = '<span data-fixo-texto></span><label class="pedido-desconto-fixo-mostrar"><input type="checkbox" data-exibicao-financeiro="fixo_mostrar"> Mostrar este desconto no pedido e no resumo</label>';
+      const marcado = window.__pedidoColetarExibicaoFinanceira?.()?.fixo_mostrar;
+      nota.querySelector('input').checked = marcado !== false;
+      campo.closest('.pedido-desconto-corpo')?.prepend(nota);
+    }
+    return nota;
+  };
+  const aplicarDescontoFixo = () => {
+    const campo = campoFixo(), nota = notaFixo();
+    if(!campo) return;
+    if(!(fixo.pct > 0)){ if(nota) nota.hidden = true; return; }
+    const alvo = centavos(fixo.pct / 100 * baseAreaDesconto(window.__PEDIDO_VALORES || {}, 'locacao'));
+    if(!fixo.manual && Math.abs((Number(campo.value) || 0) - alvo) > 0.004) campo.value = String(alvo);
+    if(nota){ nota.hidden = false; nota.querySelector('[data-fixo-texto]').textContent = fixo.manual ? `Desconto fixo da cliente: ${fixo.pct.toLocaleString('pt-BR')}% (${formatCurrency(alvo)}). Valor alterado à mão neste pedido.` : `Desconto fixo da cliente aplicado: ${fixo.pct.toLocaleString('pt-BR')}% da locação.`; }
+  };
+  const carregarDescontoFixo = async () => {
+    const id = document.getElementById('clienteIdHidden')?.value || '';
+    if(!id || !window.supabaseClient){ fixo = { pct: 0, cliente_id: null, manual: false }; atualizarPagamentoPorTotal?.(); return; }
+    if(fixoSalvo && fixoSalvo.cliente_id === id){ fixo = { ...fixoSalvo }; atualizarPagamentoPorTotal?.(); return; }
+    // pedido já salvo antes do desconto fixo existir: não muda sozinho
+    if(window.__PEDIDO_DADOS_ATUAL?.id && !fixoSalvo && String(window.__PEDIDO_DADOS_ATUAL.cliente_id || '') === id){ fixo = { pct: 0, cliente_id: id, manual: false }; return; }
+    try{
+      const { data } = await window.supabaseClient.from('clientes_empresas').select('desconto_fixo_ativo,desconto_fixo_percentual').eq('id', id).maybeSingle();
+      const pct = data?.desconto_fixo_ativo ? Number(data.desconto_fixo_percentual) || 0 : 0;
+      fixo = { pct, cliente_id: id, manual: false };
+      if(!(pct > 0)){ const c = campoFixo(); if(c && fixoSalvo) c.value = '0'; }
+      fixoSalvo = null;
+    }catch(_){ fixo = { pct: 0, cliente_id: id, manual: false }; }
+    atualizarPagamentoPorTotal?.();
+  };
+  document.getElementById('clienteInput')?.addEventListener('cliente-selecionado', () => setTimeout(carregarDescontoFixo, 50));
+
   const calcularTotais = () => {
     const totalPedido = Number(window.__TOTAL_PEDIDO || 0);
-    const descontoComercial = moneyValue(descontoComercialEl);
+    const descontoComercial = totalDescontoComercial(configDescontos());
     const descontoBV = moneyValue(bvTotalEl);
     const abatimentoBV = moneyValue(bvAbatidoEl);
     const creditoCliente = moneyValue(creditoClienteEl);
+    const descontoBvPedido = Math.max(0,Number(window.__pedidoBVDesconto?.())||0);
 
-    const totalDescontos = descontoComercial + descontoBV;
+    const totalDescontos = descontoComercial + descontoBV + descontoBvPedido;
     const totalCreditos = abatimentoBV + creditoCliente;
     const valorFinal = Math.max(0, totalPedido - totalDescontos - totalCreditos);
 
@@ -490,13 +550,35 @@ export function initPagamento(){
       totalPedido,
       totalDescontos,
       totalCreditos,
-      valorFinal
+      valorFinal,
+      descontoComercial,
+      descontoBV,
+      abatimentoBV,
+      creditoCliente,
+      descontoBvPedido
     };
   };
 
   const somarProgramado = () => linhasParcela().reduce((total, row) => total + valorDaLinha(row), 0);
 
+  const limiteDescontoComercial = (area,totais=calcularTotais()) => {
+    const geral=Math.max(0,centavos(totais.totalPedido-totais.descontoBV-totais.abatimentoBV-totais.creditoCliente-totais.descontoBvPedido));
+    const d=descontosPorArea(configDescontos()),outros=totais.descontoComercial-(d[area]||0);
+    return Math.min(Math.max(0,centavos(geral-outros)),centavos(baseAreaDesconto(window.__PEDIDO_VALORES,area)));
+  };
+  const validarDescontoComercial = () => {
+    for(const el of camposDesconto){
+      const valor=Number(el.value),area=el.dataset.descontoArea;
+      if(!Number.isFinite(valor)||el.validity.badInput||el.validity.stepMismatch||valor<0)return `Informe um desconto válido em ${AREAS_DESCONTO[area]}, com até duas casas decimais.`;
+      const limite=limiteDescontoComercial(area);
+      if(valor>limite+.005)return `O desconto não pode superar o valor de ${AREAS_DESCONTO[area]} (${formatCurrency(limite)}).`;
+    }
+    return '';
+  };
+  window.__pedidoValidarDescontoComercial=validarDescontoComercial;
+
   const atualizarResumo = () => {
+    aplicarDescontoFixo();
     atualizarTodasLinhas();
     const totais = calcularTotais();
     const totalProgramado = somarProgramado();
@@ -510,7 +592,24 @@ export function initPagamento(){
     if(totalProgramadoEl) totalProgramadoEl.innerText = formatCurrency(totalProgramado);
     if(diferencaEl) diferencaEl.innerText = formatCurrency(diferenca);
     if(resumoFaltaDistribuirEl) resumoFaltaDistribuirEl.innerText = formatCurrency(faltaDistribuir);
+    // O resumo e as parcelas usam o mesmo total líquido. A base dos itens fica intacta.
+    const totalResumo=document.getElementById('resumoTotalGeral');
+    if(totalResumo){totalResumo.textContent=formatCurrency(totais.valorFinal);colorirValor(totalResumo,totais.valorFinal);}
+    const erroDesconto=validarDescontoComercial();
+    if(camposDesconto.length&&descontoComercialEl)descontoComercialEl.value=String(totais.descontoComercial);
+    for(const el of camposDesconto){el.max=String(limiteDescontoComercial(el.dataset.descontoArea,totais));el.setAttribute('aria-invalid',String(Number(el.value)>Number(el.max)+.005||el.validity.badInput||el.validity.stepMismatch||Number(el.value)<0));}
+    const erroEl=document.getElementById('descontoComercialErro');
+    if(erroEl){erroEl.textContent=erroDesconto;erroEl.hidden=!erroDesconto;}
+    const aplicado=document.getElementById('descontoComercialAplicado');
+    if(aplicado){aplicado.textContent=formatCurrency(-totais.descontoComercial);colorirValor(aplicado,-totais.descontoComercial);}
+    const remover=document.getElementById('btnRemoverDescontoComercial');if(remover)remover.hidden=totais.descontoComercial===0;
+    for(const [id,valor] of [['resumoDescontoComercial',totais.descontoComercial],['resumoAbatimentoBV',totais.descontoBV+totais.abatimentoBV],['resumoAbatimentoCredito',totais.creditoCliente],['resumoDescontoBvPedido',totais.descontoBvPedido]]){
+      const el=document.getElementById(id);if(!el)continue;
+      el.textContent=formatCurrency(-valor);el.closest('.resumo-linha').hidden=valor<=0;colorirValor(el,-valor);
+    }
+    document.getElementById('resumoDescontoComercial')?.closest('.resumo-linha').setAttribute('hidden','');
     saldoContaCliente.atualizar();
+    window.__pedidoAtualizarExibicaoResumo?.();
 
     atualizarGrupos();
   };
@@ -588,10 +687,13 @@ export function initPagamento(){
     parcelas: parcelasEl?.value || "",
     dataEntrada: dataEntradaEl?.value || "",
     diaFixo: diaFixoEl?.value || "",
-    descontoComercial: descontoComercialEl?.value || "",
+    ...configDescontos(),
     descontoBV: bvTotalEl?.value || "",
     abatidoBV: bvAbatidoEl?.value || "",
-    creditoCliente: creditoClienteEl?.value || ""
+    creditoCliente: creditoClienteEl?.value || "",
+    descontoBvPedido: Math.max(0,Number(window.__pedidoBVDesconto?.())||0),
+    descontoFixo: fixo.pct > 0 ? { pct: fixo.pct, cliente_id: fixo.cliente_id, manual: !!fixo.manual } : null,
+    usoSaldoConta
   });
 
   const setIfExists = (el, value) => {
@@ -625,6 +727,7 @@ export function initPagamento(){
   };
 
   const aplicarConfig = (config = {}, parcelas = []) => {
+    usoSaldoConta = config.usoSaldoConta === true;
     carregarTitulos();
     setIfExists(metodoEl, config.metodo);
     setIfExists(entradaEl, config.entrada);
@@ -632,6 +735,9 @@ export function initPagamento(){
     setIfExists(dataEntradaEl, config.dataEntrada);
     setIfExists(diaFixoEl, config.diaFixo);
     setIfExists(descontoComercialEl, config.descontoComercial);
+    const porArea=descontosPorArea(config);for(const el of camposDesconto)el.value=String(porArea[el.dataset.descontoArea]);
+    fixoSalvo = config.descontoFixo && Number(config.descontoFixo.pct) > 0 ? { pct: Number(config.descontoFixo.pct), cliente_id: String(config.descontoFixo.cliente_id || ''), manual: !!config.descontoFixo.manual } : null;
+    if(fixoSalvo) fixo = { ...fixoSalvo };
     setIfExists(bvTotalEl, config.descontoBV);
     setIfExists(bvAbatidoEl, config.abatidoBV);
     setIfExists(creditoClienteEl, config.creditoCliente);
@@ -667,6 +773,12 @@ export function initPagamento(){
       // o local) e não tem nenhuma parcela ganha uma, com o valor todo, como as outras divisões já têm.
       const valores = valoresPorComponente();
       COMPONENTES.forEach(([comp]) => { if(valores[comp] > 0 && !linhasParcela(comp).length) adicionarParcela(comp, { focar: false }); });
+      COMPONENTES.forEach(([comp])=>{
+        const rows=linhasParcela(comp),atual=rows.reduce((t,r)=>t+valorDaLinha(r),0);
+        if(Math.abs(atual-(valores[comp]||0))<.005)return;
+        const novos=redistribuirParcelas(valores[comp]||0,rows.map(r=>({...dadosDaLinha(r),travada:!!r.dataset.travada})));
+        rows.forEach((row,i)=>{if(!row.dataset.travada){row.querySelector('.pg-valor').textContent=formatCurrency(novos[i]);atualizarLinhaVisual(row);}});
+      });
       atualizarResumo();
       refreshIcons();
       return;
@@ -680,7 +792,6 @@ export function initPagamento(){
     parcelasEl,
     dataEntradaEl,
     diaFixoEl,
-    descontoComercialEl,
     bvTotalEl,
     bvAbatidoEl,
     creditoClienteEl
@@ -688,6 +799,16 @@ export function initPagamento(){
     if(!el) return;
     el.addEventListener("input", gerarParcelas);
     el.addEventListener("change", gerarParcelas);
+  });
+
+  campoFixo()?.addEventListener('input', (e) => { if(e.isTrusted && fixo.pct > 0) fixo.manual = true; });
+  for(const campo of camposDesconto.length?camposDesconto:[descontoComercialEl])for(const evento of ['input','change'])campo?.addEventListener(evento,()=>{
+      window.__pedidoHouveEdicao?.();atualizarPagamentoPorTotal();document.dispatchEvent(new Event('pedido-desconto-comercial-mudou'));
+    });
+  document.getElementById('btnRemoverDescontoComercial')?.addEventListener('click',()=>{
+    for(const el of camposDesconto)el.value='0';
+    if(descontoComercialEl)descontoComercialEl.value='0';
+    const alvo=camposDesconto[0]||descontoComercialEl;alvo?.dispatchEvent(new Event('input',{bubbles:true}));alvo?.focus();
   });
 
   tbody.addEventListener("input", (event) => {
@@ -755,17 +876,30 @@ export function initPagamento(){
     const aberto = !abatimentoPopover.hidden;
     abatimentoPopover.hidden = aberto;
     btnAdicionarAbatimento.setAttribute("aria-expanded", aberto ? "false" : "true");
+    saldoContaCliente.atualizar();
+    const erro=document.getElementById('pagamentoAbatimentoErro');if(erro)erro.hidden=true;
   });
 
   btnConfirmarAbatimento?.addEventListener("click", () => {
     const bv = moneyValue(abatimentoBVEl);
     const credito = moneyValue(abatimentoCreditoEl);
-    if(bvTotalEl) bvTotalEl.value = String(moneyValue(bvTotalEl) + bv);
-    if(creditoClienteEl) creditoClienteEl.value = String(moneyValue(creditoClienteEl) + credito);
+    const campoInvalido=[abatimentoBVEl,abatimentoCreditoEl].some(el=>el&&!el.disabled&&(el.validity.badInput||el.validity.stepMismatch||el.validity.rangeUnderflow));
+    const falha=campoInvalido?'Informe valores válidos, com até duas casas decimais.':saldoContaCliente.validar(bv,credito,calcularTotais().valorFinal);
+    if(falha){const erro=document.getElementById('pagamentoAbatimentoErro');if(erro){erro.textContent=falha;erro.hidden=false;}return;}
+    usoSaldoConta = true;
+    if(bvAbatidoEl) bvAbatidoEl.value = String(centavos(moneyValue(bvAbatidoEl) + bv));
+    if(creditoClienteEl) creditoClienteEl.value = String(centavos(moneyValue(creditoClienteEl) + credito));
     if(abatimentoBVEl) abatimentoBVEl.value = "";
     if(abatimentoCreditoEl) abatimentoCreditoEl.value = "";
-    atualizarResumo();
+    atualizarPagamentoPorTotal();
     fecharPopoverAbatimento();
+  });
+  document.getElementById('pagamentoAbatimentosAplicados')?.addEventListener('click',event=>{
+    const tipo=event.target.closest('[data-remover-abatimento]')?.dataset.removerAbatimento;if(!tipo)return;
+    usoSaldoConta = true;
+    if(tipo==='bv'){if(bvTotalEl)bvTotalEl.value='0';if(bvAbatidoEl)bvAbatidoEl.value='0';}
+    if(tipo==='credito' && creditoClienteEl)creditoClienteEl.value='0';
+    atualizarPagamentoPorTotal();
   });
 
   document.addEventListener("click", (event) => {
@@ -777,6 +911,7 @@ export function initPagamento(){
   window.atualizarPagamento = atualizarPagamentoPorTotal;
   window.__pedidoColetarPagamentoConfig = coletarConfig;
   window.__pedidoAplicarPagamentoConfig = aplicarConfig;
+  window.__pedidoDescontoComercialLocacao=()=>descontoNaBaseBV(configDescontos());
 
   // Condição de pagamento escolhida pelo decorador no catálogo (nov/2026): fica em projeto_comercial.dados.pagamento.
   // Aparece no topo do Financeiro do pedido; "Aplicar esta condição" gera as parcelas de cada divisão

@@ -2,22 +2,16 @@
    google.script.* para as telas que vieram do Google Apps Script.
 
    As telas continuam chamando google.script.run.withSuccessHandler(...)
-   .funcao(args) exatamente como antes; aqui isso vira um POST para
-   /api/gs, que roda o código original do sistema (api/_gas/motor.js).
+   .funcao(args) exatamente como antes; aqui a chamada vai para a função de
+   mesmo nome em window.ACERVO_LOCAL (operacao-sem-motor.js, central-dados.js,
+   costura-dados.js, controle-rh-dados.js...), que lê e grava no Supabase.
+   O servidor antigo das planilhas (/api/gs na Vercel) foi apagado em nov/2026:
+   nada daqui sai para lá. O atributo data-sem-motor ficou nas telas só por histórico.
 
    Uso (primeiro script do <head>):
-     <script src="../gas-cliente.js" data-projeto="cronograma"></script>
+     <script src="../gas-cliente.js" data-projeto="cronograma" data-sem-motor></script>
    ===================================================================== */
 (function () {
-  var script = document.currentScript;
-  var PROJETO = script && script.getAttribute("data-projeto");
-  // O servidor (/api/gs) roda na nuvem (Vercel). De qualquer outro endereço (GitHub
-  // Pages, Live Server do VS Code...) a tela chama esse servidor direto, como a
-  // Tecnoweld chama o Supabase: assim dá pra ver as telas pelo servidor local sem
-  // precisar rodar nada além dele. Só a porta 3000 (vercel dev) usa o servidor local.
-  var local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-  var SERVIDOR = (local && location.port === "3000") || /\.vercel\.app$/i.test(location.hostname) ? "" : "https://easyloc-zeta.vercel.app";
-  var API = (script && script.getAttribute("data-api")) || (SERVIDOR + "/api/gs");
   var STORAGE = "https://awemuohtvwvrdzfxwrmd.supabase.co/storage/v1/object/public/gs-arquivos/";
   window.supabaseArquivoUrl = function(valor){
     var v=String(valor||'');
@@ -26,82 +20,16 @@
     return '';
   };
 
-  /* Login do Acervo: o servidor só libera as telas internas para quem está
-     logado no sistema (os apps de campo não precisam). O token é o da sessão
-     do Supabase do dashboard — pela janela de cima (a tela roda num iframe)
-     ou, aberta sozinha, pelo que o supabase-js guardou no navegador. */
-  function tokenDoLogin() {
-    try {
-      var topo = window.top && window.top !== window ? window.top : null;
-      var cliente = (topo && topo.supabaseClient) || window.supabaseClient;
-      if (cliente && cliente.auth && cliente.auth.getSession) {
-        return cliente.auth.getSession().then(function (r) {
-          return (r && r.data && r.data.session && r.data.session.access_token) || tokenGuardado();
-        }).catch(tokenGuardado);
-      }
-    } catch (e) { /* outra origem: segue pelo navegador */ }
-    return Promise.resolve(tokenGuardado());
-  }
-  function tokenGuardado() {
-    try {
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        if (k === "easyloc-auth" || /^sb-.*-auth-token$/.test(k)) {
-          var s = JSON.parse(localStorage.getItem(k) || "null");
-          if (s && s.access_token) { return s.access_token; }
-        }
-      }
-    } catch (e) {}
-    return "";
-  }
-
-  /* Sistemas que já saíram do motor (operacao-sem-motor.js): a função de
-     mesmo nome roda aqui no navegador, direto no Supabase. Com
-     data-sem-motor no <script>, nada mais vai para o /api/gs. */
-  var SEM_MOTOR = !!(script && script.hasAttribute("data-sem-motor"));
-  function chamarLocal(nome, args, ok, falha, usuario) {
+  function chamar(nome, args, ok, falha, usuario) {
     var f = window.ACERVO_LOCAL && window.ACERVO_LOCAL[nome];
     Promise.resolve().then(function () {
-      if (typeof f !== "function") { throw new Error("Função ainda não disponível sem o servidor antigo: " + nome); }
+      if (typeof f !== "function") { throw new Error("Função não disponível nesta tela: " + nome); }
       return f.apply(null, args);
     }).then(function (res) { if (ok) { ok(res, usuario); } }, function (e) {
       var erro = e instanceof Error ? e : new Error(String((e && e.message) || e));
       if (/Failed to fetch|NetworkError|Load failed/i.test(erro.message)) { erro = new Error("Sem conexão com o servidor. Verifique a internet e tente de novo."); }
       if (falha) { falha(erro, usuario); } else { console.error(nome + ":", erro.message); }
     });
-  }
-
-  function chamar(nome, args, ok, falha, usuario) {
-    if (SEM_MOTOR || (window.ACERVO_LOCAL && typeof window.ACERVO_LOCAL[nome] === "function")) { return chamarLocal(nome, args, ok, falha, usuario); }
-    tokenDoLogin().then(function (token) {
-      var cabecalhos = { "Content-Type": "application/json" };
-      if (token) { cabecalhos.Authorization = "Bearer " + token; }
-      // Sessão do App do Montador: o servidor exige para as funções do app (ver exigeSessaoApp em api/_gas/projetos.js)
-      try { var app = localStorage.getItem("montadorToken"); if (app) { cabecalhos["X-App-Token"] = app; } } catch (e) {}
-      return fetch(API, {
-        method: "POST",
-        headers: cabecalhos,
-        body: JSON.stringify({ projeto: PROJETO, fn: nome, args: args })
-      });
-    })
-      .then(function (r) {
-        if (r.status === 429) { return r.json().catch(function () { return { ok: false, erro: "Muitas tentativas. Aguarde alguns minutos e tente de novo." }; }); }
-        if (r.status === 401) { return r.json().catch(function () { return { ok: false, erro: "Entre no sistema para usar esta tela." }; }); }
-        if (!r.ok && r.status !== 200) { throw new Error("Falha de conexão (" + r.status + ")."); }
-        return r.json();
-      })
-      .then(function (j) {
-        if (j && j.ok) { if (ok) { ok(j.resultado, usuario); } }
-        else {
-          var e = new Error((j && j.erro) || "Erro desconhecido.");
-          if (falha) { falha(e, usuario); } else { console.error(nome + ":", e.message); }
-        }
-      })
-      .catch(function (e) {
-        var erro = e instanceof Error ? e : new Error(String(e));
-        if (/Failed to fetch|NetworkError|Load failed/i.test(erro.message)) { erro = new Error("Sem conexão com o servidor. Verifique a internet e tente de novo."); }
-        if (falha) { falha(erro, usuario); } else { console.error(nome + ":", erro.message); }
-      });
   }
 
   function executor(ok, falha, usuario) {

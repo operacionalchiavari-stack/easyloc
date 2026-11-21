@@ -182,7 +182,7 @@
 }
 
     :root {
-      --color-sidebar: #290610;
+      --color-sidebar: #5a5a55;
       --color-primary: var(--el-button-primary-bg,#7d603d);
       --color-bg: #ffffff;
       --azul: var(--el-button-primary-bg,#7d603d);

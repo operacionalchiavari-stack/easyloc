@@ -156,8 +156,25 @@ async function carregarFornecedores() {
   }
 
   Fornecedores_renderizarStats(data || []);
-  renderizarTabela(data || []);
+  fornecedoresLista = data || [];
+  filtrarFornecedores();
 }
+
+// 15/11/2026: pesquisa na linha do título (nome, fantasia, documento, telefone, e-mail, contato, categoria)
+let fornecedoresLista = [];
+const semAcento = (t) => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+function filtrarFornecedores() {
+  const q = semAcento(document.getElementById("filtroTexto")?.value).trim();
+  const digitos = q.replace(/\D/g, "");
+  const lista = !q ? fornecedoresLista : fornecedoresLista.filter((f) => {
+    const texto = semAcento([f.nome_razao_social, f.nome_fantasia, f.email, f.contato, f.categoria, f.tipo, f.cidade].join(" "));
+    if (texto.includes(q)) return true;
+    return digitos.length >= 3 && String(f.documento || "").replace(/\D/g, "").concat(" ", String(f.telefone || "").replace(/\D/g, "")).includes(digitos);
+  });
+  window.EasyLocListPager?.reset?.("cadastro-fornecedores");
+  renderizarTabela(lista);
+}
+document.addEventListener("input", (e) => { if (e.target?.id === "filtroTexto") filtrarFornecedores(); });
 
 function Fornecedores_renderizarStats(lista) {
   const set = (id, valor) => {
@@ -203,7 +220,7 @@ function renderizarTabela(lista) {
     });
 
     tr.innerHTML = `
-      <td>${esc(f.nome_razao_social || "-")}</td>
+      <td><span class="forn-nome-linha"><span class="forn-foto forn-foto-mini">${esc(String(f.nome_fantasia || f.nome_razao_social || "?").trim().split(/\s+/).filter(Boolean).slice(0, 2).map(p => p[0]).join("").toUpperCase())}${f.foto_url ? `<img src="${esc(f.foto_url)}" alt="" loading="lazy" onerror="this.remove()">` : ""}</span>${esc(f.nome_razao_social || "-")}</span></td>
       <td>${esc(f.documento || "-")}</td>
       <td>${esc(f.telefone || "-")}</td>
       <td>${esc(f.email || "-")}</td>
@@ -214,24 +231,7 @@ function renderizarTabela(lista) {
           ${f.status === "ativo" ? "Ativo" : "Inativo"}
         </span>
       </td>
-      <td>
-        <div class="actions">
-          <button class="action-btn btn-ver" type="button">Ver</button>
-          <button class="action-btn btn-editar" type="button">Editar</button>
-        </div>
-      </td>
     `;
-
-    // botões da coluna ações
-    tr.querySelector(".btn-ver").addEventListener("click", (e) => {
-      e.stopPropagation();
-      abrirModalDetalheFornecedor(f);
-    });
-
-    tr.querySelector(".btn-editar").addEventListener("click", (e) => {
-      e.stopPropagation();
-      prepararEdicaoFornecedor(f);
-    });
 
     tabela.appendChild(tr);
   });
@@ -306,10 +306,22 @@ function limparFormulario() {
     .forEach(t => t.classList.remove("selected"));
 
   document.getElementById("fStatus").value = "ativo";
+  const fech = document.getElementById("fFechamento"); if (fech) fech.checked = false;
+  const per = document.getElementById("fFechPeriodo"); if (per) per.value = "mensal";
+  pintarPeriodoFechamento();
   fotoForn.arquivo = null; fotoForn.removida = false; pintarFotoFornecedor(null);
   const ativo = document.getElementById("fPortalAtivo"); if (ativo) ativo.checked = true;
   pintarLinkPortal("");
 }
+
+/* Fechamento mensal ou semanal (nov/2026): mostra o dia do mês ou o dia da semana conforme a periodicidade. */
+function pintarPeriodoFechamento() {
+  const semanal = document.getElementById("fFechPeriodo")?.value === "semanal";
+  const mes = document.getElementById("fFechDiaMesCampo"), sem = document.getElementById("fFechDiaSemanaCampo");
+  if (mes) mes.hidden = semanal;
+  if (sem) sem.hidden = !semanal;
+}
+document.getElementById("fFechPeriodo")?.addEventListener("change", pintarPeriodoFechamento);
 
 /* Foto (logo) do fornecedor (nov/2026): bucket itens, pasta <empresa>/fornecedores/. Obrigatória em Locação de móveis. */
 const fotoForn = { arquivo: null, removida: false };
@@ -494,6 +506,12 @@ if (existente && existente.id !== fornecedorSelecionado?.id) {
     tipo,
     categoria,
     status: document.getElementById("fStatus").value,
+    fechamento_mensal: !!document.getElementById("fFechamento")?.checked,
+    fechamento_periodo: document.getElementById("fFechPeriodo")?.value === "semanal" ? "semanal" : "mensal",
+    fechamento_dia: document.getElementById("fFechPeriodo")?.value === "semanal" ? null : (Number(document.getElementById("fFechDia")?.value) || null),
+    fechamento_dia_semana: document.getElementById("fFechPeriodo")?.value === "semanal" ? (Number(document.getElementById("fFechDiaSemana")?.value) || null) : null,
+    forma_pagamento_padrao: document.getElementById("fFormaPadrao")?.value || null,
+    condicao_pagamento_padrao: (document.getElementById("fCondPadrao")?.value || "").trim() || null,
     telefone,
     email,
     contato_responsavel: document.getElementById("fContato").value,
@@ -675,6 +693,13 @@ function preencherFormularioFornecedor(f) {
   document.getElementById("fCategoria").value = f.categoria || "";
   fotoForn.arquivo = null; fotoForn.removida = false; pintarFotoFornecedor(f.foto_url || null);
   document.getElementById("fStatus").value = f.status || "ativo";
+  document.getElementById("fFechamento").checked = !!f.fechamento_mensal;
+  document.getElementById("fFechDia").value = f.fechamento_dia || "";
+  document.getElementById("fFechPeriodo").value = f.fechamento_periodo === "semanal" ? "semanal" : "mensal";
+  document.getElementById("fFechDiaSemana").value = f.fechamento_dia_semana || "";
+  pintarPeriodoFechamento();
+  document.getElementById("fFormaPadrao").value = f.forma_pagamento_padrao || "";
+  document.getElementById("fCondPadrao").value = f.condicao_pagamento_padrao || "";
   document.getElementById("fTelefone").value = f.telefone || "";
   document.getElementById("fEmail").value = f.email || "";
   document.getElementById("fContato").value = f.contato_responsavel || "";

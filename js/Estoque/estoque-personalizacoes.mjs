@@ -3,7 +3,7 @@
    arquivo: estoque-personalizacoes.mjs
 ===================================================== */
 
-import { criarEditorEtapas } from '../../Modulos/Producao/producao-cadastro.mjs';
+import { criarEditorEtapas } from '../../Modulos/Producao/producao-cadastro.mjs?v=20261115-sem-texto';
 import {carregarCadastros,ligarMoeda,numeroMoeda,moedaBR,fatorComplexidade,calcularPreco} from '../shared/custos-personalizacao.mjs';
 let personalizacoes = [];
 
@@ -79,6 +79,7 @@ const missing = getMissingEls(els, [
   "inpVinculoNome",
   "listaVinculos",
   "inpObs",
+  "inpDescCliente",
 
   // insumos
   "insumosContainer",
@@ -129,7 +130,12 @@ let cartelaTipos = [];
 // consultas abaixo falhavam silenciosamente (personalizacoes cadastradas
 // nunca apareciam). Ver window.aguardarContexto() em js/core/context.js.
 await window.aguardarContexto();
-const configCustos=(await carregarCadastros(window.supabaseClient,window.__CONTEXT.empresa_id)).custos;
+const cadastrosOperacao=await carregarCadastros(window.supabaseClient,window.__CONTEXT.empresa_id);
+const configCustos=cadastrosOperacao.custos;
+// 15/11/2026: tipos de personalização vêm de Parâmetros > Produção > Personalizações
+const tiposPersonalizacao=Array.isArray(cadastrosOperacao.tipos_personalizacao)&&cadastrosOperacao.tipos_personalizacao.length?cadastrosOperacao.tipos_personalizacao:['Pintura','Forração','Adesivação','Outro'];
+function pintarTipos(sel,primeira,valor){const atual=valor??sel.value;sel.replaceChildren(new Option(primeira,''));if(sel===els.inpTipo)sel.options[0].disabled=true;for(const t of tiposPersonalizacao)sel.add(new Option(t,t));if(atual&&!tiposPersonalizacao.includes(atual))sel.add(new Option(atual+' (fora da lista)',atual));sel.value=atual||'';}
+pintarTipos(els.filtroTipo,'Todos os tipos');pintarTipos(els.inpTipo,'Selecione...');
 for(const [valor,nivel,nome] of [['1','simples','Simples'],['1.15','media','Média'],['1.30','alta','Alta']]){const o=[...els.inpComplexidade.options].find(o=>o.value===valor);if(o)o.textContent=nome+' (+'+configCustos.complexidades[nivel]+'%)';}
 ligarMoeda(els.inpCustoHora);ligarMoeda(els.inpPrecoManual);
 els.inpCustoHora.readOnly=true;els.inpMargem.readOnly=true;
@@ -146,6 +152,11 @@ function pesquisarVinculos(){
  els.listaVinculos.hidden=!lista.length;
 }
 els.inpVinculoNome.addEventListener('input',pesquisarVinculos);
+// 15/11/2026: foto do item escolhido ao lado do campo
+const fotoVinculo=Object.assign(document.createElement('div'),{className:'pers-vinculo-foto'});els.inpVinculoNome.closest('.form-row')?.classList.add('pers-vinculo-row');els.inpVinculoNome.before(fotoVinculo);
+function pintarFotoVinculo(){const todos=[...itens,...componentes];const v=todos.find(x=>(x.nome||'').toLowerCase()===String(els.inpVinculoNome.value||'').trim().toLowerCase())||todos.find(x=>x.id===window.__persVinculoId);fotoVinculo.innerHTML=/^https?:\/\//i.test(v?.foto||'')?'<img src="'+String(v.foto).replace(/"/g,'&quot;')+'" alt="">':'<span>Sem foto</span>';}
+els.inpVinculoNome.addEventListener('change',pintarFotoVinculo);els.inpVinculoNome.addEventListener('input',()=>{window.__persVinculoId=null;pintarFotoVinculo();});
+window.__persPintarFotoVinculo=pintarFotoVinculo;
 els.inpVinculoNome.addEventListener('keydown',e=>{if(e.key==='Escape'){els.listaVinculos.hidden=true;e.stopPropagation();}if(e.key==='ArrowDown'){e.preventDefault();els.listaVinculos.querySelector('button')?.focus();}});
 els.listaVinculos.addEventListener('keydown',e=>{if(e.key==='ArrowDown'){e.preventDefault();e.target.nextElementSibling?.focus();}if(e.key==='ArrowUp'){e.preventDefault();(e.target.previousElementSibling||els.inpVinculoNome).focus();}if(e.key==='Escape'){els.listaVinculos.hidden=true;els.inpVinculoNome.focus();}});
 document.addEventListener('pointerdown',e=>{if(!els.listaVinculos.contains(e.target)&&e.target!==els.inpVinculoNome)els.listaVinculos.hidden=true;});
@@ -194,16 +205,26 @@ async function carregarItensEComponentes(){
     .filter(i => i.tipo === "Item" || i.tipo === "Kit")
     .map(i => ({
       id: i.id,
-      nome: i.descricao_total, foto:i.foto_url
+      nome: i.descricao_total, foto:i.foto_url, tipo:i.tipo
     }));
 
   componentes = data
     .filter(i => i.tipo === "Componente")
     .map(i => ({
       id: i.id,
-      nome: i.descricao_total, foto:i.foto_url
+      nome: i.descricao_total, foto:i.foto_url, tipo:i.tipo
     }));
 
+}
+
+// 15/11/2026: na lista, foto + nome completo com as medidas embaixo; coluna própria de Item/Kit/Componente
+function itemDoVinculo(r){return [...itens,...componentes].find(x=>x.id===r.vinculo_id)||null;}
+function tipoDoVinculo(r){const it=itemDoVinculo(r);return it?.tipo||(r.alvo==='COMPONENTE'?'Componente':'Item');}
+function celulaItemPersonalizacao(r){
+  const it=itemDoVinculo(r);const nome=String(it?.nome||r.vinculo_nome||'-');
+  const m=nome.match(/\s*(\(L\)[\s\S]*)$/);const so=m?nome.slice(0,m.index).trim():nome;
+  const foto=/^https?:\/\//i.test(it?.foto||'')?'<img src="'+escapeHtml(it.foto)+'" alt="" loading="lazy">':'';
+  return '<div class="pers-item-cel"><span class="pers-item-foto">'+foto+'</span><span class="pers-item-txt"><span class="pers-item-nome">'+escapeHtml(so)+'</span>'+(m?'<small class="pers-item-medidas">'+escapeHtml(m[1].trim())+'</small>':'')+'</span></div>';
 }
 
 async function carregarInsumos(){
@@ -407,6 +428,8 @@ function renderTable(){
     const precoFinal = calcularPreco(custoTotal,margem,comp);
 
     p.custo_total = custoTotal;
+    p._custo_mat = custoMat;
+    p._custo_mo = custoMO;
     p.preco_sugerido = precoFinal;
   });
 
@@ -430,7 +453,7 @@ function renderTable(){
   if(rows.length === 0){
     els.tbody.innerHTML = `
       <tr>
-        <td colspan="6" style="padding:26px 16px;color:#6b7b8b;">
+        <td colspan="10" style="padding:26px 16px;color:#6b7b8b;">
           Nenhuma personalização encontrada.
         </td>
       </tr>
@@ -476,24 +499,39 @@ function renderTable(){
 
     const custo = formatCurrency(r.custo_total || 0);
     const preco = formatCurrency(r.preco_sugerido || 0);
+    // 15/11/2026: custo de materiais, de mão de obra e etapas da produção na própria lista
+    const etapasLista = Array.isArray(r.producao_etapas) ? r.producao_etapas : [];
+    const horasEtapas = etapasLista.reduce((s, e) => s + toNum(e?.horas), 0);
+    const etapasHtml = etapasLista.length
+      ? `<span class="pers-etapas-cel"><b>${etapasLista.length} ${etapasLista.length === 1 ? "etapa" : "etapas"}</b><small>${horasEtapas.toLocaleString("pt-BR",{maximumFractionDigits:2})} h por peça</small></span>`
+      : `<span class="pers-etapas-cel is-vazio">Sem etapas</span>`;
 
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
       <td>
+        ${celulaItemPersonalizacao(r)}
+      </td>
+
+      <td>
         ${tipoBadge}
       </td>
 
       <td>
-        <span>${escapeHtml(r.vinculo_nome || "-")}</span>
-        <span class="mini-muted">${r.alvo === "ITEM" ? "Item" : "Componente"}</span>
+        <span class="badge pers-tipo-item">${escapeHtml(tipoDoVinculo(r))}</span>
       </td>
 
       <td>
         ${complexBadge}
       </td>
 
-      <td>
+      <td class="pers-num">${formatCurrency(r._custo_mat || 0)}</td>
+
+      <td class="pers-num">${formatCurrency(r._custo_mo || 0)}</td>
+
+      <td>${etapasHtml}</td>
+
+      <td class="pers-num">
         ${custo}
       </td>
 
@@ -545,7 +583,8 @@ async function openModalCreate(){
 
       els.modalTitle.textContent = "Adicionar Personalização";
       resetModalFields();
-      editorProducao.set([]);
+      editorProducao.set([{nome:'',setor:'personalizacao',grupo:1,horas:1}]);
+      window.__persVinculoId = null; window.__persPintarFotoVinculo?.();
 
       modalState.alvo = "ITEM";
       const radioItem = root.querySelector('input[name="alvo"][value="ITEM"]');
@@ -580,9 +619,12 @@ async function openModalEdit(id){
 
       atualizarVinculosModal();
 
-      els.inpTipo.value = p.tipo || "";
+      pintarTipos(els.inpTipo,"Selecione...",p.tipo || "");
       els.inpVinculoNome.value = p.vinculo_nome || "";
-      els.inpObs.value = p.obs || "";
+      els.inpObs.value = p.observacoes || p.obs || "";
+      if(els.inpDescCliente) els.inpDescCliente.value = p.descricao_cliente || "";
+      window.__persVinculoId = p.vinculo_id || null;
+      window.__persPintarFotoVinculo?.();
 
       // carrega insumos usados
       els.insumosContainer.innerHTML = "";
@@ -619,6 +661,7 @@ function resetModalFields(){
   els.inpTipo.value = "";
   els.inpVinculoNome.value = "";
   els.inpObs.value = "";
+  if(els.inpDescCliente) els.inpDescCliente.value = "";
 
   // limpa insumos
   els.insumosContainer.innerHTML = "";
@@ -928,6 +971,7 @@ async function salvarPersonalizacao(){
     vinculo_id: ref.id,
     vinculo_nome: ref.nome,
     observacoes: (els.inpObs.value || "").trim(),
+    descricao_cliente: (els.inpDescCliente?.value || "").trim() || null,
 
     tempo: toNum(els.inpTempo.value),
     custo_hora: toNum(els.inpCustoHora.value),
@@ -1142,6 +1186,7 @@ function getEls(root){
     inpVinculoNome: root.querySelector("#inpVinculoNome"),
     listaVinculos: root.querySelector("#listaVinculos"),
     inpObs: root.querySelector("#inpObs"),
+    inpDescCliente: root.querySelector("#inpDescCliente"),
 
     // ✅ NOVO: insumos
     insumosContainer: root.querySelector("#insumosContainer"),

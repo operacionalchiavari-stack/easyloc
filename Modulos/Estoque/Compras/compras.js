@@ -54,6 +54,7 @@
     if (row.classList.contains('pv-row-clickable') && !state.selectedNeedIds.has(id)) { state.selectedNeedIds.add(id); row.classList.add('is-selected'); row.setAttribute('aria-selected', 'true'); updateSelectionBar(); }
     row.scrollIntoView({ block: 'center' }); row.focus();
   }
+  window.addEventListener('compras-recarregar', () => reloadAll().catch(() => {}));
   async function reloadAll() {
     const [needs, quotations, orders] = await Promise.all([
       window.AcervoComprasAPI.listPurchaseNeeds(),
@@ -64,6 +65,7 @@
     state.quotations = quotations || [];
     state.orders = orders || [];
     state.selectedNeedIds.clear();
+    carregarOpInfo().then(() => { if (typeof renderNeeds === "function") renderNeeds(); });
     try { state.needQuotations = await window.AcervoComprasAPI.listNeedsInOpenQuotation(); }
     catch (e) { state.needQuotations = new Map(); console.warn("[Compras] cotações das necessidades", e); }
     try { state.compositionQuotes = await window.AcervoComprasAPI.listPurchaseCompositionQuotes() || []; }
@@ -81,6 +83,7 @@
     if (startTab && [...document.querySelectorAll(".pv-tab")].some((b) => b.dataset.pvTab === startTab)) selectTab(startTab);
     $("quoteSelectedBtn").onclick = () => {
       const selected = [...state.selectedNeedIds].map((id) => state.needs.find((n) => n.id === id)).filter(Boolean);
+      if (new Set(selected.map((n) => n.origem === "manutencao")).size > 1) return notify("Serviços são cotados separados de materiais. Desmarque um dos dois.", "error");
       // necessidade de OP com material cadastrado: oferece juntar outras pedidos do mesmo material (30 dias)
       const base = selected.find((n) => n.order_number && n.material_id);
       if (base) startQuoteFlow(base.id); else openQuoteBuilder(selected);
@@ -209,13 +212,13 @@
     filteredNeeds().forEach((n) => {
       if (bought.has(n.status)) return;
       if (n.origem === "manutencao") servicos.push(n);
-      else (["solicitacao", "estoque_minimo"].includes(n.origem) ? avulsa : op).push(n);
+      else (["solicitacao", "estoque_minimo", "cartela"].includes(n.origem) ? avulsa : op).push(n);
     });
     return { op, avulsa, servicos };
   }
 
   function needRowState(n) {
-    const awaitingLink = !n.material_id;
+    const awaitingLink = !n.material_id && !["manutencao", "solicitacao"].includes(n.origem); // serviço e solicitação de compra: vínculo opcional (16/11/2026)
     const pendingApproval = n.status === "aguardando_aprovacao" || awaitingLink;
     const internalRequest = n.origem === "solicitacao" && !n.order_number;
     const selected = !pendingApproval && state.selectedNeedIds.has(n.id);
@@ -268,7 +271,7 @@
       return `<tr ${needRowAttrs(n, pendingApproval, selected)}>
         ${needQtyCell(n)}
         <td><strong>${esc(n.material_nome)}</strong><span class="pv-origin-tag is-tool">${fromProgrammer ? "Ferramenta · Programador CNC" : "Ferramenta"}</span><small>${esc(sub)}${fromProgrammer ? "" : ` · <a href="../Almoxarifado/Principal/almoxarifado.html" data-tool-link>Ver detalhes</a>`}</small>${companyChip(n)}</td>
-        <td>${orders.length ? orders.map((o) => `<span class="pv-origin-tag is-op">OP ${esc(o)}</span>`).join(" ") : '<span class="subtext">Estoque mínimo de ferramenta</span>'}</td>
+        <td>${orders.length ? orders.map((o) => `<span class="cs-pedido-num">${esc(o)}</span>`).join(" ") : '<span class="subtext">Estoque mínimo de ferramenta</span>'}</td>
         <td>${esc(fromProgrammer ? (n.tool_details?.maquina || "Programação CNC") : "Ferramental")}</td>
         ${needDateCell(n)}
         ${needStatusCell(false, n.status, pcpTag)}
@@ -276,47 +279,135 @@
       </tr>`;
     }
     return `<tr ${needRowAttrs(n, pendingApproval, selected)}>
+        ${opPedidoCell(n)}
         ${needQtyCell(n)}
         <td><strong>${esc(n.material_nome)}</strong>${companyChip(n)}${n.entrega_direta_endereco ? `<small class="pv-direct-delivery" title="${esc(n.entrega_direta_endereco)}"><i data-lucide="truck"></i> Entregar direto no terceirizado: ${esc(n.entrega_direta_endereco)}</small>` : ""}</td>
-        <td>${n.order_number ? `<span class="pv-origin-tag is-op">OP ${esc(n.order_number)}</span>` : '<span class="subtext">—</span>'}</td>
+        ${opItemCell(n)}
         <td>${esc(n.etapa_nome || n.setor_nome || "—")}</td>
         ${needDateCell(n)}
         ${needStatusCell(false, n.status, pcpTag)}
-        ${needAttachmentsCell(n)}
       </tr>`;
+  }
+
+  // (16/11/2026) Necessidades operacionais: pedido (número, nunca "OP"), cliente com foto, local e o item que vai ser
+  // personalizado, com foto. Vêm de dados da própria necessidade (pedido_id, item_id) ou do pedido pelo número.
+  state.opInfo = state.opInfo || { pedidos: new Map(), itens: new Map(), pronto: false };
+  async function carregarOpInfo() {
+    const op = state.needs.filter((n) => n.order_number || n.pedido_id || n.item_id);
+    if (!op.length) return;
+    const sb = window.supabaseClient, emp = window.__CONTEXT?.empresa_id;
+    const numeros = [...new Set(op.map((n) => String(n.order_number || "")).filter(Boolean))].filter((x) => !state.opInfo.pedidos.has(x));
+    const itens = [...new Set(op.map((n) => n.item_id).filter(Boolean))].filter((x) => !state.opInfo.itens.has(x));
+    try {
+      if (numeros.length) {
+        const { data: peds } = await sb.from("separacoes_pedidos").select("id,numero_pedido,cliente_nome,cliente_id,local_nome").eq("empresa_id", emp).in("numero_pedido", numeros);
+        const ids = [...new Set((peds || []).map((p) => p.cliente_id).filter(Boolean))];
+        const { data: cli } = ids.length ? await sb.from("clientes_empresas").select("id,catalogo_logo_url").in("id", ids) : { data: [] };
+        const foto = new Map((cli || []).map((c) => [c.id, c.catalogo_logo_url]));
+        (peds || []).forEach((p) => state.opInfo.pedidos.set(String(p.numero_pedido), { ...p, foto: foto.get(p.cliente_id) || "" }));
+      }
+      if (itens.length) {
+        const { data: its } = await sb.from("itens").select("id,produto,descricao_total,foto_url").in("id", itens);
+        (its || []).forEach((i) => state.opInfo.itens.set(i.id, i));
+      }
+    } catch (e) { console.warn("[Compras] dados do pedido das necessidades", e); }
+  }
+  // Pedido, Cliente (com foto) e Local em três colunas
+  function opPedidoCell(n) {
+    const p = state.opInfo.pedidos.get(String(n.order_number || "")) || {};
+    const cliente = n.cliente_nome || p.cliente_nome, local = n.local_nome || p.local_nome, foto = n.cliente_foto || p.foto;
+    const ini = (v) => String(v).trim().split(/\s+/).slice(0, 2).map((x) => x[0]).join("").toUpperCase();
+    const av = cliente ? `<span class="cs-foto cs-foto-pessoa${foto ? " tem-foto" : ""}" style="--cs-tam:30px" aria-hidden="true">${foto ? `<img src="${esc(foto)}" alt="">` : esc(ini(cliente))}</span>` : "";
+    return `<td>${n.order_number ? `<span class="cs-pedido-num">${esc(n.order_number)}</span>` : '<span class="subtext">—</span>'}</td>
+        <td>${cliente ? `<span class="cs-com-foto">${av}<span class="cs-com-foto-txt"><strong>${esc(cliente)}</strong></span></span>` : '<span class="subtext">—</span>'}</td>
+        <td>${local ? esc(local) : '<span class="subtext">—</span>'}</td>`;
+  }
+  function opItemCell(n) {
+    const i = state.opInfo.itens.get(n.item_id) || {};
+    const nome = n.item_nome || i.produto || i.descricao_total, foto = n.item_foto || i.foto_url;
+    if (!nome) return `<td><span class="subtext">—</span></td>`;
+    return `<td><span class="cs-com-foto"><span class="cs-item-foto">${foto ? `<img src="${esc(foto)}" alt="" loading="lazy">` : ""}</span><span class="cs-com-foto-txt"><strong>${esc(nome)}</strong>${n.personalizacao_nome ? `<small>${esc(n.personalizacao_nome)}</small>` : ""}</span></span></td>`;
   }
 
   function avulsaNeedRowHtml(n) {
     const { awaitingLink, pendingApproval, internalRequest, selected, pcpTag } = needRowState(n);
     const isTool = n.origem === "ferramental";
     const fromProgrammer = isTool && n.tool_details?.fonte === "programador_cnc";
-    const linkIcon = !n.material_id
+    const linkIcon = !n.material_id && n.origem !== "manutencao"
       ? `<button type="button" class="pv-link-material-icon" data-link-material="${esc(n.id)}" title="Vincular item cadastrado" aria-label="Vincular item cadastrado"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2"/></svg></button>`
       : "";
     const programmerValue = n.valor_estimado != null && n.valor_estimado !== "" ? `${Number(n.valor_estimado).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}/un` : "";
     const toolSubtitle = fromProgrammer
-      ? `<small>${esc([n.order_number ? `OP ${n.order_number}` : "", n.tool_details?.maquina, n.tool_details?.motivo, programmerValue, n.fornecedor_nome ? `Fornecedor sugerido: ${n.fornecedor_nome}` : ""].filter(Boolean).join(" · "))}</small>`
+      ? `<small>${esc([n.order_number ? `Pedido ${n.order_number}` : "", n.tool_details?.maquina, n.tool_details?.motivo, programmerValue, n.fornecedor_nome ? `Fornecedor sugerido: ${n.fornecedor_nome}` : ""].filter(Boolean).join(" · "))}</small>`
       : isTool
       ? `<small>${esc(n.tool_details?.compra_em_risco ? 'Compra em risco' : 'Capacidade/vida útil')} · Comprar até ${fmtDate(n.tool_details?.compra_recomendada_ate)} · <a href="../Almoxarifado/Principal/almoxarifado.html" data-tool-link>Ver detalhes</a></small>`
       : "";
     const isMinimum = n.origem === "estoque_minimo";
     const isService = n.origem === "manutencao";
-    const originTag = isService ? '<span class="pv-origin-tag is-tool">Manutenção</span>' : fromProgrammer ? '<span class="pv-origin-tag is-tool">Programador CNC</span>' : isTool ? '<span class="pv-origin-tag is-tool">Ferramental</span>' : isMinimum ? '<span class="pv-origin-tag is-tool">Estoque mínimo</span>' : `<span class="pv-origin-tag is-internal">${n.local_origem === 'galpao' ? 'Galpão' : 'Solicitação interna'}</span>`;
+    const isCartela = n.origem === "cartela"; // 15/11/2026: tecido/tinta escolhido na cartela que ainda não existe no Almoxarifado
+    const originTag = isCartela ? `<span class="pv-origin-tag is-tool">${esc(n.cartela_tipo || "Cartela")} · Pedido ${esc(n.pedido_numero || "")}</span>` : isService ? '<span class="pv-origin-tag is-tool">Manutenção</span>' : fromProgrammer ? '<span class="pv-origin-tag is-tool">Programador CNC</span>' : isTool ? '<span class="pv-origin-tag is-tool">Ferramental</span>' : isMinimum ? '<span class="pv-origin-tag is-tool">Estoque mínimo</span>' : ""; // (16/11/2026) solicitação de compra comum não mostra etiqueta de origem (pedido do usuário)
+    const ia = camposIA(n);
     return `<tr ${needRowAttrs(n, pendingApproval, selected)}>
+        <td>${isCartela ? `<span class="subtext">Automático</span><small>${esc(n.pedido_cliente || "")}</small>` : fromProgrammer ? window.ComprasFoto.comNome(window.ComprasFoto.pessoa(n.criado_por, n.solicitante_nome || "Programador CNC"), esc(n.solicitante_nome || "Programador CNC")) : isTool ? '<span class="subtext">—</span>' : isMinimum ? '<span class="subtext">Automático</span>' : window.ComprasFoto.comNome(window.ComprasFoto.pessoa(n.criado_por, n.solicitante_nome), esc(n.solicitante_nome || 'Solicitante não informado'))}</td>
         ${needQtyCell(n)}
-        <td>${linkIcon}<strong>${esc(n.material_nome)}</strong>${toolSubtitle}${companyChip(n)}</td>
-        <td>${originTag}</td>
-        <td>${fromProgrammer ? esc(n.solicitante_nome || "Programador CNC") : isTool ? '<span class="subtext">—</span>' : isMinimum ? '<span class="subtext">Automático</span>' : esc(n.solicitante_nome || 'Solicitante não informado')}</td>
+        <td>${linkIcon}<strong>${esc(n.material_nome)}</strong>${toolSubtitle}${companyChip(n)}<span class="cs-origem">${originTag}</span>${!n.material_id && n.origem === "solicitacao" ? `<small class="cs-sem-vinculo">Sem vínculo com o Almoxarifado</small>` : ""}${ia.extra ? `<small class="cs-clamp" title="${esc(ia.extra)}">${esc(ia.extra)}</small>` : ""}</td>
+        ${textoCell(ia.motivo)}
+        <td>${ia.justificativa ? `<span class="cs-clamp" title="${esc(ia.justificativa)}">${esc(ia.justificativa)}</span>` : '<span class="subtext">—</span>'}${ia.alternativas ? `<small class="cs-clamp" title="${esc(ia.alternativas)}">Alternativas: ${esc(ia.alternativas)}</small>` : ""}</td>
+        ${textoCell(ia.pedido)}
         ${needDateCell(n)}
+        ${fotosCell(n.evidencias || ia.fotos)}
         ${needStatusCell(awaitingLink, n.status, pcpTag)}
         ${needAttachmentsCell(n)}
+      </tr>`;
+  }
+
+  // (16/11/2026) respostas da assistente (Carla) em campos próprios; registros antigos: lidos do texto da observação
+  function camposIA(n) {
+    const obs = String(n.observacao || "");
+    const linha = (rot) => { const m = obs.match(new RegExp("^" + rot + ":\\s*(.+)$", "mi")); return m ? m[1].trim() : ""; };
+    const fotos = (obs.match(/https?:\/\/\S+solicitacoes-evidencias\S+/g) || []);
+    const pedido = n.pedido_destino || linha("Pedido \\/ evento");
+    return {
+      motivo: n.motivo || linha("Para que"),
+      justificativa: n.justificativa || linha("Por que precisa"),
+      alternativas: (n.alternativas || linha("Alternativas avaliadas")).replace(/^nenhuma( alternativa avaliada)?\.?$/i, ""),
+      pedido: /^uso geral/i.test(pedido) ? "Uso geral / estoque" : pedido,
+      extra: n.observacao_extra || "",
+      fotos,
+    };
+  }
+  function textoCell(v) { return `<td>${v ? `<span class="cs-clamp" title="${esc(v)}">${esc(v)}</span>` : '<span class="subtext">—</span>'}</td>`; }
+  function fotosCell(lista) {
+    const fotos = (Array.isArray(lista) ? lista : []).map((f) => (typeof f === "string" ? f : f?.url)).filter((u) => /^https?:\/\//.test(u || ""));
+    if (!fotos.length) return `<td><span class="subtext">Sem foto</span></td>`;
+    return `<td><span class="cs-fotos" data-cs-todas="${esc(fotos.join("|"))}">${fotos.slice(0, 3).map((u) => `<a href="${esc(u)}" data-cs-foto-ver title="Ver foto"><img src="${esc(u)}" alt="" loading="lazy"></a>`).join("")}${fotos.length > 3 ? `<b>+${fotos.length - 3}</b>` : ""}</span></td>`;
+  }
+
+  // (16/11/2026) linha do serviço com as respostas do Marcos (manutenção): título, categoria, local, problema, prioridade, prazo e fotos
+  const CATEGORIA_SERV = { hidraulica: "Hidráulica", eletrica: "Elétrica", alvenaria: "Alvenaria", pintura: "Pintura", portas_janelas: "Portas e janelas", climatizacao: "Climatização", outros: "Outros" };
+  function servicoNeedRowHtml(n) {
+    const { pendingApproval, selected, pcpTag } = needRowState(n);
+    const prio = { baixa: "Baixa", normal: "Normal", alta: "Alta", urgente: "Urgente" }[n.prioridade] || "";
+    return `<tr ${needRowAttrs(n, pendingApproval, selected)}>
+        <td>${n.solicitante_nome ? window.ComprasFoto.comNome(window.ComprasFoto.pessoa(n.criado_por, n.solicitante_nome), esc(n.solicitante_nome)) : '<span class="subtext">—</span>'}</td>
+        <td><strong>${esc(n.descricao_item || n.material_nome)}</strong>${n.categoria ? `<small>${esc(CATEGORIA_SERV[n.categoria] || n.categoria)}${n.predial_numero ? ` · #${esc(n.predial_numero)}` : ""}</small>` : ""}</td>
+        ${textoCell(n.local)}
+        ${textoCell(n.observacao)}
+        <td>${prio ? `<span class="pv-status-pill ${n.prioridade === "urgente" || n.prioridade === "alta" ? "is-pending" : ""}">${esc(prio)}</span>` : "—"}</td>
+        ${needDateCell(n)}
+        ${fotosCell(n.evidencias)}
+        ${needStatusCell(false, n.status, pcpTag)}
+        <td>${n.predial_id ? `<button type="button" class="btn btn-secondary pv-btn-sm" data-predial-atender="${esc(n.predial_id)}">Atendimento</button>` : ""}</td>
       </tr>`;
   }
 
   function renderNeeds() {
     const { op, avulsa, servicos } = splitNeeds();
 
-    $("needsServicosBody").innerHTML = servicos.map(n=>{const template=document.createElement("template");template.innerHTML=avulsaNeedRowHtml(n);const row=template.content.firstElementChild,cells=[...row.children];cells[1].append(document.createElement("small"));cells[1].lastElementChild.textContent=cells[0].textContent;row.replaceChildren(cells[1],cells[2],cells[3],document.createElement("td"),cells[4],cells[5],document.createElement("td"),cells[6]);return row.outerHTML;}).join("");
+    // (16/11/2026) Serviços = solicitações de manutenção viradas necessidade (origem manutencao): clicar na linha seleciona para orçar
+    $("needsServicosBody").innerHTML = servicos.map(servicoNeedRowHtml).join("");
+    $("needsServicosBody").querySelectorAll("[data-predial-atender]").forEach(b=>b.addEventListener("click",e=>{e.stopPropagation();window.ComprasPredialAbrir?.(b.dataset.predialAtender);}));
+    $("needsServicosEmpty")?.classList.toggle("hidden", servicos.length > 0);
     window.dispatchEvent(new Event("compras-servicos-contagem"));
     $("needsOpEmpty").classList.toggle("hidden", op.length > 0);
     $("needsOpBody").innerHTML = op.map(opNeedRowHtml).join("");
@@ -328,6 +419,13 @@
       body.querySelectorAll("tr.pv-row-clickable").forEach(tr=>{
         const toggle=()=>{
           const id=tr.dataset.needId;
+          // (16/11/2026) serviço é sempre cotado separado de material (necessidade operacional e solicitação de compra)
+          if(!state.selectedNeedIds.has(id)){
+            const eServ=(n)=>n?.origem==="manutencao";
+            const esta=state.needs.find(n=>n.id===id);
+            const outro=[...state.selectedNeedIds].map(x=>state.needs.find(n=>n.id===x)).find(n=>n&&eServ(n)!==eServ(esta));
+            if(outro){notify(eServ(esta)?"Serviços são cotados separados. Desmarque os materiais selecionados para cotar este serviço.":"Serviços são cotados separados. Desmarque os serviços selecionados para cotar este material.","error");return;}
+          }
           if(state.selectedNeedIds.has(id)) state.selectedNeedIds.delete(id); else state.selectedNeedIds.add(id);
           const selected=state.selectedNeedIds.has(id);
           tr.classList.toggle('is-selected',selected);tr.setAttribute('aria-selected',String(selected));
@@ -352,8 +450,46 @@
     return `<a data-composition-quote href="${esc(value)}" target="_blank" rel="noopener noreferrer" title="Link do produto" class="pv-product-link">Ver produto</a>`;
   }
 
+  // 15/11/2026: solicitação de tecido/tinta da cartela — vincula a um material do Almoxarifado ou cadastra um novo.
+  // A opção da cartela passa a apontar para esse material: os próximos pedidos já reservam no Almoxarifado.
+  async function linkCartelaMaterial(need) {
+    const sb=window.supabaseClient, emp=window.__CONTEXT?.empresa_id;
+    try {
+      const {data:materiais,error}=await sb.rpc('compras_almox_materiais',{p_empresa:emp});if(error)throw error;
+      const d=document.createElement('dialog');d.className='pv-dialog pv-link-dialog pv-cartela-dialog';
+      d.setAttribute('aria-label','Vincular ao Almoxarifado');
+      d.innerHTML=`<form class="dialog-card"><header><h2>Vincular ao Almoxarifado</h2></header><div class="pv-link-dialog-body">
+        <div class="pv-link-request"><div><span>Escolhido pelo cliente</span><strong>${esc(need.material_nome)}</strong></div><div><span>Quantidade</span><strong>${quantityText(need.quantidade_faltante,need.unidade)}</strong></div></div>
+        <p class="pv-cartela-dica">Pedido ${esc(need.pedido_numero||'')} · ${esc(need.pedido_cliente||'')}. Depois do vínculo, esta opção da cartela ${esc(need.cartela_nome||'')} passa a reservar no Almoxarifado nos próximos pedidos.</p>
+        <div class="pv-cartela-modo" role="radiogroup"><label><input type="radio" name="modo" value="novo" checked> Ainda não existe — cadastrar no Almoxarifado</label><label><input type="radio" name="modo" value="existente"${materiais?.length?'':' disabled'}> Já existe no Almoxarifado</label></div>
+        <div data-modo="novo" class="pv-cartela-novo">
+          <label>Nome do material<input name="nome" required maxlength="120" value="${esc(need.material_nome||'')}"></label>
+          <div class="pv-cartela-linha"><label>Unidade<input name="unidade" maxlength="20" value="${esc(String(need.unidade||'UN').toUpperCase())}"></label>
+          <label>Categoria<input name="categoria" maxlength="60" value="${esc(need.cartela_tipo==='Tinta'?'Tintas':need.cartela_tipo==='Tecido'?'Tecidos':(need.cartela_tipo||''))}"></label>
+          <label>Custo (R$)<input name="custo" inputmode="decimal" value="${need.valor_estimado!=null&&need.valor_estimado!==''?String(need.valor_estimado).replace('.',','):''}"></label></div>
+        </div>
+        <div data-modo="existente" class="pv-cartela-existente" hidden><label for="purchaseCartelaMaterial">Material do Almoxarifado</label><select id="purchaseCartelaMaterial" name="material"><option value="">Selecione o material</option>${(materiais||[]).map(m=>`<option value="${esc(m.id)}">${esc(m.codigo||'')} · ${esc(m.produto)} (${esc(m.unidade||'')})</option>`).join('')}</select></div>
+        <p role="alert" data-error></p></div>
+        <footer><button type="button" class="btn btn-secondary" data-close>Cancelar</button><button type="submit" class="btn btn-primary">Vincular</button></footer></form>`;
+      document.body.append(d);d.querySelector('[data-close]').onclick=()=>d.close();d.addEventListener('close',()=>d.remove());
+      const form=d.querySelector('form');
+      const modo=()=>form.querySelector('[name=modo]:checked').value;
+      form.addEventListener('change',e=>{if(e.target.name!=='modo')return;d.querySelector('[data-modo=novo]').hidden=modo()!=='novo';d.querySelector('[data-modo=existente]').hidden=modo()!=='existente';form.nome.required=modo()==='novo';form.material.required=modo()==='existente';});
+      form.onsubmit=async e=>{e.preventDefault();const b=d.querySelector('[type=submit]');b.disabled=true;
+        try{
+          const args={p_empresa:emp,p_necessidade:need.id,p_produto_id:null,p_novo:null};
+          if(modo()==='existente')args.p_produto_id=form.material.value;
+          else args.p_novo={nome:form.nome.value.trim(),unidade:form.unidade.value.trim(),categoria:form.categoria.value.trim(),custo:form.custo.value.trim()};
+          const {data,error}=await sb.rpc('compras_cartela_vincular',args);if(error)throw error;
+          d.close();await reloadAll();notify(data?.novo?`Material ${data.material_codigo} cadastrado no Almoxarifado e vinculado.`:'Material vinculado.');
+        }catch(err){d.querySelector('[data-error]').textContent=err.message;b.disabled=false;}};
+      d.showModal();
+    }catch(e){notify(e.message,'error');}
+  }
+
   async function linkInternalMaterial(id) {
     const need=state.needs.find(n=>n.id===id);if(!need)return;
+    if(need.origem==='cartela')return linkCartelaMaterial(need);
     try {
       const materials=await window.AcervoComprasAPI.listWarehouseMaterials();
       const d=document.createElement('dialog');d.className='pv-dialog pv-link-dialog';
@@ -380,7 +516,8 @@
     if (!need) return;
     try {
       // (2026-10-10) só pergunta pelas necessidades que ficaram FORA da seleção (as selecionadas já entram na cotação)
-      const candidates = (await window.AcervoComprasAPI.findConsolidatableNeeds(needId, 30) || []).filter((c) => !state.selectedNeedIds.has(c.id));
+      const servico = need.origem === "manutencao";
+      const candidates = (await window.AcervoComprasAPI.findConsolidatableNeeds(needId, 30) || []).filter((c) => !state.selectedNeedIds.has(c.id) && ((state.needs.find((n) => n.id === c.id)?.origem || c.origem) === "manutencao") === servico);
       if (!candidates.length) { openQuoteBuilder([need, ...selectedNeedsExcluding(new Set([need.id]))]); return; }
       state.consolidationBase = need;
       state.consolidationCandidates = candidates;
@@ -444,7 +581,7 @@
     const groups = new Map();
     needs.forEach((n) => {
       const key = n.tool_type_id ? `tool:${n.tool_type_id}` : n.material_id || `desc:${(n.material_nome || "").toLowerCase()}`;
-      if (!groups.has(key)) groups.set(key, { tool: Boolean(n.tool_type_id) || n.origem === "manutencao", material_id: n.material_id || null, codigo: n.material_codigo || "", nome: n.material_nome, especificacao: n.especificacao || "", unidade: n.unidade || "un", needs: [] });
+      if (!groups.has(key)) groups.set(key, { semVinculo: !n.material_id && n.origem === "solicitacao", tool: Boolean(n.tool_type_id) || n.origem === "manutencao", material_id: n.material_id || null, codigo: n.material_codigo || "", nome: n.material_nome, especificacao: n.especificacao || "", unidade: n.unidade || "un", needs: [] });
       groups.get(key).needs.push(n);
     });
     state.quoteBuilderGroups = [...groups.values()].map((g) => ({ ...g, quantidade_cotada: g.needs.reduce((s, n) => s + Number(n.quantidade_faltante || 0), 0) }));
@@ -504,14 +641,14 @@
       <div class="pv-quote-item-list">
         <div class="pv-quote-item-headrow"><span>Material</span><span>pedidos incluídas</span><span>Qtd. a cotar</span><span>Un.</span></div>
         ${state.quoteBuilderGroups.map((g, idx) => `
-        <div class="pv-quote-item-row ${g.material_id || g.tool ? "" : "is-risk"}">
+        <div class="pv-quote-item-row ${g.material_id || g.tool || g.semVinculo ? "" : "is-risk"}">
           <div class="pv-quote-item-name"><strong>${esc(g.nome)}</strong>${g.codigo ? `<small>${esc(g.codigo)}</small>` : ""}</div>
           <details class="pv-quote-item-needs"><summary>${g.needs.length} OP${g.needs.length > 1 ? "s" : ""}</summary>
             <ul>${g.needs.map((n) => `<li>${esc(n.order_number || "geral")} — ${Number(n.quantidade_faltante || 0).toLocaleString("pt-BR")} ${esc(n.unidade || "")} ${n.data_necessidade ? `· ${fmtDate(n.data_necessidade)}` : ""}</li>`).join("")}</ul>
           </details>
           <input type="number" class="pv-quote-item-qty" min="0.01" step="0.01" data-group-qty="${idx}" value="${g.quantidade_cotada}">
           <input type="text" class="pv-quote-item-unit" value="${esc(g.unidade)}" disabled>
-          ${g.material_id || g.tool ? "" : `<p class="pv-quote-item-warning"><i data-lucide="alert-triangle"></i> Sem material cadastrado no Almoxarifado — não será possível gerar o pedido até cadastrá-lo.</p>`}
+          ${g.material_id || g.tool ? "" : g.semVinculo ? `<p class="pv-quote-item-note">Sem vínculo com o Almoxarifado: ao chegar, não entra no estoque.</p>` : `<p class="pv-quote-item-warning"><i data-lucide="alert-triangle"></i> Sem material cadastrado no Almoxarifado — não será possível gerar o pedido até cadastrá-lo.</p>`}
         </div>`).join("")}
       </div>`;
     $("quoteBuilderItems").querySelectorAll("[data-group-qty]").forEach((input) => input.addEventListener("input", () => {
@@ -562,24 +699,65 @@
   }
 
   // ===================== Cotações =====================
+  function purchasePeopleHtml(ctx,registro){
+    return ctx.pessoas.map(p=>`<div class="pv-list-item">${window.ComprasFoto.comNome(window.ComprasFoto.pessoa(p.id,p.nome),`<span>${esc(p.nome)}${p.setor?'<small>'+esc(p.setor)+'</small>':''}</span>`)}</div>`).join('')||`<span class="pv-muted">Não informado</span>${registro.comprador_nome?'<small>Registrado por '+esc(registro.comprador_nome)+'</small>':''}`;
+  }
+  function labelPurchaseCells(body){
+    const headers=[...body.closest('table').tHead.rows[0].cells].map(th=>th.textContent.trim()||'Documentos');
+    for(const tr of body.rows)for(const [n,td] of [...tr.cells].entries())td.dataset.colLabel=headers[n];
+    window.ComprasDetalhes?.preparar(body);
+  }
+  function purchaseDestinationsHtml(ctx){
+    return ctx.destinos.map(d=>`<div class="pv-list-item"><strong>${esc(d.nome)}</strong>${d.detalhe?'<small>'+esc(d.detalhe)+'</small>':''}</div>`).join('')||'<span class="pv-muted">Não informado</span>';
+  }
+  function purchaseSearch(registro){
+    const ctx=window.ComprasListas.contexto(registro,state.needs);
+    return [...(registro.items||[]).flatMap(i=>[i.nome,i.material_nome,i.codigo]),...ctx.pessoas.flatMap(p=>[p.nome,p.setor]),...ctx.destinos.flatMap(d=>[d.nome,d.detalhe])];
+  }
+  function quotationValuesHtml(p){
+    if(p.parcial)return '<span class="pv-muted">Comparar itens pendentes</span><small>Parte desta cotação já gerou pedidos.</small>';
+    let html;
+    if(p.totais.length){
+      const menor=p.totais[0],maior=p.totais.at(-1);
+      html=`<strong>${money(menor.total)}</strong>${maior.total!==menor.total?'<small>até '+money(maior.total)+'</small>':''}<small>${p.totais.length} proposta(s) completa(s) · frete e desconto incluídos</small><small>Menor total: ${esc(menor.fornecedor||'Fornecedor')}</small>`;
+    }else html='<span class="pv-muted">Sem total comparável</span>';
+    if(p.parciais)html+=`<small>${p.parciais} proposta(s) parcial(is)</small>`;
+    if(p.vencidas)html+=`<small class="pv-text-danger">${p.vencidas} proposta(s) vencida(s)</small>`;
+    return html;
+  }
+  function purchaseReceiptHtml(o){
+    if(o.status==='cancelado')return '<span class="pv-muted">Pedido cancelado</span>';
+    const r=window.ComprasListas.recebimento(o);
+    return r.itens.map(i=>`<div class="pv-list-item"><small>${esc(i.nome)}</small><span class="pv-list-received">${quantityText(i.recebido,i.unidade)} de ${quantityText(i.comprado,i.unidade)}</span><small>${i.recebido>=i.comprado?'Concluído':'Faltam '+quantityText(Math.max(0,i.comprado-i.recebido),i.unidade)}</small></div>`).join('')||'<span class="pv-muted">Sem itens informados</span>';
+  }
+  function purchaseInvoiceHtml(o){
+    const notas=Array.isArray(o.nfe_receipts)?o.nfe_receipts:[];
+    return `<button type="button" class="pv-list-nf ${notas.length?'is-attached':'is-missing'}" data-order-invoice="${esc(o.id)}" aria-label="Ver nota fiscal do pedido PC-${esc(String(o.numero).padStart(6,'0'))}">${notas.length?'XML anexado':'XML pendente'}</button>${notas.length?notas.map(n=>'<small>NF '+esc(n.numero_nfe||'s/n')+'</small>').join(''):o.numero_nf?'<small>NF '+esc(o.numero_nf)+' registrada</small>':''}`;
+  }
   function renderQuotations() {
-    const rows = state.quotations.filter((q) => q.status !== "encerrada" && q.status !== "cancelada" && matchesSearch(`SC-${String(q.numero).padStart(6, "0")}`, q.numero));
+    const rows = state.quotations.filter((q) => q.status !== "encerrada" && q.status !== "cancelada" && matchesSearch(`SC-${String(q.numero).padStart(6, "0")}`, q.numero, ...purchaseSearch(q), ...(q.suppliers||[]).map(s=>s.nome)));
     $("quotationsEmpty").classList.toggle("hidden", rows.length > 0);
-    $("quotationsBody").innerHTML = rows.map((q) => `
-      <tr>
+    $("quotationsEmpty").textContent=state.quotations.some(q=>!['encerrada','cancelada'].includes(q.status))?'Nenhuma cotação nesta busca.':'Nenhuma cotação em aberto.';
+    const hoje=new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo'}).format(new Date());
+    $("quotationsBody").innerHTML = rows.map((q) => {
+      const p=window.ComprasListas.propostas(q,hoje),ctx=window.ComprasListas.contexto(q,state.needs);
+      return `
+      <tr class="pv-row-clickable" data-quotation-id="${esc(q.id)}" tabindex="0" aria-label="Abrir cotação SC-${esc(String(q.numero).padStart(6,'0'))}">
+        <td>${purchasePeopleHtml(ctx,q)}</td>
         <td><strong>SC-${esc(String(q.numero).padStart(6, "0"))}</strong><small>Criada em ${fmtDate(q.created_at)}</small></td>
-        <td>${q.itens_count}</td>
-        <td>${q.fornecedores_count}</td>
-        <td>${progressHtml(Number(q.respostas_count), Number(q.fornecedores_count), `${q.respostas_count} de ${q.fornecedores_count} fornecedores`)}<small>${Math.max(0, Number(q.fornecedores_count) - Number(q.respostas_count))} sem resposta</small></td>
-        <td><span class="pv-status-pill is-${q.status}">${quotationStatusLabel(q.status)}</span></td>
-        <td>${deadlineHtml(q.prazo_desejado)}</td>
-        <td class="pv-row-actions">
-          <button class="btn btn-secondary pv-btn-sm" type="button" data-open-quotation="${esc(q.id)}">Abrir</button>
+        <td class="pv-list-material">${(q.items||[]).map(i=>`<div class="pv-list-item"><strong>${esc(i.nome||i.material_nome||'Item')}</strong><small>${quantityText(i.quantidade_cotada,i.unidade||'un')}${i.comprado===true||i.comprado==='true'?' · Já comprado':''}</small></div>`).join('')||esc(q.itens_count||0)+' item(ns)'}</td>
+        <td>${purchaseDestinationsHtml(ctx)}</td>
+        <td>${progressHtml(p.respondidos,p.totalFornecedores,`${p.respondidos} de ${p.totalFornecedores} fornecedores`)}<small>${p.pendentes} sem resposta</small>${p.fornecedores.length?'<details class="pv-list-suppliers"><summary>Ver fornecedores</summary>'+p.fornecedores.map(s=>`<div class="pv-list-item">${esc(s.nome||'Fornecedor')}<small>${s.status==='respondido'?'Respondeu':'Aguardando resposta'}</small></div>`).join('')+'</details>':''}</td>
+        <td class="pv-quote-values">${quotationValuesHtml(p)}</td>
+        <td>${deadlineHtml(q.prazo_desejado)}<span class="pv-status-pill is-${esc(q.status)}">${esc(quotationStatusLabel(q.status))}</span></td>
+        <td><strong class="pv-list-action">${esc(p.acao)}</strong><small>${esc(p.detalhe)}</small><div class="pv-list-documents">
           <button class="icon-btn" type="button" data-reprint-quotation="${esc(q.id)}" title="Gerar 2ª via em PDF"><i data-lucide="file-down"></i></button>
-          <button class="btn btn-secondary pv-btn-sm" type="button" data-cancel-quotation="${esc(q.id)}" title="Encerrar sem gerar pedido">Encerrar</button>
-        </td>
-      </tr>`).join("");
-    $("quotationsBody").querySelectorAll("[data-open-quotation]").forEach((btn) => btn.addEventListener("click", () => openProposals(btn.dataset.openQuotation)));
+        </div></td>
+      </tr>`;}).join("");
+    labelPurchaseCells($('quotationsBody'));
+    // (16/11/2026) igual à Tecnoweld: clicar na linha abre as propostas em tela inteira
+    $("quotationsBody").querySelectorAll("tr[data-quotation-id]").forEach((tr) => tr.addEventListener("click", (e) => { if (!e.target.closest("button, a, input, details")) openProposals(tr.dataset.quotationId); }));
+    $("quotationsBody").querySelectorAll('tr[data-quotation-id]').forEach(tr=>tr.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target===tr){e.preventDefault();openProposals(tr.dataset.quotationId);}}));
     $("quotationsBody").querySelectorAll("[data-reprint-quotation]").forEach((btn) => btn.addEventListener("click", () => reprintQuotation(btn.dataset.reprintQuotation)));
     $("quotationsBody").querySelectorAll("[data-cancel-quotation]").forEach((btn) => btn.addEventListener("click", () => cancelQuotation(btn.dataset.cancelQuotation)));
     lucide.createIcons();
@@ -623,12 +801,15 @@
 
   function renderProposalsShell() {
     const data = state.currentWorkspace;
-    $("proposalsTitle").textContent = `Solicitação SC-${String(data.numero).padStart(6, "0")}`;
+    $("proposalsTitle").textContent = `Cotação SC-${String(data.numero).padStart(6, "0")}`;
     $("proposalsMetaBar").innerHTML = `
-      <span>Prazo solicitado: <b>${fmtDate(data.prazo_desejado)}</b></span>
-      <span>Itens: <b>${data.items.length}</b></span>
-      <span>Fornecedores convidados: <b>${data.suppliers.length}</b></span>
+      <span><small>Prazo solicitado</small><b>${fmtDate(data.prazo_desejado)}</b></span>
+      <span><small>Itens</small><b>${data.items.length}</b></span>
+      <span><small>Fornecedores</small><b>${data.suppliers.length}</b></span>
     `;
+    $("proposalsSupplierCount").textContent=data.suppliers.length;
+    $("proposalsItemCount").textContent=data.items.length;
+    $("proposalsResponseCount").textContent=data.suppliers.filter(s=>s.status==="respondido").length+" de "+data.suppliers.length+" propostas recebidas";
     switchProposalsMode(state.proposalsMode);
     renderSupplierTabs();
     if (state.activeSupplierId) selectSupplier(state.activeSupplierId);
@@ -646,9 +827,8 @@
 
   function renderSupplierTabs() {
     $("proposalsSupplierTabs").innerHTML = state.currentWorkspace.suppliers.map((s) => `
-      <button type="button" class="pv-supplier-tab ${s.status === "respondido" ? "is-answered" : ""} ${s.supplier_id === state.activeSupplierId ? "active" : ""}" data-select-supplier="${esc(s.supplier_id)}">
-        <strong>${esc(s.nome)}</strong>
-        <small>${s.status === "respondido" ? "Proposta recebida" : "Aguardando proposta"}</small>
+      <button type="button" class="pv-supplier-tab ${s.status === "respondido" ? "is-answered" : ""} ${s.supplier_id === state.activeSupplierId ? "active" : ""}" data-select-supplier="${esc(s.supplier_id)}" aria-pressed="${s.supplier_id === state.activeSupplierId}">
+        ${window.ComprasFoto.comNome(window.ComprasFoto.fornecedor(s.supplier_id, s.nome, 30), `<strong>${esc(s.nome)}</strong>`, `<small>${s.status === "respondido" ? "Proposta recebida" : "Aguardando proposta"}</small>`)}
       </button>`).join("");
     $("proposalsSupplierTabs").querySelectorAll("[data-select-supplier]").forEach((btn) => btn.addEventListener("click", () => {
       state.pendingAiDocument = null;
@@ -659,8 +839,9 @@
 
   function selectSupplier(supplierId) {
     state.activeSupplierId = supplierId;
-    document.querySelectorAll("#proposalsSupplierTabs .pv-supplier-tab").forEach((b) => b.classList.toggle("active", b.dataset.selectSupplier === supplierId));
+    document.querySelectorAll("#proposalsSupplierTabs .pv-supplier-tab").forEach((b) => {b.classList.toggle("active", b.dataset.selectSupplier === supplierId);b.setAttribute("aria-pressed",String(b.dataset.selectSupplier === supplierId));});
     const supplier = state.currentWorkspace.suppliers.find((s) => s.supplier_id === supplierId);
+    $("proposalsActiveSupplier").textContent=supplier?.nome||"Selecione um fornecedor";
     const header = supplier?.header || {};
     $("proposalCondicao").value = header.condicao_pagamento || "";
     $("proposalFrete").value = header.frete || 0;
@@ -739,7 +920,7 @@
     $("proposalsFooterTotal").textContent = money(itemsTotal + general.frete);
     const pill = $("proposalsFooterPcp");
     if (!anyQuoted) { pill.textContent = ""; pill.className = "pv-status-pill"; return; }
-    pill.textContent = atende ? "Atende o operação" : "Não atende o operação";
+    pill.textContent = atende ? "Atende a operação" : "Não atende a operação";
     pill.className = `pv-status-pill ${atende ? "is-atende" : "is-nao-atende"}`;
   }
 
@@ -802,7 +983,7 @@
             return `<label class="pv-proposal-row ${isCheapest ? "is-cheapest" : ""} ${isFastest ? "is-fastest" : ""} ${isRisk ? "is-risk" : ""}">
               <input type="radio" name="winner-${esc(item.id)}" value="${esc(r.supplier_id)}" ${r.supplier_id === suggestedId ? "checked" : ""}>
               <div class="pv-proposal-fornecedor">
-                <strong>${esc(r.fornecedor_nome)}</strong>
+                ${window.ComprasFoto.comNome(window.ComprasFoto.fornecedor(r.supplier_id, r.fornecedor_nome, 26), `<strong>${esc(r.fornecedor_nome)}</strong>`)}
                 ${isCheapest ? `<span class="pv-proposal-badge is-cheapest">Melhor preço</span>` : ""}
                 ${isFastest ? `<span class="pv-proposal-badge is-fastest">Melhor prazo</span>` : ""}
                 ${isRisk ? `<span class="pv-proposal-badge is-risk">Não atende operação</span>` : ""}
@@ -989,7 +1170,7 @@
       if (mode === "abertos" && ["recebido", "cancelado"].includes(o.status)) return false;
       if (mode === "recebidos" && o.status !== "recebido") return false;
       if (mode === "cancelados" && o.status !== "cancelado") return false;
-      return matchesSearch(`PC-${String(o.numero).padStart(6, "0")}`, o.numero, o.fornecedor_nome, ...(o.op_numeros || []), ...(o.items || []).flatMap(i => [i.nome, i.codigo, i.material_nome]));
+      return matchesSearch(`PC-${String(o.numero).padStart(6, "0")}`, o.numero, o.fornecedor_nome, ...(o.op_numeros || []), ...purchaseSearch(o),o.numero_nf,...(o.nfe_receipts||[]).map(n=>n.numero_nfe));
     });
   }
 
@@ -997,18 +1178,25 @@
     const orders = filteredOrders();
     $("ordersEmpty").classList.toggle("hidden", orders.length > 0);
     $("ordersEmpty").textContent = state.orders.length ? "Nenhum pedido nesta situação ou busca. Troque o filtro para ver os demais." : "Nenhum pedido de compra emitido ainda.";
-    $("ordersBody").innerHTML = orders.map((o) => `
-      <tr class="pv-row-clickable" data-order-id="${esc(o.id)}">
+    $("ordersBody").innerHTML = orders.map((o) => {
+      const ctx=window.ComprasListas.contexto(o,state.needs);
+      return `
+      <tr class="pv-row-clickable" data-order-id="${esc(o.id)}" tabindex="0" aria-label="Abrir pedido PC-${esc(String(o.numero).padStart(6,'0'))}">
+        <td>${window.ComprasFoto.comNome(window.ComprasFoto.fornecedor(o.fornecedor_id || o.fornecedor?.id, o.fornecedor_nome), `<strong>${esc(o.fornecedor_nome)}</strong>`)}</td>
         <td><strong>PC-${esc(String(o.numero).padStart(6, "0"))}</strong><small>Emitido em ${fmtDate(o.created_at)}</small></td>
-        <td><strong>${esc(o.fornecedor_nome)}</strong></td>
-        <td>${(o.items || []).map(i => `<div>${esc(i.nome || i.material_nome || "Item")}</div>`).join('') || '—'}</td>
-        <td class="pv-order-quantity">${(o.items || []).map(i => `<div>${Number(i.quantidade || 0).toLocaleString('pt-BR')} ${esc(i.unidade || 'un')}</div>`).join('') || '—'}</td>
-        <td>${money(o.valor_total)}</td>
+        <td class="pv-order-quantity">${(o.items || []).map(i => `<div class="pv-list-item"><strong>${esc(i.nome || i.material_nome || "Item")}</strong><small>${quantityText(i.quantidade,i.unidade||'un')}</small></div>`).join('') || '—'}</td>
+        <td class="pv-order-destination">${purchaseDestinationsHtml(ctx)}${ctx.pessoas.length?'<small class="pv-order-people">Solicitado por '+ctx.pessoas.map(p=>esc(p.nome)+(p.setor?' · '+esc(p.setor):'')).join('; ')+'</small>':''}</td>
+        <td class="pv-order-total">${money(o.valor_total)}</td>
         <td>${deadlineHtml(o.prazo_acordado, ['recebido', 'cancelado'].includes(o.status))}</td>
-        <td><span class="pv-status-pill is-${esc(o.status)}">${esc(orderStatusLabel(o.status))}</span>${o.pendencia_documental ? '<small class="pv-text-danger">Documentação pendente</small>' : ''}</td>
-        <td>${opNumbersChipsHtml(o.op_numeros || [])}</td>
-      </tr>`).join("");
-    $("ordersBody").querySelectorAll("tr.pv-row-clickable").forEach((tr) => tr.addEventListener("click", () => openOrderDetail(tr.dataset.orderId)));
+        <td class="pv-order-receipt">${purchaseReceiptHtml(o)}</td>
+        <td><span class="pv-status-pill is-${esc(o.status)}">${esc(orderStatusLabel(o.status))}</span><div class="pv-list-documents">${purchaseInvoiceHtml(o)}</div></td>
+      </tr>`;}).join("");
+    labelPurchaseCells($('ordersBody'));
+    $("ordersBody").querySelectorAll("tr.pv-row-clickable").forEach((tr) => {
+      tr.addEventListener("click",e=>{if(!e.target.closest('button,a,input'))openOrderDetail(tr.dataset.orderId);});
+      tr.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target===tr){e.preventDefault();openOrderDetail(tr.dataset.orderId);}});
+    });
+    $("ordersBody").querySelectorAll('[data-order-invoice]').forEach(b=>b.onclick=async()=>{await openOrderDetail(b.dataset.orderInvoice);if(state.currentOrderDetail?.id!==b.dataset.orderInvoice||!$('orderDetailDialog').open)return;const alvo=$('orderCardNf');alvo?.scrollIntoView({behavior:'auto',block:'start'});alvo?.querySelector('button')?.focus();});
     bindAllocChipsToggle($("ordersBody"));
     fitAllocChips();
   }
@@ -1071,7 +1259,7 @@
 
   function allocationChipsHtml(necessidades, unidade, expanded = false) {
     if (!necessidades.length) return `<span class="pv-cell-na">—</span>`;
-    const chips = necessidades.map((n) => `<span class="pv-alloc-chip">${esc(n.order_number ? "Pedido/OS " + n.order_number : "Solicitação interna")} · ${Number(n.quantidade_alocada).toLocaleString("pt-BR")} ${esc(unidade)}</span>`).join("");
+    const chips = necessidades.map((n) => `<span class="pv-alloc-chip">${esc(n.order_number ? "Pedido " + n.order_number : "Solicitação interna")} · ${Number(n.quantidade_alocada).toLocaleString("pt-BR")} ${esc(unidade)}</span>`).join("");
     return `<div class="pv-alloc-chips${expanded ? " is-expanded" : ""}" data-fit-chips>${chips}<button type="button" class="pv-alloc-more hidden" data-alloc-toggle>+0</button></div>`;
   }
 
@@ -1107,41 +1295,75 @@
   function renderOrderDetail() {
     const o = state.currentOrderDetail;
     const { xmlOk } = orderDocStatus(o);
+    // (16/11/2026) igual à Tecnoweld: resumo no cabeçalho, andamento, itens + pagamento à esquerda, nota fiscal / recebimento / histórico à direita
+    const recebido = o.status === "recebido";
+    const pago = Boolean(o.parcelas && o.parcelas.length);
+    const passos = [
+      { ok: true, t: "Pedido emitido", d: fmtDate(o.created_at) },
+      { ok: Boolean(o.prazo_acordado), t: "Prazo combinado", d: o.prazo_acordado ? fmtDate(o.prazo_acordado) : "falta informar" },
+      { ok: pago, t: "Pagamento", d: pago ? `${o.parcelas.length} parcela(s) no Contas a Pagar` : "falta informar", go: "orderPaySection" },
+      { ok: xmlOk, t: "Nota fiscal", d: xmlOk ? "XML anexado" : "aguardando", go: "orderCardNf" },
+      { ok: recebido, t: "Recebido", d: recebido ? "concluído" : o.status === "recebido_parcial" ? "parcial" : "aguardando" },
+    ];
+    const fz = o.fornecedor || {};
+    $("orderDetailMeta").innerHTML = `<div class="pv-od-headline">
+        <div class="pv-od-summary pv-od-summary-head">
+          <div class="pv-od-kpi is-main"><small>Fornecedor</small>${window.ComprasFoto.comNome(window.ComprasFoto.fornecedor(fz.id || o.fornecedor_id, fz.nome || o.fornecedor_nome, 34), `<strong>${esc(fz.nome || o.fornecedor_nome || "—")}</strong>`)}<span>${esc([fz.documento, fz.telefone, fz.email].filter(Boolean).join(" · "))}</span></div>
+          <div class="pv-od-kpi"><small>Valor total</small><strong class="pv-od-money">${money(o.valor_total)}</strong><span>${(o.items || []).length} item(ns)</span></div>
+          <div class="pv-od-kpi"><small>Chegada combinada</small><strong>${o.prazo_acordado ? fmtDate(o.prazo_acordado) : "—"}</strong><span>${esc(orderStatusLabel(o.status))}</span></div>
+          <div class="pv-od-kpi"><small>Faturar para</small><button type="button" class="pv-company-chip" data-order-company title="Trocar a empresa (CNPJ) deste pedido"><i data-lucide="building-2"></i>${esc(o.billing_company ? [o.billing_company.rotulo, o.billing_company.cnpj].filter(Boolean).join(" · ") : "Empresa principal")}</button>${o.comprador_nome ? `<span>Comprador: ${esc(o.comprador_nome)}</span>` : ""}</div>
+        </div>
+      </div>`;
     $("orderDetailBody").innerHTML = `
-      <div class="pv-order-meta">
-        <span><small>Fornecedor</small><strong>${esc(o.fornecedor?.nome || "—")}</strong></span>
-        <span><small>Status</small><strong>${orderStatusLabel(o.status)}</strong></span>
-        <span><small>Comprador</small><strong>${esc(o.comprador_nome || "—")}</strong></span>
-        <span><small>Valor total</small><strong>${money(o.valor_total)}</strong></span>
-        <span><small>Prazo acordado</small><strong>${fmtDate(o.prazo_acordado)}</strong></span>
-        <span><small>Faturar para</small><strong><button type="button" class="pv-company-chip" data-order-company title="Trocar a empresa (CNPJ) deste pedido"><i data-lucide="building-2"></i>${esc(o.billing_company ? [o.billing_company.rotulo, o.billing_company.cnpj].filter(Boolean).join(" · ") : "Empresa principal")}</button></strong></span>
-        <span><small>XML</small><span class="pv-status-pill ${xmlOk ? "is-ok" : "is-pending"}">${xmlOk ? "Anexado" : "Pendente"}</span></span>
+      <div class="pv-od">
+        ${o.billing_company_conflito ? `<p class="pv-company-warning"><i data-lucide="triangle-alert"></i> Este pedido junta itens de pedidos de empresas diferentes. Confira e escolha em "Faturar para" o CNPJ do pedido (ou separe em pedidos).</p>` : ""}
+        <nav class="pv-od-steps" aria-label="Andamento do pedido">
+          ${passos.map((x) => `<button type="button" class="pv-od-step${x.ok ? " is-ok" : ""}" ${x.go ? `data-od-go="${x.go}"` : "disabled"}><span class="pv-od-dot">${x.ok ? "✓" : ""}</span><span><strong>${esc(x.t)}</strong><small>${esc(x.d)}</small></span></button>`).join("")}
+        </nav>
+        <div class="pv-od-grid">
+          <div class="pv-od-main">
+            <section class="pv-od-card" id="orderCardItens">
+              <div class="pv-order-table-wrap">
+                <table class="pv-table pv-order-table">
+                  <thead><tr><th>Material</th><th>Comprado</th><th>Recebido</th><th>Saldo</th><th>Para</th></tr></thead>
+                  <tbody>
+                    ${(o.items || []).map((it) => `
+                    <tr data-item-id="${esc(it.id)}">
+                      <td><strong>${esc(it.nome)}</strong>${it.valor_unitario ? `<small>${money(it.valor_unitario)} / ${esc(it.unidade)} · ${money(it.valor_total)}</small>` : ""}</td>
+                      <td>${Number(it.quantidade).toLocaleString("pt-BR")} ${esc(it.unidade)}</td>
+                      <td>${Number(it.quantidade_recebida || 0).toLocaleString("pt-BR")} ${esc(it.unidade)}</td>
+                      <td>${orderSaldo(it).toLocaleString("pt-BR")} ${esc(it.unidade)}</td>
+                      <td>${allocationChipsHtml(it.necessidades || [], it.unidade, true)}</td>
+                    </tr>`).join("")}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section class="pv-pay-section" id="orderPaySection"><header><h3>Pagamento e parcelas</h3><small>Forma de pagamento e parcelas que vão para o Contas a Pagar</small></header>${paymentBlockHtml(o)}</section>
+          </div>
+          <aside class="pv-od-side">
+            <section class="pv-od-card" id="orderCardNf">
+              <header><h3>Nota fiscal</h3><span class="pv-status-pill ${xmlOk ? "is-ok" : "is-pending"}">${xmlOk ? "XML anexado" : "Pendente"}</span></header>
+              ${(o.nfe_receipts || []).length ? `<ul class="pv-od-list">${o.nfe_receipts.map((r) => `<li><strong>NF ${esc(r.numero_nfe || "s/n")}</strong><span>${money(r.valor_total)}</span></li>`).join("")}</ul>` : `<p class="pv-od-hint">O XML pode chegar antes da mercadoria; o Almoxarifado encontra a nota pronta.</p>`}
+              <div class="pv-od-btns">
+                <button class="btn btn-secondary pv-btn-sm" type="button" id="attachInvoiceBtn"><i data-lucide="file-plus"></i> Anexar XML da NF-e</button>
+              </div>
+            </section>
+            ${(o.historico || []).length ? `<section class="pv-od-card"><header><h3>Histórico</h3><small>${o.historico.length} registro(s)</small></header><ul class="pv-od-history">${o.historico.slice(0, 8).map((h) => `<li><time>${new Date(h.created_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</time><strong>${esc(h.acao === "alterado_recebimento" ? "Alterado no recebimento" : String(h.acao || "").replaceAll("_", " "))}</strong><span>${esc(h.observacao || "")}${h.usuario_nome ? ` · ${esc(h.usuario_nome)}` : ""}</span></li>`).join("")}</ul></section>` : ""}
+          </aside>
+        </div>
       </div>
-      ${o.billing_company_conflito ? `<p class="pv-company-warning"><i data-lucide="triangle-alert"></i> Este pedido junta itens de pedidos de empresas diferentes. Confira e escolha em "Faturar para" o CNPJ do pedido (ou separe em pedidos).</p>` : ""}
-      <div class="pv-order-actions">
-        ${(o.items || []).some(i=>Number(i.quantidade_recebida)>0) ? `<button class="btn btn-secondary pv-btn-sm" type="button" id="registerRncBtn">Registrar divergência</button>` : ""}<a class="btn btn-secondary pv-btn-sm" href="../../Chiavari/Almoxarifado/almoxarifado.html?aba=recebimento">Recebimento no Almoxarifado</a><button class="btn btn-secondary pv-btn-sm" type="button" id="attachInvoiceBtn"><i data-lucide="file-plus"></i> Anexar XML da NF-e</button>
-      </div>
-      ${paymentBlockHtml(o)}
-      <div class="pv-order-table-wrap">
-        <table class="pv-table pv-order-table">
-          <thead><tr><th>Material</th><th>Comprado</th><th>Recebido</th><th>Saldo</th><th>Alocado para</th></tr></thead>
-          <tbody>
-            ${(o.items || []).map((it) => `
-            <tr data-item-id="${esc(it.id)}">
-              <td><strong>${esc(it.nome)}</strong></td>
-              <td>${Number(it.quantidade).toLocaleString("pt-BR")} ${esc(it.unidade)}</td>
-              <td>${Number(it.quantidade_recebida || 0).toLocaleString("pt-BR")} ${esc(it.unidade)}</td>
-              <td>${orderSaldo(it).toLocaleString("pt-BR")} ${esc(it.unidade)}</td>
-              <td>${allocationChipsHtml(it.necessidades || [], it.unidade, true)}</td>
-            </tr>`).join("")}
-          </tbody>
-        </table>
-      </div>
-      ${(o.historico || []).length ? `<details class="pv-order-history"${(o.historico || []).some((h) => h.acao === "alterado_recebimento") ? " open" : ""}><summary>Histórico do pedido (${o.historico.length})</summary><ul>${o.historico.map((h) => `<li><time>${new Date(h.created_at).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</time><strong>${esc(h.acao === "alterado_recebimento" ? "Alterado no recebimento" : String(h.acao || "").replaceAll("_", " "))}</strong><span>${esc(h.observacao || "")}${h.usuario_nome ? ` · ${esc(h.usuario_nome)}` : ""}</span></li>`).join("")}</ul></details>` : ""}
     `;
+    $("orderDetailBody").querySelectorAll("[data-od-go]").forEach((b) => b.addEventListener("click", () => {
+      const el = $(b.dataset.odGo); if (!el) return;
+      el.scrollIntoView({ behavior: "smooth", block: "start" }); el.classList.add("pv-od-flash"); setTimeout(() => el.classList.remove("pv-od-flash"), 1400);
+    }));
     $("attachInvoiceBtn").addEventListener("click", () => { state.pendingInvoiceOrder = o.id; $("invoiceDialog").showModal(); });
     bindPaymentBlock(o);
-    $("registerRncBtn")?.addEventListener("click",async()=>{await window.AcervoComprasAPI.openOrderRnc(o);await openOrderDetail(o.id);await reloadAll();});
+    // (16/11/2026) Salvar no rodapé (ao lado de Gerar PDF e Fechar): grava o pagamento e as parcelas no Contas a Pagar
+    const save = $("orderDetailSaveBtn");
+    save.classList.toggle("hidden", o.status === "cancelado");
+    save.onclick = () => { const b = $("orderDetailBody").querySelector("[data-payment-send]"); if (b) b.click(); else notify("Nada para salvar: o pagamento já está no Contas a Pagar. Use Refazer para mudar as parcelas."); };
     bindAllocChipsToggle($("orderDetailBody"));
     fitAllocChips();
     updateOrderFooterSummary();
@@ -1154,13 +1376,13 @@
   function paymentDefaultDraft(o) {
     const total = Math.round(Number(o.valor_total || 0) * 100) / 100;
     const first = paymentAddDays(new Date().toISOString().slice(0, 10), 30);
-    return { forma: o.forma_pagamento || "boleto", total, parcelas: [{ vencimento: first, valor: total }] };
+    return { forma: o.forma_pagamento || "boleto", total, parcelas: [{ vencimento: first, valor: total }], cartao: o.cartao_id || "", compra: o.cartao_compra_em || new Date().toISOString().slice(0, 10) };
   }
   function paymentBlockHtml(o) {
     if (o.status === "cancelado") return "";
     const d = state.paymentDraft;
     if (o.parcelas && !d) {
-      return `<p class="pv-payment-confirmed"><i data-lucide="check-circle-2"></i> Pagamento confirmado — ${esc(paymentMethodLabel(o.forma_pagamento))}, ${o.parcelas.length} parcela(s) enviada(s) ao Contas a Pagar${o.pagamento_por_nome ? ` por ${esc(o.pagamento_por_nome)}` : ""}.<button type="button" class="btn btn-secondary pv-btn-sm pv-payment-redo" data-payment-redo>Refazer</button></p>
+      return `<p class="pv-payment-confirmed"><i data-lucide="check-circle-2"></i> Pagamento confirmado — ${esc(paymentMethodLabel(o.forma_pagamento))}${o.cartao_nome ? ` (${esc(o.cartao_nome)})` : ""}, ${o.parcelas.length} parcela(s) enviada(s) ao Contas a Pagar${o.pagamento_por_nome ? ` por ${esc(o.pagamento_por_nome)}` : ""}.<button type="button" class="btn btn-secondary pv-btn-sm pv-payment-redo" data-payment-redo>Refazer</button></p>
         <ul class="pv-payment-list">${o.parcelas.map((p, k) => `<li>${k + 1}ª · ${fmtDate(p.due_date)} · ${money(p.amount)}</li>`).join("")}</ul>`;
     }
     const draft = d || paymentDefaultDraft(o);
@@ -1170,12 +1392,14 @@
       <div class="pv-payment-head"><h3>Valores e pagamento</h3><span class="pv-hint">Gera os títulos no Contas a Pagar (Financeiro).</span></div>
       <div class="pv-payment-grid">
         <label>Forma de pagamento<select data-payment-field="forma">${["boleto", "pix", "transferencia", "cartao", "dinheiro"].map((f) => `<option value="${f}"${f === draft.forma ? " selected" : ""}>${paymentMethodLabel(f)}</option>`).join("")}</select></label>
+        ${draft.forma === "cartao" ? `<label>Cartão<select data-payment-field="cartao"><option value="">${(state.cartoes || []).length ? "Escolha o cartão" : "Nenhum cartão cadastrado"}</option>${(state.cartoes || []).map((c) => `<option value="${esc(c.id)}"${c.id === draft.cartao ? " selected" : ""}>${esc(c.nome + (c.final ? " · final " + c.final : ""))}</option>`).join("")}</select></label><label>Data da compra<input type="date" data-payment-field="compra" value="${esc(draft.compra || "")}"></label>` : ""}
         <label>Total a pagar<input type="text" inputmode="decimal" data-payment-field="total" value="${esc(String(draft.total).replace(".", ","))}"></label>
         <label>Parcelas<span class="pv-payment-split"><input type="number" min="1" max="24" data-payment-field="n" value="${draft.parcelas.length}"><button type="button" class="btn btn-secondary pv-btn-sm" data-payment-split>Dividir</button></span></label>
       </div>
       <table class="pv-payment-rows"><tbody>${draft.parcelas.map((p, k) => `<tr data-payment-row="${k}"><td>${k + 1}ª</td><td><input type="date" data-payment-part="vencimento" value="${esc(p.vencimento)}"></td><td><input type="text" inputmode="decimal" data-payment-part="valor" value="${esc(String(p.valor).replace(".", ","))}"></td></tr>`).join("")}</tbody></table>
+      ${draft.forma === "cartao" && draft.cartao ? `<p class="pv-hint">No cartão, cada parcela vence na fatura em que cai (pela data da compra e o dia em que o cartão vira); as datas acima são ajustadas no Financeiro.</p>` : ""}
       <p class="pv-payment-sum${wrong ? " is-error" : ""}" data-payment-sum>Soma das parcelas: ${money(sum)}${wrong ? " — diferente do total" : ""}</p>
-      <div class="pv-payment-actions">${o.parcelas ? `<button type="button" class="btn btn-secondary pv-btn-sm" data-payment-cancel>Cancelar</button>` : ""}<button type="button" class="btn btn-primary pv-btn-sm" data-payment-send>Enviar ao Contas a Pagar</button></div>
+      <div class="pv-payment-actions">${o.parcelas ? `<button type="button" class="btn btn-secondary pv-btn-sm" data-payment-cancel>Cancelar</button>` : ""}<button type="button" hidden data-payment-send>Salvar</button></div>
     </div>`;
   }
   function paymentNumber(v) { let t = String(v || "").trim(); if (t.includes(",")) t = t.replace(/\./g, "").replace(",", "."); const n = Number(t); return Number.isFinite(n) ? n : 0; }
@@ -1193,7 +1417,10 @@
       el.textContent = `Soma das parcelas: ${money(sum)}${wrong ? " — diferente do total" : ""}`;
       el.classList.toggle("is-error", wrong);
     };
-    panel.querySelector('[data-payment-field="forma"]').addEventListener("change", (e) => { d.forma = e.target.value; });
+    panel.querySelector('[data-payment-field="forma"]').addEventListener("change", (e) => { d.forma = e.target.value; if (d.forma === "cartao" && !state.cartoes) window.AcervoComprasAPI.listCreditCards().then((l) => { state.cartoes = l; if (!d.cartao && l.length === 1) d.cartao = l[0].id; rerender(); }).catch(() => { state.cartoes = []; rerender(); }); else rerender(); });
+    panel.querySelector('[data-payment-field="cartao"]')?.addEventListener("change", (e) => { d.cartao = e.target.value; rerender(); });
+    panel.querySelector('[data-payment-field="compra"]')?.addEventListener("change", (e) => { d.compra = e.target.value; });
+    if (d.forma === "cartao" && !state.cartoes) window.AcervoComprasAPI.listCreditCards().then((l) => { state.cartoes = l; if (!d.cartao && l.length === 1) d.cartao = l[0].id; rerender(); }).catch(() => { state.cartoes = []; });
     panel.querySelector('[data-payment-field="total"]').addEventListener("input", (e) => { d.total = paymentNumber(e.target.value); refreshSum(); });
     panel.querySelectorAll("[data-payment-row]").forEach((tr) => {
       const p = d.parcelas[Number(tr.dataset.paymentRow)];
@@ -1213,9 +1440,10 @@
       if (!(Number(d.total) > 0)) { notify("Informe o total a pagar.", "error"); return; }
       if (d.parcelas.some((p) => !p.vencimento || !(Number(p.valor) > 0))) { notify("Cada parcela precisa de vencimento e valor.", "error"); return; }
       if (Math.abs(d.parcelas.reduce((s, p) => s + Number(p.valor || 0), 0) - Number(d.total)) > 0.05) { notify("A soma das parcelas está diferente do total.", "error"); return; }
+      if (d.forma === "cartao" && (state.cartoes || []).length && !d.cartao) { notify("Escolha o cartão de crédito usado na compra.", "error"); return; }
       btn.disabled = true;
       try {
-        await window.AcervoComprasAPI.setPurchaseOrderPayment(o.id, d.forma, d.parcelas.map((p) => ({ vencimento: p.vencimento, valor: Number(p.valor) })), Number(d.total));
+        await window.AcervoComprasAPI.setPurchaseOrderPayment(o.id, d.forma, d.parcelas.map((p) => ({ vencimento: p.vencimento, valor: Number(p.valor) })), Number(d.total), d.cartao || null, d.compra || null);
         notify(`${d.parcelas.length} parcela(s) enviada(s) ao Contas a Pagar.`);
         state.paymentDraft = null;
         await openOrderDetail(o.id);

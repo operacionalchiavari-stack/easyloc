@@ -18,11 +18,59 @@
       icone: '<svg viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5zM13 4h5.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H13z"/><path d="M7 8h1.5M7 11h1.5M16 8h-1M16 11h-1"/></svg>' },
     { chave: "bonus", nome: "Meu bônus", texto: "Seu bônus, extrato e prêmios.", href: "Modulos/Chiavari/Cronograma/montador.html?app=1&tela=bonus",
       icone: '<svg viewBox="0 0 24 24"><path d="M3 8h18v4H3zm2 4v9h14v-9M12 8v13"/><path d="M12 8H8a3 3 0 1 1 3-3Zm0 0h4a3 3 0 1 0-3-3Z"/></svg>' },
+    { chave: "gerencial", nome: "Gerencial", texto: "Os relatórios do sistema: eventos, vendas, pós-venda e financeiro.", href: "#gerencial",
+      icone: '<svg viewBox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7m4 7H3"/></svg>' },
+    { chave: "agentes", nome: "Agentes de IA", texto: "Converse com as assistentes do sistema: vendas, financeiro, estoque e mais.", href: "#agentes",
+      icone: '<svg viewBox="0 0 24 24"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6zM18.5 14.5l.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8zM5.5 15.5l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg>' },
   ];
+  /* 20/11/2026: módulo "Agentes de IA" = as assistentes que já existem nas telas do sistema, abertas com ?app=1
+     (faixa do app em cima, js/app/relatorio-app.js; a Helena abre no catálogo do app, ?agente=helena). Cada uma segue a
+     permissão da tela onde mora (flags ag_* da RPC app_celular_modulos). */
+  const AGENTES = [
+    { flag: "ag_helena", inicial: "H", nome: "Helena", papel: "Comercial e catálogo", texto: "Monta pedidos, confere disponibilidade, sugere combinações e gera fotos das composições.", href: "Modulos/Comercial/Catalogo/catalogo-app.html?app=1&agente=helena" },
+    { flag: "ag_clara", inicial: "C", nome: "Clara", papel: "Financeiro", texto: "Diretora financeira: caixa, contas, DRE, simulações e relatórios com provas.", href: "Modulos/Financeiro/financeiro.html?app=1&aba=clara&grupo=agentes&titulo=Clara%20%C2%B7%20Financeiro" },
+    { flag: "ag_cora", inicial: "C", nome: "Cora", papel: "Estoque e acervo", texto: "Próximas saídas, divergências, peças em manutenção e inventário.", href: "Modulos/Estoque/Acervo/acervo.html?app=1&aba=cora&grupo=agentes&titulo=Cora%20%C2%B7%20Estoque" },
+    { flag: "ag_carla", inicial: "C", nome: "Carla", papel: "Compras", texto: "Pede o que você precisa comprar e confere se a compra é mesmo necessária.", href: "Modulos/Geral/SolicitacoesCompra/solicitacoes.html?app=1&grupo=agentes&titulo=Carla%20%C2%B7%20Compras" },
+    { flag: "ag_marcos", inicial: "M", nome: "Marcos", papel: "Manutenção", texto: "Abre a solicitação de manutenção com fotos, local e prioridade.", href: "Modulos/Geral/SolicitacoesManutencao/solicitacoes.html?app=1&grupo=agentes&titulo=Marcos%20%C2%B7%20Manuten%C3%A7%C3%A3o" },
+    { flag: "ag_ideia", inicial: "I", nome: "Assistente da Ideia Premiada", papel: "Ideias de melhoria", texto: "Ajuda você a contar sua ideia e envia para o RH avaliar.", href: "Modulos/RH/IdeiaPremiada/ideia-premiada.html?app=1&grupo=agentes&titulo=Ideia%20Premiada" },
+  ];
+  function pintarAgentes(mods){
+    $("apAgentesLista").innerHTML = AGENTES.filter((a) => mods[a.flag]).map((a, i) =>
+      '<a class="ap-modulo ap-rel ap-agente" href="' + a.href + '" style="--i:' + i + '"><span class="ap-agente-avatar" aria-hidden="true">' + esc(a.inicial) + '</span>' +
+      '<span class="ap-modulo-texto"><small class="ap-agente-papel">' + esc(a.papel) + '</small><b class="ap-modulo-titulo">' + esc(a.nome) + '</b><small>' + esc(a.texto) + '</small></span><span class="ap-seta" aria-hidden="true">›</span></a>').join("")
+      || '<p class="ap-vazio">Seu usuário não tem acesso a nenhum agente. Fale com o administrador.</p>';
+  }
+  /* 20/11/2026: módulo Gerencial = os relatórios que já existem no sistema, abertos com ?app=1 (faixa do app em cima,
+     js/app/relatorio-app.js). Cada um segue a permissão do sistema (flags ger_comercial / ger_financeiro da RPC). */
+  const RELATORIOS = [
+    { grupo: "Comercial", flag: "ger_comercial", nome: "Panorama dos Eventos", texto: "Faturamento, clientes, locais, cidades e o mapa de onde a empresa atua.", href: "Modulos/Comercial/Pedidos/gerencial.html?app=1",
+      icone: '<svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>' },
+    { grupo: "Comercial", flag: "ger_comercial", nome: "Produtividade comercial", texto: "Vendas, conversão, contatos e 3D por vendedor.", href: "Modulos/Comercial/Produtividade/produtividade.html?app=1",
+      icone: '<svg viewBox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7m4 7H3"/></svg>' },
+    { grupo: "Comercial", flag: "ger_comercial", nome: "Cancelamentos", texto: "Motivos, decoradores, regiões e valor perdido.", href: "Modulos/Comercial/Cancelamentos/cancelamentos.html?app=1",
+      icone: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 8.5l7 7m0-7-7 7"/></svg>' },
+    { grupo: "Comercial", flag: "ger_comercial", nome: "Pós-venda", texto: "Satisfação dos clientes, elogios e críticas à equipe.", href: "Modulos/Chiavari/Feedback/feedback.html?app=1&aba=painel",
+      icone: '<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z"/></svg>' },
+    { grupo: "Comercial", flag: "ger_comercial", nome: "Sublocações", texto: "O que mais alugamos de parceiros e quanto pagamos.", href: "Modulos/Comercial/Terceirizacoes/terceirizacoes.html?app=1&aba=relatorios",
+      icone: '<svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3m3 13H6l3 3"/></svg>' },
+    { grupo: "Financeiro", flag: "ger_financeiro", nome: "Financeiro gerencial", texto: "DRE mês a mês, ponto de equilíbrio e lucro por evento.", href: "Modulos/Financeiro/financeiro.html?app=1&aba=gerencial",
+      icone: '<svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M3.5 9h17M9 9v11"/></svg>' },
+    { grupo: "Financeiro", flag: "ger_financeiro", nome: "Painel do CFO", texto: "Caixa, previsões e alertas do financeiro numa tela só.", href: "Modulos/Financeiro/painel-cfo.html?app=1",
+      icone: '<svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 4 8-8m-5 0h5v5"/></svg>' },
+  ];
+  function pintarRelatorios(mods, empresa){
+    const grupos = {};
+    RELATORIOS.filter((r) => mods[r.flag]).forEach((r) => { (grupos[r.grupo] = grupos[r.grupo] || []).push(r); });
+    let i = 0;
+    $("apRelatorios").innerHTML = Object.keys(grupos).map((g) => '<p class="ap-rel-grupo">' + esc(g) + '</p><div class="ap-modulos ap-rel-lista">' +
+      grupos[g].map((r) => '<a class="ap-modulo ap-rel" href="' + r.href + (r.href.includes("painel-cfo") ? "&empresa=" + encodeURIComponent(empresa) : "") + '" style="--i:' + (i++) + '"><span class="ap-modulo-icone" aria-hidden="true">' + r.icone + '</span>' +
+        '<span class="ap-modulo-texto"><b class="ap-modulo-titulo">' + esc(r.nome) + '</b><small>' + esc(r.texto) + '</small></span><span class="ap-seta" aria-hidden="true">›</span></a>').join("") + '</div>').join("")
+      || '<p class="ap-vazio">Seu usuário não tem acesso a nenhum relatório. Fale com o administrador.</p>';
+  }
   // Nov/2026: Configurações (notificações e localização) aparece para todos, no fim da lista.
   const CONFIG = { chave: "config", nome: "Configurações", texto: "Notificações e localização.", href: "#config",
     icone: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>' };
-  function tela(id){ ["apCarregando", "apLogin", "apInicio", "apConfig"].forEach((x) => { $(x).hidden = x !== id; }); document.body.dataset.tela = id;
+  function tela(id){ ["apCarregando", "apLogin", "apInicio", "apConfig", "apGerencial", "apAgentes"].forEach((x) => { $(x).hidden = x !== id; }); document.body.dataset.tela = id;
     // Nov/2026: ao abrir o app (inclusive pelo ícone na tela do celular) entra a animação padrão até a tela ficar pronta.
     if(window.AppCarregamento){ id === "apCarregando" ? AppCarregamento.mostrar() : AppCarregamento.pronto(); }
     if(id === "apLogin"){ iniciarVitrine(); try{ const aviso = sessionStorage.getItem("app_aviso"); if(aviso){ sessionStorage.removeItem("app_aviso"); mensagem(aviso); } }catch(e){} } }
@@ -117,19 +165,28 @@
       '<a class="ap-modulo" href="' + m.href + '" style="--i:' + i + '"><span class="ap-modulo-icone" aria-hidden="true">' + m.icone + '</span>' +
       '<span class="ap-modulo-texto"><b class="ap-modulo-titulo">' + m.nome + '</b><small>' + m.texto + '</small></span><span class="ap-seta" aria-hidden="true">›</span></a>').join("")
       + (disponiveis.length === 1 ? '<p class="ap-vazio">Seu usuário ainda não tem acesso a nenhum módulo do app. Fale com o administrador.</p>' : "");
-    tela(location.hash === "#config" ? "apConfig" : "apInicio");
+    pintarRelatorios(mods, empresa);
+    pintarAgentes(mods);
+    tela(telaDoEndereco());
     window.AppRastreador?.iniciar(empresa);
     window.AppAvisos?.iniciar(empresa); // Nov/2026: bloco "Avisos no celular" (notificações)
   }
 
+  function telaDoEndereco(){ return location.hash === "#config" ? "apConfig" : location.hash === "#gerencial" ? "apGerencial" : location.hash === "#agentes" ? "apAgentes" : "apInicio"; }
   /* Nov/2026: tocar num módulo mostra o carregamento padrão (branco, com a logo) enquanto a página do módulo abre. */
   $("apModulos").addEventListener("click", (e) => {
     const a = e.target.closest(".ap-modulo"); if(!a){ return; }
-    if(a.getAttribute("href") === "#config"){ e.preventDefault(); history.pushState(null, "", "#config"); tela("apConfig"); window.scrollTo(0, 0); return; }
+    const alvo = a.getAttribute("href");
+    const SUBTELAS = { "#config": "apConfig", "#gerencial": "apGerencial", "#agentes": "apAgentes" };
+    if(SUBTELAS[alvo]){ e.preventDefault(); history.pushState({ app: alvo }, "", alvo); tela(SUBTELAS[alvo]); window.scrollTo(0, 0); return; }
     window.AppCarregamento?.mostrar();
   });
+  $("apRelatorios").addEventListener("click", (e) => { if(e.target.closest(".ap-rel")){ window.AppCarregamento?.mostrar(); } });
+  $("apAgentesLista").addEventListener("click", (e) => { if(e.target.closest(".ap-agente")){ window.AppCarregamento?.mostrar(); } });
+  $("apAgentesVoltar").addEventListener("click", () => { if(history.state && history.state.app === "#agentes"){ history.back(); } else { history.replaceState(null, "", location.pathname + location.search); tela("apInicio"); } });
+  $("apGerencialVoltar").addEventListener("click", () => { if(history.state && history.state.app === "#gerencial"){ history.back(); } else { history.replaceState(null, "", location.pathname + location.search); tela("apInicio"); } });
   $("apConfigVoltar").addEventListener("click", () => { if(location.hash === "#config"){ history.back(); } else { tela("apInicio"); } });
-  window.addEventListener("popstate", () => { if(!$("apLogin").hidden || !$("apCarregando").hidden){ return; } tela(location.hash === "#config" ? "apConfig" : "apInicio"); });
+  window.addEventListener("popstate", () => { if(!$("apLogin").hidden || !$("apCarregando").hidden){ return; } tela(telaDoEndereco()); });
 
   /* ---------- Entrar e sair ---------- */
   $("apForm").addEventListener("submit", async (ev) => {

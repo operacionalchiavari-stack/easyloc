@@ -205,6 +205,12 @@
     renderPermissions(employee ? selected : profile('Visualizador'));
     syncAccess();
     setPhoto(fotoDe(employee));
+    // Voz para as reuniões (nov/2026): amostra curta para a IA reconhecer quem fala (js/ui/vozReuniao.js).
+    if (window.EasyLocVoz) {
+      const caixa = $('funcVozBox');
+      if (mode !== 'create' && id && (proprio || can('rh.funcionarios.editar') || mode === 'view')) window.EasyLocVoz.montar(caixa, { client, empresaId: context.empresa_id, funcionarioId: id, nome: employee?.nome });
+      else caixa.innerHTML = '<p class="func-voz-aviso">Salve o cadastro para gravar a voz da pessoa.</p>';
+    }
     returnFocus = document.activeElement;
     $('funcionarioFormCard').classList.remove('hidden');
     listaScroll=window.scrollY;$('funcionariosView').hidden=true;

@@ -337,3 +337,42 @@ tbody tr:hover{
 .forn-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
 .forn-foto-btn{min-height:34px!important;padding:6px 12px!important;font-size:13px!important;cursor:pointer}
 #fFotoObrig{color:#b42318}
+.forn-check{display:flex;align-items:center;gap:8px;height:40px;font-weight:500;text-transform:none;letter-spacing:0}
+
+/* Fechamento mensal/semanal (nov/2026): o campo do dia que não vale fica escondido (o .field vencia o [hidden]) */
+#fFechDiaMesCampo[hidden],#fFechDiaSemanaCampo[hidden]{display:none!important}
+
+/* Foto do fornecedor no formato do cadastro de cliente (nov/2026): quadro grande no começo do formulário */
+.forn-foto-field{height:100%;display:flex;flex-direction:column;gap:6px}
+.forn-foto-avatar{position:relative;display:block;width:100%;flex:1 1 auto;min-height:128px;border:1px solid #e1e5eb;border-radius:14px;background:linear-gradient(135deg,#f4f5f7,#fff);cursor:pointer;overflow:hidden}
+.forn-foto-avatar .forn-foto{position:absolute!important;inset:0;width:100%!important;height:100%!important;border-radius:0!important;border:0!important;background:transparent!important;color:#9aa3af!important;font:600 28px Inter,system-ui,sans-serif!important;display:grid;place-items:center}
+.forn-foto-avatar .forn-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.forn-foto-edit{position:absolute;right:6px;bottom:6px;width:32px;height:32px;display:grid;place-items:center;border-radius:999px;background:#f6f7f9;color:#1f2020;box-shadow:0 1px 3px rgba(0,0,0,.25);pointer-events:none;z-index:1}
+.forn-foto-edit svg{width:16px;height:16px}
+.forn-foto-remover{align-self:flex-start;border:0;background:none;padding:0;color:#b42318;font:500 12px Inter,system-ui,sans-serif;cursor:pointer;text-decoration:underline}
+@media(max-width:760px){.forn-foto-field{grid-row:auto!important}.forn-foto-avatar{min-height:96px;max-width:96px}}
+.forn-nome-linha{display:inline-flex;align-items:center;gap:10px}
+.forn-foto.forn-foto-mini{width:34px;height:34px;flex:0 0 auto;font-size:12px}
+
+/* 15/11/2026: pesquisa à esquerda e "Adicionar fornecedor" à direita, na linha do título; cards de resumo e filtros saíram */
+html:root:is(#fn#fn#fn#fn,html) body .container-fornecedores>.page-header{position:relative!important}
+html:root:is(#fn#fn#fn#fn,html) body .container-fornecedores>.page-header>.forn-busca-topo{position:absolute!important;left:0;top:30px;width:min(300px,28vw)!important;height:40px!important;margin:0!important;z-index:2}
+html:root:is(#fn#fn#fn#fn,html) body .container-fornecedores>.page-header>.header-actions{position:absolute!important;right:0;top:30px;margin:0!important;width:auto!important;z-index:2}
+html:root:is(#fn#fn#fn#fn,html) body .container-fornecedores>.page-header>.el-stat-row[hidden],html:root:is(#fn#fn#fn#fn,html) body .container-fornecedores>.filters[hidden]{display:none!important}
+@media(max-width:1100px){
+  html:root:is(#fn#fn#fn#fn,html) body .container-fornecedores>.page-header>.forn-busca-topo,
+  html:root:is(#fn#fn#fn#fn,html) body .container-fornecedores>.page-header>.header-actions{position:static!important;width:100%!important;margin-top:10px!important}
+}
+/* 15/11/2026: foto do fornecedor sempre quadrada no detalhe */
+html:root:is(#fn#fn#fn#fn,html) body .forn-foto-avatar{flex:none!important;width:min(100%,170px)!important;max-width:none!important;height:auto!important;min-height:0!important;aspect-ratio:1/1!important}
+@media(max-width:760px){html:root:is(#fn#fn#fn#fn,html) body .forn-foto-avatar{width:110px!important}}
+/* 15/11/2026: formulário do fornecedor alinhado — foto ocupa as 3 linhas da esquerda; campos com a mesma altura e o mesmo espaço */
+html:root:is(#fn#fn#fn#fn,html) body #modalFornecedor .form-grid{row-gap:14px!important;column-gap:14px!important;align-items:end}
+html:root:is(#fn#fn#fn#fn,html) body #modalFornecedor .field{gap:6px!important;margin:0!important}
+html:root:is(#fn#fn#fn#fn,html) body #modalFornecedor .field>label:first-child{margin:0!important}
+html:root:is(#fn#fn#fn#fn,html) body #modalFornecedor :is(.el-input,.el-select){height:44px!important;min-height:0!important}
+html:root:is(#fn#fn#fn#fn,html) body #modalFornecedor .forn-foto-field{align-self:stretch!important}
+html:root:is(#fn#fn#fn#fn,html) body #modalFornecedor .forn-foto-avatar{width:auto!important;height:100%!important;max-width:100%;align-self:flex-start;aspect-ratio:1/1!important;flex:1 1 auto!important}
+html:root:is(#fn#fn#fn#fn,html) body #modalFornecedor .forn-check{display:flex;align-items:center;gap:8px;height:44px;margin:0}
+html:root:is(#fn#fn#fn#fn,html) body #modalFornecedor .form-section{margin:0 0 16px!important;padding:0!important}
+html:root:is(#fn#fn#fn#fn,html) body #modalFornecedor .form-section+.form-section{padding-top:16px!important;border-top:1px solid #e3e7ec}

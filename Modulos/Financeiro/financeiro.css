@@ -235,7 +235,7 @@ html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin
 html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > h2:first-child{flex:none!important;order:0!important;margin:0!important;padding:0 0 12px!important;border:0!important;text-align:left!important;font-size:clamp(19px,1.9vw,30px)!important;letter-spacing:.16em!important}
 html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > h2:first-child::after{content:none!important;display:none!important}
 html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > .fin-abas{--el-tab-gap:13px;flex:1 1 auto!important;justify-content:flex-end!important;margin:0!important;padding-top:0!important;min-width:0}
-@media(max-width:1279px){
+@media(max-width:1499px){
   html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo{flex-wrap:wrap!important}
   html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > .fin-abas{flex:1 1 100%!important;justify-content:center!important}
   html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > h2:first-child{flex:1 1 100%!important;text-align:center!important;padding:20px 0 4px!important}
@@ -265,7 +265,7 @@ html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin
 html:root:is(#elTabsGlobal#elTabsGlobal#elTabsGlobal#fin-topo,html) body .fin-topo .fin-abas-duplas > .fin-abas{--el-tab-gap:13px;flex-wrap:nowrap!important;grid-row:1;margin:0!important;padding-top:0!important;min-width:0}
 html:root:is(#elTabsGlobal#elTabsGlobal#elTabsGlobal#fin-topo,html) body .fin-topo .fin-abas-duplas > .fin-abas-esq{grid-column:1;justify-content:flex-end!important}
 html:root:is(#elTabsGlobal#elTabsGlobal#elTabsGlobal#fin-topo,html) body .fin-topo .fin-abas-duplas > .fin-abas-dir{grid-column:3;justify-content:flex-start!important}
-@media(max-width:1279px){
+@media(max-width:1499px){
   html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
   html:root:is(#fin-topo#fin-topo#fin-topo,html) body .fin-page > .header-list.fin-topo > h2:first-child{grid-column:1 / -1!important;padding:20px 0 4px!important}
   html:root:is(#elTabsGlobal#elTabsGlobal#elTabsGlobal#fin-topo,html) body .fin-topo .fin-abas-duplas > .fin-abas{grid-row:2;flex-wrap:wrap!important}
@@ -505,3 +505,149 @@ html:root:is(#gw1,#gw2,#gw3,#gw4,#gw5,#gw6,html) .fin-gateways .fin-gw-dica{marg
 
 /* Nov/2026: baixa manual */
 .fin-aviso-baixa{background:#fff7e6;border:1px solid #f1d39a;border-radius:8px;padding:8px 10px;color:#7a5600;font-size:13px}
+
+/* Agenda do dia (nov/2026, igual à da Tecnoweld): coluna à direita da Visão geral */
+.fin-agenda-ajuda{font-size:13px;color:#64748b;line-height:1.5}
+.fin-agenda-abas{display:flex;gap:6px;border-bottom:1px solid #e2e8f0;padding-bottom:8px}
+.fin-agenda-abas button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:8px 12px;border:1px solid transparent;border-radius:8px;background:#f8fafc;color:#64748b;font:600 13px Inter,sans-serif;cursor:pointer}
+.fin-agenda-abas button span{padding:1px 6px;border-radius:99px;background:#ffffffb3;font-size:11px}
+.fin-agenda-abas [data-agenda-aba="receber"][aria-selected="true"]{background:#dcfce7;border-color:#86c99c;color:#14532d}
+.fin-agenda-abas [data-agenda-aba="pagar"][aria-selected="true"]{background:#fff1f2;border-color:#fda4af;color:#b42318}
+.fin-agenda-abas button:focus-visible{outline:2px solid #2563eb;outline-offset:2px}
+#finAgendaPainel .fin-agenda-grupo>h4{display:none}
+.fin-agenda-grupo{margin-top:14px}
+.fin-agenda-grupo h4{margin:0 0 6px;font-size:14px}
+.fin-agenda-item{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:10px;row-gap:2px;padding:8px 0;border-top:1px solid #e2e8f0}
+.fin-agenda-item>div{grid-column:1;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.fin-agenda-item strong{font-size:13px;overflow-wrap:anywhere}
+.fin-agenda-valor{font-weight:700;white-space:nowrap}
+.fin-agenda-item small,.fin-agenda-historico small{display:block;font-size:11px;color:#64748b;line-height:1.3}
+.fin-agenda-item>small{grid-column:1;overflow-wrap:anywhere}
+.fin-agenda-item button{grid-column:2;grid-row:1 / 4;align-self:center;justify-self:end;height:28px;padding:0 9px;font-size:11px}
+.fin-agenda-grupo[data-direcao="saida"] h4{color:#b42318}
+.fin-agenda-grupo[data-direcao="entrada"] h4{color:#1f7a44}
+.fin-agenda-historico{display:grid;gap:12px;padding-left:20px}
+html:root #finAgendaDia .fin-agenda-item.fin-agenda-prev{margin-top:6px;padding:8px 10px;border:1px dashed #f5c542;border-radius:8px;background:#fffbeb}
+.fin-agenda-abas [data-agenda-aba="previsto"][aria-selected="true"]{background:#fef3c7;border-color:#f5c542;color:#713f12}
+.fin-agenda-cnpj{display:block;margin-top:4px;font-size:12px;color:#475569;text-align:left}
+button.fin-agenda-cnpj{margin:4px 0 0;padding:2px 6px;color:#1d4ed8}
+html:root #finAgendaDia .fin-agenda-item.fin-ag2{display:flex;flex-direction:column;gap:4px}
+#finAgendaDia .fin-ag2-topo{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+#finAgendaDia .fin-ag2-topo strong{min-width:0}
+#finAgendaDia .fin-ag2-topo .fin-agenda-valor{flex-shrink:0;white-space:nowrap}
+#finAgendaDia .fin-ag2-info{color:#64748b;font-size:12px}
+#finAgendaDia .fin-ag2-pe{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px}
+#finAgendaDia .fin-ag2-pe:empty{display:none}
+#finAgendaDia .fin-ag2-pe .fin-agenda-cnpj{margin:0;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left}
+#finAgendaDia .fin-ag2-pe .fin-btn{flex-shrink:0;margin:0}
+html:root #finAgendaDia .fin-ag2-topo{flex-wrap:nowrap!important}
+html:root #finAgendaDia .fin-ag2-topo strong{flex:1 1 auto}
+html:root #finAgendaDia .fin-ag2-pe [data-reagendar]{background:#eff6ff;border:1px solid #93c5fd;color:#1d4ed8;font-weight:600}
+html:root #finAgendaDia .fin-ag2-pe [data-reagendar]:hover{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+#finAgendaDia h3{margin:0 0 10px}
+#finAgendaDia .fin-agenda-venc{display:inline-block;margin-right:4px;padding:1px 6px;border-radius:999px;background:#fee2e2;color:#b42318;font-size:10.5px;font-weight:700;letter-spacing:.02em}
+#finAgendaDia .fin-agenda-item{padding:10px 0}
+.fin-geral-lado #finAgendaDia{position:sticky;top:12px;max-height:calc(100vh - 140px);overflow-y:auto}
+
+/* Conta fixa: valor previsto por mês (nov/2026) */
+.fin-prev-meses{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 12px;margin-top:14px}
+.fin-prev-meses label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:#5f5f5f}
+.fin-prev-todos{display:flex;gap:8px;align-items:center}
+.fin-prev-todos input{flex:1;min-width:0}
+.fin-prev-total{margin:14px 0 0;font-size:13px;color:#4f4f4f}
+.fin-prev-mes{display:block;margin-top:3px;font-size:12px;color:#6b6b6b}
+@media(max-width:700px){.fin-prev-meses{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Fluxo Real x Previsto e Recebimentos previstos (nov/2026, igual à Tecnoweld): previsto em amarelo */
+.fin-cal-tit{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.fin-fluxo-nota{margin:10px 2px 0;color:#6b6b6b;font-size:12.5px}
+html:root #finCalendario#finCalendario.fin-cal-previsto{border:2px solid #f5c542!important;background:#fffbeb!important;box-shadow:0 0 0 4px #fde68a66!important}
+html:root .fin-cal-dia.previsto{background:#fef3c7!important;border-color:#f5c542!important}
+.fin-cal-valores .pv{display:inline-block;margin-top:2px;padding:1px 6px;border-radius:6px;background:#fef9c3;border:1px solid #f5c542;color:#713f12;font-weight:600}
+.fin-agenda-abas [data-agenda-aba="previsto"][aria-selected="true"]{background:#fef3c7;border-color:#f5c542;color:#713f12}
+html:root #finAgendaDia .fin-agenda-item.fin-agenda-prev{border:1px dashed #f5c542;border-radius:8px;background:#fffbeb}
+html:root .fin-previstos-tab .fin-tabela tbody tr td{background:#fffbeb!important}
+html:root .fin-previstos-tab .fin-tabela tbody tr:nth-child(even) td{background:#fef6d8!important}
+html:root .fin-previstos-tab .fin-tabela tbody tr:hover td{background:#fdeeb5!important}
+.fin-prev-total{font-size:14px;color:#713f12}
+.fin-prev-n{display:inline-block;min-width:18px;margin-left:4px;padding:0 5px;border-radius:9px;background:#fde68a;color:#713f12;font-size:11px;text-align:center}
+html:root:is(#fin-modo#fin-modo#fin-modo#fin-modo,html) .fin-fluxo-modo{display:inline-flex;gap:4px;padding:3px;border-radius:10px;background:#f1f5f9;border:1px solid #e2e8f0}
+html:root:is(#fin-modo#fin-modo#fin-modo#fin-modo,html) .fin-fluxo-modo button{border:0!important;background:transparent!important;padding:6px 16px!important;border-radius:8px!important;font:600 13px Inter,sans-serif!important;color:#64748b!important;text-transform:none!important;letter-spacing:0!important;box-shadow:none!important;cursor:pointer;min-height:0!important}
+html:root:is(#fin-modo#fin-modo#fin-modo#fin-modo,html) .fin-fluxo-modo button[aria-pressed="true"]{background:#fff!important;color:#0f172a!important;box-shadow:0 1px 3px #0f172a26!important}
+html:root:is(#fin-modo#fin-modo#fin-modo#fin-modo,html) .fin-cal-previsto .fin-fluxo-modo [data-fluxo-modo="previsto"][aria-pressed="true"]{background:#facc15!important;color:#422006!important}
+/* Topo do Financeiro (nov/2026, pedido do usuário): "Financeiro" no começo e logo depois todas as abas, sem cortar
+   nenhuma (quebram para a linha de baixo se não couberem). Vence a grade de 3 colunas antiga. */
+html:root:is(#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp,html) body .fin-page > .header-list.fin-topo{display:flex!important;flex-wrap:wrap!important;align-items:center!important;justify-content:flex-start!important;column-gap:28px!important;row-gap:4px!important}
+html:root:is(#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp,html) body .fin-page > .header-list.fin-topo > h2:first-child{order:0;flex:0 0 auto!important;text-align:left!important;padding:0 0 12px!important;margin:0!important}
+html:root:is(#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp,html) body .fin-page > .header-list.fin-topo > .fin-abas-duplas{display:flex!important;flex:1 1 0!important;flex-wrap:wrap!important;align-items:center;column-gap:var(--el-tab-gap,13px);row-gap:4px;min-width:0}
+html:root:is(#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp,html) body .fin-topo .fin-abas-duplas > .fin-abas{display:contents!important}
+/* "FINANCEIRO" menor para caber com todas as abas numa linha só (nov/2026). Em tela mais estreita as abas também apertam. */
+html:root:is(#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp,html) body .fin-page > .header-list.fin-topo > h2:first-child{font-size:22px!important;letter-spacing:.12em!important;padding:0 0 4px!important}
+html:root:is(#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp,html) body .fin-page > .header-list.fin-topo{flex-wrap:nowrap!important;column-gap:22px!important}
+html:root:is(#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp,html) body .fin-page > .header-list.fin-topo > .fin-abas-duplas{flex-wrap:nowrap!important;column-gap:18px!important}
+@media(max-width:1499px){
+  html:root:is(#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp,html) body .fin-page > .header-list.fin-topo > h2:first-child{font-size:18px!important;letter-spacing:.1em!important}
+  html:root:is(#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp,html) body .fin-page > .header-list.fin-topo{column-gap:16px!important}
+  html:root:is(#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp,html) body .fin-page > .header-list.fin-topo > .fin-abas-duplas{column-gap:11px!important}
+  html:root:is(#elTabsGlobal#elTabsGlobal#elTabsGlobal#fin-tp#fin-tp#fin-tp,html) body .fin-topo .fin-abas-duplas button{font-size:12px!important;letter-spacing:.02em!important}
+}
+@media(max-width:1279px){
+  html:root:is(#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp,html) body .fin-page > .header-list.fin-topo,
+  html:root:is(#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp,html) body .fin-page > .header-list.fin-topo > .fin-abas-duplas{flex-wrap:wrap!important}
+}
+
+/* (nov/2026) A pagar: compra no cartão, fatura e fechamento de parceiro numa linha só — trazido da Tecnoweld */
+.fin-cartao-tag{display:block;margin-top:4px;font-size:12px;color:#5b4bb7}
+.fin-fat-linha{cursor:pointer}
+.fin-fat-linha:hover>td{background:#f5f8fc}
+.fin-fat-ic{display:inline-block;width:14px;margin-right:4px;color:#6b7280;transition:transform .15s}
+.fin-fat-linha.is-aberta .fin-fat-ic{transform:rotate(90deg)}
+.fin-fat-linha .fin-pag-descricao+small{display:block;color:#6b6b6b;font-size:11px;margin-top:2px}
+.fin-fat-linha.fin-fat-foco>td{background:#e8f1ff !important;transition:background .6s}
+/* o tema pinta todo contador de aba de vermelho e no canto: o total em aberto fica cinza, ao lado do nome */
+html:root :is(body:not(.portal-shell), #main-content) :is(.fin-abas, .tabs) > :is(button, a) .fin-conta-aba.fin-conta-total:not(:empty){
+  position:static !important; display:inline-grid !important; margin:0 0 0 6px !important; vertical-align:middle;
+  background:#e6e9ee !important; color:#4a5260 !important; border:0 !important; box-shadow:none !important; animation:none !important; transform:none !important;
+}
+/* (2026-11-13) linha da fatura e as compras abertas embaixo em cinza clarinho, para destacar do resto */
+html:root .fin-tabela tr.fin-fat-linha>td{background:#f3f4f6 !important}
+html:root .fin-tabela tr.fin-fat-linha:hover>td{background:#eceef1 !important}
+html:root .fin-tabela tr.fin-fat-linha.is-aberta+tr.fin-fech-comp>td{background:#f3f4f6 !important}
+html:root tr.fin-fat-linha.is-aberta+tr.fin-fech-comp .fin-fech-comp-tab,
+html:root tr.fin-fat-linha.is-aberta+tr.fin-fech-comp .fin-fech-comp-tab :is(th,td){background:#f8f9fa !important}
+html:root .fin-tabela tr.fin-fat-linha.fin-fat-foco>td{background:#e8f1ff !important}
+/* (2026-11-13) compras abertas da fatura: o tema pinta tabela de branco com prioridade de id; aqui também com id */
+html:root #finConteudo tr.fin-fech-comp>td,
+html:root #finConteudo tr.fin-fech-comp .fin-fech-comp-tab,
+html:root #finConteudo tr.fin-fech-comp .fin-fech-comp-tab :is(thead, tbody, tfoot, tr, th, td){background:#f1f3f5 !important}
+html:root #finConteudo tr.fin-fech-comp .fin-fech-comp-tab :is(th, td){border-color:#e1e4e8 !important}
+
+/* A receber: foto do cliente (nov/2026), a do catálogo; sem foto, iniciais */
+.fin-cli-foto{position:relative;flex:0 0 auto;width:40px;height:40px;border-radius:50%;overflow:hidden;background:#eaf0fa;color:#123f86;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;border:1px solid #dfe5ee}
+.fin-cli-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.fin-cli-foto i{font-style:normal}
+.fin-cli-foto.peq{width:34px;height:34px;font-size:12px}
+.fin-quem-foto{display:flex;align-items:center;gap:10px}
+/* número do pedido no card vermelho da Central de Pedidos (nov/2026) */
+.fin-num-card{display:inline-flex;align-items:center;justify-content:center;min-width:44px;height:28px;padding:0 10px;border:1px solid rgba(220,38,38,.18);border-radius:999px;background:rgba(220,38,38,.10);color:#b91c1c;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fin-pedido-linha>strong:has(.fin-num-card){display:inline-flex}
+td.fin-num-ped{width:1%;white-space:nowrap}
+.fin-sem-pedido{color:#6b6b6b;font-size:13px}
+.fin-receber-data td.fin-quem{min-width:200px}
+.fin-receber-data td.fin-local{min-width:140px}
+/* Recebimentos previstos (nov/2026): bolinha da aba em amarelo piscando, para diferenciar das pendências (vermelho) */
+html:root:is(#fin-prev#fin-prev#fin-prev,html) :is(body:not(.portal-shell), #main-content) .fin-abas > button .fin-conta-aba.fin-conta-amarela:not(:empty){background:#f2b705 !important;color:#3d2e00 !important;box-shadow:0 0 0 0 rgba(242,183,5,.5);animation:fin-prev-pulsa 1.15s ease-in-out infinite}
+@keyframes fin-prev-pulsa{0%,100%{box-shadow:0 0 0 0 rgba(242,183,5,.5);transform:scale(1)}50%{box-shadow:0 0 0 7px rgba(242,183,5,0);transform:scale(1.08)}}
+@media (prefers-reduced-motion:reduce){html:root:is(#fin-prev#fin-prev#fin-prev,html) .fin-conta-aba.fin-conta-amarela{animation:none !important}}
+
+/* Título "Financeiro" saiu da frente das abas (nov/2026, pedido do usuário): fica só para leitor de tela */
+html:root:is(#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp,html) body .fin-page > .header-list.fin-topo > h2:first-child{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;border:0!important}
+html:root:is(#acervo-fin#acervo-fin,html) .fin-conta-linha>.fin-btn{height:36px;min-height:36px;white-space:nowrap}
+/* Contas a pagar (19/11/2026): a linha da fatura do cartão (e as compras dela, quando aberta) em lilás clarinho, no lugar do cinza */
+html:root #finConteudo .fin-tabela tr.fin-fat-linha>td{background:#f4f0fc !important}
+html:root #finConteudo .fin-tabela tr.fin-fat-linha:hover>td{background:#ece5fa !important}
+html:root #finConteudo .fin-tabela tr.fin-fat-linha.fin-fat-foco>td{background:#e4dbf8 !important}
+html:root #finConteudo tr.fin-fat-linha.is-aberta+tr.fin-fech-comp>td,
+html:root #finConteudo tr.fin-fat-linha.is-aberta+tr.fin-fech-comp .fin-fech-comp-tab,
+html:root #finConteudo tr.fin-fat-linha.is-aberta+tr.fin-fech-comp .fin-fech-comp-tab :is(thead, tbody, tfoot, tr, th, td){background:#f8f5fd !important}
+html:root #finConteudo tr.fin-fat-linha.is-aberta+tr.fin-fech-comp .fin-fech-comp-tab :is(th, td){border-color:#e6dff5 !important}

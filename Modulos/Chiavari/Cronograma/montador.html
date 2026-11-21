@@ -2,12 +2,13 @@
 <html lang="pt-BR">
 <head>
 <link rel="stylesheet" href="../../../styles/tokens.css?v=20261019-globais">
-<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
+<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js?v=20261108-zoom-padrao"></script>
 <script src="../../../js/app/carregamento-app.js?v=20261106-abertura" data-auto></script>
-<script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
-  <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261107-teste-usuario"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
+  <script src="../gas-cliente.js?v=20261120-sem-servidor" data-projeto="cronograma" data-sem-motor></script>
+  <script src="../operacao-sem-motor.js?v=20261120-bonus-supabase"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -311,7 +312,11 @@
     .toast{ position:fixed; left:50%; bottom:calc(22px + env(safe-area-inset-bottom)); transform:translate(-50%, 20px); background:var(--escuro); color:#fff; padding:12px 18px; border-radius:14px; font-weight:600; font-size:14px; opacity:0; pointer-events:none; transition:.25s; z-index:30; max-width:calc(100% - 32px); text-align:center; white-space:pre-line; }
     .toast.ver{ opacity:1; transform:translate(-50%, 0); }
     .toast.erro{ background:var(--erro); }
-  </style>
+    /* Particularidades do local (18/11/2026) */
+  .evento-particularidades{display:grid;gap:3px;margin:0 0 10px;padding:10px 12px;border-radius:12px;background:#fff7e6;border:1px solid #f1d9a6;color:#5c4511;font-size:14px;line-height:1.45}
+  .evento-particularidades strong{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#8a5a00}
+  .evento-particularidades span{white-space:pre-line}
+</style>
   <link rel="stylesheet" href="montador-app.css?v=20261014-pedido">
 <link rel="stylesheet" href="../../../styles/theme-compat.css?v=20261019-globais">
 <style id="contagem-desmontagem">
@@ -339,6 +344,10 @@
   <meta name="theme-color" content="#5a5a55">
   <link rel="stylesheet" href="../apps-equipe.css?v=20261106-topo-branco">
   <link rel="stylesheet" href="montador-evento.css?v=20261108-lista-chat4">
+<link rel="stylesheet" href="../../../styles/assistente-solicitacao.css?v=20261108-montagem">
+<link rel="stylesheet" href="montador-ia.css?v=20261108-montagem">
+<script src="../../../js/ui/assistente-solicitacao.js?v=20261108-montagem"></script>
+<script src="../../../js/ui/montagem-assistente.js?v=20261108-montagem"></script>
 </head>
 <body class="chiavari-equipe-app" data-app-equipe="montagem">
 
@@ -408,7 +417,7 @@
 
   <div class="toast" id="toast"></div>
 
-<script src="montador-evento.js?v=20261108-lista-chat4"></script>
+<script src="montador-evento.js?v=20261108-montagem-ia"></script>
 <script src="montador-bonus.js?v=20261031-integrado"></script>
 <script>
   /* =========================================================
@@ -904,25 +913,7 @@
     if(el("etapaFotoEquipe")) equipe.append(el("etapaFotoEquipe"));
     ["regProgresso", "etapaConferencia", "etapaRegistros"].forEach(function(id){ if(el(id)) lista.append(el(id)); });
     // Nov/2026: troca/reposição e sacolas saíram da aba Lista (ficam escondidas; vão para o chat do pedido).
-    if(!el("etapaAssistente")){
-      const a = document.createElement("section"); a.id = "etapaAssistente"; a.className = "secao etapa-assistente";
-      a.innerHTML =
-        '<div class="etapa-assistente-conversa"><div class="etapa-assistente-msg">Em breve você poderá conversar comigo aqui sobre as informações deste pedido.</div></div>' +
-        '<form class="etapa-assistente-campo"><input type="text" placeholder="Mensagem" maxlength="1000" autocomplete="off" aria-label="Mensagem para o assistente"><button type="submit" class="etapa-chat-enviar" disabled aria-label="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 20 4l-6 16-3-7z"/></svg></button></form>';
-      info.append(a);
-      /* Nov/2026: só para teste do visual: a mensagem aparece na conversa, mas não vai para lugar nenhum nem fica salva. */
-      const form = a.querySelector("form"), campo = form.querySelector("input"), enviar = form.querySelector("button");
-      campo.addEventListener("input", function(){ enviar.disabled = !campo.value.trim(); });
-      form.addEventListener("submit", function(ev){
-        ev.preventDefault();
-        const texto = campo.value.trim(); if(!texto) return;
-        const conversa = a.querySelector(".etapa-assistente-conversa");
-        const msg = document.createElement("div"); msg.className = "etapa-assistente-msg etapa-msg-minha";
-        msg.innerHTML = esc(texto) + '<small>' + new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) + '</small>';
-        conversa.append(msg); conversa.scrollTop = conversa.scrollHeight; msg.scrollIntoView({ block: "end" });
-        campo.value = ""; enviar.disabled = true; campo.focus();
-      });
-    }
+    if(el("etapaAssistenteIa")) info.append(el("etapaAssistenteIa"));
     ["etapaInfo", "etapaPedido"].forEach(function(id){ if(el(id)) info.append(el(id)); });
     let nav = el("etapaAbas");
     if(!nav){
@@ -981,6 +972,7 @@
     /* Nov/2026: cliente, data e endereço ficam só no cartão da lista; aqui a tela começa na Equipe.
        Fica só a orientação (observação) e o alerta, quando houver. */
     document.getElementById("etapaCabeca").innerHTML =
+      (e.particularidades ? '<div class="evento-particularidades" role="note"><strong>Atenção neste local</strong><span>'+esc(e.particularidades)+'</span></div>' : '') +
       (e.observacao && !/^gerado pelo pedido\.?$/i.test(String(e.observacao).trim()) ? '<p class="evento-orientacao evento-orientacao-solta">'+esc(e.observacao)+'</p>' : '') +
       (e.alerta ? '<div class="alerta">' + I.alerta + '<div><strong>' + esc(e.alerta.problema) + '</strong>' + esc(e.alerta.observacao || "") + (e.alerta.enviadoPor ? ' — ' + esc(e.alerta.enviadoPor) : "") + '</div></div>' : "");
   }
@@ -1926,7 +1918,7 @@
 <script>window.MONT_MAPS_SDK="https://maps.googleapis.com/maps/api/js?key=AIzaSyBRTnhpv3S0kqV9G56x0npaxd6YABj8dnI&libraries=geometry&language=pt-BR&region=BR&callback=MONT_mapsPronto&loading=async";</script>
 <script src="montador-mapa.js?v=20261014-pedido"></script>
 <script src="../apps-equipe.js?v=20261031-bonus-integrado"></script>
-<script src="../../../js/app/rastreamento-app.js?v=20261107-config"></script>
+<script src="../../../js/app/rastreamento-app.js?v=20261119-espera-conexao"></script>
 <script src="../../../js/app/android-principal.js?v=20261107"></script>
 </body>
 </html>

@@ -115,11 +115,11 @@ const mockSupabase = `
   assert.ok(!(await page.evaluate(() => window.__al.join(" "))).includes("Pedido cancelado"));
   console.log("ok 1 - motivos de Parâmetros; Outro motivo exige observação; sem gravar a situação volta");
   // 2) com telefone: cancela mesmo com o financeiro como está, grava o motivo
-  await page.evaluate(() => { const t = document.getElementById("clienteTelefone") || document.querySelector("[id*=elefone]"); if (t) t.value = "11999990000"; window.__al = []; });
+  await page.evaluate(() => { const t = document.getElementById("telefoneInput"); if (t) t.value = "11999990000"; document.getElementById("localIdHidden").value="local-fixture";window.__al = []; });
   await page.selectOption("#pedidoStatusComercial", "cancelado");
   await page.waitForSelector("#modalCancelarOrcamento:not(.hidden) [data-motivo-id=m1]");
   await page.click("[data-motivo-id=m1]"); await page.fill("#motivoCancelamentoPedido", "Fechou com outra empresa"); await page.click("#btnConfirmarCancelamentoPedido");
-  await page.waitForFunction(() => window.__al.some((m) => /Pedido cancelado/.test(m)), null, { timeout: 15000 });
+  await page.waitForFunction(() => window.__al.some((m) => /Pedido cancelado/.test(m)), null, { timeout: 15000 }).catch(async e=>{console.error(await page.evaluate(()=>({avisos:window.__al,erro:document.querySelector(".ct-erro")?.textContent})));throw e;});
   const ped = (await salvos()).pop();
   assert.equal(ped.status_comercial, "cancelado");
   assert.equal(ped.observacoes.cancelamento.motivo, "Concorrência mais barata"); assert.equal(ped.observacoes.cancelamento.motivo_id, "m1");

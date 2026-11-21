@@ -16,7 +16,38 @@ module.exports = function operacaoRpcFixture(banco, nome, args = {}) {
       return false;
     }).map(p=>({...p,fluxo_etapa:setor==='expedicao'||(setor==='triagem'&&!p.operacao?.coleta?.concluido_em&&['separado','separado_com_divergencia'].includes(p.status))?(p.operacao?.coleta?.concluido_em?'retorno_simultaneo':'expedicao'):setor,somente_consulta:false})).slice(args.p_de||0,(args.p_de||0)+(args.p_limite||500)));
   }
+  if(nome==='operacao_caminhoes_volta_programados')return ok([{pedido_id:'p1',caminhao_id:'c2',codigo:'M2',placa:'XYZ9K87'}]);
   const p=(banco.separacoes_pedidos || []).find(p=>p.id===args.p_pedido);
+  const cargaPecas=()=>banco.cargaPecas||(banco.separacoes_itens||[]).filter(i=>i.separacao_pedido_id===args.p_pedido).flatMap(i=>{
+    const filhos=(banco.kit_itens||[]).filter(k=>k.kit_id===i.item_id),q=Number(i.quantidade_solicitada??(banco.separacoes_etiquetas||[]).filter(e=>e.separacao_item_id===i.id).length);
+    return (filhos.length?filhos:[{item_id:i.item_id,quantidade:1,itens:{produto:i.item_nome}}]).map(k=>({chave:i.id+'|'+k.item_id,item_id:k.item_id,linha:i.id,nome:k.itens?.produto||i.item_nome,esperado:q*Number(k.quantidade)}));
+  });
+  if(nome==='operacao_conferencia_pecas'&&banco.conferenciaManual)return ok(cargaPecas());
+  const descarga=nome==='operacao_descarga_veiculo_base'||nome==='operacao_descarregamento_lote',etapaCarga=descarga?'descarregamento':'carregamento',veiculosCampo=descarga?'descarga_por_veiculo':'carga_por_veiculo';
+  const cargaBase=()=>({itens:cargaPecas(),veiculos:p?.operacao?.[veiculosCampo]||[],token:String(p?.operacao?.carga_revisao||0),concluido:!!p?.operacao?.[etapaCarga]?.concluido_em});
+  if((nome==='operacao_carga_veiculo_base'||nome==='operacao_descarga_veiculo_base'))return ok(cargaBase());
+  if((nome==='operacao_carregamento_lote'||nome==='operacao_descarregamento_lote')){
+    if(!p)return erro('Pedido nao encontrado');const b=cargaBase();if(b.concluido)return erro('Carregamento ja concluido');if(args.p_token!==b.token)return erro('A carga mudou');
+    p.operacao||={};const frotaLocal=banco.caminhoes||[{id:'c1',codigo:'G',placa:'ABC1D23',modelo:'Bau grande'},{id:'c2',codigo:'M2',placa:'XYZ9K87',modelo:'Bau medio'}];
+    if(args.p_caminhao){
+      if(b.veiculos.some(c=>c.caminhao_id===args.p_caminhao))return erro('Caminhao ja carregado');
+      if(!args.p_itens?.some(i=>i.quantidade>0))return erro('Informe os itens');
+      for(const i of args.p_itens){const esperado=b.itens.find(p=>p.chave===i.chave)?.esperado,antes=b.veiculos.reduce((q,c)=>q+Number(c.itens.find(x=>x.chave===i.chave)?.quantidade||0),0);if(esperado==null||i.quantidade<0||antes+i.quantidade>esperado)return erro('Quantidade invalida');}
+      const cam=frotaLocal.find(c=>c.id===args.p_caminhao);p.operacao[veiculosCampo]=[...b.veiculos,{caminhao_id:cam.id,codigo:cam.codigo,placa:cam.placa,itens:args.p_itens}];p.operacao.carga_revisao=Number(b.token)+1;
+    }
+    p.operacao[etapaCarga+'_observacoes']={...p.operacao[etapaCarga+'_observacoes'],...args.p_observacoes};
+    const totais=Object.fromEntries(b.itens.map(i=>[i.chave,(p.operacao[veiculosCampo]||[]).reduce((q,c)=>q+Number(c.itens.find(x=>x.chave===i.chave)?.quantidade||0),0)]));
+    const completo=b.itens.every(i=>totais[i.chave]===i.esperado);
+    if(completo||args.p_finalizar){
+      p.operacao[etapaCarga+'_caminhoes']=(p.operacao[veiculosCampo]||[]).map(c=>({id:c.caminhao_id,codigo:c.codigo,placa:c.placa}));
+      const itens=b.itens.map(i=>({...i,conferido:totais[i.chave],obs:p.operacao[etapaCarga+'_observacoes'][i.chave]||''}));
+      p.operacao[etapaCarga]={concluido_em:new Date().toISOString(),itens,total:b.itens.reduce((n,i)=>n+i.esperado,0),lidas:Object.values(totais).reduce((a,b)=>a+b,0),faltando:itens.filter(i=>i.conferido<i.esperado),caminhoes:p.operacao[etapaCarga+'_caminhoes'],...(args.p_pendencia?{pendencia:args.p_pendencia}:{})};
+      p.status_operacional='carregado';
+    }
+    window.__gravados?.push({t:'separacoes_pedidos',tipo:'update',p:{operacao:structuredClone(p.operacao)}});
+    window.__cargasTeste=structuredClone(p.operacao);
+    return ok(structuredClone({base:cargaBase(),operacao:p.operacao,registro:p.operacao[etapaCarga]?.concluido_em?p.operacao[etapaCarga]:null}));
+  }
   if(nome==='operacao_iniciar_conferencia'){
     if(!p)return erro('Pedido não encontrado');
     p.operacao||={};p.operacao[args.p_etapa]||={};if(!p.operacao[args.p_etapa].concluido_em)p.operacao[args.p_etapa].iniciado_em||=new Date().toISOString();return ok({...p});

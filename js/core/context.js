@@ -43,7 +43,7 @@ window.aguardarContexto = function (timeoutMs = 10000) {
 
   if (!veioDoLogin) {
     try { await window.supabaseClient.auth.signOut(); } catch(e){}
-    window.location.href = "login.html";
+    window.location.href = (location.pathname.includes("/Modulos/") ? location.pathname.slice(0, location.pathname.indexOf("/Modulos/")) + "/" : "") + "login.html";
     return;
   }
 
@@ -53,14 +53,14 @@ window.aguardarContexto = function (timeoutMs = 10000) {
     : (await window.supabaseClient.auth.getSession()).data.session;
 
   if (!session) {
-    window.location.href = "login.html";
+    window.location.href = (location.pathname.includes("/Modulos/") ? location.pathname.slice(0, location.pathname.indexOf("/Modulos/")) + "/" : "") + "login.html";
     return;
   }
 
   // 🔄 escuta logout
   window.supabaseClient.auth.onAuthStateChange((event) => {
     if (event === "SIGNED_OUT") {
-      window.location.href = "login.html";
+      window.location.href = (location.pathname.includes("/Modulos/") ? location.pathname.slice(0, location.pathname.indexOf("/Modulos/")) + "/" : "") + "login.html";
     }
   });
 
@@ -72,7 +72,7 @@ window.aguardarContexto = function (timeoutMs = 10000) {
   const usuarioNome = sessionStorage.getItem("usuario_nome");
 
   if (!empresaId) {
-    window.location.href = "login.html";
+    window.location.href = (location.pathname.includes("/Modulos/") ? location.pathname.slice(0, location.pathname.indexOf("/Modulos/")) + "/" : "") + "login.html";
     return;
   }
 

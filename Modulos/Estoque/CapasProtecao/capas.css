@@ -13,7 +13,7 @@
 
 .cp-seletor{display:flex;flex-direction:column;gap:7px}.cp-resultados{max-height:260px;overflow:auto;border:1px solid #d4dde7;border-radius:12px;padding:8px;background:#fff}.cp-resultados[hidden]{display:none!important}.cp-resultados .cp-resultado{display:flex!important;align-items:center;gap:12px;width:100%;padding:10px!important;border:0;border-radius:8px;background:transparent!important;color:inherit!important;text-align:left;cursor:pointer;letter-spacing:normal!important;text-transform:none!important}.cp-resultados .cp-resultado:hover,.cp-resultados .cp-resultado:focus-visible{background:#f1f4f7!important}.cp-resultado img,.cp-sem-foto{width:48px;height:48px;flex:none;object-fit:cover;border-radius:8px;background:#f1f4f7}.cp-sem-foto{display:grid;place-items:center;color:#718096;font-size:24px}
 
-.cp-page section[hidden]{display:none!important}.cp-abas{display:flex;gap:8px;margin:16px 0}.cp-abas button{padding:12px 22px;border:1px solid #dce3ea;border-radius:10px;background:transparent;color:inherit;cursor:pointer}.cp-abas button[aria-selected="true"]{background:var(--el-color-primary,#80643f);color:#fff}.cp-historico-barra{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:24px}.cp-historico-barra label{display:flex;flex-direction:column;gap:8px;min-width:0}.cp-historico-barra select{padding:12px;max-width:100%;border:1px solid #dce3ea;border-radius:10px}#cpHistoricoConteudo{overflow-x:auto}#cpHistoricoConteudo h3{margin:24px 0 12px}#cpHistoricoConteudo table{width:100%}
+.cp-page [hidden]{display:none!important}.cp-abas{display:flex;gap:8px;margin:16px 0}.cp-abas button{padding:12px 22px;border:1px solid #dce3ea;border-radius:10px;background:transparent;color:inherit;cursor:pointer}.cp-abas button[aria-selected="true"]{background:var(--el-color-primary,#80643f);color:#fff}.cp-historico-barra{display:flex;align-items:end;justify-content:space-between;gap:18px;margin-bottom:24px}.cp-historico-barra label{display:flex;flex-direction:column;gap:8px;min-width:0}.cp-historico-barra select{padding:12px;max-width:100%;border:1px solid #dce3ea;border-radius:10px}#cpHistoricoConteudo{overflow-x:auto}#cpHistoricoConteudo h3{margin:24px 0 12px}#cpHistoricoConteudo table{width:100%}
 
 /* Abas, titulo e pesquisa no mesmo cabecalho. */
 .cp-page .cp-header .cp-abas{grid-column:1!important;grid-row:1!important;justify-self:start;margin:0;align-self:center}.cp-page .cp-header input{grid-column:3!important;grid-row:1!important;justify-self:end;max-width:320px}.cp-page .cp-header h1{position:static!important;transform:none!important;grid-column:2!important;grid-row:1!important;justify-self:center!important;align-self:center!important;left:auto!important;top:auto!important}.cp-page .cp-header{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important}@media(max-width:900px){.cp-page .cp-header .cp-abas{gap:4px}.cp-page .cp-header .cp-abas button{padding:8px;font-size:11px}}
@@ -38,3 +38,113 @@ html body .cp-page #cpCabecalho{display:grid!important;grid-template-columns:min
 .cp-page #cpHistoricoConteudo .cp-hist .cp-conferencia-diferenca td{background:#fff3d9}
 .cp-page #cpHistoricoConteudo .cp-hist .cp-conferencia-concluida td{background:#eef7f1}
 .cp-page #cpHistoricoConteudo .cp-hist .cp-conferencia-pendente td{background:#eef3fb}
+
+/* 15/11/2026: custo e Perdas da equipe */
+.cp-sem-custo{color:#9aa3ad;font-size:12px}
+#cpPerdasPainel{margin-top:14px;min-width:0;overflow-x:auto}
+.cp-perdas-barra{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:12px}
+.cp-perdas-barra label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#5b6470}
+.cp-perdas-barra input{height:36px;padding:0 10px;border:1px solid #d8dee6;border-radius:8px;background:#fff}
+.cp-perdas-barra .cp-ajuda{flex:1 1 320px;margin:0;font-size:12.5px;color:#6b6b6b}
+.cp-perda{color:#b42318;font-weight:600}
+html:root body .cp-page .cp-header>.cp-abas{display:flex!important;flex-wrap:nowrap!important;width:max-content!important;max-width:none!important;gap:2px!important}
+html:root body .cp-page .cp-header>.cp-abas>button{flex:0 0 auto!important;white-space:nowrap!important;padding-left:12px!important;padding-right:12px!important}
+html:root body .cp-page .cp-header>.cp-abas>button{padding-left:8px!important;padding-right:8px!important}
+html:root body .cp-page .cp-header>h1{margin-left:24px!important}
+html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page .cp-header>.cp-abas{gap:12px!important}
+html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page .cp-header{grid-template-columns:minmax(max-content,1fr) auto minmax(0,1fr)!important;column-gap:20px!important}
+@media(max-width:1100px){
+ html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page #cpCabecalho{grid-template-columns:minmax(0,1fr)!important;row-gap:14px!important}
+ html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page #cpCabecalho>h1{grid-area:1/1/2/2!important;margin-left:0!important;max-width:100%!important;font-size:30px!important;white-space:normal!important}
+ html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page #cpCabecalho>.cp-abas{grid-area:2/1/3/2!important;width:100%!important;max-width:100%!important;overflow-x:auto;box-sizing:border-box}
+ html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page #cpCabecalho>#cpBusca{grid-area:3/1/4/2!important;max-width:100%!important}
+}
+/* Painel de perdas: mesma organização de dados e gráficos da produtividade comercial. */
+#cpPerdasPainel{--cp-perdas-borda:var(--el-color-border,#e3e7ec);--cp-perdas-suave:var(--el-color-muted,#69717d);--cp-perdas-texto:var(--el-color-text,#242a32);color:var(--cp-perdas-texto);overflow:visible}
+#cpPerdasPainel *{box-sizing:border-box}
+#cpPerdasPainel .cp-perdas-barra{gap:14px;margin:22px 0 20px;align-items:flex-end}
+#cpPerdasPainel .cp-perdas-titulo{flex:1 1 260px}
+#cpPerdasPainel .cp-perdas-titulo h2{margin:0 0 6px;font:600 18px Inter,Arial,sans-serif;letter-spacing:0;text-transform:none}
+#cpPerdasPainel .cp-perdas-titulo p{margin:0;font-size:12px;color:var(--cp-perdas-suave)}
+#cpPerdasPainel .cp-perdas-barra label{font-size:11px;font-weight:600;gap:7px;min-width:0}
+#cpPerdasPainel .cp-perdas-barra input{height:40px;width:150px;color:var(--cp-perdas-texto);font:400 13px Inter,Arial,sans-serif}
+#cpPerdasPainel .cp-perdas-barra button{height:40px;margin:0;padding:0 24px;border:0;border-radius:7px;background:var(--el-color-primary,#80613b);color:#fff;font:600 12px Inter,Arial,sans-serif;cursor:pointer}
+#cpPerdasPainel .cp-perdas-erro{flex-basis:100%;margin:0;color:#b42318;font-size:12px}
+#cpPerdasPainel .cp-perdas-erro:empty{display:none}
+#cpPerdasPainel .cp-perdas-card{background:var(--el-color-surface,#fff);border:1px solid var(--cp-perdas-borda);border-radius:14px;box-shadow:0 0 8px #0f172a14;overflow:hidden;margin-bottom:20px;min-width:0}
+#cpPerdasPainel .cp-perdas-card>header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:18px 22px;border-bottom:1px solid var(--cp-perdas-borda)}
+#cpPerdasPainel .cp-perdas-card>header h2{margin:0;font:600 15px Inter,Arial,sans-serif;letter-spacing:0;text-transform:none}
+#cpPerdasPainel .cp-perdas-card>header p{margin:0;color:var(--cp-perdas-suave);font-size:12px;line-height:1.6}
+#cpPerdasPainel .cp-perdas-grade{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}
+#cpPerdasPainel .cp-perdas-dados{padding:22px;min-width:0}
+#cpPerdasPainel .cp-perdas-resumo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin:0 0 20px;padding:0 0 20px;border-bottom:1px solid var(--cp-perdas-borda)}
+#cpPerdasPainel .cp-perdas-resumo span{display:block;color:var(--cp-perdas-suave);font-size:12px}
+#cpPerdasPainel .cp-perdas-resumo strong{display:block;font:600 28px Inter,Arial,sans-serif;font-variant-numeric:tabular-nums;margin-top:10px;color:#b44944;overflow-wrap:anywhere}
+#cpPerdasPainel h3{margin:22px 0 8px;font:600 13px Inter,Arial,sans-serif;letter-spacing:0;text-transform:none}
+#cpPerdasPainel .cp-perdas-tabela{width:100%;border-collapse:collapse;margin:0}
+#cpPerdasPainel .cp-perdas-tabela caption{text-align:left;font-size:13px;font-weight:600;margin:0 0 10px}
+#cpPerdasPainel .cp-perdas-tabela :is(th,td){border-bottom:1px solid #eef1f4;padding:12px 10px;font-size:13px;text-align:right;line-height:1.5;white-space:nowrap}
+#cpPerdasPainel .cp-perdas-tabela thead th{background:transparent;color:var(--cp-perdas-suave);font-size:11px;font-weight:500;letter-spacing:0;text-transform:none}
+#cpPerdasPainel .cp-perdas-tabela :is(th,td):first-child{text-align:left;padding-left:0;white-space:normal}
+#cpPerdasPainel .cp-perdas-tabela tbody th{font-weight:500}
+#cpPerdasPainel .cp-perdas-tabela td{font-weight:600;font-variant-numeric:tabular-nums}
+#cpPerdasPainel .cp-perdas-tabela tbody tr:hover{background:var(--el-table-row-hover,#f7f9fb)}
+#cpPerdasPainel .cp-perdas-nota{margin:0 0 12px;font-size:11.5px;color:var(--cp-perdas-suave);line-height:1.7}
+#cpPerdasPainel .cp-perdas-rodape{margin:12px 0 0}
+#cpPerdasPainel .cp-perdas-pessoa{display:flex;align-items:center;gap:9px;min-width:130px}
+#cpPerdasPainel .cp-perdas-pessoa i,#cpPerdasPainel .cp-perdas-legenda i{display:block;width:10px;height:10px;border-radius:3px;flex:none}
+#cpPerdasPainel .cp-perdas-pessoa small{display:block;font-size:10.5px;font-weight:400;color:var(--cp-perdas-suave);margin-top:3px}
+#cpPerdasPainel .cp-perdas-graficos{border-left:1px solid #eef1f4;padding:22px;min-width:0}
+#cpPerdasPainel .cp-perdas-grafico+article{border-top:1px solid #eef1f4;padding-top:22px;margin-top:22px}
+#cpPerdasPainel .cp-perdas-grafico h3{margin:0 0 6px}
+#cpPerdasPainel .cp-perdas-rosca{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+#cpPerdasPainel .cp-perdas-rosca svg{width:170px;height:170px;flex:none;max-width:100%}
+#cpPerdasPainel .cp-rosca-rot{font:500 11px Inter,Arial,sans-serif;fill:var(--cp-perdas-suave)}
+#cpPerdasPainel .cp-rosca-val{font:600 14px Inter,Arial,sans-serif;fill:var(--cp-perdas-texto)}
+#cpPerdasPainel .cp-perdas-legenda{list-style:none;padding:0;margin:0;display:grid;gap:12px;flex:1 1 200px;min-width:0}
+#cpPerdasPainel .cp-perdas-legenda li{display:grid;grid-template-columns:10px minmax(0,1fr) auto auto;gap:8px;align-items:center;font-size:12px}
+#cpPerdasPainel .cp-perdas-legenda span{overflow-wrap:anywhere}
+#cpPerdasPainel .cp-perdas-legenda b{font-weight:600;white-space:nowrap}
+#cpPerdasPainel .cp-perdas-legenda small{font-size:11px;color:var(--cp-perdas-suave);text-align:right;min-width:30px}
+#cpPerdasPainel .cp-perdas-vazio{font-size:12px;color:var(--cp-perdas-suave);margin:12px 0 0}
+#cpPerdasPainel .cp-perdas-scroll{overflow-x:auto;max-width:100%;min-width:0}
+#cpPerdasPainel .cp-perdas-ocorrencias .cp-hist{min-width:1050px;margin:0}
+#cpPerdasPainel .cp-perdas-ocorrencias .cp-hist :is(th,td){padding:14px 18px}
+#cpPerdasPainel .cp-perdas-ocorrencias .cp-hist th{background:var(--el-table-header-bg,#f8fafc);font-size:11px}
+#cpPerdasPainel .cp-perdas-ocorrencias>.cp-perdas-nota{padding:0 22px 18px}
+@media(max-width:1000px){#cpPerdasPainel .cp-perdas-grade{grid-template-columns:1fr}#cpPerdasPainel .cp-perdas-graficos{border-left:0;border-top:1px solid #eef1f4}}
+@media(max-width:600px){#cpPerdasPainel .cp-perdas-barra label{flex:1 1 120px}#cpPerdasPainel .cp-perdas-barra input{width:100%;max-width:100%}#cpPerdasPainel .cp-perdas-barra button{width:100%}#cpPerdasPainel :is(.cp-perdas-dados,.cp-perdas-graficos){padding:16px}#cpPerdasPainel .cp-perdas-resumo{gap:12px}#cpPerdasPainel .cp-perdas-resumo strong{font-size:24px}#cpPerdasPainel .cp-perdas-card>header{padding:16px}#cpPerdasPainel .cp-perdas-rosca{justify-content:center}#cpPerdasPainel .cp-perdas-legenda{flex-basis:100%}#cpPerdasPainel .cp-perdas-tabela :is(th,td){padding:10px 6px;font-size:12px}}
+/* 16/11/2026: abas e título mais perto do menu */
+html:root:is(#cp#cp#cp#cp#cp,html) body main.cp-page{padding-top:8px!important}
+html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page .cp-header{padding-top:0!important;margin-top:0!important}
+
+/* 16/11/2026: filtro de Perdas na linha do título; histórico num quadro só */
+html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page .cp-header>#cpPerdasFiltro{grid-column:3!important;grid-row:1!important;justify-self:end;margin:0}
+html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page .cp-header>#cpPerdasFiltro[hidden]{display:none!important}
+html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page .cp-header>#cpPerdasFiltro form{display:flex!important;align-items:center!important;gap:8px!important;margin:0!important;padding:0!important;border:0!important;background:none!important;box-shadow:none!important;flex-wrap:nowrap}
+html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page .cp-header>#cpPerdasFiltro label{display:flex!important;flex-direction:row!important;align-items:center!important;gap:6px!important;font-size:12px;margin:0}
+html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page .cp-header>#cpPerdasFiltro input{height:34px;padding:0 8px;border:1px solid #d8dee6;border-radius:8px;background:#fff;font-size:13px}
+html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page .cp-header>#cpPerdasFiltro button{grid-column:auto!important;height:34px;padding:0 14px;font-size:12.5px}
+html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page .cp-header>#cpPerdasFiltro .cp-perdas-erro:empty{display:none}
+html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page #cpItemSelecionado[hidden]{display:none!important}
+.cp-status-conferencia{background:#eef3f8;color:#3d6382}
+
+/* 16/11/2026: "Nova movimentação" na linha do título (aba Histórico); a barra de cima do histórico ficou vazia e some */
+html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page .cp-header>#cpNovaMovimentacao{grid-column:3!important;grid-row:1!important;justify-self:end;margin:0!important}
+html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page .cp-header>#cpNovaMovimentacao[hidden]{display:none!important}
+html:root:is(#cp#cp#cp#cp#cp,html) body .cp-page .cp-historico-barra{display:none!important}
+
+/* 16/11/2026: fotos em Perdas da equipe */
+.cp-foto-redonda{position:relative;display:inline-grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border-radius:50%;overflow:hidden;background:#eaf0fa;color:#123f86;font:600 12px Inter,system-ui,sans-serif;border:1px solid #dce4ec}
+.cp-foto-redonda.is-mini{width:28px;height:28px;flex-basis:28px;font-size:10.5px}
+.cp-foto-redonda img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.cp-perdas-pessoa{display:inline-flex;align-items:center;gap:8px}
+.cp-equipe-fotos{display:flex;flex-direction:column;gap:5px}
+.cp-equipe-pessoa,.cp-cliente-linha{display:flex;align-items:center;gap:8px}
+.cp-equipe-pessoa small{font-size:10.5px;color:#8191a0}
+
+/* 16/11/2026: botão Consultar de Perdas da equipe */
+html:root:is(#cp#cp#cp#cp#cp#cp,html) body .cp-page .cp-header>#cpPerdasFiltro button.cp-consultar{display:inline-flex!important;align-items:center;gap:6px;height:34px!important;min-height:0!important;padding:0 16px!important;border:1px solid #123f86!important;border-radius:999px!important;background:#123f86!important;color:#fff!important;font:600 12.5px Inter,system-ui,sans-serif!important;letter-spacing:.02em;text-transform:none!important;box-shadow:0 1px 2px rgba(15,23,42,.12)!important;cursor:pointer;transition:background .15s,box-shadow .15s}
+html:root:is(#cp#cp#cp#cp#cp#cp,html) body .cp-page .cp-header>#cpPerdasFiltro button.cp-consultar:hover{background:#0d2f66!important;box-shadow:0 3px 8px rgba(18,63,134,.25)!important}
+html:root:is(#cp#cp#cp#cp#cp#cp,html) body .cp-page .cp-header>#cpPerdasFiltro button.cp-consultar:focus-visible{outline:2px solid #123f86;outline-offset:2px}
+html:root:is(#cp#cp#cp#cp#cp#cp,html) body .cp-page .cp-header>#cpPerdasFiltro input{border-radius:999px!important;padding:0 12px!important}

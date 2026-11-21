@@ -3,6 +3,11 @@
 // vê como fica com IA usando a amostra escolhida. Só para item personalizável.
 const { chromium } = require('playwright'); const express = require('express'); const assert = require('node:assert/strict');
 const { installMock } = require('./mock-projetos.cjs');
+const { createCanvas } = require('@napi-rs/canvas');
+const amostraCanvas = createCanvas(48, 32), amostraCtx = amostraCanvas.getContext('2d');
+amostraCtx.fillStyle = '#285c67'; amostraCtx.fillRect(0, 0, 48, 32);
+amostraCtx.fillStyle = '#3a7884'; amostraCtx.fillRect(0, 0, 12, 32);
+const AMOSTRA_FOTO = amostraCanvas.toBuffer('image/png');
 (async () => {
   const app = express(); app.use(express.static(process.cwd())); const server = app.listen(0, '127.0.0.1'); await new Promise((r) => server.on('listening', r));
   const browser = await chromium.launch({ channel: 'msedge', headless: true });
@@ -10,14 +15,25 @@ const { installMock } = require('./mock-projetos.cjs');
     const page = await browser.newPage({ viewport: { width: 1440, height: 900 } }); const errors = []; page.on('pageerror', (e) => errors.push(e.message));
     await page.route('https://**/*', (r) => r.fulfill({ body: '', contentType: 'text/javascript' }));
     await page.route('https://fixture/**', (r) => r.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300"><rect width="300" height="300" fill="#c9b9a6"/></svg>' }));
+    await page.route('https://fixture/amostra-azul.png', r => r.fulfill({ contentType: 'image/png', body: AMOSTRA_FOTO }));
     await page.addInitScript(() => { if (!sessionStorage.getItem('mockdb')) sessionStorage.setItem('mockdb', JSON.stringify({ projetos: [{ id: 'p1', cliente_id: 'client', noivos: 'Ana & Bruno', data_evento: '2027-05-22', local_evento: 'Jardim', status: 'rascunho', dados: { ambientes: [{ id: 'a1', nome: 'Lounge', itens: [], renders: [] }] } }], calls: [], uploads: [], removed: [], seq: 3 })); });
     await page.addInitScript(installMock, { token: true, cartela: true, pinturaSemCartela:true });
+    await page.addInitScript(() => {
+      const rpc = window.supabaseClient.rpc.bind(window.supabaseClient);
+      window.supabaseClient.rpc = async (nome, args) => {
+        const resposta = await rpc(nome, args);
+        if (nome === 'personalizacao_cartelas') for (const v of resposta.data?.variaveis || [])
+          for (const c of v.cartelas || []) for (const o of c.opcoes || [])
+            if (o.id === 'o2') o.foto_url = 'https://fixture/amostra-azul.png';
+        return resposta;
+      };
+    });
     const base = 'http://127.0.0.1:' + server.address().port + '/Modulos/Comercial/Catalogo/catalogo.html';
     await page.goto(base);
     await page.locator('[data-gateway-tile="catalogo"]').click();
     await page.locator('[data-entry-project="p1"]').click();
     await page.locator('.cpj-entry').waitFor({ state: 'detached' });
-    assert.match(await page.locator('#catalogSearch').getAttribute('placeholder'),/Esc/);await page.locator('#catalogSearch').fill('teste');await page.locator('#catalogSearch').press('Escape');assert.equal(await page.locator('#catalogSearch').inputValue(),'');
+    assert.match(await page.locator('#catalogSearch').getAttribute('placeholder'),/Pesquisar/);await page.locator('#catalogSearch').fill('teste');await page.locator('#catalogSearch').press('Escape');assert.equal(await page.locator('#catalogSearch').inputValue(),'');
     const abrirItem = async (cat, id) => {
       await page.locator('#catalogGlobalBack').isVisible().catch(() => false);
       await page.evaluate(() => window.scrollTo(0, 0));
@@ -35,6 +51,7 @@ const { installMock } = require('./mock-projetos.cjs');
     assert.equal(await botao.isVisible(), true);
     await botao.click();
     const dlg = page.locator('dialog.cpj-pers-dialog[open]'); await dlg.waitFor();
+    await dlg.locator('[data-pers-aba="novas"]').click();
     await dlg.locator('[data-pers-opcao="o1"]').waitFor();
     assert.match(await dlg.textContent(), /SV-101/); assert.match(await dlg.textContent(), /SV-202/);
     assert.equal(await page.locator('#catalogCustomizeDialog[open]').count(), 0, 'não abre o envio de foto do tecido');
@@ -52,12 +69,14 @@ const { installMock } = require('./mock-projetos.cjs');
     assert.equal(inv.name, 'studio-ai-engine');
     assert.equal(inv.body.scene.referencePolicy, 'fabric_customization');
     assert.match(inv.body.scene.fabricReference, /^data:image\/png;base64,/);
+    assert.equal(inv.body.scene.fabricReference, 'data:image/png;base64,' + AMOSTRA_FOTO.toString('base64'), 'a IA recebe a foto cadastrada, mesmo quando a opção também tem uma cor');
     assert.match(inv.body.prompt, /pintura/); assert.match(inv.body.prompt, /SV-202 Azul Petróleo/);
     await page.locator('.catalog-notification.has-photo').waitFor({ timeout: 10000 });
-    console.log('ok 2 - "Ver como fica com IA" usa a cor escolhida (código no pedido para a IA) e mostra o resultado');
+    console.log('ok 2 - "Ver como fica com IA" envia a foto exata da opção escolhida e mostra o resultado');
 
     // 3. Adicionar ao projeto: a escolha anterior volta marcada; entra no ambiente já personalizado
     await botao.click(); await dlg.waitFor();
+    await dlg.locator('[data-pers-aba="novas"]').click();
     await dlg.locator('[data-pers-opcao="o2"][aria-pressed="true"]').waitFor();
     await dlg.locator('button[type="submit"]').click();
     await dlg.waitFor({ state: 'detached' });

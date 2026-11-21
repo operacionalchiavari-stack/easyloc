@@ -2,7 +2,7 @@
   'use strict';
   // Motivos em dois cards (out/2026): pendências (carregamento, entrega, coleta) e divergências da 2ª conferência.
   const SIT = '<option value="bateu">Quando a 2ª conferência bate</option><option value="continua">Quando a diferença continua</option>';
-  const NOMES = {separacao:'Separa??o',carregamento:'Pendência do carregamento',entrega:'Entrega',coleta:'Coleta',divergencia_falta:'Divergência: faltou',divergencia_sobra:'Divergência: veio a mais'};
+  const NOMES = {separacao:'Separação',carregamento:'Pendência do carregamento',entrega:'Entrega',coleta:'Coleta',divergencia_falta:'Divergência: faltou',divergencia_sobra:'Divergência: veio a mais'};
   const GRUPOS = [
     {titulo:'Tipos de problema da separação', etapas:['separacao'],
      ajuda:'Tipos oferecidos em Reportar problema na Triagem. As ocorrências seguem para a Gestão do Acervo. Desative um tipo sem apagar o histórico.',

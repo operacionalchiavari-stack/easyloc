@@ -1,6 +1,8 @@
+import { instrucoesEmpresa } from '../_shared/ia-config.ts';
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { designPresentation } from "./presentation-design.mjs";
+import { guardarPersonalizacao, prepararPersonalizacao } from "./personalizacao-acervo.mjs";
 import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
 
 const corsHeaders = {
@@ -114,7 +116,7 @@ async function planLayout(input: GenerateSceneInput) {
     body: JSON.stringify({
       model: Deno.env.get("STUDIO_OPENAI_VISION_MODEL") || "gpt-4.1-mini",
       messages: [
-        { role: "system", content: "Voce e uma decoradora de eventos. Interprete o briefing e escolha uma zona preferencial para cada modelo fornecido: front (entrada/frente), back (fundo), left, right ou any. Use somente IDs fornecidos. Considere funcao dos moveis, circulacao e regras em metros. O motor geometrico posicionara os modelos e verificara as distancias; nao afirme que o briefing completo foi executado. Retorne todos os modelos uma vez." },
+        { role: "system", content: "Voce e uma decoradora de eventos. Interprete o briefing e escolha uma zona preferencial para cada modelo fornecido: front (entrada/frente), back (fundo), left, right ou any. Use somente IDs fornecidos. Considere funcao dos moveis, circulacao e regras em metros. O motor geometrico posicionara os modelos e verificara as distancias; nao afirme que o briefing completo foi executado. Retorne todos os modelos uma vez." + await instrucoesEmpresa(input.empresa_id,"studio") },
         { role: "user", content: JSON.stringify({ briefing: input.prompt, ...input.scene }) },
       ],
       response_format: { type: "json_schema", json_schema: { name: "decoration_plan", strict: true, schema: {
@@ -151,6 +153,14 @@ function validarPayload(body: Partial<GenerateSceneInput>) {
   return null;
 }
 
+// O realismo não pode transformar um tecido ou uma madeira em outra tonalidade.
+const FIDELIDADE_COR_ESTUDIO = [
+  "MANDATORY PRODUCT COLOR FIDELITY: the supplied 3D capture is the color reference, including each material's hue, saturation AND midtone lightness. Preserve the perceived brightness of every upholstery, wood, cane, metal and painted surface, not just its color family.",
+  "Do not darken or brighten the furniture, deepen greens into near-black, darken wood stains, mute colors, warm or cool the palette, or increase global contrast. Do not apply cinematic grading, filmic tone mapping, vignettes, crushed blacks or an underexposed luxury look.",
+  "Use neutral white-balanced, evenly exposed studio lighting with ample soft fill so the broad material surfaces retain the same color and brightness as the reference. Add realism through fine material texture, subtle reflections and gentle localized contact shadows only; never spread ambient occlusion or dark shading across entire seats, cushions, backs or wood surfaces.",
+  "Color and brightness fidelity take priority over lighting style, atmosphere, contrast and any aesthetic instruction. Verify that the furniture still has the same visible colors and midtone brightness as the input before returning the image; do not wash out or overexpose the materials to compensate.",
+].join(" ");
+
 function normalizarPrompt(input: GenerateSceneInput) {
   const versions = Math.min(Math.max(Number(input.versions || 1), 1), 1);
   if (input.scene?.referencePolicy === "fabric_customization") {
@@ -185,8 +195,8 @@ function normalizarPrompt(input: GenerateSceneInput) {
         "Keep the exact quantity of pieces, models, shapes, proportions, relative dimensions, colors, materials, upholstery, arms, legs and structures, seams and cushion divisions, construction details, and the exact positions and spatial relationships between the pieces. Do not add cushions, change arms, or change the number of seats.",
         "Place the exact original furniture composition inside a seamless infinite pure white photography studio with a clean white floor and white background, without visible corners, walls, windows, architecture, floor tiles or horizon lines.",
         "Create extremely realistic physically accurate materials, including detailed leather grain, natural fabric fibers, authentic wood grain, subtle wood finish reflections, realistic cane and rattan weaving, precise seams, accurate upholstery folds and natural material imperfections. Improve only the rendering of materials, light and shadows; never change the product design or its original colors.",
-        "Use large professional softbox lighting, sophisticated global illumination, physically plausible indirect light, ambient occlusion and natural soft contact shadows beneath every furniture leg and base.",
-        "The shadows must anchor the furniture naturally to the studio floor, with realistic softness, depth and direction.",
+        "Use large neutral softbox key and fill lights, balanced exposure and physically plausible indirect light. Keep ambient occlusion subtle and localized to contact points, with gentle soft contact shadows beneath furniture legs and bases.",
+        "The shadows must anchor the furniture naturally to the studio floor without lowering the midtone brightness of the furniture materials.",
         "The composition is already framed close to the camera in the supplied image, filling about 75 to 90 percent of the frame: keep this framing, camera angle and perspective. Keep the furniture large, centered and completely visible, with elegant minimal margins. Do not zoom out, do not shrink the furniture, do not add empty space.",
         "Use premium commercial furniture photography composition, realistic photographic perspective equivalent to a 50 mm lens, a natural camera viewpoint and precise visual balance, without wide-angle distortion.",
         "Make the image look like a real photograph taken with a high-end professional camera in a luxury furniture photography studio.",
@@ -197,6 +207,7 @@ function normalizarPrompt(input: GenerateSceneInput) {
         "If realism and fidelity ever conflict, fidelity to the original furniture always wins.",
         "Preserve the exact original furniture arrangement and design.",
         "The result must look like an authentic professional studio photograph, not a 3D viewport, illustration, SketchUp screenshot or stylized CGI render.",
+        FIDELIDADE_COR_ESTUDIO,
       ].join(" "),
       versions,
     };
@@ -352,7 +363,11 @@ async function generateWithOpenAI(input: GenerateSceneInput) {
     };
   }
 
-  const { prompt, versions } = normalizarPrompt(input);
+  const normalizado = normalizarPrompt(input);
+  const versions=normalizado.versions;
+  const prompt=[normalizado.prompt,await instrucoesEmpresa(input.empresa_id,"studio"),
+    input.scene?.referencePolicy === "furniture_studio_catalog" ? FIDELIDADE_COR_ESTUDIO : "",
+  ].filter(Boolean).join(" ");
   const referencias = coletarReferencias(input);
   const imageSize = resolverTamanhoImagem(input);
   if (referencias.length !== (input.scene?.referencePolicy === "fabric_customization" ? 2 : 1)) {
@@ -459,6 +474,7 @@ serve(async (req) => {
   let reservation: string | null = null;
   let presentationRequest = false;
   let creditClient: ReturnType<typeof createClient> | null = null;
+  let liberarPersonalizacao: (() => Promise<void>) | null = null;
   const settle = async (success: boolean) => {
     if (!reservation || !creditClient) return;
     const { error } = await creditClient.rpc('creditos_finalizar', { p_id: reservation, p_sucesso: success });
@@ -494,6 +510,19 @@ serve(async (req) => {
     }
 
     const input = body as GenerateSceneInput;
+    if(action === 'generate_scene'){
+      const preparacao = await prepararPersonalizacao(acesso.serviceClient,input);
+      liberarPersonalizacao = preparacao?.liberar || null;
+      if(preparacao?.foto){
+        const foto=preparacao.foto;
+        const escolhaAtual=input.scene.personalizacao as {item_id?:string;escolha?:unknown} | undefined;
+        const reutilizada={id:foto.id,url:foto.url,titulo:foto.titulo,tipo:foto.tipo,
+          personalizacao:{item_id:foto.item_id || escolhaAtual?.item_id,tipo:foto.tipo,
+            descricao:foto.titulo,escolha:escolhaAtual?.escolha || null}};
+        return respostaJson({ok:true,providerStatus:'ok',images:[{url:foto.url}],personalizacaoSalva:reutilizada,reutilizada:true,creditosCobrados:0});
+      }
+      if(preparacao?.ocupada)return respostaJson({erro:'Essa combinação já está sendo renderizada. Aguarde e abra novamente as versões renderizadas. Nenhum crédito foi utilizado.'},409);
+    }
     if ('catalogSession' in acesso) {
       if (!body.request_id || !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(body.request_id) || !Number.isInteger(body.expected_cost)) {
         return respostaJson({ erro: 'Atualize o catálogo e confirme o custo em créditos antes de usar a IA.' }, 400);
@@ -508,7 +537,7 @@ serve(async (req) => {
       if (error || !data) return respostaJson({ erro: 'Sem permissão para utilizar a IA.' }, 403);
     }
     if (action === "design_presentation") {
-      const design = await designPresentation(input, { apiKey: Deno.env.get('OPENAI_API_KEY'), model: Deno.env.get('PRESENTATION_OPENAI_MODEL') });
+      const design = await designPresentation(input, { apiKey: Deno.env.get('OPENAI_API_KEY'), model: Deno.env.get('PRESENTATION_OPENAI_MODEL'),instrucoes:await instrucoesEmpresa(input.empresa_id,'studio') });
       await settle(true);
       return respostaJson({ ok: true, design });
     }
@@ -520,11 +549,24 @@ serve(async (req) => {
     }
     const result = await generateScene(input);
     await settle(result.providerStatus === 'ok' && result.images.length > 0);
+    let personalizacaoSalva = null, personalizacaoErro = null;
+    if (result.providerStatus === 'ok' && result.images[0] && input.scene?.personalizacao) {
+      try {
+        personalizacaoSalva = await guardarPersonalizacao(acesso.serviceClient, input, result.images[0], {
+          clienteId: 'catalogSession' in acesso ? acesso.catalogSession.cliente_id : null,
+          usuarioId: 'user' in acesso ? acesso.user.id : null,
+        });
+      } catch (error) {
+        console.error('Erro ao guardar personalização comercial', error);
+        personalizacaoErro = 'A imagem foi gerada, mas não foi possível salvá-la em Personalizações IA. Baixe a imagem para preservá-la.';
+      }
+    }
 
     return respostaJson({
       ok: result.providerStatus === "ok",
       providerStatus: result.providerStatus,
       images: result.images,
+      personalizacaoSalva, personalizacaoErro,
       prompt: input.prompt,
       modelo: result.modelo,
       error: "error" in result ? result.error : undefined,
@@ -536,5 +578,7 @@ serve(async (req) => {
       erro: presentationRequest ? "Não foi possível criar a apresentação com IA. Tente novamente." : "Erro ao gerar imagem no Studio AI Engine",
       details: err instanceof Error ? err.message : String(err),
     }, 500);
+  } finally {
+    try{await liberarPersonalizacao?.();}catch(error){console.error('Falha ao liberar combinação de personalização',error);}
   }
 });

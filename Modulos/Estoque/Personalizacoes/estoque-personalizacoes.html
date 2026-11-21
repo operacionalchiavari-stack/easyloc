@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Personalizações</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
-  <link rel="stylesheet" href="estoque-personalizacoes.css?v=20261102-insumos-kits">
-  <link rel="stylesheet" href="estoque-cartelas.css?v=20261022-cartelas">
+  <link rel="stylesheet" href="estoque-personalizacoes.css?v=20261115-editar-refeito">
+  <link rel="stylesheet" href="estoque-cartelas.css?v=20261115-modal">
 <link rel="stylesheet" href="../../Producao/producao.css?v=20261022-ordens">
 </head>
 <body>
@@ -24,18 +25,20 @@
   <!-- TOP BAR -->
   <div class="page-top">
     <div class="page-title">
-      <h1>Personalizações Cadastradas</h1>
+      <h1>Personalizações</h1>
+    </div>
+
+    <div class="pers-abas" role="tablist">
+      <button type="button" class="pers-aba is-ativa" data-pers-aba="personalizacoes" role="tab" aria-selected="true">Personalizações</button>
+      <button type="button" class="pers-aba" data-pers-aba="cartelas" role="tab" aria-selected="false">Tecidos e tintas</button>
     </div>
 
     <div class="page-actions">
-      <button type="button" class="btn primary" id="btnAddPersonalizacao">+ Adicionar Personalização</button>
+      <button type="button" class="btn primary" id="btnAddPersonalizacao">Adicionar personalização</button>
+      <button type="button" class="btn primary hidden" id="btnNovaCartela">Nova cartela</button>
     </div>
   </div>
 
-  <div class="pers-abas" role="tablist">
-    <button type="button" class="pers-aba is-ativa" data-pers-aba="personalizacoes" role="tab" aria-selected="true">Personalizações</button>
-    <button type="button" class="pers-aba" data-pers-aba="cartelas" role="tab" aria-selected="false">Cartelas de tecidos e tintas</button>
-  </div>
 
   <div class="pers-aba-painel" data-pers-painel="personalizacoes">
 
@@ -71,12 +74,16 @@
     <table class="data-table">
 <thead>
   <tr>
-    <th style="width:160px;">TIPO</th>
     <th>ITEM / COMPONENTE</th>
-    <th style="width:160px;">COMPLEXIDADE</th>
-    <th style="width:160px;">CUSTO EST.</th>
-    <th style="width:170px;">PREÇO SUG.</th>
-    <th style="width:120px;">STATUS</th>
+    <th style="width:160px;">TIPO</th>
+    <th style="width:120px;">ITEM, KIT OU COMPONENTE</th>
+    <th style="width:120px;">COMPLEXIDADE</th>
+    <th style="width:110px;">MATERIAIS</th>
+    <th style="width:120px;">MÃO DE OBRA</th>
+    <th style="width:120px;">ETAPAS</th>
+    <th style="width:120px;">CUSTO EST.</th>
+    <th style="width:120px;">PREÇO SUG.</th>
+    <th style="width:100px;">STATUS</th>
   </tr>
 </thead>
       <tbody id="tbodyPersonalizacoes">
@@ -106,9 +113,6 @@
 
   <div class="modal-header-left">
     <h3 id="modalTitle">Adicionar Personalização</h3>
-    <div class="modal-sub">
-      Vincule a um item ou componente e defina parâmetros de produção para gerar o preço automaticamente.
-    </div>
   </div>
 
   <div class="modal-header-right">
@@ -126,6 +130,8 @@
         ● Inativo
       </button>
     </div>
+
+    <button type="button" class="btn primary" id="btnSalvar">Salvar</button>
 
   </div>
 
@@ -189,8 +195,13 @@
   </div>
 
   <div class="form-row">
-    <label>Observações</label>
-    <textarea class="el-textarea" id="inpObs" rows="2" placeholder="Ex: cor específica, padrão de costura, acabamento..." ></textarea>
+    <label for="inpObs">Observação para a equipe de produção</label>
+    <textarea class="el-textarea" id="inpObs" rows="2" placeholder="Aparece para o time na hora de fazer a personalização (na ordem de produção). Ex.: cor específica, padrão de costura, acabamento..."></textarea>
+  </div>
+
+  <div class="form-row">
+    <label for="inpDescCliente">Descrição para o cliente</label>
+    <textarea class="el-textarea" id="inpDescCliente" rows="2" placeholder="Aparece no pedido enviado ao cliente, junto do item personalizado. Ex.: forração em linho, acabamento com pesponto..."></textarea>
   </div>
 
 </div>
@@ -198,7 +209,6 @@
 <!-- BLOCO: MATERIAIS UTILIZADOS -->
 <div class="card-section">
   <div class="card-title">Materiais utilizados</div>
-  <p class="mini-muted" style="margin:0 0 10px;">Materiais do Almoxarifado, na quantidade gasta para personalizar <strong>uma unidade</strong> do item. O pedido que levar esta personalização reserva esses materiais. Tecido ou tinta que o cliente escolhe: use <strong>Material escolhido pelo cliente</strong> — o cliente escolhe a opção na cartela, o preço muda conforme a opção e só ela é reservada.</p>
 
   <div id="insumosContainer"></div>
 
@@ -213,11 +223,12 @@
 
 </div>
 
-            <!-- BLOCO: MÃO DE OBRA -->
-            <div class="card-section">
-              <div class="card-title">Mão de obra</div>
+            <!-- BLOCO: ETAPAS DA PRODUÇÃO (15/11/2026: tempo e custo por hora saem da tela; o tempo é a soma das etapas
+                 e o custo por hora vem de Parâmetros > Produção > Personalizações) -->
+            <div class="card-section pers-etapas-card">
+              <div class="card-title">Etapas da produção</div>
 
-              <div class="form-row two">
+              <div class="form-row two pers-mao-obra-oculta" hidden>
                 <div>
                   <label>Tempo por unidade (horas)</label>
                   <input class="el-input" type="number" id="inpTempo" step="0.1" min="0" placeholder="Ex: 1.5" />
@@ -298,9 +309,8 @@
       </div>
 
       <!-- FOOTER -->
-      <div class="modal-footer">
+      <div class="modal-footer" hidden>
         <button type="button" class="btn secondary" id="btnCancelar">Voltar</button>
-        <button type="button" class="btn primary" id="btnSalvar">Salvar</button>
       </div>
 
   </div>
@@ -311,12 +321,12 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
-<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
-<script type="module" src="../../../js/Estoque/estoque-personalizacoes.mjs?v=20261102-insumos-kits"></script>
-<script type="module" src="../../../js/Estoque/estoque-cartelas.mjs?v=20261022-cartelas"></script>
+<script type="module" src="../../../js/Estoque/estoque-personalizacoes.mjs?v=20261115-editar-refeito"></script>
+<script type="module" src="../../../js/Estoque/estoque-cartelas.mjs?v=20261115-sem-cor"></script>
 <script>lucide.createIcons();</script>
-<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
 </body>
 </html>

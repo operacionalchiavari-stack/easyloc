@@ -3173,8 +3173,8 @@ function handleToolbarMenuClick(event){
 // prompt principal, em inglês, mora no servidor (studio-ai-engine, referencePolicy "furniture_studio_catalog"), pra
 // não depender do que o navegador manda; aqui vai só o inventário e o estilo de luz escolhido.
 const LUZ_ESTUDIO = {
-  suave: "Lighting style: large soft key light and fill softboxes, gentle and even, natural soft contact shadows.",
-  cenica: "Lighting style: refined directional softbox key light from one side with controlled contrast, sculpting the materials, still soft and natural, never harsh.",
+  suave: "Lighting style: neutral white-balanced soft key and ample fill softboxes, gentle and even, natural localized contact shadows. Preserve each original material's hue, saturation and midtone brightness; do not darken or wash out the furniture.",
+  cenica: "Lighting style: refined directional softbox key light from one side with ample neutral fill. Shape only subtle highlights and localized contact shadows, preserving each original material's hue, saturation and midtone brightness. Never use overall darkening, underexposure or cinematic color grading to create contrast.",
 };
 function montarCorpoIA(renderOptions = { iluminacao: "suave" }){
   const foto = capturarFotoEstudio();
@@ -3762,12 +3762,27 @@ function cenaModalSelecionar(objeto){
   modal.onSelecionar?.(item ? { id: String(item.id), nome: item.name, foto: item.photo || "", categoria: item.catLabel || "" } : null);
 }
 
+let preparandoFotoItem=false;
 export const cenaEditor = {
   pronto: () => studio.initialized,
   ocupado: () => Boolean(studio.cenaModal),
   // Móveis que podem entrar na cena: qualquer item do catálogo com modelo 3D (mesma lista da biblioteca do 3D Livre).
   itens: () => studio.items.filter((item) => item.glb).map((item) => ({ id: String(item.id), nome: item.name, foto: item.photo || "", categoria: item.catLabel || "", busca: normalizeSearch(`${item.name} ${item.catLabel || ""}`) })),
   normalizar: normalizeSearch,
+  async fotoDoItem(itemId){
+    if(studio.cenaModal||projectBusy||preparandoFotoItem)throw Error('Conclua a edição do 3D aberto antes de personalizar este móvel.');
+    if(!itemPorId(itemId)?.glb)throw Error('O modelo 3D deste móvel não está disponível.');
+    preparandoFotoItem=true;
+    const host=document.createElement('div');host.style.cssText='position:fixed;left:-12000px;top:0;width:1200px;height:800px;pointer-events:none';host.setAttribute('aria-hidden','true');document.body.appendChild(host);
+    try{
+      const resultado=await cenaEditor.abrir(host,{version:1,roomWidth:12,roomDepth:12,wallHeight:4,floorFinish:'neutral',walls:{},customWalls:[],
+        objects:[{itemId,position:[0,0,0],rotation:[0,0,0],scale:[1,1,1]}],camera:{position:[4,2.5,5],target:[0,.6,0]}});
+      if(resultado.faltando)throw Error('Não foi possível carregar o modelo 3D deste móvel.');
+      const foto=capturarFotoEstudio();
+      if(!foto?.src)throw Error('Não foi possível capturar a imagem deste móvel.');
+      return foto.src;
+    }finally{try{await cenaEditor.fechar();}finally{host.remove();preparandoFotoItem=false;}}
+  },
   async abrir(host, snapshot, { onSelecionar } = {}){
     if(studio.cenaModal) await cenaEditor.fechar();
     cenaValida(snapshot);

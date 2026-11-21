@@ -13,7 +13,8 @@
   const status = document.getElementById("catalogoParametrosStatus");
   const botao = document.getElementById("btnSalvarCatalogo");
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-  let empresaId = null, decoradores = [];
+  let empresaId = null, decoradores = [], carregado = false;
+  botao.disabled = true;
 
   function cartao(r, cfg){
     const c = Object.assign({}, PADRAO, cfg || {});
@@ -49,14 +50,15 @@
     empresaId = ctx?.empresa_id || window.__CONTEXT?.empresa_id;
     if(!empresaId){ status.textContent = "Empresa não identificada."; return; }
     const sb = window.supabaseClient;
-    const [{ data: cfg, error }, { data: lista }] = await Promise.all([
+    const [{ data: cfg, error }, { data: lista, error: erroLista }] = await Promise.all([
       sb.from("catalogo_parametros").select("config").eq("empresa_id", empresaId).maybeSingle(),
       sb.rpc("catalogo_decoradores_lista", { p_empresa_id: empresaId })
     ]);
-    if(error){ console.error(error); status.textContent = "Não foi possível carregar os parâmetros do catálogo."; }
+    if(error || erroLista){ status.textContent = 'Não foi possível carregar os parâmetros. Recarregue a página antes de salvar.'; return; }
     decoradores = lista || [];
     const config = cfg?.config || {};
     document.getElementById("catalogoRecursos").innerHTML = RECURSOS.map((r) => cartao(r, config[r.chave])).join("");
+    carregado=true; botao.disabled=false;
   }
 
   form.addEventListener("change", (e) => {
@@ -67,16 +69,18 @@
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if(!carregado || botao.disabled)return;
     let config;
     try { config = ler(); }
     catch(erro){ if(Array.isArray(erro)){ erro[0]?.focus?.(); window.alerta?.(erro[1], "Parâmetros", "aviso"); return; } throw erro; }
     botao.disabled = true; status.textContent = "Salvando…";
-    const { error } = await window.supabaseClient.from("catalogo_parametros")
+    try{const { error } = await window.supabaseClient.from("catalogo_parametros")
       .upsert({ empresa_id: empresaId, config, updated_at: new Date().toISOString(), updated_by: window.__CONTEXT?.usuario_id || null }, { onConflict: "empresa_id" });
     botao.disabled = false;
     if(error){ console.error(error); status.textContent = ""; window.alerta?.("Não foi possível salvar: " + error.message, "Parâmetros", "erro"); return; }
     status.textContent = "Salvo. O catálogo já segue as novas regras (quem estiver com ele aberto vê ao recarregar).";
+    }catch(err){status.textContent=err.message;window.alerta?.(err.message,"Parâmetros","erro");}finally{botao.disabled=false;}
   });
 
-  carregar();
+  carregar().catch(e=>{status.textContent=e.message;botao.disabled=true;});
 })();

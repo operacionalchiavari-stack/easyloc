@@ -12,7 +12,7 @@ async function executar(){
  const db=new Client({host:pg.PGHOST,port:Number(pg.PGPORT),user:pg.PGUSER,password:pg.PGPASSWORD,database:pg.PGDATABASE,ssl,connectionTimeoutMillis:30000});
  const password=crypto.randomBytes(36).toString('hex'),usuario='acervo_backup_executor';
  try{await db.connect();await db.query('set role postgres');await db.query("do $$begin if not exists(select 1 from pg_roles where rolname='acervo_backup_executor') then create role acervo_backup_executor login noinherit;end if;end $$");
-  const sql=(await db.query("select format('alter role acervo_backup_executor password %L',$1::text) s",[password])).rows[0].s;await db.query(sql);
+  const sql=(await db.query("select format('alter role acervo_backup_executor login noinherit password %L',$1::text) s",[password])).rows[0].s;await db.query(sql);
   await db.query("grant connect on database postgres to acervo_backup_executor;grant usage on schema public to acervo_backup_executor;grant execute on function public.sistema_backup_exportar(),public.sistema_backup_estrutura(),public.sistema_backup_linhas(text,text,integer,integer) to acervo_backup_executor;alter role acervo_backup_executor set default_transaction_read_only=on;alter role acervo_backup_executor set statement_timeout='240s'");
  }finally{await db.end();}
  const ref=fs.readFileSync(path.join(raiz,'supabase/.temp/project-ref'),'utf8').trim();

@@ -2307,3 +2307,15 @@ html:root #itensListHeader#itensListHeader>#itensSearchInput{display:block!impor
 html:root #itensListHeader#itensListHeader>.header-actions.header-actions{position:static!important;grid-column:3;grid-row:1;justify-self:end;margin:0!important;width:auto!important;max-width:100%;flex-wrap:nowrap!important;gap:8px!important}
 @media(max-width:1400px){html:root #itensListHeader#itensListHeader{grid-template-columns:minmax(0,1fr) auto;row-gap:16px!important}html:root #itensListHeader#itensListHeader>h2{grid-column:1/-1;grid-row:1}html:root #itensListHeader#itensListHeader>#itensSearchInput{grid-column:1;grid-row:2}html:root #itensListHeader#itensListHeader>.header-actions.header-actions{grid-column:2;grid-row:2}}
 @media(max-width:650px){html:root #itensListHeader#itensListHeader{grid-template-columns:minmax(0,1fr)}html:root #itensListHeader#itensListHeader>#itensSearchInput{grid-column:1;grid-row:2;width:100%}html:root #itensListHeader#itensListHeader>.header-actions.header-actions{grid-column:1;grid-row:3;justify-self:end;flex-wrap:wrap!important}}
+
+/* 15/11/2026: ícone do resumo ao lado da pesquisa (o par ocupa o lugar que era só da pesquisa) */
+html:root #itensListHeader#itensListHeader>.itens-busca-linha{grid-column:1;grid-row:1;justify-self:start;display:flex;align-items:center;gap:10px;min-width:0;width:min(380px,100%)}
+html:root #itensListHeader#itensListHeader>.itens-busca-linha>#itensSearchInput{display:block!important;flex:1 1 auto;box-sizing:border-box;width:auto;min-width:0;height:44px;margin:0!important;padding:10px 14px;font:14px Inter,system-ui,sans-serif;border:1px solid #dce3eb;border-radius:12px;background:#f5f6f7}
+html:root #itensListHeader#itensListHeader>.itens-busca-linha .itens-resumo-pop{left:0;right:auto}
+@media(max-width:1400px){html:root #itensListHeader#itensListHeader>.itens-busca-linha{grid-column:1;grid-row:2}}
+@media(max-width:650px){html:root #itensListHeader#itensListHeader>.itens-busca-linha{grid-column:1;grid-row:2;width:100%}}
+
+/* 15/11/2026: medidas na linha de baixo do nome do item */
+.td-item .item-medidas{margin-top:3px;color:#6b6b6b;font-size:12.5px}
+
+.td-estoque .estoque-kit{color:#6b6b6b;font-size:12.5px}

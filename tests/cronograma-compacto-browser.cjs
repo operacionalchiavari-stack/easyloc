@@ -63,7 +63,9 @@ for (let n = 0; n < 8; n++) {
   const grupos=await page.locator('#cronogramaTabela tbody[data-dia]').evaluateAll(nodes=>nodes.map(el=>({dia:el.dataset.dia,linhas:[...el.querySelectorAll('.crono-tabela-data')].map(c=>c.textContent.split('/').reverse().join('-')),cabecalhos:el.querySelectorAll('.crono-tabela-dia').length})));
   assert.ok(grupos.length>1);assert.ok(grupos.every(g=>g.cabecalhos===1&&g.linhas.every(d=>d===g.dia)),'um grupo por dia, sem misturar etapas');
   await page.locator('#cronogramaTabela [data-crono-responsavel="Wesley"] img').first().waitFor();
-  assert.match(await page.locator('.crono-tabela-pedido-tag').first().innerText(),/^#\d+/);
+  assert.match(await page.locator('.crono-tabela-pedido-tag').first().innerText(),/^\d+$/,'sem # antes do número');
+  assert.ok(await page.locator('#cronogramaTabela .crono-decorador-foto').count()>0,'foto do decorador na tabela');
+  assert.ok(await page.locator('#cronogramaGrade .evento-cliente .crono-decorador-foto').count()>0,'foto do decorador na grade');
   await page.screenshot({path:path.join(raiz,'outputs/cronograma-tabela.png'),fullPage:true});
   await page.locator('#cronogramaTabela [data-crono-detalhes]').filter({hasText:'Montagem'}).first().click();
   await page.locator('.crono-detalhes').waitFor();

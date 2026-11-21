@@ -33,7 +33,9 @@
     const el = card(message, title, variant);
     el.setAttribute("role", "status"); el.setAttribute("aria-live", "polite");
     const close = () => { clearTimeout(toasts.get(el)?.timer); toasts.delete(el); el.remove(); if (!stack.children.length) stack.remove(); };
-    el.appendChild(button("Fechar", "secondary", close));
+    const dismiss = button("\u00d7", "el-alert__close", close);
+    dismiss.setAttribute("aria-label", "Fechar alerta"); dismiss.title = "Fechar";
+    el.appendChild(dismiss);
     const progress = document.createElement("span"); progress.className = "el-alert__progress"; progress.setAttribute("aria-hidden", "true");
     el.style.setProperty("--alert-duration", duration+"ms"); el.appendChild(progress);
     toasts.set(el, close); close.timer = setTimeout(close, duration); stack.appendChild(el);
@@ -57,7 +59,12 @@
       const cancel = button(options.cancelarTexto || "Não", "secondary", () => close(false));
       const accept = button(options.confirmarTexto || "Sim", "primary", () => close(true));
       if (!options.somenteOk) actions.appendChild(cancel);
-      actions.appendChild(accept); el.appendChild(actions); overlay.appendChild(el); document.body.appendChild(overlay);
+      if (options.somenteOk) {
+        accept.textContent = "\u00d7"; accept.className = "btn el-alert__close";
+        accept.setAttribute("aria-label", "Fechar alerta"); accept.title = "Fechar";
+        el.appendChild(accept);
+      } else { actions.appendChild(accept); el.appendChild(actions); }
+      overlay.appendChild(el); document.body.appendChild(overlay);
       overlay.addEventListener("keydown", event => {
         if(event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(false); }
         if(event.key === "Tab") { event.preventDefault(); (options.somenteOk || document.activeElement === cancel ? accept : cancel).focus(); }

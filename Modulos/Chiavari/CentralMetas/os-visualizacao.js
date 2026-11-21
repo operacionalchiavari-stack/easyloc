@@ -11,7 +11,7 @@
   if(params.get('concluidas')==='1'){
    const style=document.createElement('style');style.textContent='body{padding:0!important}body>*:not(#modalConcluidas):not(script):not(style){display:none!important}#modalConcluidas{display:flex!important;position:static!important;padding:0!important;background:transparent!important;align-items:flex-start!important}#modalConcluidas .modal-caixa{width:100%!important;max-width:none!important;max-height:none!important;margin:0!important;box-shadow:none!important}#modalConcluidas .modal-topo,#modalConcluidas .modal-fechar{display:none!important}#modalConcluidas .modal-corpo{padding:0!important}#modalConcluidas .filtros-concluidas{padding:14px 0}#modalConcluidas .modal-caixa{border:0!important;background:transparent!important}';document.head.append(style);abrirOSConcluidas();return;
   }
-  if(!window.OSGestaoAcervo){const h=document.querySelector('h1');if(h?.firstChild?.nodeType===3)h.firstChild.textContent='Cronograma da manutenção ';return;}
+  if(!window.OSGestaoAcervo){const h=document.querySelector('h1');if(h?.firstChild?.nodeType===3)h.firstChild.textContent='Ordens de serviço ';return;}
   if(params.get('acao')!=='nova')return;
   abrirNovaOS();
   try{const catalogo=await carregarCatalogo(),item=catalogo.itens.find(i=>String(i.codigo).trim()===String(params.get('codigo')).trim());

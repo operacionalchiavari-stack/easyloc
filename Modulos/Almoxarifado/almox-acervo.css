@@ -1,0 +1,40 @@
+/* Almoxarifado novo (cópia da Tecnoweld): estilos das abas que vêm do Acervo (Recebimento, Solicitações de compra,
+   Pedidos a separar), no mesmo visual de cartão da Tecnoweld. */
+body{margin:0;background:#f3f5f6}
+.almoxarifado-page{padding:18px 24px 40px}
+.acv-card{padding:16px 18px;margin-bottom:16px}
+.acv-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.acv-card-head h2{margin:0;font-size:16px;font-weight:700}
+.acv-card-head .tw-field{width:auto;min-width:180px}
+.acv-aviso{margin:0 0 12px;padding:10px 12px;border-radius:8px;background:#fff7e6;border:1px solid #f3d27a;font-size:13px}
+.col-qtd{text-align:right;white-space:nowrap}
+.hist-vazio,.empty-state{color:#6b7280;text-align:center;padding:18px}
+.muted-line{display:block;color:#6b7280;font-size:12px;margin-top:2px}
+.status-badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;border:1px solid transparent}
+.status-badge.warning{background:#fff7e6;color:#8a5a00;border-color:#f3d27a}
+.status-badge.info{background:#eaf0fa;color:#123f86;border-color:#c7d5ee}
+.status-badge.success{background:#e8f5ec;color:#1f7a44;border-color:#b9e0c6}
+.status-badge.neutral{background:#f1f3f5;color:#4b5563;border-color:#dfe3e8}
+.almox-tab-badge:empty{display:none}
+/* Recebimento (almox-recebimento.js) usa "badge" e "btn-sm" do almoxarifado antigo */
+#tab-recebimento .btn-sm{padding:6px 12px;font-size:13px}
+#tab-recebimento .badge{display:inline-flex;padding:3px 9px;border-radius:999px;font-size:12px;font-weight:600;background:#f1f3f5;color:#4b5563}
+#tab-recebimento .badge-ok{background:#e8f5ec;color:#1f7a44}
+#tab-recebimento .badge-atencao{background:#fff7e6;color:#8a5a00}
+#tab-recebimento .badge-falta{background:#fdecec;color:#b42318}
+#tab-recebimento .badge-reservado{background:#eaf0fa;color:#123f86}
+#tab-recebimento .badge-cinza{background:#f1f3f5;color:#4b5563}
+#tab-recebimento table{width:100%;border-collapse:collapse}
+.acv-producao{padding:0}
+.acv-card{background:#fff;border:1px solid #e5e9ef;border-radius:14px}
+#receivingTab,#purchasesTab{display:flex;flex-direction:column;gap:0}
+#receivingTab.hidden,#purchasesTab.hidden{display:none}
+.acv-table{width:100%;border-collapse:collapse;table-layout:auto;font-size:13.5px}
+.acv-table th{position:sticky;top:0;background:#f5f7fa;color:#4b5563;font-size:12px;font-weight:700;text-align:left;padding:10px 12px;border-bottom:1px solid #e5e9ef;white-space:nowrap}
+.acv-table td{padding:10px 12px;border-bottom:1px solid #eef1f5;vertical-align:middle}
+.acv-table tr:last-child td{border-bottom:0}
+.acv-table th.col-qtd,.acv-table td.col-qtd{text-align:right}
+.acv-table tbody tr[data-receb-abrir]{cursor:pointer}
+.acv-table tbody tr[data-receb-abrir]:hover td{background:#f8fafc}
+.acv-table .material-code{color:#0b63ce;font-weight:700}
+.almox-tab-panel .acv-card{border:0;border-radius:0;padding:0;margin-bottom:24px;background:transparent}

@@ -35,6 +35,9 @@ const fixture=()=>{
    await pagina.goto(base+'/Modulos/Chiavari/Ocorrencias/OcorrenciasOperacionais.html');
    await pagina.locator('#opLinhas [data-detalhe="a"]').waitFor();
    assert.equal(await pagina.locator('#opLinhas tr').count(),2);
+   assert.deepEqual((await pagina.locator('.op-page thead th').first().locator('xpath=..').locator('th').allTextContents()).slice(0,3),['Data','Pedido','Cliente'],'Pedido e Cliente em colunas separadas');
+   assert.ok(await pagina.locator('#opLinhas .op-num-card').count()>0,'número no card vermelho');assert.ok(await pagina.locator('#opLinhas .op-foto').count()>0,'foto (ou iniciais) do cliente');
+   assert.equal(await pagina.locator('#opLinhas .op-num-card').first().evaluate(e=>getComputedStyle(e).color),'rgb(185, 28, 28)');
    assert.equal(await pagina.getByRole('button',{name:'Nova ocorrência',exact:true}).count(),0);
    await pagina.locator('#opBusca').fill('Capa Cadeira');assert.equal(await pagina.locator('#opLinhas tr').count(),1);
    await pagina.locator('[data-detalhe="a"]').click();await pagina.locator('#opDetalhe[open]').waitFor();

@@ -152,14 +152,15 @@ async function abrir(b, pagina, banco, html) {
     await p.close();
 
     // ---------- Pedido: BV da titular, dividir, negociar ----------
-    const htmlBv = `<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="Modulos/Comercial/Pedidos/pedido.css">
+    const htmlBv = `<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="Modulos/Comercial/Pedidos/pedido.css"><link rel="stylesheet" href="styles/pedido-pagamentos-responsivo.css"><main class="pedido-screen">
       <div class="meta-item"><div class="autocomplete-wrapper"><input id="clienteInput" value="Ana Assistente"><input type="hidden" id="clienteIdHidden" value="c2"></div></div>
-      <aside class="pedido-financeiro" style="width:380px"><section class="finance-card resumo-card"><h2>Resumo</h2></section></aside>
+      <aside class="pedido-financeiro" style="width:min(1000px,calc(100vw - 40px))"><section class="finance-card resumo-card"><h2>Resumo</h2></section></aside></main>
       <script type="module">import { initEquipePedido } from "./js/pedido/pedido.equipe.mjs"; import { initBvPedido } from "./js/pedido/pedido.bv.mjs";
         window.__PEDIDO_VALORES = { locacao_bv: 10000 };
         initEquipePedido({ supabase: window.supabaseClient }); initBvPedido({ supabase: window.supabaseClient });
         document.getElementById("clienteInput").dispatchEvent(new CustomEvent("cliente-selecionado", { detail: { id: "c2" } })); window.__pronto = true;</script>`;
     ({ p, errs } = await abrir(b, "teste-bv.html", {
+      comercial_motivos_bv:[{id:'m1',empresa_id:'e1',nome:'Negociação comercial',ativo:true,ordem:1}],
       clientes_equipe_membros: [{ empresa_id: "e1", cliente_id: "c2", equipe_id: "e1x", papel: { nome: "Assistente" }, equipe: eqs.e1 }],
       "rpc:pedido_bv_regra": {
         com: { regra: { beneficiario_id: "c1", beneficiario_nome: "Kelly Khawam", pela_titular: true, equipe_nome: "Equipe Kelly", percentual: 15 }, registrado: null, membros: [{ cliente_id: "c1", nome: "Kelly Khawam" }, { cliente_id: "c2", nome: "Ana Assistente" }] },
@@ -184,15 +185,28 @@ async function abrir(b, pagina, banco, html) {
     await p.screenshot({ path: path.join(process.env.TMP || ".", "pedido-bv.png"), fullPage: true });
     // negociado neste pedido: 12%, volta tudo para a titular
     await p.check("[data-pbv=manual]");
+    const alinhamento=await p.evaluate(()=>{const texto=document.querySelector('.pbv-manual').getBoundingClientRect(),campo=document.querySelector('[data-pbv=pct]').getBoundingClientRect();return campo.left>texto.right&&Math.abs((campo.top+campo.height/2)-(texto.top+texto.height/2))<2;});
+    assert.ok(alinhamento,'percentual é digitado ao lado da opção, na mesma linha');
+    await p.screenshot({path:'.tmp/pedido-bv-ao-lado.png',fullPage:true});
     await p.fill("[data-pbv=pct]", "12"); await p.dispatchEvent("[data-pbv=pct]", "change");
-    await p.fill("[data-pbv=obs]", "Negociado na reunião"); await p.dispatchEvent("[data-pbv=obs]", "change");
+    assert.match(await p.evaluate(()=>window.__pedidoValidarBV()),/Selecione o motivo/);
+    await p.selectOption('[data-pbv=motivo]','m1');
     assert.match(await p.textContent(".pbv-total"), /12%.*1\.200,00/);
-    assert.deepEqual(await p.evaluate(() => window.__pedidoBV()), { manual: true, percentual: 12, observacao: "Negociado na reunião", partes: null });
+    assert.deepEqual(await p.evaluate(() => window.__pedidoBV()), { manual: true, percentual: 12, observacao: "Negociação comercial", partes: null,motivo_id:'m1' });
     await p.fill("[data-pbv=pct]", ""); await p.dispatchEvent("[data-pbv=pct]", "change");
     await p.fill("[data-pbv=pct]", "150"); await p.dispatchEvent("[data-pbv=pct]", "change");
     assert.match(await p.evaluate(() => window.__pedidoValidarBV()), /entre 0 e 100/);
     await p.click("[data-pbv=padrao]");
     assert.equal(await p.evaluate(() => window.__pedidoBV()), null);
     console.log("ok 5 - BV: % da titular por padrão, dividir com quem fez, negociado no pedido, validações", errs.length ? errs : "");
+    await p.close();
+    ({p,errs}=await abrir(b,'teste-motivos.html',{comercial_motivos_bv:[{id:'m1',empresa_id:'e1',nome:'Negociação comercial',ativo:true,ordem:1}]},`<!doctype html><meta charset="utf-8"><main id="motivos"></main><script src="Modulos/Configuracoes/Parametros/parametros-motivos-cancelamento.js"></script><script>carregarMotivosBV(document.querySelector('#motivos'),'e1');</script>`));
+    await p.locator('.pr-motivos-bv [data-nome]').waitFor();
+    await p.locator('.pr-motivos-bv [data-novo] input[name=nome]').fill('Condição para evento');await p.locator('.pr-motivos-bv [data-novo] button').click();
+    await p.waitForFunction(()=>document.querySelectorAll('.pr-motivos-bv li').length===2);
+    await p.locator('.pr-motivos-bv li').first().locator('[data-ativo]').uncheck();
+    await p.waitForFunction(()=>document.querySelector('.pr-motivos-bv li').classList.contains('inativo'));
+    assert.equal(await p.evaluate(()=>window.__banco.comercial_motivos_bv.find(m=>m.id==='m1').ativo),false);
+    assert.deepEqual(errs,[]);console.log('ok 6 - parâmetros: cadastra e desativa motivos de BV preservando o histórico');
   } finally { await b.close(); }
 })().catch((e) => { console.error(e); process.exit(1); });

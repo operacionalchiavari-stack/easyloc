@@ -3,17 +3,19 @@
 <html data-theme-legacy lang="pt-BR">
 <head>
 <link rel="stylesheet" href="../../../styles/tokens.css?v=20261019-globais">
-<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
-<script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
-  <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="costura"></script>
+<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js?v=20261108-zoom-padrao"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
+  <script src="../gas-cliente.js?v=20261120-sem-servidor" data-projeto="costura" data-sem-motor></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Painel de Complexidade</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="../../../js/core/supabase.js"></script>
-<script src="../../../js/shared/complexidade.js?v=20261102-personalizacao"></script>
-<link rel="stylesheet" href="complexidade-automatica.css?v=20261101-score">
+<script src="../../../js/shared/complexidade.js?v=20261120-consulta"></script>
+<link rel="stylesheet" href="complexidade-automatica.css?v=20261120-consulta">
+<link rel="stylesheet" href="complexidade-tela.css?v=20261120-provas">
 
 <style>
 :root{
@@ -1002,6 +1004,21 @@ html:root body .header :is(.btn-setor,.btn-painel-cx):hover{
   background:transparent!important;border-bottom-color:#cbd0d6!important;
 }
 html:root body .header .btn-setor.ativo:hover{border-bottom-color:var(--el-button-primary-bg,#7d603d)!important}
+/* "Todos os setores" (nov/2026): o título da coluna leva para a aba do setor */
+.cx-tabela-geral .cx-th-setor{cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:4px;transition:text-decoration-color .15s}
+.cx-tabela-geral .cx-th-setor:hover{text-decoration-color:currentColor}
+.cx-tabela-geral .cx-td-setor{min-width:120px}
+/* nov/2026: sem o título "Pedidos"; número do pedido em card azul; foto do cliente; cor da nota pela faixa (Parâmetros) */
+html:root body #listaPedidos::before{content:none!important;display:none!important}
+html:root:is(#cx-n#cx-n#cx-n#cx-n,html) body #listaPedidos .pedido-destaque{background:rgba(220,38,38,.10)!important;border-color:rgba(220,38,38,.18)!important;color:#b91c1c!important} /* vermelho, igual à Central de Pedidos */
+.cx-cliente{display:inline-flex;align-items:center;gap:10px;text-align:left}
+.cx-foto{position:relative;flex:0 0 auto;width:36px;height:36px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;background:#eaf0fa;color:#123f86;font-size:12px;font-weight:600;border:1px solid #dfe5ee}
+.cx-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}.cx-foto i{font-style:normal}
+html:root:is(#cx-n#cx-n#cx-n#cx-n,html) body #listaPedidos .score.cx-cor-azul{background:#e3edfb!important;color:#123f86!important}
+html:root:is(#cx-n#cx-n#cx-n#cx-n,html) body #listaPedidos .score.cx-cor-amarelo{background:#fdf1cf!important;color:#7a5a00!important}
+html:root:is(#cx-n#cx-n#cx-n#cx-n,html) body #listaPedidos .score.cx-cor-vermelho{background:#fbe1df!important;color:#a8261d!important}
+/* Cliente e Local alinhados à esquerda (nov/2026) */
+html:root:is(#cx-n#cx-n#cx-n#cx-n,html) body #listaPedidos .cx-tabela-geral :is(th,td).cx-esq{text-align:left!important;padding-left:14px!important}
 </style>
 </head>
 
@@ -1016,53 +1033,7 @@ html:root body .header .btn-setor.ativo:hover{border-bottom-color:var(--el-butto
     <input id="filtroCliente" type="search" aria-label="Filtrar cliente ou local" placeholder="Filtrar cliente ou local" oninput="aplicarFiltrosPainel()" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
   </div>
 
-  <div style="display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap;">
-
-<div
-  id="btnPersonalizacao"
-  class="btn-setor btn-personalizacao ativo"
-  onclick="mudarSetor('personalizacao')"
->
-  Estofados
-</div>
-
-<div
-  id="btnPintura"
-  class="btn-setor btn-pintura"
-  onclick="mudarSetor('pintura')"
->
-  Pintura
-</div>
-
-<div
-  id="btnMontagem"
-  class="btn-setor btn-montagem"
-  onclick="mudarSetor('montagem')"
->
-  Montagem
-</div>
-
-<div
-  id="btnTriagem"
-  class="btn-setor"
-  onclick="mudarSetor('triagem')"
->
-  Triagem
-</div>
-
-<div
-  id="btnCarregamento"
-  class="btn-setor"
-  onclick="mudarSetor('carregamento')"
->
-  Carregamento
-</div>
-
-<button type="button" class="btn-painel-cx" onclick="PainelCX.abrir()">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-7"/></svg>Painel
-</button>
-
-  </div>
+  <!-- nov/2026: sem abas de setor nem Painel; a tabela mostra sempre todos os setores. As perguntas ficam na análise do pedido. -->
 </div>
 
   <div id="listaPedidos"></div>
@@ -1424,7 +1395,7 @@ html:root body .header .btn-setor.ativo:hover{border-bottom-color:var(--el-butto
 let respostas = {};
 let pedidos = [];
 let lote = [];
-let setorAtual = "personalizacao";
+let setorAtual = "geral"; // nov/2026: abre em "Todos os setores" (score de cada setor lado a lado)
 
 // Pedido que está aberto para edição
 let pedidoEmEdicao = null;
@@ -2177,7 +2148,7 @@ valorMontagem: limparMoeda(document.getElementById("valorMontagem").value),
 valorFrete: limparMoeda(document.getElementById("valorFrete").value),
 
   // 🔥 ESSENCIAL
-  setor: setorAtual === "personalizacao" ? "Forração" : "Acabamento e Pintura",
+  setor: (setorAtual === "personalizacao" || setorAtual === "geral") ? "Forração" : "Acabamento e Pintura",
 
   score,
 
@@ -2561,6 +2532,71 @@ function mudarPaginaPainel(direcao){
   render();
 
 }
+// "Todos os setores" (nov/2026): os pedidos com o score de cada setor lado a lado. As perguntas de cada setor ficam na aba
+// do setor; clicar no título da coluna abre essa aba.
+const SETORES_GERAL = [
+  ["personalizacao", "Estofados", "score"], ["pintura", "Pintura", "scorePintura"], ["montagem", "Montagem", "scoreMontagem"],
+  ["triagem", "Triagem", "scoreTriagem"], ["carregamento", "Carregamento", "scoreCarregamento"]
+];
+// Cor do card da nota (nov/2026): faixas definidas em Parâmetros > Complexidade (config.faixas_cor).
+window.__cxFaixas = { azul_ate: 50, amarelo_ate: 75 };
+function corScoreCX(n){
+  if(!Number.isFinite(n)) return "";
+  const f = window.__cxFaixas || {};
+  return n <= Number(f.azul_ate ?? 50) ? "cx-cor-azul" : n <= Number(f.amarelo_ate ?? 75) ? "cx-cor-amarelo" : "cx-cor-vermelho";
+}
+function scoreSetorHtml(p, setor, campo){
+  if(p.automatico && p.complexidade && p.complexidade.setores && p.complexidade.setores[setor]){
+    const s = p.complexidade.setores[setor], a = CXRegras.apresentarScore(s);
+    const n = s.score != null ? Number(s.score) : s.intervalo ? Number(s.intervalo.maximo) : NaN; // parcial: pela maior nota possível
+    return '<span class="score '+corScoreCX(n)+'" title="'+(a.detalhe||'')+'">'+a.texto+'</span>'+(a.legenda ? '<small class="cx-score-legenda">'+a.legenda+'</small>' : '');
+  }
+  const n = Number(p[campo]) || 0;
+  return '<span class="score '+corScoreCX(n)+'">'+n+'%</span>';
+}
+// Foto do cliente (nov/2026): a do catálogo (clientes_empresas.catalogo_logo_url), pelo nome; sem foto, iniciais.
+window.__cxFotos = {};
+const normNomeCX = (v) => String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+function fotoClienteCX(nome){
+  const url = window.__cxFotos[normNomeCX(nome)];
+  const ini = String(nome || "?").trim().split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]).join("").toUpperCase() || "?";
+  const e = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  return '<span class="cx-foto"><i>'+e(ini)+'</i>'+(url ? '<img src="'+e(url)+'" alt="" loading="lazy" onerror="this.remove()">' : '')+'</span>';
+}
+// Carrega as fotos dos clientes e as faixas de cor uma vez; redesenha quando chegam.
+(async function carregarExtrasCX(){
+  try {
+    const sb = window.supabaseClient; if(!sb || !sb.from) return;
+    const [cli, cfg] = await Promise.all([
+      sb.from("clientes_empresas").select("nome_razao,catalogo_logo_url"),
+      sb.from("complexidade_config").select("config").maybeSingle()
+    ]);
+    (cli && cli.data || []).forEach((c) => { if(c.catalogo_logo_url) window.__cxFotos[normNomeCX(c.nome_razao)] = c.catalogo_logo_url; });
+    const f = cfg && cfg.data && cfg.data.config && cfg.data.config.faixas_cor;
+    if(f) window.__cxFaixas = { azul_ate: Number(f.azul_ate), amarelo_ate: Number(f.amarelo_ate) };
+    if(typeof render === "function" && typeof pedidos !== "undefined" && pedidos && pedidos.length) render();
+  } catch(e) { console.warn("Painel de Complexidade: fotos/cores", e); }
+})();
+function tabelaGeral(pedidosPagina){
+  const esc = (v) => String(v ?? "").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return `
+    <table class="cx-tabela-geral" style="width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:visible;">
+      <thead><tr>
+        <th>Data</th><th>Pedido</th><th class="cx-esq">Cliente</th><th class="cx-esq">Local</th>
+        ${SETORES_GERAL.map(([k, nome]) => `<th class="cx-th-setor">${nome}</th>`).join("")}
+      </tr></thead>
+      <tbody>
+        ${pedidosPagina.map(p => `
+          <tr onclick="abrirPedidoPorId('${encodeURIComponent(p.id || "")}')" style="border-bottom:1px solid #e5e7eb;text-align:center;cursor:pointer;">
+            <td>${formatarData(p.data)}</td>
+            <td>${p.numero ? `<span class="pedido-destaque">${esc(p.numero)}</span>` : ""}</td>
+            <td class="cx-esq"><span class="cx-cliente">${fotoClienteCX(p.cliente)}<span>${esc(p.cliente)}</span></span></td>
+            <td class="cx-esq">${esc(p.local)}</td>
+            ${SETORES_GERAL.map(([k, , campo]) => `<td class="cx-td-setor">${scoreSetorHtml(p, k, campo)}</td>`).join("")}
+          </tr>`).join("")}
+      </tbody>
+    </table>`;
+}
 function respostaTabela(valor){
 
   if(valor === true){
@@ -2612,7 +2648,7 @@ function render(){
     return;
   }
 
-  lista.innerHTML = `
+  lista.innerHTML = (setorAtual === "geral" ? tabelaGeral(pedidosPagina) : `
     <table style="
       width:100%;
       border-collapse:collapse;
@@ -2652,22 +2688,19 @@ ${setorAtual === "personalizacao" ? `
 
   <th data-tooltip="Carga volumosa (sofás, bares, painéis)?">23</th>
   <th data-tooltip="Itens frágeis na carga?">24</th>
-  <th data-tooltip="Mais de uma viagem?">25</th>
-  <th data-tooltip="Carregamento fora do horário (noite/fim de semana)?">26</th>
+    <th data-tooltip="Carregamento fora do horário (noite/fim de semana)?">26</th>
 
 ` : `
 
-  <th data-tooltip="Pergunta 1 de Montagem">15</th>
-  <th data-tooltip="Pergunta 2 de Montagem">16</th>
-  <th data-tooltip="Pergunta 3 de Montagem">17</th>
-  <th data-tooltip="Pergunta 4 de Montagem">18</th>
+  <th data-tooltip="O transporte exige baldeação?">15</th>
+  <th data-tooltip="O transporte das peças exige escada?">16</th>
+  <th data-tooltip="Caminhões acima do limite?">18</th>
 
 `}
 
 <th data-tooltip="Cliente com histórico de reclamação?">5</th>
 <th data-tooltip="Cliente recorrente/exclusivo?">6</th>
 <th data-tooltip="Evento fora do padrão?">7</th>
-<th data-tooltip="Cliente novo?">8</th>
 
 <th data-tooltip="Carregamento seg a qua?">9</th>
 <th data-tooltip="Passou por mais de 1 setor?">10</th>
@@ -2716,14 +2749,12 @@ ${setorAtual === "personalizacao" ? `
 
   <td>${respostaTabela(p.r23)}</td>
   <td>${respostaTabela(p.r24)}</td>
-  <td>${respostaTabela(p.r25)}</td>
   <td>${respostaTabela(p.r26)}</td>
 
 ` : `
 
   <td>${respostaTabela(p.r15)}</td>
   <td>${respostaTabela(p.r16)}</td>
-  <td>${respostaTabela(p.r17)}</td>
   <td>${respostaTabela(p.r18)}</td>
 
 `}
@@ -2731,7 +2762,6 @@ ${setorAtual === "personalizacao" ? `
 <td>${respostaTabela(p.r5)}</td>
 <td>${respostaTabela(p.r6)}</td>
 <td>${respostaTabela(p.r7)}</td>
-<td>${respostaTabela(p.r8)}</td>
 <td>${respostaTabela(p.r9)}</td>
 <td>${respostaTabela(p.r10)}</td>
 
@@ -2754,7 +2784,7 @@ ${p.automatico ? CXRegras.apresentarScore(p.complexidade.setores[setorAtual]).te
           </tr>
         `).join("")}
       </tbody>
-    </table>
+    </table>`) + `
 
     <div class="paginacao-pedidos">
 
@@ -2990,6 +3020,7 @@ function mudarSetor(setor){
   setorAtual = setor;
 
   const botoes = {
+    geral: "btnGeral",
     personalizacao: "btnPersonalizacao",
     pintura: "btnPintura",
     montagem: "btnMontagem",
@@ -2998,9 +3029,7 @@ function mudarSetor(setor){
   };
 
   Object.keys(botoes).forEach(chave => {
-    document
-      .getElementById(botoes[chave])
-      .classList.toggle("ativo", chave === setor);
+    document.getElementById(botoes[chave])?.classList.toggle("ativo", chave === setor); // abas saíram em nov/2026
   });
 
   paginaAtual = 1;
@@ -3411,6 +3440,8 @@ var PainelCX = (function(){
   return { abrir:abrir, fechar:fechar, periodo:periodo, abrirPedido:abrirPedido };
 })();
 </script>
-<script src="complexidade-automatica.js?v=20261101-base-geral"></script>
+<script src="costura-dados.js?v=20261120-supabase"></script>
+<script src="complexidade-tela.js?v=20261120-provas2"></script>
+<script src="complexidade-automatica.js?v=20261120-provas"></script>
 </body>
 </html>

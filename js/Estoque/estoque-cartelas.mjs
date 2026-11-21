@@ -44,10 +44,15 @@ async function iniciar() {
   await Promise.all([carregarCartelas(), carregarFornecedores()]);
   pintarLista();
   painel.addEventListener("input", (e) => { if (e.target.matches("[data-cart-busca]")) { C.filtro = e.target.value; pintarCards(); } });
+  document.getElementById("btnNovaCartela")?.addEventListener("click", () => abrirCartela(null));
+  painel.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-cart-id]")) { e.preventDefault(); e.target.click(); } });
   painel.addEventListener("click", (e) => {
     if (e.target.closest("[data-cart-nova]")) return abrirCartela(null);
     const card = e.target.closest("[data-cart-id]");
-    if (card && !e.target.closest("a")) abrirCartela(card.dataset.cartId);
+    // 15/11/2026: clicar no catálogo mostra as opções dele na coluna da direita (editar pelo botão "Editar catálogo")
+    const ed = e.target.closest("[data-cart-editar]");
+    if (ed) { e.stopPropagation(); abrirModalCartela(C.cartelas.find((c) => c.id === ed.dataset.cartEditar) || C.atual); return; }
+    if (card && !e.target.closest("a")) { if (C.sel !== card.dataset.cartId) C.editando = null; C.ladoId = null; C.sel = card.dataset.cartId; pintarCards(); }
   });
   const abaUrl = new URLSearchParams(location.search).get("aba");
   if (abaUrl === "cartelas") trocarAba("cartelas");
@@ -66,13 +71,15 @@ function trocarAba(aba) {
   document.querySelectorAll("[data-pers-painel]").forEach((p) => p.classList.toggle("hidden", p.dataset.persPainel !== aba));
   const add = document.getElementById("btnAddPersonalizacao");
   if (add) add.classList.toggle("hidden", aba !== "personalizacoes");
+  // 15/11/2026: "Nova cartela" fica na linha do título, no lugar de "Adicionar personalização"
+  document.getElementById("btnNovaCartela")?.classList.toggle("hidden", aba !== "cartelas");
   const h1 = document.querySelector(".personalizacoes-page .page-title h1");
-  if (h1) h1.textContent = aba === "cartelas" ? "Cartelas de tecidos e tintas" : "Personalizações Cadastradas";
+  if (h1) h1.textContent = "Personalizações";
 }
 
 async function carregarCartelas() {
   const { data, error } = await sb().from("cartelas")
-    .select("*, cartela_opcoes(id, foto_url, cor, ativo)")
+    .select("*, cartela_opcoes(id, codigo, nome, preco, ordem, foto_url, cor, ativo)")
     .eq("empresa_id", empresa())
     .order("tipo").order("nome");
   if (error) { console.error("erro ao carregar cartelas:", error); C.cartelas = []; return; }
@@ -80,8 +87,8 @@ async function carregarCartelas() {
 }
 
 async function carregarFornecedores() {
-  const { data } = await sb().from("fornecedores").select("id, nome_razao_social, nome_fantasia").eq("empresa_id", empresa()).order("nome_razao_social");
-  C.fornecedores = (data || []).map((f) => ({ id: f.id, nome: String(f.nome_fantasia || f.nome_razao_social || "").trim() })).filter((f) => f.nome);
+  const { data } = await sb().from("fornecedores").select("id, nome_razao_social, nome_fantasia, foto_url").eq("empresa_id", empresa()).order("nome_razao_social");
+  C.fornecedores = (data || []).map((f) => ({ id: f.id, nome: String(f.nome_fantasia || f.nome_razao_social || "").trim(), foto: f.foto_url || "" })).filter((f) => f.nome);
 }
 
 async function carregarMateriais() {
@@ -98,12 +105,11 @@ function pintarLista() {
   painel.innerHTML = `
     <div class="cart-topo">
       <input class="el-input cart-busca" type="search" data-cart-busca placeholder="Pesquisar cartela, tipo ou fornecedor..." autocomplete="off">
-      <button type="button" class="btn primary" data-cart-nova>+ Nova cartela</button>
     </div>
-    <p class="cart-ajuda">Cadastre aqui os catálogos de tecidos e tintas dos fornecedores. Na personalização, use
-      <strong>Material escolhido pelo cliente</strong>: o cliente escolhe a opção no catálogo (e o Comercial no pedido), o preço
-      muda conforme a opção e o pedido chega com o código.</p>
-    <div class="cart-grid" data-cart-grid></div>`;
+    <div class="cart-duas">
+      <div class="cart-grid" data-cart-grid></div>
+      <section class="cart-lado" data-cart-lado aria-live="polite"></section>
+    </div>`;
   pintarCards();
 }
 
@@ -112,41 +118,93 @@ function pintarCards() {
   if (!grid) return;
   const q = C.filtro.trim().toLowerCase();
   const lista = C.cartelas.filter((c) => !q || [c.nome, c.tipo, c.fornecedor_nome].some((t) => String(t || "").toLowerCase().includes(q)));
+  const formNova = "";
   if (!lista.length) {
-    grid.innerHTML = `<div class="cart-vazio">${C.cartelas.length ? "Nenhuma cartela encontrada." : "Nenhuma cartela cadastrada ainda. Comece por <strong>+ Nova cartela</strong>."}</div>`;
+    grid.innerHTML = formNova + (formNova ? "" : `<div class="cart-vazio">${C.cartelas.length ? "Nenhuma cartela encontrada." : "Nenhuma cartela cadastrada ainda. Comece por <strong>Nova cartela</strong>, no topo."}</div>`);
+    pintarLado(null);
     return;
   }
-  grid.innerHTML = lista.map((c) => {
-    const ops = (c.cartela_opcoes || []).filter((o) => o.ativo);
-    const amostras = ops.slice(0, 8).map((o) => o.foto_url
-      ? `<span class="cart-amostra" style="background-image:url('${esc(o.foto_url)}')"></span>`
-      : `<span class="cart-amostra" style="background:${esc(o.cor || "#e3e7ec")}"></span>`).join("");
-    return `<button type="button" class="cart-card${c.ativa ? "" : " is-inativa"}" data-cart-id="${c.id}">
-      <span class="cart-card-topo"><span class="cart-tipo">${esc(c.tipo)}</span>${c.ativa ? "" : '<span class="cart-inativa">Inativa</span>'}</span>
+  if (C.ladoId !== "nova" && !lista.some((c) => c.id === C.sel)) C.sel = lista[0].id;
+  grid.innerHTML = formNova + lista.map((c) => {
+    const forn = C.fornecedores.find((f) => f.id === c.fornecedor_id) || C.fornecedores.find((f) => f.nome.toLowerCase() === String(c.fornecedor_nome || "").toLowerCase());
+    const nomeForn = c.fornecedor_nome || forn?.nome || "";
+    const ini = (nomeForn || c.nome || "?").trim().split(/\s+/).slice(0, 2).map((x) => x[0]).join("").toUpperCase();
+    const foto = forn?.foto ? `<img src="${esc(forn.foto)}" alt="" loading="lazy">` : `<span>${esc(ini)}</span>`;
+    const sel = c.id === C.sel;
+    return `<div role="button" tabindex="0" class="cart-card cart-card-mini${c.ativa ? "" : " is-inativa"}${sel ? " is-sel" : ""}" data-cart-id="${c.id}" aria-pressed="${sel}" title="${esc(nomeForn)}">
+      <span class="cart-forn-foto">${foto}</span>
       <strong class="cart-nome">${esc(c.nome)}</strong>
-      <span class="cart-forn">${esc(c.fornecedor_nome || "Sem fornecedor")}</span>
-      <span class="cart-amostras">${amostras || '<span class="cart-sem">Sem opções</span>'}</span>
-      <span class="cart-rodape"><span>${ops.length} opç${ops.length === 1 ? "ão" : "ões"} · cobrado por ${esc(c.unidade)}</span>${c.link ? `<a href="${esc(c.link)}" target="_blank" rel="noopener">Catálogo do fornecedor ↗</a>` : ""}</span>
-    </button>`;
+      ${sel ? `<button type="button" class="btn secondary cart-editar" data-cart-editar="${c.id}">Editar</button>` : ""}
+    </div>`;
   }).join("");
+  pintarLado(C.ladoId === "nova" ? null : lista.find((c) => c.id === C.sel));
+}
+
+// 15/11/2026: dados do catálogo (nome, tipo, fornecedor...) ficam na coluna da esquerda, no lugar do card escolhido
+function formCartelaHtml(atual) {
+  const c = atual || { nome: "", tipo: "Tecido", fornecedor_nome: "", link: "", unidade: "m", ativa: true };
+  const tipos = [...new Set([...TIPOS_SUGERIDOS, ...C.cartelas.map((x) => x.tipo)])];
+  return `<div class="cart-form-card" data-cart-form>
+      <div class="cart-form-topo"><strong>${atual ? "Editar cartela" : "Nova cartela"}</strong>
+        <button type="button" class="cart-modal-x" data-cart-fechar aria-label="Fechar">×</button></div>
+      <label class="cart-campo">Nome da cartela<input class="el-input" data-f="nome" value="${esc(c.nome)}" placeholder="Ex.: Linho Karsten 2026"></label>
+      <label class="cart-campo">Tipo<input class="el-input" data-f="tipo" list="cartTipos" value="${esc(c.tipo)}" placeholder="Tecido, Tinta..."></label>
+      <datalist id="cartTipos">${tipos.map((t) => `<option value="${esc(t)}">`).join("")}</datalist>
+      <label class="cart-campo">Fornecedor<input class="el-input" data-f="fornecedor" list="cartFornecedores" value="${esc(c.fornecedor_nome || "")}" placeholder="Nome do fornecedor"></label>
+      <datalist id="cartFornecedores">${C.fornecedores.map((f) => `<option value="${esc(f.nome)}">`).join("")}</datalist>
+      <label class="cart-campo">Preço cobrado por<select class="el-select" data-f="unidade">${UNIDADES.map((u) => `<option${u === c.unidade ? " selected" : ""}>${u}</option>`).join("")}</select></label>
+      <label class="cart-campo">Link do catálogo do fornecedor (opcional)<input class="el-input" data-f="link" value="${esc(c.link || "")}" placeholder="https://..."></label>
+      <label class="cart-check"><input type="checkbox" data-f="ativa"${c.ativa ? " checked" : ""}> Cartela ativa (aparece para o cliente)</label>
+      <p class="cart-dica">O <strong>tipo</strong> liga a cartela à personalização: uma linha "Material escolhido pelo cliente" do tipo <em>${esc(c.tipo || "Tecido")}</em> mostra todas as cartelas ativas desse tipo.</p>
+      <p class="cart-modal-erro" data-cart-erro hidden></p>
+      <div class="cart-modal-acoes"><button type="button" class="btn secondary" data-cart-fechar>Cancelar</button>
+        <button type="button" class="btn primary" data-cart-salvar>${atual ? "Salvar" : "Criar cartela"}</button></div>
+    </div>`;
+}
+
+// 15/11/2026: editar/criar cartela abre numa janela (não estica o card)
+function abrirModalCartela(atual) {
+  document.querySelector("dialog.cart-modal")?.remove();
+  const dlg = document.createElement("dialog");
+  dlg.className = "cart-modal";
+  dlg.innerHTML = formCartelaHtml(atual || null);
+  document.body.appendChild(dlg);
+  dlg.addEventListener("click", (e) => {
+    if (e.target === dlg || e.target.closest("[data-cart-fechar]")) return dlg.close();
+    if (e.target.closest("[data-cart-salvar]")) salvarCartela(atual || null);
+  });
+  dlg.addEventListener("close", () => dlg.remove());
+  dlg.showModal();
+  dlg.querySelector('[data-f="nome"]')?.focus();
+}
+
+// Coluna da direita: as tintas/tecidos (opções) do catálogo escolhido
+function pintarLado(c) {
+  const lado = document.querySelector("[data-cart-lado]");
+  if (!lado) return;
+  if (C.ladoId === "nova") { lado.innerHTML = '<p class="cart-lado-vazio">Preencha os dados da nova cartela à esquerda e clique em "Criar cartela" para cadastrar as opções.</p>'; return; }
+  if (!c) { C.ladoId = null; lado.innerHTML = '<p class="cart-lado-vazio">Escolha um catálogo ou crie um em "Nova cartela".</p>'; return; }
+  if (C.ladoId === c.id) return;
+  abrirCartela(c.id);
 }
 
 // ------------------------------------------------------------------ tela da cartela
+// 15/11/2026: não existe mais tela separada — o catálogo escolhido é editado na coluna da direita da aba.
+const alvoDetalhe = () => document.querySelector("[data-cart-lado]");
 async function abrirCartela(id) {
+  if (!id) { abrirModalCartela(null); return; }
+  C.sel = id;
+  C.ladoId = id;
   C.atual = id ? C.cartelas.find((c) => c.id === id) || null : null;
   C.opcoes = [];
   if (C.atual) await carregarOpcoes();
-  await carregarMateriais();
-  document.querySelector(".personalizacao-list-view")?.classList.add("hidden");
-  const tela = document.getElementById("cartelaDetalhe");
-  tela.classList.remove("hidden");
+  if (!C.materiais.length) await carregarMateriais();
+  pintarCards();
   pintarDetalhe();
-  window.scrollTo({ top: 0, behavior: "instant" });
 }
 
 function fecharCartela() {
-  document.getElementById("cartelaDetalhe").classList.add("hidden");
-  document.querySelector(".personalizacao-list-view")?.classList.remove("hidden");
+  C.sel = null; C.ladoId = null; C.atual = null;
   carregarCartelas().then(pintarCards);
 }
 
@@ -157,35 +215,10 @@ async function carregarOpcoes() {
 }
 
 function pintarDetalhe() {
-  const tela = document.getElementById("cartelaDetalhe");
-  const c = C.atual || { nome: "", tipo: "Tecido", fornecedor_nome: "", link: "", unidade: "m", ativa: true };
-  const tipos = [...new Set([...TIPOS_SUGERIDOS, ...C.cartelas.map((x) => x.tipo)])];
-  tela.innerHTML = `
-    <div class="cart-det">
-      <div class="cart-det-topo">
-        <button type="button" class="back-btn btn-icon" data-cart-voltar title="Voltar para as cartelas">←</button>
-        <h2>${C.atual ? esc(c.nome) : "Nova cartela"}</h2>
-        ${C.atual ? '<button type="button" class="btn secondary cart-excluir" data-cart-excluir>Excluir cartela</button>' : ""}
-        <button type="button" class="btn primary" data-cart-salvar>${C.atual ? "Salvar" : "Criar cartela"}</button>
-      </div>
-
-      <section class="cart-sec">
-        <div class="cart-form">
-          <label class="cart-campo cart-c-nome">Nome da cartela<input class="el-input" data-f="nome" value="${esc(c.nome)}" placeholder="Ex.: Linho Karsten 2026"></label>
-          <label class="cart-campo">Tipo<input class="el-input" data-f="tipo" list="cartTipos" value="${esc(c.tipo)}" placeholder="Tecido, Tinta..."></label>
-          <datalist id="cartTipos">${tipos.map((t) => `<option value="${esc(t)}">`).join("")}</datalist>
-          <label class="cart-campo">Fornecedor<input class="el-input" data-f="fornecedor" list="cartFornecedores" value="${esc(c.fornecedor_nome || "")}" placeholder="Nome do fornecedor"></label>
-          <datalist id="cartFornecedores">${C.fornecedores.map((f) => `<option value="${esc(f.nome)}">`).join("")}</datalist>
-          <label class="cart-campo">Preço cobrado por<select class="el-select" data-f="unidade">${UNIDADES.map((u) => `<option${u === c.unidade ? " selected" : ""}>${u}</option>`).join("")}</select></label>
-          <label class="cart-campo cart-c-link">Link do catálogo do fornecedor (opcional)<input class="el-input" data-f="link" value="${esc(c.link || "")}" placeholder="https://..."></label>
-          <label class="cart-check"><input type="checkbox" data-f="ativa"${c.ativa ? " checked" : ""}> Cartela ativa (aparece para o cliente)</label>
-        </div>
-        <p class="cart-dica">O <strong>tipo</strong> liga a cartela à personalização: uma linha "Material escolhido pelo cliente" do tipo
-          <em>Tecido</em> mostra todas as cartelas ativas de tipo Tecido.</p>
-      </section>
-
-      ${C.atual ? opcoesHtml() : '<p class="cart-dica">Crie a cartela para cadastrar as opções.</p>'}
-    </div>`;
+  const tela = alvoDetalhe();
+  if (!tela) return;
+  if (!C.atual) { pintarLado(null); return; }
+  tela.innerHTML = `<div class="cart-det">${opcoesHtml()}</div>`;
   ligarDetalhe(tela);
 }
 
@@ -196,19 +229,16 @@ function opcoesHtml() {
       <div class="cart-sec-topo">
         <h3>Opções <span class="cart-cont">${C.opcoes.length}</span></h3>
         <div class="cart-sec-acoes">
-          <button type="button" class="btn secondary" data-cart-colar>Colar da planilha</button>
-          <label class="btn secondary cart-fotos-btn">Enviar fotos<input type="file" accept="image/*" multiple data-cart-fotos hidden></label>
           <button type="button" class="btn primary" data-cart-opcao-nova>+ Opção</button>
         </div>
       </div>
-      <p class="cart-dica">Enviar fotos: o nome de cada arquivo precisa ser o código da opção (ex.: <em>LK-01.jpg</em>).
-        O preço é por ${esc(u)}; no pedido ele é multiplicado pela quantidade da personalização e pela margem dela.</p>
+      <p class="cart-dica">O preço é por ${esc(u)}; no pedido ele é multiplicado pela quantidade da personalização e pela margem dela.</p>
       <datalist id="cartMateriais">${C.materiais.map((m) => `<option value="${esc(m.nome)}">`).join("")}</datalist>
       <div class="cart-tabela-wrap">
         <table class="data-table cart-tabela">
-          <thead><tr><th style="width:70px">Foto</th><th style="width:120px">Código</th><th>Nome</th><th style="width:96px">Cor</th>
+          <thead><tr><th style="width:70px">Foto</th><th style="width:120px">Código</th><th>Nome</th>
             <th style="width:140px">Preço por ${esc(u)}</th><th style="width:240px">Material do Almoxarifado</th><th style="width:70px">Ativa</th><th style="width:44px"></th></tr></thead>
-          <tbody data-cart-opcoes>${C.opcoes.length ? C.opcoes.map(linhaOpcao).join("") : '<tr><td colspan="8" class="cart-vazio-linha">Nenhuma opção ainda.</td></tr>'}</tbody>
+          <tbody data-cart-opcoes>${C.opcoes.length ? C.opcoes.map(linhaOpcao).join("") : '<tr><td colspan="7" class="cart-vazio-linha">Nenhuma opção ainda.</td></tr>'}</tbody>
         </table>
       </div>
     </section>`;
@@ -220,7 +250,6 @@ function linhaOpcao(o) {
     <td><label class="cart-foto" title="Trocar foto" style="${o.foto_url ? `background-image:url('${esc(o.foto_url)}')` : o.cor ? `background:${esc(o.cor)}` : ""}">${o.foto_url || o.cor ? "" : "+"}<input type="file" accept="image/*" data-op-foto hidden></label></td>
     <td><input class="el-input" data-op-f="codigo" value="${esc(o.codigo)}"></td>
     <td><input class="el-input" data-op-f="nome" value="${esc(o.nome)}"></td>
-    <td class="cart-cor-cel"><input type="color" data-op-f="cor" value="${esc(o.cor || "#ffffff")}"${o.cor ? "" : ' data-vazio="1"'}>${o.cor ? '<button type="button" class="cart-limpar" data-op-sem-cor title="Sem cor">×</button>' : ""}</td>
     <td><input class="el-input" data-op-f="preco" inputmode="decimal" value="${esc(String(o.preco ?? 0).replace(".", ","))}"></td>
     <td><input class="el-input" data-op-f="material" list="cartMateriais" value="${esc(mat?.nome || o.almox_produto_id || "")}" placeholder="Não reserva estoque"></td>
     <td><input type="checkbox" data-op-f="ativo"${o.ativo ? " checked" : ""}></td>
@@ -229,9 +258,6 @@ function linhaOpcao(o) {
 }
 
 function ligarDetalhe(tela) {
-  tela.querySelector("[data-cart-voltar]").addEventListener("click", fecharCartela);
-  tela.querySelector("[data-cart-salvar]").addEventListener("click", salvarCartela);
-  tela.querySelector("[data-cart-excluir]")?.addEventListener("click", excluirCartela);
   tela.querySelector("[data-cart-opcao-nova]")?.addEventListener("click", novaOpcao);
   tela.querySelector("[data-cart-colar]")?.addEventListener("click", colarDaPlanilha);
   tela.querySelector("[data-cart-fotos]")?.addEventListener("change", (e) => enviarFotosEmLote([...e.target.files]));
@@ -251,12 +277,14 @@ function ligarDetalhe(tela) {
   });
 }
 
-async function salvarCartela() {
-  const tela = document.getElementById("cartelaDetalhe");
+async function salvarCartela(atualModal) {
+  const tela = document.querySelector("dialog.cart-modal [data-cart-form]");
+  if (!tela) return;
   const v = (f) => tela.querySelector(`[data-f="${f}"]`);
   const nome = v("nome").value.trim(), tipo = v("tipo").value.trim();
-  if (!nome) return aviso("Informe o nome da cartela.");
-  if (!tipo) return aviso("Informe o tipo (Tecido, Tinta...).");
+  const erro = (m) => { const el = tela.querySelector("[data-cart-erro]"); if (el) { el.textContent = m; el.hidden = false; } else aviso(m, "erro"); };
+  if (!nome) return erro("Informe o nome da cartela.");
+  if (!tipo) return erro("Informe o tipo (Tecido, Tinta...).");
   const fornNome = v("fornecedor").value.trim();
   const forn = C.fornecedores.find((f) => f.nome.toLowerCase() === fornNome.toLowerCase());
   const dados = {
@@ -266,15 +294,20 @@ async function salvarCartela() {
     updated_at: new Date().toISOString()
   };
   if (dados.link && !/^https?:\/\//i.test(dados.link)) dados.link = "https://" + dados.link;
-  const q = C.atual ? sb().from("cartelas").update(dados).eq("id", C.atual.id) : sb().from("cartelas").insert(dados);
-  const { data, error } = await q.select("*, cartela_opcoes(id, foto_url, cor, ativo)").single();
-  if (error) { console.error(error); return aviso(mensagemErro(error, "Não foi possível salvar a cartela."), "erro"); }
-  const nova = !C.atual;
+  const alvo = atualModal !== undefined ? atualModal : C.atual;
+  const q = alvo ? sb().from("cartelas").update(dados).eq("id", alvo.id) : sb().from("cartelas").insert(dados);
+  const { data, error } = await q.select("*, cartela_opcoes(id, codigo, nome, preco, ordem, foto_url, cor, ativo)").single();
+  if (error) { console.error(error); return erro(mensagemErro(error, "Não foi possível salvar a cartela.")); }
+  const nova = !alvo;
   C.atual = data;
   const i = C.cartelas.findIndex((c) => c.id === data.id);
   if (i >= 0) C.cartelas[i] = data; else C.cartelas.push(data);
   if (nova) C.opcoes = [];
+  document.querySelector("dialog.cart-modal")?.close();
+  C.sel = data.id; C.ladoId = data.id; C.editando = null;
+  pintarCards();
   pintarDetalhe();
+  if (!nova) aviso("Cartela salva.", "sucesso");
   if (nova) aviso("Cartela criada. Agora cadastre as opções.", "sucesso");
 }
 

@@ -1,0 +1,246 @@
+/* A primeira área é o cronograma editável; as demais abas mantêm o layout próprio. */
+html:root body .pl-page #plAbasDias{display:none!important}
+html:root body .pl-page #plDias{display:block!important;min-width:0;overflow:visible}
+html:root body .pl-page #plCronogramaEquipe{min-width:0;overflow-anchor:none}
+html:root:is(#plc#plc#plc,html) .pl-page #plTopoUnificado{position:sticky!important;top:0;z-index:20;background:#f3f5f6!important;display:grid!important;grid-template-columns:auto minmax(0,1fr) auto!important;align-items:center!important;gap:8px 18px!important;padding-bottom:10px!important;border-bottom:1px solid #dce4ec}
+html:root:is(#plc#plc#plc,html) .pl-page #plTopoUnificado>h1{grid-column:1!important;grid-row:1!important;padding:20px 0!important;margin:0!important;text-align:left;font-size:clamp(19px,1.6vw,28px)!important;letter-spacing:.1em!important;white-space:nowrap}
+html:root:is(#plc#plc#plc,html) .pl-page #plTopoUnificado #plModuloAbas{grid-column:2!important;grid-row:1!important;flex-wrap:wrap!important;gap:10px 18px!important;margin:0!important;min-width:0}
+html:root:is(#plc#plc#plc,html) .pl-page #plTopoUnificado #plAcoesDireita{grid-column:3!important;grid-row:1!important;flex-wrap:wrap;gap:10px!important;margin:0!important;min-width:0}
+html:root body .pl-page #cronogramaTabela{margin:14px 0;border-radius:16px;background:#fff;overflow:visible}
+html:root body .pl-page #cronogramaTabela .crono-tabela-scroll{overflow:visible;max-height:none}
+html:root:is(#plc#plc#plc,html) .pl-page table.pl-crono-tabela{width:100%;min-width:0;table-layout:fixed;font-size:14px;line-height:1.5}
+html:root:is(#plc#plc#plc,html) .pl-page table.pl-crono-tabela :is(td,th){box-sizing:border-box;min-width:0;padding:15px 12px;font-size:14px;vertical-align:top}
+html:root:is(#plc#plc#plc,html) .pl-page table.pl-crono-tabela thead th{top:var(--pl-crono-top,120px);background:#fff!important;letter-spacing:.02em;font-size:13px;color:#34465a;text-transform:none;white-space:normal}
+html:root:is(#plc#plc#plc,html) .pl-page #cronogramaTabela table .crono-tabela-dia th{position:static!important;padding:0!important}
+.pl-page .pl-crono-tabela .crono-dia-cabecalho{margin:0;padding:12px 16px;min-height:36px}
+.pl-crono-tabela th:nth-child(1){width:9%}.pl-crono-tabela th:nth-child(2){width:12%}.pl-crono-tabela th:nth-child(3){width:21%}.pl-crono-tabela th:nth-child(4){width:16%}.pl-crono-tabela th:nth-child(5){width:26%}.pl-crono-tabela th:nth-child(6){width:10%}.pl-crono-tabela th:nth-child(7){width:6%}
+html:root:is(#plc#plc#plc,html) .pl-page table.pl-crono-tabela .crono-tabela-pessoa{min-width:0;align-items:center;gap:9px}
+html:root:is(#plc#plc#plc,html) .pl-page table.pl-crono-tabela .crono-tabela-pessoa>span:last-child{min-width:0;overflow-wrap:anywhere}
+html:root:is(#plc#plc#plc,html) .pl-page table.pl-crono-tabela .crono-tabela-etapa{display:inline-block;font-size:14px;padding:8px 10px 12px;max-width:100%;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:top}
+.pl-crono-tabela .crono-tabela-linha{cursor:default}
+.pl-crono-tabela .crono-tabela-linha:focus-visible{outline:2px solid #8eb5e5;outline-offset:-2px}
+.pl-crono-local,.pl-crono-equipe{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.pl-crono-consulta{display:block;font-size:12px;line-height:1.4;color:#758498;margin-top:6px}
+.pl-crono-cam{display:flex;align-items:center;gap:6px;margin-bottom:5px;min-width:0;overflow-wrap:anywhere}
+.pl-crono-cam .crono-tabela-avatar{width:32px!important;height:32px!important;flex-basis:32px!important}
+html:root body .pl-page .pl-crono-mais{display:block;width:100%;padding:10px;border:0;background:transparent;color:#6b7d92;font:400 14px Inter,Arial,sans-serif;cursor:pointer;text-align:center;letter-spacing:0;text-transform:none}
+.pl-crono-mais:disabled{opacity:.65;cursor:wait}
+html:root .pl-page:has(#plModuloEquipe[hidden]) #plIrHoje{display:none!important}
+html:root body dialog.pl-escala-dialog{width:min(840px,calc(100vw - 28px));max-width:840px;max-height:calc(100dvh - 36px);padding:0;border:1px solid #dce4ec;border-radius:16px;background:#f3f5f6;color:#24364e;box-shadow:0 20px 60px #152b4633;overflow:auto;box-sizing:border-box}
+.pl-escala-dialog::backdrop{background:#152b4670}
+html:root .pl-escala-dialog>header{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px 22px;background:#fff;border-bottom:1px solid #dce4ec}
+.pl-escala-dialog>header h2{margin:0;font:600 18px/1.4 Inter,Arial,sans-serif;letter-spacing:0;text-transform:none}
+.pl-escala-dialog>header button{border:0;background:transparent;color:#6b7d92;font-size:26px;cursor:pointer}
+.pl-editor-conteudo{padding:18px;min-width:0}
+html:root .pl-escala-dialog .pl-etapa{display:block;margin:0;padding:18px;border:1px solid #dce4ec;border-radius:12px;background:#fff;min-width:0}
+.pl-editor-resumo{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding-bottom:16px;border-bottom:1px solid #e7edf3;font-size:14px}
+.pl-editor-resumo>small{flex-basis:100%;font-size:13px;color:#6b7d92}
+.pl-editor-tipo{padding:4px 8px;background:#eaf2ff;color:#123f86;border-radius:6px}
+.pl-editor-grade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;padding-top:18px}
+.pl-editor-campo:last-child{grid-column:1/-1}
+.pl-editor-campo{min-width:0}
+.pl-editor-campo h3{margin:0 0 10px;font:600 14px/1.4 Inter,Arial,sans-serif}
+.pl-editor-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;min-width:0}
+.pl-editor-chip{position:relative;display:inline-flex;align-items:center;gap:8px;max-width:100%;padding:7px 10px;background:#eef3fa;border:1px solid #dce4ec;border-radius:7px;font-size:14px}
+.pl-editor-chip>span{min-width:0;overflow-wrap:anywhere}
+html:root .pl-editor-chip .pl-vaga-remover{position:static;width:22px;height:22px;flex:0 0 22px;padding:0;border:0;background:transparent;color:#65748b;font-size:20px}
+.pl-editor-vazio{font-size:14px;color:#8592a3}
+html:root .pl-escala-dialog select.pl-add{display:block;width:100%;max-width:100%;height:42px;border:1px solid #cbd6e3;border-radius:8px;background:#fff;color:#24364e;padding:8px 10px;font:400 14px Inter,Arial,sans-serif;box-sizing:border-box}
+.pl-editor-avisos{font-size:13px;color:#9a5b05;line-height:1.5}
+.pl-editor-avisos:empty{display:none}
+html:root .pl-escala-dialog .pl-uber{margin-top:18px;border-top:1px solid #e7edf3}
+html:root .pl-escala-dialog .pl-uber .pl-painel-cab{padding:14px 0;font:600 15px Inter,Arial,sans-serif}
+html:root .pl-escala-dialog .pl-uber .pl-painel-cab h2{font:600 15px Inter,Arial,sans-serif;letter-spacing:0;text-transform:none}
+html:root .pl-escala-dialog .pl-uber .pl-etapa-escala{padding:8px 0}
+.pl-editor-info{margin-top:14px;font-size:14px}
+.pl-editor-info>summary{padding:12px 2px;color:#526a86;cursor:pointer}
+html:root .pl-escala-dialog .pl-info-supervisor{margin-top:8px;min-width:0}
+.pl-escala-dialog>footer{position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 22px;border-top:1px solid #dce4ec;background:#fff}
+.pl-escala-dialog>footer>span{font-size:13px;color:#6b7d92}
+.pl-escala-dialog>footer button{min-height:38px;padding:8px 16px;border:1px solid #cbd6e3;border-radius:8px;background:#fff;color:#24364e;font-size:14px;cursor:pointer}
+.pl-escala-dialog>#plEditorErro{margin:12px 18px 0}
+@media(max-width:1100px){
+ html:root:is(#plc#plc#plc,html) .pl-page table.pl-crono-tabela :is(td,th){padding:12px 8px}
+ .pl-crono-tabela .crono-tabela-pessoa{flex-direction:column;align-items:flex-start!important}
+ .pl-crono-cam{flex-direction:column;align-items:flex-start}
+}
+@media(max-width:760px){
+ html:root:is(#plc#plc#plc,html) .pl-page #plTopoUnificado{grid-template-columns:minmax(0,1fr)!important}
+ html:root:is(#plc#plc#plc,html) .pl-page #plTopoUnificado #plAcoesDireita{grid-column:1!important;grid-row:3!important;justify-self:start!important;justify-content:flex-start!important}
+ html:root body .pl-page #cronogramaTabela{background:transparent;border:0;box-shadow:none;overflow:visible}
+ html:root .pl-page table.pl-crono-tabela,html:root .pl-page table.pl-crono-tabela tbody{display:block;width:100%}
+ html:root .pl-page table.pl-crono-tabela thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+ html:root .pl-page table.pl-crono-tabela .crono-tabela-dia,html:root .pl-page table.pl-crono-tabela .crono-tabela-dia th{display:block;width:100%;margin:0;border:0!important}
+ html:root .pl-page #cronogramaTabela .crono-tabela-dia th{padding:0!important;margin:14px 0 10px}
+ .pl-crono-tabela .crono-dia-cabecalho{margin:0;padding:10px 12px;border-radius:10px}
+ html:root .pl-page .pl-crono-tabela .crono-tabela-linha{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:8px;gap:4px;border:1px solid #dce4ec;border-radius:12px;background:#fff;margin-bottom:10px}
+ html:root:is(#plc#plc#plc,html) .pl-page table.pl-crono-tabela td{display:block;width:auto;max-width:none;border:0;padding:8px;overflow:hidden}
+ .pl-crono-tabela td::before{content:attr(data-col);display:block;font-size:12px;color:#6b7d92;margin-bottom:5px}
+ .pl-crono-tabela .crono-tabela-pessoa{flex-direction:row;align-items:center!important}
+ .pl-crono-cam{flex-direction:row;align-items:center}
+ .pl-editor-grade{grid-template-columns:minmax(0,1fr)}
+ .pl-editor-campo:last-child{grid-column:auto}
+ .pl-editor-conteudo{padding:12px}
+ html:root .pl-escala-dialog .pl-etapa{padding:14px}
+}
+
+/* Ajustes na própria célula; iniciais identificam pessoas e a silhueta indica vaga. */
+.pl-crono-hora{display:block;margin-top:4px;color:#63758b;font-weight:400}
+.pl-inline-equipe{display:grid;gap:8px;min-width:0}
+html:root body .pl-page .pl-inline-editar{position:relative;min-width:0;margin:0}
+.pl-inline-editar>summary{display:flex;align-items:center;min-width:0;gap:5px;list-style:none;cursor:pointer;border-radius:7px;padding:3px 0}
+.pl-inline-editar>summary::-webkit-details-marker{display:none}
+.pl-inline-editar>summary::after{content:'⌄';color:#8a99ab;margin-left:auto;flex-shrink:0}
+.pl-inline-editar>summary:hover{background:#eef3f9}
+.pl-inline-editar>summary:focus-visible{outline:2px solid #8eb5e5;outline-offset:3px}
+html:root:is(#plc#plc#plc,html) .pl-page table.pl-crono-tabela .pl-inline-equipe .crono-tabela-avatar,
+html:root:is(#plc#plc#plc,html) .pl-page table.pl-crono-tabela [data-col="Responsável"] .crono-tabela-avatar{width:36px!important;height:36px!important;flex:0 0 36px!important;background:#e8f0fc;color:#365e94;border:1px solid #cfddf2;font-weight:600}
+html:root:is(#plc#plc#plc,html) .pl-page table.pl-crono-tabela :is([data-col="Equipe"],[data-col="Responsável"]) .crono-tabela-pessoa{flex-direction:row;align-items:center!important;min-width:0;width:100%;gap:7px}
+html:root:is(#plc#plc#plc,html) .pl-page table.pl-crono-tabela :is([data-col="Equipe"],[data-col="Responsável"]) .crono-tabela-pessoa>span:last-child{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal}
+.pl-inline-vaga{display:flex;align-items:center;gap:7px;min-width:0;color:#7c8796;font-size:14px}
+.pl-vaga-avatar{display:grid;place-items:center;box-sizing:border-box;width:36px;height:36px;flex:0 0 36px;border:1px dashed #b5bec9;border-radius:50%;background:#f0f2f5;color:#a3adba}
+.pl-vaga-avatar svg{width:23px;height:23px;fill:currentColor}
+.pl-inline-vaga>span:last-child{overflow:hidden;text-overflow:ellipsis}
+.pl-inline-opcoes{display:grid;gap:6px;padding:8px 0 3px;min-width:0}
+html:root body .pl-page table.pl-crono-tabela select.pl-add{box-sizing:border-box;display:block;width:100%;min-width:0;max-width:100%;height:38px;border:1px solid #cad6e4;border-radius:8px;background:#fff;color:#253b57;padding:7px;font:400 14px Inter,Arial,sans-serif;cursor:pointer}
+html:root body .pl-page .pl-inline-opcoes>button,html:root body .pl-page .pl-inline-adicionar{border:0;background:transparent;color:#526c8d;font:400 14px/1.4 Inter,Arial,sans-serif;padding:4px 0;text-align:left;cursor:pointer;text-transform:none;letter-spacing:0;max-width:100%;white-space:normal}
+html:root body .pl-page .pl-inline-opcoes>button{color:#ac434b;justify-self:start}
+html:root body .pl-page .pl-inline-uber>.pl-etapa{position:absolute;right:0;top:100%;z-index:15;width:min(480px,80vw);box-sizing:border-box;padding:16px;margin:4px 0;border:1px solid #d9e2ee;border-radius:12px;background:#fff;box-shadow:0 12px 32px #20354d26}
+.pl-inline-uber:not([open])>.pl-etapa{display:none!important}
+html:root body .pl-page .pl-inline-uber .pl-uber{margin:0;border:0}
+html:root body .pl-page .pl-inline-uber .pl-painel-cab{padding:0 0 10px}
+html:root body .pl-page .pl-inline-uber .pl-painel-cab h2{font:600 15px Inter,Arial,sans-serif;letter-spacing:0}
+html:root body .pl-page .pl-inline-uber .pl-etapa-escala{padding:0}
+@media(max-width:760px){html:root body .pl-page .pl-inline-uber>.pl-etapa{position:static;width:100%;box-shadow:none;padding:8px}.pl-crono-tabela td:has(.pl-inline-uber[open]){grid-column:1/-1}}
+
+.pl-crono-pedido-etapa{margin-top:10px;min-width:0}
+.pl-crono-tabela [data-col="Cliente"] .pl-crono-local{margin-top:9px;color:#63758b;font-weight:400}
+@media(min-width:761px){
+ html:root body .pl-page .pl-crono-tabela .crono-tabela-linha>td:nth-child(n+4){box-shadow:inset 1px 0 #e5ebf2}
+ html:root body .pl-page .pl-crono-tabela thead th:nth-child(n+4){border-left:1px solid #edf1f5}
+}
+
+/* Escolha visual de pessoas e veículos, expandida na própria tabela. */
+html:root:is(#plc#plc#plc,html) .pl-page #plModuloAbas button{font-size:14px!important}
+html:root body .pl-page table.pl-crono-tabela .pl-inline-escolher{display:flex;align-items:center;justify-content:flex-start;gap:5px;width:100%;min-width:0;margin:0;padding:3px 0;border:0;border-radius:7px;background:transparent;color:inherit;font:inherit;text-transform:none;letter-spacing:0;text-align:left;cursor:pointer;box-shadow:none}
+.pl-inline-escolher::after{content:'⌄';margin-left:auto;color:#8a99ab;flex-shrink:0}
+html:root body .pl-page table.pl-crono-tabela .pl-inline-escolher:hover,html:root body .pl-page table.pl-crono-tabela .pl-inline-escolher[aria-expanded="true"]{background:#edf3f9}
+.pl-inline-escolher:focus-visible{outline:2px solid #8eb5e5;outline-offset:3px}
+html:root body .pl-page table.pl-crono-tabela .pl-escolha-linha>td{padding:0 14px 16px;background:#f2f5f8;box-shadow:none}
+.pl-escolha-painel{padding:20px 24px;border:1px solid #d9e4ed;border-radius:14px;background:#fff;box-shadow:0 8px 24px #253e5910;min-width:0}
+.pl-escolha-painel>header{display:flex;align-items:center;gap:18px;min-width:0}
+.pl-escolha-painel>header>div{flex:1;min-width:0}
+.pl-escolha-painel h2{margin:0;font:600 18px/1.4 Inter,Arial,sans-serif;letter-spacing:0;text-transform:none;color:#243951}
+.pl-escolha-painel header p{margin:5px 0 0;font-size:14px;color:#6a7d92;overflow-wrap:anywhere}
+html:root body .pl-page .pl-escolha-painel input{width:260px;min-width:0;max-width:100%;box-sizing:border-box;height:42px;padding:9px 13px;border:1px solid #d5dfea;border-radius:10px;background:#fff;color:#243951;font:400 14px Inter,Arial,sans-serif}
+html:root body .pl-page .pl-escolha-painel [data-fechar-escolha]{width:32px;height:32px;flex:0 0 32px;margin:0;padding:0;border:0;background:transparent;color:#718398;font-size:26px;cursor:pointer;box-shadow:none}
+.pl-escolha-abas{display:flex;gap:8px;margin:18px 0 12px;flex-wrap:wrap}
+html:root body .pl-page .pl-escolha-abas button{padding:8px 14px;margin:0;border:1px solid #dbe4ee;border-radius:8px;background:#fff;color:#526b88;font:500 14px Inter,Arial,sans-serif;letter-spacing:0;text-transform:none;cursor:pointer}
+html:root body .pl-page .pl-escolha-abas button[aria-pressed="true"]{background:#edf5f0;border-color:#a9cfb9;color:#226744}
+.pl-escolha-grade{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;max-width:960px;margin:0 auto;min-width:0}
+html:root body .pl-page .pl-escolha-card{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:7px;min-width:0;padding:18px 10px;margin:0;border:1px solid transparent;border-radius:12px;background:#fff;color:#243951;font:400 14px/1.4 Inter,Arial,sans-serif;text-align:center;text-transform:none;letter-spacing:0;cursor:pointer;box-shadow:none;transition:background .15s,border-color .15s}
+html:root body .pl-page .pl-escolha-card:hover{background:#f2f7f4;border-color:#bad5c5}
+.pl-escolha-card:focus-visible{outline:2px solid #57936f;outline-offset:2px}
+.pl-escolha-foto{position:relative;display:grid;place-items:center;width:72px;height:72px;flex:0 0 72px;overflow:hidden;border:3px solid #fff;border-radius:50%;background:#e8f0fc;color:#365e94;box-shadow:0 0 0 1px #d7e2ed,0 5px 14px #17344c0b;font-size:21px;font-weight:500}
+.pl-escolha-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pl-escolha-card strong{font-size:14px;font-weight:600;overflow-wrap:anywhere;max-width:100%}
+.pl-escolha-detalhe{color:#738499;font-size:14px;overflow-wrap:anywhere}
+.pl-escolha-card small{font-size:13px;padding:3px 8px;border-radius:20px;font-weight:400}
+.pl-escolha-card .is-livre{background:#eaf6ef;color:#367b54}.pl-escolha-card .is-alocado{background:#fff6e7;color:#98742f}
+html:root body .pl-page .pl-escolha-card[hidden],html:root body .pl-page .pl-escolha-vazia[hidden]{display:none!important}
+.pl-escolha-vazia{text-align:center;padding:22px;color:#72849a;font-size:14px}
+.pl-escolha-painel>footer{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-top:14px;margin-top:12px;border-top:1px solid #edf1f5;color:#738499;font-size:13px}
+html:root body .pl-page .pl-escolha-painel [data-acao="tirar"]{border:0;background:transparent;color:#a8434d;padding:6px 0;cursor:pointer;text-transform:none;letter-spacing:0;font:400 14px Inter,Arial,sans-serif}
+@media(max-width:1200px){.pl-escolha-grade{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:761px) and (max-width:1100px){html:root:is(#plc#plc#plc,html) .pl-page #plTopoUnificado{grid-template-columns:auto minmax(0,1fr)!important}html:root:is(#plc#plc#plc,html) .pl-page #plTopoUnificado #plAcoesDireita{grid-column:1/-1!important;grid-row:2!important;justify-self:end!important}}
+@media(max-width:760px){
+ html:root:is(#plc#plc#plc,html) .pl-page #plTopoUnificado>h1{grid-column:1!important;grid-row:1!important;white-space:normal;padding:14px 0 4px!important;text-align:center}
+ html:root:is(#plc#plc#plc,html) .pl-page #plTopoUnificado #plModuloAbas{grid-column:1!important;grid-row:2!important}
+ html:root .pl-page table.pl-crono-tabela .pl-escolha-linha{display:block;margin-bottom:12px}
+ html:root:is(#plc#plc#plc,html) .pl-page table.pl-crono-tabela .pl-escolha-linha>td{display:block;width:100%;padding:0;background:transparent}
+ .pl-escolha-linha>td::before{display:none}
+ .pl-escolha-painel{padding:16px 12px}
+ .pl-escolha-painel>header{flex-wrap:wrap;gap:12px}
+ .pl-escolha-painel>header>div{flex-basis:calc(100% - 50px)}
+ html:root body .pl-page .pl-escolha-painel input{width:100%;order:3}
+ .pl-escolha-grade{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+ .pl-escolha-painel>footer{flex-direction:column;align-items:flex-start}
+}
+@media(max-width:480px){.pl-escolha-grade{grid-template-columns:repeat(2,minmax(0,1fr))}.pl-escolha-foto{width:64px;height:64px;flex-basis:64px}}
+
+html:root body .pl-page #cronogramaTabela .pl-escolha-painel>header{display:grid!important;grid-template-columns:minmax(0,1fr) 260px 32px!important;align-items:center;gap:18px;width:100%;min-width:0;box-sizing:border-box;margin:0;padding:0}
+html:root body .pl-page #cronogramaTabela .pl-escolha-painel>header>div{grid-column:1;grid-row:1;width:auto;min-width:0;max-width:100%}
+html:root body .pl-page #cronogramaTabela .pl-escolha-painel h2{display:block;width:auto;min-width:0;max-width:100%;font:600 18px/1.4 Inter,Arial,sans-serif!important;letter-spacing:0!important;overflow-wrap:normal;white-space:normal}
+html:root body .pl-page #cronogramaTabela .pl-escolha-painel>header input{grid-column:2;grid-row:1;width:100%!important;min-width:0!important;max-width:100%!important;box-shadow:none}
+html:root body .pl-page #cronogramaTabela .pl-escolha-painel>header [data-fechar-escolha]{grid-column:3;grid-row:1}
+@media(max-width:760px){
+ html:root body .pl-page #cronogramaTabela .pl-escolha-painel>header{grid-template-columns:minmax(0,1fr) 32px!important;gap:12px}
+ html:root body .pl-page #cronogramaTabela .pl-escolha-painel>header input{grid-column:1/-1;grid-row:2}
+ html:root body .pl-page #cronogramaTabela .pl-escolha-painel>header [data-fechar-escolha]{grid-column:2;grid-row:1}
+}
+
+/* Card de escolha flutuante: não ocupa espaço nas linhas nem bloqueia a página. */
+html:root body .pl-page #cronogramaTabela .pl-escolha-painel.pl-escolha-flutuante{position:fixed!important;z-index:80;display:flex!important;flex-direction:column;width:min(540px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:var(--pl-escolha-max-altura,480px);box-sizing:border-box;margin:0;padding:16px;border:1px solid #d9e2ec;border-radius:16px;background:#fff;color:#243951;box-shadow:0 16px 45px #2337502b,0 3px 10px #2337500d;overflow:hidden;text-align:left;font:400 14px/1.4 Inter,Arial,sans-serif}
+html:root body .pl-page #cronogramaTabela .pl-escolha-flutuante>header{grid-template-columns:minmax(0,1fr) 28px!important;gap:8px 12px;flex:0 0 auto}
+html:root body .pl-page #cronogramaTabela .pl-escolha-flutuante h2{font-size:16px!important}
+html:root body .pl-page #cronogramaTabela .pl-escolha-flutuante>header input{grid-column:1;grid-row:1;height:38px;order:initial;padding:8px 11px}
+html:root body .pl-page #cronogramaTabela .pl-escolha-flutuante>header [data-fechar-escolha]{grid-column:2;grid-row:1;align-self:start;width:28px;height:28px;min-height:0;padding:0;font-size:24px}
+.pl-escolha-flutuante header p{margin-top:3px;font-size:13px;font-weight:400}
+.pl-escolha-flutuante .pl-escolha-abas{flex:0 0 auto;margin:12px 0 8px;gap:6px}
+html:root body .pl-page .pl-escolha-flutuante .pl-escolha-abas button{padding:6px 10px}
+.pl-escolha-flutuante .pl-escolha-grade{width:100%;flex:1 1 auto;min-height:0;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0;padding:4px 2px;box-sizing:border-box;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:thin}
+html:root body .pl-page .pl-escolha-flutuante .pl-escolha-card{gap:4px;padding:8px 5px;min-height:0}
+.pl-escolha-flutuante .pl-escolha-foto{width:52px;height:52px;flex-basis:52px;font-size:18px}
+.pl-escolha-flutuante .pl-escolha-detalhe{font-size:13px}
+.pl-escolha-flutuante .pl-escolha-card small{font-size:12px;padding:2px 6px}
+.pl-escolha-flutuante>footer{flex:0 0 auto;padding-top:8px;margin-top:8px;min-width:0}
+.pl-escolha-flutuante>footer>span{display:none}
+.pl-escolha-flutuante>footer:not(:has(button)){display:none}
+.pl-escolha-flutuante .pl-escolha-vazia{flex:0 0 auto;margin:0;padding:18px 8px}
+@media(max-width:480px){html:root body .pl-page #cronogramaTabela .pl-escolha-painel.pl-escolha-flutuante{padding:12px}.pl-escolha-flutuante .pl-escolha-grade{grid-template-columns:repeat(3,minmax(0,1fr));gap:3px}.pl-escolha-flutuante .pl-escolha-card strong{font-size:14px}.pl-escolha-flutuante .pl-escolha-detalhe{display:none}}
+
+.pl-escolha-flutuante .pl-escolha-grade{margin-top:10px}
+
+/* Seleção centralizada, com fechamento pelo fundo ou pela tecla Esc. */
+html:root body .pl-page #cronogramaTabela dialog.pl-escolha-painel.pl-escolha-flutuante{inset:auto!important;left:50%!important;top:50%!important;transform:translate(-50%,-50%);width:min(840px,calc(100vw - 32px));max-width:calc(100vw - 32px);max-height:var(--pl-escolha-max-altura,640px);margin:0!important;padding:24px;border-radius:20px;box-shadow:0 24px 75px #152a4538}
+dialog.pl-escolha-flutuante::backdrop{background:#192e4545}
+html:root body .pl-page #cronogramaTabela dialog.pl-escolha-flutuante>header{grid-template-columns:minmax(0,1fr) 32px!important;gap:14px}
+html:root body .pl-page #cronogramaTabela dialog.pl-escolha-flutuante>header input{height:42px}
+dialog.pl-escolha-flutuante .pl-escolha-grade{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:18px}
+html:root body .pl-page dialog.pl-escolha-flutuante .pl-escolha-card{gap:6px;padding:12px 8px}
+dialog.pl-escolha-flutuante .pl-escolha-foto{width:64px;height:64px;flex-basis:64px;font-size:20px}
+dialog.pl-escolha-flutuante .pl-escolha-detalhe{display:block;font-size:14px}
+dialog.pl-escolha-flutuante .pl-escolha-card small{font-size:13px}
+@media(max-width:700px){html:root body .pl-page #cronogramaTabela dialog.pl-escolha-painel.pl-escolha-flutuante{padding:16px}.pl-escolha-flutuante .pl-escolha-grade{grid-template-columns:repeat(3,minmax(0,1fr))}dialog.pl-escolha-flutuante .pl-escolha-foto{width:52px;height:52px;flex-basis:52px}html:root body .pl-page dialog.pl-escolha-flutuante .pl-escolha-card{padding:10px 3px}dialog.pl-escolha-flutuante .pl-escolha-grade{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}}
+
+dialog.pl-escolha-flutuante .pl-escolha-grade{align-items:start}
+.pl-escolha-escalas{display:grid;gap:8px;width:100%;min-width:0;margin-top:3px;text-align:left}
+.pl-escolha-alocacao{display:flex;flex-direction:column;gap:3px;padding:8px;border:1px solid #ede4d5;border-radius:8px;background:#fffbf5;color:#735f41;min-width:0;font-size:13px;line-height:1.4;overflow-wrap:anywhere}
+.pl-escolha-alocacao b{font-size:13px;font-weight:600}
+
+/* Listas extensas mantêm o tamanho dos cards e rolam sem comprimir as fileiras. */
+html:root body .pl-page #cronogramaTabela dialog.pl-escolha-flutuante .pl-escolha-grade{grid-auto-rows:max-content!important;grid-template-rows:none!important;align-content:start!important;align-items:start!important;row-gap:16px}
+html:root body .pl-page #cronogramaTabela dialog.pl-escolha-flutuante .pl-escolha-card{height:auto!important;min-height:max-content!important;align-self:start;box-sizing:border-box;border-color:#e6ecf2}
+html:root body .pl-page #cronogramaTabela dialog.pl-escolha-flutuante .pl-escolha-card>*{flex-shrink:0}
+html:root body .pl-page #cronogramaTabela dialog.pl-escolha-flutuante .pl-escolha-card:hover{border-color:#bad5c5}
+
+html:root body .pl-page table.pl-crono-tabela button.pl-inline-escolher.pl-inline-foto{display:inline-flex;width:auto;min-width:0;flex:0 0 auto;padding:0;margin:0;border:0;border-radius:50%;line-height:1;vertical-align:middle}
+.pl-inline-escolher.pl-inline-foto::after{display:none}
+
+/* Data/horário e pedido/etapa centralizados nas respectivas colunas. */
+html:root:is(#plc#plc#plc,html) .pl-page table.pl-crono-tabela .crono-tabela-linha>td:is([data-col="Data"],[data-col="Pedido"]){text-align:center!important;vertical-align:middle!important}
+html:root:is(#plc#plc#plc,html) .pl-page table.pl-crono-tabela thead th:nth-child(-n+2){text-align:center!important}
+
+/* Dias passados preservam o fundo padrão e aparecem esmaecidos. */
+html:root body .pl-page #cronogramaTabela .pl-crono-passado{opacity:.45}
+
+/* Títulos dos dias no estilo do Resumo do dia, sem cor exclusiva para hoje. */
+html:root body .pl-page #cronogramaTabela .crono-tabela-dia th{background:#f3f5f6!important}
+html:root body .pl-page #cronogramaTabela .crono-dia-cabecalho{display:flex;align-items:center;justify-content:center;gap:20px;min-width:0;margin:0;padding:16px;background:transparent;text-align:center}
+html:root:is(#plc#plc#plc,html) .pl-page #cronogramaTabela .crono-dia-titulo{display:block;min-width:0;font:400 clamp(24px,2.3vw,32px)/1.15 "Cormorant Garamond",Georgia,serif!important;letter-spacing:.01em!important;text-transform:none!important;color:#2e2b29;white-space:normal;text-align:center}
+html:root:is(#plc#plc#plc,html) .pl-page #cronogramaTabela .crono-dia-titulo em{font:inherit!important;font-style:normal!important;letter-spacing:inherit;color:#c4302b;white-space:nowrap}
+.pl-crono-dia-orn{position:relative;flex:0 1 65px;min-width:14px;height:1px;background:linear-gradient(90deg,transparent,#cdb994)}
+.pl-crono-dia-orn:last-child{background:linear-gradient(90deg,#cdb994,transparent)}
+.pl-crono-dia-orn::after{content:"";position:absolute;top:50%;width:5px;height:5px;background:#b99a72;transform:translateY(-50%) rotate(45deg)}
+.pl-crono-dia-orn:first-child::after{right:-2px}.pl-crono-dia-orn:last-child::after{left:-2px}
+@media(max-width:760px){html:root body .pl-page #cronogramaTabela .crono-dia-cabecalho{padding:14px 10px;gap:12px}html:root:is(#plc#plc#plc,html) .pl-page #cronogramaTabela .crono-dia-titulo{font-size:22px!important}.pl-crono-dia-orn{flex-basis:24px;min-width:10px}}

@@ -74,26 +74,13 @@ window.itens_toggleQrPanel = function(){
 };
 
 async function itens_garantirQrCode(item){
+  // 15/11/2026: o código é gerado e protegido pelo banco; aqui só lê o que está gravado.
   if(item?.qr_code) return item.qr_code;
-
-  const qrCode = itens_gerarQrCode();
-  item.qr_code = qrCode;
-
   try{
-    const { error } = await window.supabaseClient
-      ?.from("itens")
-      .update({ qr_code: qrCode })
-      .eq("id", item.id);
-
-    if(itens_colunaQrAusente(error)){
-      item.qr_code = "";
-      return "";
-    }
-  }catch(error){
-    console.warn("Nao foi possivel salvar QR Code do item antigo:", error);
-  }
-
-  return qrCode;
+    const { data } = await window.supabaseClient?.from("itens").select("qr_code").eq("id", item.id).maybeSingle();
+    item.qr_code = data?.qr_code || "";
+  }catch(error){ console.warn("Não foi possível ler o QR Code do item:", error); }
+  return item.qr_code || "";
 }
 
 window.itens_copiarQrCode = function(){

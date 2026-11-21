@@ -220,3 +220,33 @@
 .so-chat-topo .so-acoes button{text-align:left}
 /* Conversa mais estreita e alinhada às abas principais. */
 @media(min-width:1201px){.so-pedidos{grid-template-columns:280px minmax(300px,1fr) minmax(380px,1.8fr)}html:root body main.el-page:has(.so-pedidos) .ac-cabecalho>.fin-abas{max-width:calc(100% - var(--so-conversa-largura,380px) - 16px)!important;flex-wrap:wrap!important;box-sizing:border-box}}
+
+.so-avaria .so-chat-anexos{padding:8px;margin:0}
+.so-painel .so-detalhe .so-avaria .so-chat-anexos button{height:150px}.so-avaria .so-chat-anexos img{height:140px}
+
+/* (16/11/2026, pedido do usuário: "tela toda azul") visual neutro: cartões brancos, selecionado com borda grafite,
+   número do pedido no selo vermelho padrão do sistema, iniciais e balões em cinza. Vale na Gestão do acervo, na
+   Central de Pedidos e na Triagem (mesmo componente). */
+html:root .so-pedidos .so-pedidos-lista button{border-color:#e3e7ec}
+html:root .so-pedidos .so-pedidos-lista button[aria-pressed=true]{background:#fff;border:2px solid #44443f;padding:11px;box-shadow:0 4px 14px rgb(15 23 42 / 10%)}
+html:root .so-pedidos .so-produtos-lista>button{border-color:#e3e7ec}
+html:root .so-pedidos .so-produtos-lista>button[aria-pressed=true]{background:#fff;border-color:#44443f;box-shadow:inset 0 0 0 1px #44443f,0 4px 14px rgb(15 23 42 / 8%)}
+html:root .so-pedido-numero{border:0;background:#fdf1f0;color:#c4302b;font-weight:600}
+html:root .so-pedido-agenda>strong,html:root .so-pedido-identidade>strong{color:#1f2020}
+html:root .so-pedido-agenda>span,html:root .so-pedido-identidade>small{color:#6b6b6b}
+html:root .so-avatar{background:#eef0f2;color:#4f4f4f}
+html:root .so-mensagem-triagem .so-balao{background:#f3f4f6}
+html:root .so-balao{background:#fff;border:1px solid #e7e9ec}
+html:root .so-mensagem-triagem .so-balao{border-color:#e7e9ec}
+html:root .so-table tr[data-so-linha][aria-selected=true]{background:#f6f6f4}
+html:root .so-produtos-lista>button:focus-visible{outline-color:#44443f}
+html:root .so-painel .so-pedidos-lista button,html:root .so-painel .so-pedidos-lista button[aria-pressed=true]{color:#1f2020}
+html:root :is(.so-dialog,.so-inline-conversa) button:not([type=submit]):not(.so-anexo-escolher),html:root .so-painel .so-chat-topo .so-acoes button{background:#fff;border-color:#dfe4ea;color:#1f2020}
+html:root :is(.so-dialog,.so-inline-conversa) button:not([type=submit]):not(.so-anexo-escolher):hover,html:root .so-painel .so-chat-topo .so-acoes button:hover{background:#f6f6f4;border-color:#44443f}
+html:root :is(.so-dialog,.so-inline-conversa) [type=submit]{background:var(--el-button-primary-bg,#123f86);border-color:var(--el-button-primary-bg,#123f86);color:#fff}
+html:root:is(#so#so#so#so#so#so,html) .so-pedidos-lista button,html:root:is(#so#so#so#so#so#so,html) .so-pedidos-lista button :is(strong,b){color:#1f2020}
+html:root:is(#so#so#so#so#so#so,html) .so-pedidos-lista button :is(small,.so-pedido-agenda>span){color:#6b6b6b}
+html:root:is(#so#so#so#so#so#so,html) .so-pedidos-lista .so-pedido-numero{color:#c4302b}
+/* (16/11/2026) sem a borda preta no selecionado: fundo cinza-claro e contorno fino, igual aos outros cartões */
+html:root:is(#so#so#so#so#so#so,html) .so-pedidos .so-pedidos-lista button[aria-pressed=true]{background:#fff;border:2px solid #c4302b;padding:11px;box-shadow:none}
+html:root:is(#so#so#so#so#so#so,html) .so-pedidos .so-produtos-lista>button[aria-pressed=true]{background:#fff;border-color:#c4302b;box-shadow:inset 0 0 0 1px #c4302b}

@@ -48,6 +48,8 @@
         icone: "layout-grid",
         rotulo: "Geral",
         itens: [
+          // Reuniões (nov/2026): agenda, gravação e ata pela IA. Aberto a toda a equipe; quem vê cada reunião é decidido no banco.
+          { rotulo: "Reuniões", href: "Modulos/Gestao/Reunioes/reunioes.html" },
           { rotulo: "Solicitação de compra", href: "Modulos/Geral/SolicitacoesCompra/solicitacoes.html" },
           { rotulo: "Solicitação de manutenção", href: "Modulos/Geral/SolicitacoesManutencao/solicitacoes.html" },
           // Cronograma era uma categoria própria; com o menu no topo foi para dentro de Geral (pedido do usuário).
@@ -66,13 +68,14 @@
             rotulo: "Cadastros",
             grupo: [
               { rotulo: "Clientes", href: "Modulos/Comercial/CadastroClientes/cadastro-clientes.html" },
+              { rotulo: "Clientes finais", href: "Modulos/Comercial/ClientesFinais/clientes-finais.html" }, // quem contrata o evento (18/11/2026)
               { rotulo: "Locais", href: "Modulos/Comercial/CadastroLocais/cadastro-locais.html" },
             ],
           },
           { rotulo: "Pedidos e Orçamentos", href: "Modulos/Comercial/Pedidos/CentralPedidos.html" },
+          { rotulo: "Personalizações IA", href: "Modulos/Comercial/PersonalizacoesIA/personalizacoes-ia.html" },
           { rotulo: "Sublocações", href: "Modulos/Comercial/Terceirizacoes/terceirizacoes.html" }, // empresas e itens sublocados (nov/2026)
           { rotulo: "Contas a receber", href: "Modulos/Comercial/ContasReceber/contas-receber.html" },
-          { rotulo: "Produtividade", href: "Modulos/Comercial/Produtividade/produtividade.html" },
           { rotulo: "Cancelamentos", href: "Modulos/Comercial/Cancelamentos/cancelamentos.html" },
           {
             rotulo: "Contratos",
@@ -86,9 +89,9 @@
           {
             rotulo: "Disponibilidade de Itens",
             legado: {
-              html: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.html?v=20261031-filtros-titulo",
-              js: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.js?v=20261107-teste-usuario",
-              css: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.css?v=20261101-arraste-horizontal",
+              html: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.html?v=20261118-filtros",
+              js: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.js?v=20261118-filtros",
+              css: "Modulos/Estoque/DisponibilidadeItens/disponibilidade-itens.css?v=20261118-filtros",
             },
           },
         ],
@@ -106,23 +109,18 @@
               { rotulo: "Cadastro de Itens", href: "Modulos/Estoque/CadastroItens/cadastro-itens.html" },
               { rotulo: "Cadastro de Personalizações", href: "Modulos/Estoque/Personalizacoes/estoque-personalizacoes.html" },
               { rotulo: "Cadastro de Fornecedores", href: "Modulos/Estoque/CadastroFornecedores/fornecedores.html" },
+              { rotulo: "Material de proteção", href: "Modulos/Estoque/CapasProtecao/capas.html" },
             ],
           },
           { rotulo: "Gestão do acervo", href: "Modulos/Estoque/Acervo/acervo.html" },
-          { rotulo: "Material de proteção", href: "Modulos/Estoque/CapasProtecao/capas.html" },
-          { rotulo: "Almoxarifado", href: "Modulos/Chiavari/Almoxarifado/almoxarifado.html" },
-          { rotulo: "Ordens de serviço", href: "Modulos/Chiavari/CentralMetas/itens-danificados.html" },
+          { rotulo: "Almoxarifado", href: "Modulos/Almoxarifado/almoxarifado.html" },
+          // 16/11/2026: Ordens de serviço e de produção numa tela só, com abas; saiu do menu principal (era a categoria Produção).
+          { rotulo: "O.S e O.P", href: "Modulos/Producao/ordens-painel.html" },
           {
             rotulo: "Compras",
               href: "Modulos/Estoque/Compras/compras.html",
           },
         ],
-      },
-      {
-        id: "producao",
-        icone: "paintbrush",
-        rotulo: "Produção",
-        href: "Modulos/Producao/ordens.html",
       },
       {
         id: "logistica",
@@ -161,6 +159,8 @@
           { rotulo: "Fluxo do sistema", href: "Modulos/Gestao/Fluxograma/fluxograma.html" },
           { rotulo: "Histórico", href: "Modulos/Comercial/Historico/historico.html" },
           { rotulo: "Central de Metas", href: "Modulos/Chiavari/CentralMetas/central.html" },
+          // Saiu do Comercial a pedido (15/11/2026): é tela de gestão do time comercial.
+          { rotulo: "Produtividade comercial", href: "Modulos/Comercial/Produtividade/produtividade.html" },
           { rotulo: "Parâmetros", href: "Modulos/Configuracoes/Parametros/parametros.html" },
           // Era categoria própria; com o menu no topo foi para dentro de Gestão (pedido do usuário).
           { rotulo: "Importar Itens", href: "Modulos/Importacao/ImportarItens/importar-itens.html" },

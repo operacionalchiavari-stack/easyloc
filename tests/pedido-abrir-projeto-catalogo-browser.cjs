@@ -129,6 +129,7 @@ const mockSupabase = `
   // Dados obrigatórios (out/2026): sem a data de entrega, não abre a lista/catálogo e marca o campo.
   const entregaOriginal = await page.inputValue("#dataEntrega");
   await page.fill("#dataEntrega", "");
+  await page.evaluate(()=>{document.getElementById('localIdHidden').value='local-fixture';});
   await page.locator('.ct-depois button[data-etapa="lista"]').click();
   await page.waitForFunction(() => /data de entrega/i.test(document.querySelector(".el-alert-stack .el-alert")?.textContent || ""));
   assert.ok(await page.locator("#dataEntrega").evaluate(el => el.classList.contains("is-invalido")), "campo de entrega marcado");
@@ -188,7 +189,7 @@ const mockSupabase = `
   assert.ok(await cf.locator('[data-cpj-render="r2"] img').evaluate(img=>img.naturalWidth>0 && img.src.includes('/object/public/')));
   assert.strictEqual(await cf.locator('[data-cpj="ir-estudio"]').count(),0,'botao 3D Livre removido apenas do comercial');
   await cf.locator('body').evaluate(async()=>{
-    const {cenaEditor}=await import('./catalogo-studio3d.mjs?v=20261102-3d-persistente');
+    const {cenaEditor}=await import('./catalogo-studio3d.mjs?v=20261118-3d-personalizacao');
     cenaEditor.pronto=()=>true;cenaEditor.abrir=async()=>({faltando:0});cenaEditor.fechar=async()=>{};
     cenaEditor.capturar=()=>{const canvas=document.createElement('canvas');canvas.width=20;canvas.height=20;canvas.getContext('2d').fillRect(0,0,20,20);return {foto:canvas.toDataURL('image/png'),snapshot:{}};};
   });
@@ -229,7 +230,7 @@ const mockSupabase = `
     const prefixo='e1:'+antes.id+':';
     const quantidade=(await pendentes.listarRendersPendentes(prefixo)).length;
     window.parent.__pedidoGravarProjetoComercial=gravar;
-    const m=await import('./catalogo-projetos.mjs?v=20261102-montagem-planta');
+    const m=await import('./catalogo-projetos.mjs?v=20261118-fixo');
     await m.definirProjetoComercialPedido(antes);
     const depois=await pendentes.listarRendersPendentes(prefixo);
     return {falhou,quantidade,restantes:depois.length,render:window.parent.__pedidoProjetoComercial.dados.ambientes.flatMap(a=>a.renders).find(r=>r.cena?.tipo==='ia')};

@@ -2,9 +2,10 @@ const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,
 const estados={aberta:'Solicitada',analise:'Em análise',agendada:'Agendada',execucao:'Em execução',concluida:'Concluída',cancelada:'Cancelada'},prioridades={baixa:'Baixa',normal:'Normal',alta:'Alta',urgente:'Urgente'},dia=v=>v?String(v).slice(0,10).split('-').reverse().join('/'):'—';
 let empresa,lista=[];
 const dialog=document.createElement('dialog');dialog.className='pv-dialog predial-atendimento';document.body.append(dialog);
-async function rpc(acao,dados={}){const {data,error}=await window.supabaseClient.rpc('manutencao_predial_operar',{p_empresa:empresa,p_acao:acao,p_dados:dados});if(error)throw Error(error.message);return data;}
+async function rpc(acao,dados={}){if(!empresa)empresa=(await window.aguardarContexto()).empresa_id;const {data,error}=await window.supabaseClient.rpc('manutencao_predial_operar',{p_empresa:empresa,p_acao:acao,p_dados:dados});if(error)throw Error(error.message);return data;}
 function pintar(){const busca=($('comprasSearch').value||'').toLocaleLowerCase('pt-BR');const rows=lista.filter(r=>[r.numero,r.titulo,r.local,r.solicitante_nome,r.responsavel].join(' ').toLocaleLowerCase('pt-BR').includes(busca));$('predialComprasBody').innerHTML=rows.map(r=>`<tr><td><b>#${r.numero} · ${esc(r.titulo)}</b></td><td>${esc(r.local)}</td><td>${esc(r.solicitante_nome)}</td><td><span class="badge ${r.prioridade==='urgente'?'text-danger':''}">${prioridades[r.prioridade]}</span></td><td class="text-danger">${dia(r.necessario_ate)}</td><td><span class="badge status">${estados[r.status]}</span></td><td>${esc(r.responsavel||'A definir')}</td><td><button type="button" class="btn btn-secondary" data-predial="${r.id}">${r.confirmado_em?'Ver serviço':'Atender'}</button></td></tr>`).join('');$('predialComprasRetorno').textContent=rows.length?'':'Nenhuma solicitação de manutenção da empresa.';}
-function atualizarContagem(){const badge=$('needsServicosBadge');if(badge){const total=lista.filter(r=>!['concluida','cancelada'].includes(r.status)).length+Number(badge.dataset.operacionais||0);badge.textContent=total;badge.hidden=total===0;}if($('needsServicosBody')?.children.length)$('predialComprasRetorno').textContent='';}
+// (16/11/2026) a contagem vem só das necessidades (cada manutenção em aberto já virou uma necessidade de serviço)
+function atualizarContagem(){const badge=$('needsServicosBadge');if(badge){const total=Number(badge.dataset.operacionais||0);badge.textContent=total;badge.hidden=total===0;}}
 window.addEventListener('compras-servicos-contagem',atualizarContagem);
 async function carregar(){const data=await rpc('listar');lista=data.itens||[];pintar();atualizarContagem();}
 const options=(map,value)=>Object.entries(map).map(([k,v])=>`<option value="${k}" ${k===value?'selected':''}>${v}</option>`).join('');
@@ -38,7 +39,7 @@ async function abrir(id){
  dialog.querySelectorAll('[data-fechar]').forEach(b=>b.onclick=()=>dialog.close());
  form.onsubmit=async e=>{e.preventDefault();const b=e.submitter;
   if(f.execucao_tipo.value==='externa'&&!f.fornecedor_id.value){f.fornecedor_busca.setCustomValidity('Selecione um fornecedor da lista.');f.fornecedor_busca.reportValidity();return;}
-  b.disabled=true;try{const dados={...Object.fromEntries(new FormData(form)),id:r.id,updated_at:r.updated_at};if(dados.execucao_tipo==='externa')dados.parcelas=[...dialog.querySelectorAll('.predial-parcela')].map(el=>({vencimento:el.querySelector('[data-vencimento]').value,valor:Number(el.querySelector('[data-valor]').value)}));await rpc('atualizar',dados);await carregar();await abrir(r.id);window.alerta('Atendimento salvo. '+(dados.execucao_tipo==='externa'?'Contas a Pagar gerado; pagamento bloqueado até a confirmação do serviço.':''),'Manutenção da empresa','sucesso');}catch(err){erro.textContent=err.message;}finally{b.disabled=false;}
+  b.disabled=true;try{const dados={...Object.fromEntries(new FormData(form)),id:r.id,updated_at:r.updated_at};if(dados.execucao_tipo==='externa')dados.parcelas=[...dialog.querySelectorAll('.predial-parcela')].map(el=>({vencimento:el.querySelector('[data-vencimento]').value,valor:Number(el.querySelector('[data-valor]').value)}));await rpc('atualizar',dados);await carregar();window.dispatchEvent(new Event('compras-recarregar'));await abrir(r.id);window.alerta('Atendimento salvo. '+(dados.execucao_tipo==='externa'?'Contas a Pagar gerado; pagamento bloqueado até a confirmação do serviço.':''),'Manutenção da empresa','sucesso');}catch(err){erro.textContent=err.message;}finally{b.disabled=false;}
  };
  dialog.querySelector('[data-confirmar]')?.addEventListener('click',()=>{
   if(alterado){erro.textContent='Salve as alterações do atendimento antes de confirmar o serviço.';return;}
@@ -47,6 +48,7 @@ async function abrir(id){
  if(!dialog.open)dialog.showModal();
  try{suppliers=await fornecedores();dialog.querySelector('#predialFornecedores').innerHTML=suppliers.map(s=>`<option value="${esc(supplierLabel(s))}"></option>`).join('');const supplier=suppliers.find(s=>s.id===r.fornecedor_id);if(supplier)f.fornecedor_busca.value=supplierLabel(supplier);}catch(err){erro.textContent='Não foi possível carregar fornecedores: '+err.message;}
 }
+window.ComprasPredialAbrir=id=>abrir(id).catch(err=>window.alerta(err.message,'Manutenção da empresa','erro'));
 $('predialComprasBody').onclick=async e=>{const b=e.target.closest('[data-predial]');if(!b)return;b.disabled=true;try{await abrir(b.dataset.predial);}catch(err){window.alerta(err.message,'Manutenção da empresa','erro');}finally{b.disabled=false;}};
 $('comprasSearch').addEventListener('input',()=>{pintar();atualizarContagem();});
 document.querySelector('[data-pv-tab="needs-servicos"]').addEventListener('click',()=>carregar().catch(e=>$('predialComprasRetorno').textContent=e.message));

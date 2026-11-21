@@ -16,7 +16,8 @@
   function verificar(input){
     let autofill=false;
     try{autofill=input.matches(':autofill,:-webkit-autofill');}catch(_){}
-    if(autofill || (emailLogin && input.value.trim().toLowerCase()===emailLogin))limparAutomatico(input);
+    // nov/2026: também qualquer e-mail que o navegador ponha sozinho (outra conta salva), não só o da conta logada
+    if(autofill || (emailLogin && input.value.trim().toLowerCase()===emailLogin) || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value.trim()))limparAutomatico(input);
   }
   async function identificarLogin(){
     try{

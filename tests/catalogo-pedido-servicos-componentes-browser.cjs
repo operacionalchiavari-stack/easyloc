@@ -38,7 +38,7 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
       const builder = (dados) => new Proxy({}, { get(_t, prop) { if (prop === 'then') return (ok) => ok({ data: dados, error: null }); return () => builder(dados); } });
       const orig = window.supabaseClient.from.bind(window.supabaseClient);
       const PERS = [{ id: '11111111-1111-4111-8111-111111111111', tipo: 'Pintura', vinculo_id: '1', status: 'ATIVO', preco_sugerido: 0 }];
-      const TERC = [{ id: 't1', fornecedor_id: 'f2', produto: 'Tenda Cristal 10x10', largura: 10, altura: 3, profundidade: 10, codigo: 'TC10', quantidade: 3, custo: 1500, valor_locacao: 3000, foto_url: 'https://fixture/tenda.png', ativo: true },
+      const TERC = [{ id: 't1', fornecedor_id: 'f2', produto: 'Tenda Cristal 10x10', largura: 10, altura: 3, profundidade: 10, codigo: 'TC10', quantidade: 3, custo: 1500, valor_reposicao: 9000, valor_locacao: 3000, foto_url: 'https://fixture/tenda.png', ativo: true },
         { id: 't2', fornecedor_id: 'f1', produto: 'Sofá Veludo Rosa', quantidade: 6, custo: 200, valor_locacao: 500, foto_url: '', ativo: true }];
       window.supabaseClient.from = (t) => t === 'servicos_adicionais' ? builder(SERVICOS) : t === 'itens' ? builder(COMP) : t === 'personalizacoes' ? builder(PERS) : t === 'terceirizacao_itens' ? builder(TERC) : orig(t);
       const origRpc = window.supabaseClient.rpc.bind(window.supabaseClient);
@@ -76,9 +76,11 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     await sdlg.locator('button[type=submit]').click();
     await page.waitForFunction(() => (window.__sincronizados.at(-1)?.dados?.terceirizados || []).length === 1, null, { timeout: 8000 });
     const tl = (await ultimo()).dados.terceirizados[0];
+    assert.equal(tl.valor_reposicao,9000);
     assert.deepEqual({ id: tl.terceirizado_id, amb: tl.ambiente_id, q: tl.quantidade, v: tl.valor, c: tl.custo, emp: tl.fornecedor_nome }, { id: 't1', amb: 'a2', q: 2, v: 3000, c: 1500, emp: 'Tendas Brasil' });
     // Nov/2026: o item sublocado fica junto dos itens do ambiente, em lilás, com " - Sublocação" (sem nome da empresa).
     const linhaTerc = await cat.locator('.pa-linha-sublocacao').innerText();
+    assert.match(linhaTerc,/9\.000,00/);
     assert.match(linhaTerc, /Tenda Cristal 10x10 - Sublocação/);
     assert.ok(!/Tendas Brasil|A empresa tem/.test(linhaTerc), 'sem empresa nem quantidade da empresa na linha');
     await cat.locator('[data-terc-campo="quantidade"]').fill('1'); await cat.locator('[data-terc-campo="quantidade"]').dispatchEvent('change');
@@ -106,6 +108,8 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     let s = (await ultimo()).dados.servicos[0];
     assert.deepEqual({ nome: s.nome, q: s.quantidade, v: s.valor, etapa: s.etapa, data: s.data, hora: s.hora }, { nome: 'Montagem especial', q: 2, v: 400, etapa: 'montagem', data: '2026-11-10', hora: '14:30' });
     assert.match(await cat.locator('.cpj-servico-linha').getAttribute('title'), /cronograma como Montagem/);
+    const dataBox=await cat.locator('[data-servico-campo="data"]').boundingBox(),horaBox=await cat.locator('[data-servico-campo="hora"]').boundingBox();
+    assert.ok(Math.abs(dataBox.y-horaBox.y)<2,'Data e horario na mesma linha');
     await cat.locator('[data-servico-campo="hora"]').fill('16:00'); await cat.locator('[data-servico-campo="hora"]').dispatchEvent('change');
     await page.waitForFunction(() => window.__sincronizados.at(-1)?.dados?.servicos?.[0]?.hora === '16:00', null, { timeout: 8000 });
     await cat.locator('[data-servico-campo="valor"]').fill('350');
@@ -172,7 +176,7 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     const sel = cat.locator('[data-pa-item="1"] [data-cpj-personalizar]');
     await sel.waitFor({ timeout: 8000 });
     assert.equal(await cat.locator('[data-pa-item="c1"] [data-cpj-personalizar]').count(), 0, 'componente sem personalização não tem seletor');
-    await sel.click();await dlg.locator('[data-pers-opcao="o1"]').click();await dlg.locator('[type=submit]').click();
+    await sel.click();await dlg.locator('[data-pers-aba="novas"]').click();await dlg.locator('[data-pers-opcao="o1"]').click();await dlg.locator('[type=submit]').click();
     await page.waitForFunction(() => (window.__sincronizados.at(-1)?.dados?.ambientes?.[0]?.itens || []).some((i) => i.item_id === '1' && i.personalizacao_id === 'pers1'), null, { timeout: 8000 });
     console.log('ok 2b - personalização escolhida na linha do item vai pro pedido');
 

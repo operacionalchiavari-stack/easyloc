@@ -1,8 +1,14 @@
 // Pedido digital (out/2026): página pública do link do pedido. O cliente entra com o código de 6 números e vê o MESMO
 // documento do PDF do pedido (pedidoPreviewHtml, layout em pé); no lugar da "Programação de pagamento" ficam os pagamentos
-// ("Pagamento 1, 2…", sem dizer conta nem banco), com o PIX de cada um. O PIX é uma cobrança do
+// ("Locação 1/2", "Frete"…, sem dizer conta nem banco), com o PIX de cada um. O PIX é uma cobrança do
 // gateway da conta certa (valor travado); a confirmação dá baixa sozinha no Financeiro.
 (function () {
+  // "Locação 1/2", "Frete", "Montagem" no lugar de "Pagamento N" (pedido do usuário, 18/11/2026).
+  var NOMES_COMPONENTE = { locacao: "Locação", frete: "Frete", montagem: "Montagem" };
+  function nomePagamento(p) {
+    var nome = NOMES_COMPONENTE[p.componente] || (p.componente ? String(p.componente) : "Pagamento " + p.numero);
+    return Number(p.parcelas) > 1 ? nome + " " + p.parcela + "/" + p.parcelas : nome;
+  }
   const $ = (id) => document.getElementById(id);
   const sb = window.supabaseClient;
   const slug = new URLSearchParams(location.search).get("p") || "";
@@ -40,6 +46,8 @@
   const dataBr = (iso) => iso ? String(iso).slice(8, 10) + "/" + String(iso).slice(5, 7) + "/" + String(iso).slice(0, 4) : "";
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   let pin = "", dados = null, aberto = null, timerPix = null, timerRelogio = null;
+  let revisaoConsulta=0, atualizando=false, assinaturaDocumento='',observadorPagamento=null;
+  const assinatura = data => JSON.stringify([data?.detalhe || {},data?.empresa || {},data?.pedido || {}]);
 
   function lerPin() {
     const m = location.hash.match(/c=(\d{6})/);
@@ -55,19 +63,31 @@
   }
 
   async function abrir(codigo, silencioso) {
+    const revisao=++revisaoConsulta;
     $("pgCarregando").hidden = !!silencioso && !!dados;
     const { data, error } = await sb.rpc("pagamento_link_abrir", { p_slug: slug, p_pin: codigo });
-    if (error || !data) { mostrarEntrar("Não foi possível abrir agora. Tente de novo."); return; }
+    if(revisao!==revisaoConsulta)return;
+    if (error || !data) { if(!silencioso || !dados)mostrarEntrar("Não foi possível abrir agora. Tente de novo."); return; }
     if (data.erro) { guardarPin(""); mostrarEntrar(data.erro); return; }
     const jaAberto = !!dados && !!$("pagamento");
     pin = codigo; guardarPin(codigo); dados = data;
     await prepararSimulacao(); aplicarSimulacao();
-    if (silencioso && jaAberto) pintarPagamentos();
-    else await pintar().catch((e) => { console.error(e); mostrarEntrar("Não foi possível abrir o pedido agora. Tente de novo."); });
+    if (silencioso && jaAberto && assinaturaDocumento===assinatura(data)) pintarPagamentos();
+    else {
+      const posicao=window.scrollY;
+      await pintar().catch((e) => { console.error(e); mostrarEntrar("Não foi possível abrir o pedido agora. Tente de novo."); });
+      if(silencioso && jaAberto)window.scrollTo(0,posicao);
+    }
+  }
+  async function atualizarPedido(){
+    if(document.hidden || !pin || aberto || atualizando)return;
+    atualizando=true;
+    try{await abrir(pin,true);}catch(e){console.warn('Atualização do pedido indisponível.');}
+    finally{atualizando=false;}
   }
 
   const SITUACAO = { pago: ["Pago", "ok"], vencido: ["Vencido", "venc"], parcial: ["Pago em parte", "parc"], aberto: ["Em aberto", "aberto"] };
-  const MODULO = "../Comercial/Catalogo/projeto-apresentacao.mjs?v=20261107-lista-sublocacao";
+  const MODULO = "../Comercial/Catalogo/projeto-apresentacao.mjs?v=20261118-fixo";
   let docMod = null;
 
   function marca() {
@@ -97,7 +117,7 @@
     const d = dados.detalhe || {};
     const model = docMod.dadosApresentacao({ noivos: d.nome || "Pedido", data_evento: d.data_evento || "", data_evento_fim: d.data_evento_fim || "", local_evento: d.local || "",
       dados: { ambientes: d.ambientes || [], servicos: d.servicos || [], terceirizados: d.terceirizados || [] } }, achadorDeItem(d.cadastro));
-    const fin = docMod.financeiroPedidoSalvo({ valor_total: d.valor_total, observacoes: { valores: d.valores } });
+    const fin = docMod.financeiroPedidoSalvo({ valor_total: d.valor_total, observacoes: { valores: d.valores,pagamento_config:d.pagamento_config,exibicao_financeiro:d.exibicao_financeiro } });
     model.financeiro = fin ? { ...fin, parcelas: [] } : null;
     model.pagamentosSlot = '<section class="cpj-order-financeiro-parcelas pg-slot" id="pagamento"></section>';
     model.semAviso = true;
@@ -115,7 +135,12 @@
     ajustarPlantas();
     pintarPagamentos();
     const pag = $("pagamento"), barra = $("pdBarra");
-    if (pag && barra && "IntersectionObserver" in window) new IntersectionObserver(([e]) => barra.classList.toggle("oculta", e.isIntersecting), { threshold: 0.05 }).observe(pag);
+    if (pag && barra && "IntersectionObserver" in window) {
+      observadorPagamento?.disconnect();
+      observadorPagamento=new IntersectionObserver(([e]) => barra.classList.toggle("oculta", e.isIntersecting), { threshold: 0.05 });
+      observadorPagamento.observe(pag);
+    }
+    assinaturaDocumento=assinatura(dados);
   }
 
   // A planta tem o tamanho da folha A4: na tela, encolhe até caber na largura do papel (no celular, principalmente)
@@ -123,7 +148,7 @@
     const papel = document.querySelector("#pgLista .cpj-order-paper");
     if (!papel) return;
     const cs = getComputedStyle(papel), livre = papel.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
-    papel.querySelectorAll(".cpj-order-planta-folha").forEach((f) => {
+    papel.querySelectorAll(".cpj-order-planta-pagina").forEach((f) => {
       const largura = parseFloat(f.style.width) * 96 / 25.4; // mm → px
       if (largura > 0) f.style.zoom = String(Math.min(Number(f.style.getPropertyValue("--zt")) || 1, livre / largura));
     });
@@ -140,7 +165,7 @@
         lista.map((p) => {
           const [rot, cls] = SITUACAO[p.situacao] || SITUACAO.aberto;
           const pago = p.situacao === "pago";
-          return '<tr class="pg-item is-' + cls + '"><td>Pagamento ' + p.numero + '<span class="pg-chip ' + cls + '">' + rot + "</span></td><td>" + esc(dataBr(p.vencimento)) + '</td><td class="cpj-order-valor-col">' + brl(pago ? p.valor : p.aberto) + '</td><td class="pg-acao">' +
+          return '<tr class="pg-item is-' + cls + '"><td>' + esc(nomePagamento(p)) + '<span class="pg-chip ' + cls + '">' + rot + "</span></td><td>" + esc(dataBr(p.vencimento)) + '</td><td class="cpj-order-valor-col">' + brl(pago ? p.valor : p.aberto) + '</td><td class="pg-acao">' +
             (pago ? '<span class="pg-pago">Pago ✓</span>' : p.pagavel ? '<button type="button" class="pg-btn" data-pagar="' + p.id + '">' + (p.pix ? "Ver QR Code" : "Gerar QR Code") + "</button>" : '<span class="pg-equipe">Fale com a nossa equipe</span>') + "</td></tr>";
         }).join("") + "</tbody></table>" +
         '<p class="pg-total-linha">' + (emAberto.length ? "Total em aberto <b>" + brl(total) + "</b>" : '<b class="pg-quitado">Tudo pago ✓</b>') + "</p>");
@@ -172,13 +197,13 @@
     const corpo = $("pgPixCorpo");
     if (r.pago) {
       pararPix();
-      corpo.innerHTML = '<div class="pg-pix-ok"><span>✓</span><h3>Pagamento confirmado</h3><p>Pagamento ' + p.numero + " · " + brl(r.valor || p.aberto) + '</p><button type="button" class="pg-btn" data-fechar>Fechar</button></div>';
+      corpo.innerHTML = '<div class="pg-pix-ok"><span>✓</span><h3>Pagamento confirmado</h3><p>' + esc(nomePagamento(p)) + " · " + brl(r.valor || p.aberto) + '</p><button type="button" class="pg-btn" data-fechar>Fechar</button></div>';
       if (simulando) { simPagos.add(p.id); aplicarSimulacao(); pintarPagamentos(); return; }
       abrir(pin, true);
       return;
     }
     corpo.innerHTML =
-      '<p class="pg-pix-sub">Pagamento ' + p.numero + " · vence " + esc(dataBr(p.vencimento)) + "</p>" +
+      '<p class="pg-pix-sub">' + esc(nomePagamento(p)) + " · vence " + esc(dataBr(p.vencimento)) + "</p>" +
       '<p class="pg-pix-valor">' + brl(r.valor) + "</p>" +
       (r.qr_code_base64 ? '<img class="pg-pix-qr" alt="QR Code PIX" src="data:image/png;base64,' + r.qr_code_base64 + '">' : "") +
       '<p class="pg-pix-dica">Abra o app do seu banco, escolha <b>PIX › Ler QR Code</b> e confirme. Ou copie o código:</p>' +
@@ -223,10 +248,13 @@
     if (e.target === $("pgFoto") || e.target.closest("[data-fechar-foto]")) { $("pgFoto").close(); return; }
     if (e.target.closest("[data-fechar]") || e.target === $("pgPix")) $("pgPix").close();
   });
-  $("pgPix").addEventListener("close", () => { pararPix(); aberto = null; });
+  $("pgPix").addEventListener("close", () => { pararPix(); aberto = null; atualizarPedido(); });
   $("pgForm").addEventListener("submit", (e) => { e.preventDefault(); const v = $("pgCodigo").value.replace(/\D/g, ""); if (v.length === 6) abrir(v); });
   $("pgCodigo").addEventListener("input", (e) => { const v = e.target.value.replace(/\D/g, "").slice(0, 6); e.target.value = v; if (v.length === 6) abrir(v); });
-  document.addEventListener("visibilitychange", () => { if (!document.hidden && pin && !aberto) abrir(pin, true); });
+  document.addEventListener("visibilitychange", atualizarPedido);
+  window.addEventListener('focus',atualizarPedido);
+  window.addEventListener('pageshow',e=>{if(e.persisted)atualizarPedido();});
+  setInterval(atualizarPedido,30000);
 
   if (!slug) { $("pgCarregando").textContent = "Link de pagamento inválido."; return; }
   const inicial = lerPin();

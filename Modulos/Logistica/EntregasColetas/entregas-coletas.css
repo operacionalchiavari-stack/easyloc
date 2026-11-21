@@ -309,3 +309,24 @@ html:root .ec-documento-pedido .cpj-order-photo .ec-sem-foto-item{display:flex;a
  html:root #ecDetalhe#ecDetalhe .ec-conferencia-cinco .cpj-order-colhead td:nth-child(8){white-space:normal!important;overflow-wrap:normal}
  html:root #ecDetalhe#ecDetalhe .ec-conferencia-cinco span[data-falta]{display:block;font-size:18px;font-weight:600;line-height:40px;text-align:center}
 }
+
+.ec-observacoes-pedido{padding:14px 18px;margin-bottom:18px;border:1px solid #e3e7ec;border-radius:12px;background:#f7f9fa;white-space:pre-wrap}.ec-observacoes-pedido p{margin:8px 0 0}
+
+/* O cabeçalho comercial deve caber inteiro no painel de entrega/coleta. */
+@media screen{
+ html:root #ecDetalhe#ecDetalhe .ec-documento-pedido{padding:16px!important}
+ html:root #ecDetalhe#ecDetalhe .ec-documento-pedido .cpj-order-letterhead{position:static!important;display:flex!important;flex-wrap:wrap;align-items:center;justify-content:space-between;box-sizing:border-box;width:100%;height:auto!important;min-height:90px;max-height:none!important;margin:0!important;padding:18px 24px!important;gap:18px 24px;overflow:visible}
+ html:root #ecDetalhe#ecDetalhe .ec-documento-pedido .cpj-order-brand{flex:0 1 auto;min-width:0;max-width:100%}
+ html:root #ecDetalhe#ecDetalhe .ec-documento-pedido .cpj-order-logo{max-width:100%}
+ html:root #ecDetalhe#ecDetalhe .ec-documento-pedido .cpj-order-letterhead-side{flex:1 1 360px;min-width:0;max-width:100%;flex-wrap:wrap;justify-content:flex-end;gap:14px 22px}
+ html:root #ecDetalhe#ecDetalhe .ec-documento-pedido .cpj-order-requester{flex:1 1 200px;min-width:0;max-width:100%}
+ html:root #ecDetalhe#ecDetalhe .ec-documento-pedido .cpj-order-requester>div{min-width:0;max-width:100%}
+ html:root #ecDetalhe#ecDetalhe .ec-documento-pedido .cpj-order-requester :is(span,strong){white-space:normal!important;overflow-wrap:anywhere;line-height:1.4}
+ html:root #ecDetalhe#ecDetalhe .ec-documento-pedido .cpj-order-kind{white-space:normal;overflow-wrap:anywhere;max-width:100%;line-height:1.4}
+}
+@media screen and (max-width:700px){
+ html:root #ecDetalhe#ecDetalhe .ec-documento-pedido{padding:12px!important}
+ html:root #ecDetalhe#ecDetalhe .ec-documento-pedido .cpj-order-letterhead{padding:16px!important;gap:16px}
+ html:root #ecDetalhe#ecDetalhe .ec-documento-pedido .cpj-order-letterhead-side{flex-basis:100%;justify-content:flex-start}
+ html:root #ecDetalhe#ecDetalhe .ec-documento-pedido .cpj-order-divider{display:none}
+}

@@ -1,0 +1,50 @@
+/* Cadastros > Clientes finais (18/11/2026) */
+#cfiPage{padding:0 clamp(14px,2vw,28px) 28px}
+html:root:is(#cfi#cfi#cfi,html) body #cfiPage > .header-list.cfi-topo{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;align-items:center!important;column-gap:20px!important}
+html:root:is(#cfi#cfi#cfi,html) body #cfiPage > .header-list.cfi-topo > h2{grid-column:2!important;grid-row:1!important;margin:0!important;white-space:nowrap}
+html:root:is(#cfi#cfi#cfi,html) body #cfiPage > .header-list.cfi-topo > #cfiBusca{grid-column:1;grid-row:1;justify-self:start;width:min(420px,100%);min-height:40px}
+@media(max-width:1000px){html:root:is(#cfi#cfi#cfi,html) body #cfiPage > .header-list.cfi-topo{display:flex!important;flex-direction:column!important;gap:12px!important}}
+.cfi-layout{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:18px;align-items:start}
+@media(max-width:1000px){.cfi-layout{grid-template-columns:1fr}}
+.cfi-lista-card,.cfi-card{background:#fff;border:1px solid #e3e7ec;border-radius:16px;box-shadow:0 0 8px rgba(15,23,42,.08)}
+.cfi-lista-topo{padding:12px 16px;border-bottom:1px solid #eef1f4;font:500 12px Inter,sans-serif;color:#6b6b6b}
+.cfi-lista{display:grid;max-height:calc(100vh - 220px);overflow:auto;border-radius:0 0 16px 16px}
+.cfi-item{display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;padding:10px 14px;border:0;border-bottom:1px solid #f1f3f6;background:#fff;cursor:pointer;font:inherit;color:#1f2020}
+.cfi-item:hover{background:#f7f9fb}
+.cfi-item.is-ativo{background:#eaf0fa;box-shadow:inset 3px 0 0 #123f86}
+.cfi-item-txt{display:grid;min-width:0}
+.cfi-item-txt b{font:500 14px Inter,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cfi-item-txt small{font-size:12px;color:#6b6b6b}
+.cfi-item-ped{display:grid;justify-items:end;font-size:11px;color:#6b6b6b}
+.cfi-item-ped b{font:600 15px Inter,sans-serif;color:#1f2020}
+.cfi-ini{display:inline-grid;place-items:center;width:38px;height:38px;border-radius:50%;background:#e7ebf1;color:#3d4757;font:600 13px Inter,sans-serif;flex:none}
+.cfi-ini.grande{width:60px;height:60px;font-size:20px}
+.cfi-ini.peq{width:24px;height:24px;font-size:10px}
+.cfi-vazio{padding:20px 16px;color:#6b6b6b;font-size:13px}
+.cfi-detalhe{display:grid;gap:16px}
+.cfi-card{padding:18px 22px}
+.cfi-cab{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.cfi-cab h3{margin:0;font:600 19px Inter,sans-serif;color:#1f2020;letter-spacing:0;text-transform:none}
+.cfi-cab p{margin:2px 0 0;font-size:12px;color:#6b6b6b}
+.cfi-campos{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px 18px}
+.cfi-campo{display:grid;gap:2px}
+.cfi-campo span{font:500 11px Inter,sans-serif;color:#6b6b6b;text-transform:uppercase;letter-spacing:.04em}
+.cfi-campo b{font:500 14px Inter,sans-serif;color:#1f2020;overflow-wrap:anywhere}
+.cfi-numeros{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.cfi-numeros div{background:#f7f9fb;border:1px solid #e9edf2;border-radius:12px;padding:10px 14px;display:grid;gap:2px}
+.cfi-numeros span{font-size:11px;color:#6b6b6b}
+.cfi-numeros b{font:600 17px Inter,sans-serif;color:#1f2020}
+.cfi-nota{margin:12px 0 0;font-size:12px;color:#6b6b6b}
+.cfi-card h4{margin:0 0 10px;font:600 15px Inter,sans-serif;color:#1f2020;letter-spacing:0;text-transform:none}
+.cfi-tabela{width:100%;border-collapse:collapse;font-size:13px}
+.cfi-tabela th{text-align:left;font:600 11px Inter,sans-serif;text-transform:uppercase;color:#6b6b6b;padding:8px 10px;border-bottom:1px solid #e3e7ec;background:#fff}
+.cfi-tabela td{padding:9px 10px;border-bottom:1px solid #f1f3f6;vertical-align:middle}
+.cfi-tabela .num{text-align:right;white-space:nowrap}
+.cfi-num{display:inline-block;padding:2px 8px;border-radius:7px;background:#fdecec;color:#c4302b;font:600 12.5px Inter,sans-serif}
+.cfi-dec{display:inline-flex;align-items:center;gap:8px}
+.cfi-dec img{width:24px;height:24px;border-radius:50%;object-fit:cover}
+.cfi-st{display:inline-block;padding:2px 9px;border-radius:999px;font:500 11.5px Inter,sans-serif;background:#eef1f5;color:#4f4f4f}
+.cfi-st.st-aprovado,.cfi-st.st-finalizado,.cfi-st.st-enviado{background:#e6f4ea;color:#1f7a44}
+.cfi-st.st-pre_reserva{background:#fdf6dd;color:#8a6200}
+.cfi-st.st-cancelado{background:#fdecec;color:#b42318}
+.cfi-abrir{min-height:30px!important;padding:4px 10px!important;font-size:12px!important}

@@ -68,12 +68,29 @@
     });
     await carregar();
   }
+  window.carregarMotivosPosicaoFinal = (host, empresa) => cardLista(host, empresa, {
+    tabela: 'fin_posicao_motivos', titulo: 'Posição final: motivos para não cobrar', descricao: false, max: 120, min: 3,
+    ajuda: 'Opções oferecidas ao escolher Não na coluna Cobrar da posição final. Desative um motivo para deixar de oferecê-lo sem alterar os registros anteriores.',
+    placeholder: 'Novo motivo para não cobrar', vazio: 'Nenhum motivo cadastrado.', repetido: 'Já existe um motivo com esse nome.',
+    curto: 'O motivo precisa de pelo menos 3 letras.', someTexto: 'Motivo não aparece mais para escolher.', classe: 'pr-posicao-motivos' });
   window.carregarMotivosCancelamento = (host, empresa) => cardLista(host, empresa, {
     tabela: 'comercial_motivos_cancelamento', titulo: 'Motivos de cancelamento do pedido', descricao: true, max: 80, min: 3,
     ajuda: 'Aparecem na janela "Cancelar pedido" do Comercial. O motivo é obrigatório para cancelar e alimenta o relatório Comercial &gt; Cancelamentos.',
     placeholder: 'Novo motivo (ex.: Orçamento acima do previsto)', vazio: 'Nenhum motivo cadastrado.', repetido: 'Já existe um motivo com esse nome.',
     curto: 'O motivo precisa de pelo menos 3 letras.', someTexto: 'Motivo não aparece mais no cancelamento.', classe: 'pr-motivos-cancel' });
+  window.carregarMotivosBV = (host, empresa) => cardLista(host, empresa, {
+    tabela: 'comercial_motivos_bv', titulo: 'Motivos de negociação do BV', descricao: false, max: 120, min: 3,
+    ajuda: 'Motivos oferecidos ao negociar um BV diferente no pedido. Desative uma opção para deixar de oferecê-la sem alterar o histórico dos pedidos.',
+    placeholder: 'Novo motivo de negociação do BV', vazio: 'Nenhum motivo cadastrado.', repetido: 'Já existe um motivo com esse nome.',
+    curto: 'O motivo precisa de pelo menos 3 letras.', someTexto: 'Motivo não aparece mais para escolher.', classe: 'pr-motivos-bv' });
   // Papéis das pessoas nas equipes de clientes (Cadastro de Clientes > Equipes)
+  // 15/11/2026: grupos de separação (Triagem) escolhidos no cadastro de cada item
+  window.carregarGruposSeparacao = (host, empresa) => cardLista(host, empresa, {
+    tabela: 'separacao_grupos', titulo: 'Grupos de separação', descricao: false, max: 60, min: 2, classe: 'pr-grupos-separacao',
+    ajuda: 'Aparecem para escolher no campo <b>Grupo de separação</b> do cadastro de cada item (Estoque &gt; Cadastro de Itens), para a Triagem separar os itens por grupo.',
+    placeholder: 'Novo grupo (ex.: Aparadores)', vazio: 'Nenhum grupo cadastrado.', repetido: 'Já existe um grupo com esse nome.',
+    curto: 'O grupo precisa de pelo menos 2 letras.', someTexto: 'Grupo não aparece mais para escolher (os itens que já têm continuam com ele).' });
+
   window.carregarPapeisEquipe = (host, empresa) => cardLista(host, empresa, {
     tabela: 'clientes_equipe_papeis', titulo: 'Papéis nas equipes de clientes', descricao: false, max: 60, min: 2, classe: 'pr-papeis-equipe',
     ajuda: 'Usados no Cadastro de Clientes &gt; Equipes para dizer o que cada pessoa faz na equipe (ex.: Titular, Assistente, Sócio(a)).',

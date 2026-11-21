@@ -77,3 +77,54 @@
   .cart-campo,.cart-campo.cart-c-nome,.cart-campo.cart-c-link,.cart-check{grid-column:span 12}
   .cart-topo{flex-wrap:wrap}
 }
+
+/* 15/11/2026: duas colunas — catálogos à esquerda, as opções (tintas/tecidos) do escolhido à direita */
+.cart-duas{display:grid;grid-template-columns:minmax(280px,380px) minmax(0,1fr);gap:18px;align-items:start}
+.cart-duas .cart-grid{grid-template-columns:1fr;gap:10px}
+.cart-card.is-sel{border-color:#123f86;box-shadow:0 0 0 2px rgba(18,63,134,.18)}
+.cart-lado{position:sticky;top:12px;background:#fff;border:1px solid #e3e7ec;border-radius:14px;padding:16px;box-shadow:0 0 8px rgba(15,23,42,.12),0 0 2px rgba(15,23,42,.1)}
+.cart-lado-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+.cart-lado-topo h3{margin:6px 0 2px;font-size:17px;color:#1f2020}
+.cart-ops{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.cart-op{display:flex;align-items:center;gap:10px;padding:8px;border:1px solid #edf0f3;border-radius:10px}
+.cart-op.is-inativa{opacity:.55}
+.cart-op-foto{width:44px;height:44px;flex:none;border-radius:8px;background-size:cover;background-position:center;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)}
+.cart-op-txt{display:flex;flex-direction:column;min-width:0;flex:1}
+.cart-op-txt strong{font-size:13px;font-weight:500;color:#1f2020;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cart-op-txt small{font-size:11.5px;color:#6b6b6b}
+.cart-op-preco{font-size:12.5px;color:#4b5563;white-space:nowrap}
+.cart-lado-vazio{margin:8px 0;color:#6b6b6b;font-size:13px}
+@media(max-width:900px){.cart-duas{grid-template-columns:1fr}.cart-lado{position:static}}
+
+/* 15/11/2026: edição do catálogo dentro da coluna da direita */
+.cart-lado .cart-det{gap:14px}
+.cart-lado .cart-det-topo h2{font-size:18px}
+.cart-lado .cart-sec{box-shadow:none!important;border:0!important;padding:0!important;background:transparent!important}
+.cart-lado .cart-sec+.cart-sec{border-top:1px solid #edf0f3!important;padding-top:14px!important}
+.cart-lado .cart-tabela-wrap{overflow-x:auto}
+
+/* 15/11/2026: formulário do catálogo na coluna da esquerda; direita só com as opções */
+.cart-form-card{cursor:default;gap:10px}
+.cart-form-card .cart-form-topo{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cart-form-card .cart-form-topo strong{font-size:16px;color:#1f2020}
+.cart-form-card .cart-campo{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:500;color:#5b6470;text-transform:none;letter-spacing:normal}
+.cart-form-card .cart-check{display:flex;align-items:center;gap:8px;font-size:13px;color:#4b5563}
+.cart-form-card .cart-dica{margin:2px 0 0;font-size:12px;color:#6b6b6b}
+.cart-lado .cart-det>.cart-sec{border-top:0!important;padding-top:0!important}
+
+/* 15/11/2026: card enxuto — foto do fornecedor e nome da cartela; "Editar" abre o formulário */
+.cart-card.cart-card-mini{flex-direction:row;align-items:center;gap:12px;padding:12px 14px}
+.cart-card-mini .cart-nome{flex:1;min-width:0;font-size:15px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cart-forn-foto{width:44px;height:44px;flex:none;border-radius:50%;overflow:hidden;background:#eef1f5;display:flex;align-items:center;justify-content:center;color:#4b5563;font-size:13px;font-weight:600}
+.cart-forn-foto img{width:100%;height:100%;object-fit:cover}
+.cart-card-mini .cart-editar{flex:none;min-height:34px;padding:0 14px}
+
+/* 15/11/2026: "Editar" pequeno no card; editar/criar cartela abre numa janela */
+html:root:is(#cart-ed#cart-ed#cart-ed,html) .cart-card-mini .cart-editar{min-height:0!important;height:26px!important;padding:0 10px!important;font-size:11.5px!important;font-weight:500!important;letter-spacing:.02em!important;border-radius:999px!important;line-height:1!important}
+dialog.cart-modal{width:min(480px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow:auto;border:0;border-radius:14px;padding:22px 24px;box-shadow:0 20px 50px rgba(15,23,42,.28);background:#fff}
+dialog.cart-modal::backdrop{background:rgba(15,23,42,.42)}
+dialog.cart-modal .cart-form-card{display:flex;flex-direction:column;gap:12px}
+dialog.cart-modal .cart-form-topo strong{font-size:18px}
+dialog.cart-modal .cart-modal-x{border:0;background:none;font-size:24px;line-height:1;color:#6b6b6b;cursor:pointer;padding:0 4px}
+dialog.cart-modal .cart-modal-acoes{display:flex;justify-content:flex-end;gap:10px;margin-top:6px}
+dialog.cart-modal .cart-modal-erro{margin:0;padding:8px 10px;border-radius:8px;background:#fdecea;color:#b42318;font-size:13px}

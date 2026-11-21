@@ -7,7 +7,7 @@
   --el-button-primary-soft: #f4efe8;
   /* Exceções mantidas de propósito: cor do menu (vinho) e cor de destaque dos
      botões (marrom). Todo o restante replica o design system do Tecnoweld. */
-  --color-sidebar: #290610;
+  --color-sidebar: #5a5a55;
   --color-primary: var(--el-button-primary-bg);
   --color-bg: #f4f6f8;
   --empresa-cor-principal-rgb: 13, 41, 35;

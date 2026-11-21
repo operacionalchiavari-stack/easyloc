@@ -6,3 +6,7 @@ html:root body .cx-cabecalho-linha h1{white-space:nowrap;text-align:center}
 .cx-cabecalho-linha #filtroCliente{justify-self:end}
 .cx-score-legenda{display:block;margin-top:5px;color:#846531;font-size:11px;font-weight:500;line-height:1.4}.cx-score-legenda:empty{display:none}.score{white-space:nowrap}
 @media(max-width:1100px){html:root body .header .cx-cabecalho-linha{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px!important}html:root body .cx-cabecalho-linha h1{grid-column:1/-1;grid-row:1;white-space:normal}.cx-cabecalho-linha input{max-width:none;grid-row:2}}
+
+/* nov/2026: foto e local da cliente na linha do número; planejamento só com a montagem */
+.cx-auto-linha{display:flex;align-items:center;flex-wrap:wrap;gap:12px 18px}.cx-auto-linha h2{margin:6px 0}.cx-auto-cli{display:inline-flex;align-items:center;gap:10px}.cx-auto-cli .cx-foto{width:44px;height:44px;flex:none}.cx-auto-cli b{display:block;font-size:15px;font-weight:600}.cx-auto-cli small{display:block;font-size:13px}.cx-auto-dialog fieldset.cx-auto-plano{border:0;padding:0;margin:14px 0}.cx-auto-plano label{max-width:320px}
+.cx-auto-consulta article{grid-template-columns:1fr}.cx-auto-valor.sim{background:#eaf4e9;color:#28653c}.cx-auto-valor.nao{background:#f1f2f0;color:#4f4f4f}.cx-auto-topo h2{margin:6px 0}

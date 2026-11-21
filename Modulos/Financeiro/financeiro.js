@@ -23,7 +23,7 @@
   const S = {
     sb: null, emp: null, aba: "geral",
     contas: [], saldos: {}, cfg: {}, cats: [], ccs: [], receber: [], pagar: [], fornecedores: [], clientes: [], pedidos: {},
-    filtroR: { busca: "", status: "abertos", div: "", conta: "" }, filtroP: { busca: "", status: "abertos" },
+    filtroR: { busca: "", status: "abertos", div: "", conta: "" }, filtroP: { busca: "", status: "abertos", cat: "", conta: "", prazo: "" },
     concConta: "", dre: { ini: null, fim: null }
   };
 
@@ -60,15 +60,20 @@
       todos("fin_receber", "*", (q) => q.order("vencimento")),
       todos("fin_pagar", "*", (q) => q.order("vencimento")),
       rpc("fin_saldos", { p_empresa: S.emp }),
-      todos("fornecedores", "id,nome_razao_social,nome_fantasia,documento", (q) => q.order("nome_razao_social")).catch(() => []),
-      todos("clientes_empresas", "id,nome_razao,cpf_cnpj", (q) => q.order("nome_razao")).catch(() => [])
+      todos("fornecedores", "id,nome_razao_social,nome_fantasia,documento,foto_url", (q) => q.order("nome_razao_social")).catch(() => todos("fornecedores", "id,nome_razao_social,nome_fantasia,documento", (q) => q.order("nome_razao_social"))).catch(() => []),
+      todos("clientes_empresas", "id,nome_razao,cpf_cnpj,catalogo_logo_url", (q) => q.order("nome_razao")).catch(() => todos("clientes_empresas", "id,nome_razao,cpf_cnpj", (q) => q.order("nome_razao"))).catch(() => [])
     ]);
     S.contas = contas; S.cfg = cfg; S.cats = cats; S.ccs = ccs; S.receber = receber; S.pagar = pagar;
     // Baixa manual (Parâmetros > Financeiro, nov/2026): sem ela, recebimento e pagamento só pela conciliação em Bancos.
     S.baixaManual = await S.sb.from("empresa_financeiro").select("baixa_manual_receber,baixa_manual_pagar").eq("empresa_id", S.emp).maybeSingle().then((r) => r.data || {}).catch(() => ({}));
     S.fornecedores = forn; S.clientes = cli;
-    // pré-reservas (nov/2026): parcelas programadas no pedido, só como previsão (não são contas a receber)
-    S.previsoes = await rpc("fin_previsao_pre_reservas", { p_empresa: S.emp }).catch(() => []) || [];
+    // cartões de crédito e faturas (Bancos e cartões → Cartões) e parcelas dos fechamentos de parceiros (aba Fechamentos de parceiros)
+    S.cartoes = await todos("fin_cartoes", "*", (q) => q.order("nome")).catch(() => []);
+    S.faturas = await todos("fin_cartao_faturas", "id,cartao_id,vencimento,virada,conferida_em,valor_banco").catch(() => []);
+    { const [fps, fes] = await Promise.all([todos("fin_fechamento_parcelas", "id,numero,vencimento,valor,fechamento_id").catch(() => []), todos("fin_fechamentos", "id,referencia,nf_numero,nf_arquivo_url,status").catch(() => [])]);
+      S.fechParcelas = fps.map((p) => { const f = fes.find((x) => x.id === p.fechamento_id) || {}; return { ...p, referencia: f.referencia || "", nf_numero: f.nf_numero || "", nf_arquivo_url: f.nf_arquivo_url || "", total: fps.filter((x) => x.fechamento_id === p.fechamento_id).length }; }); }
+    // recebimentos previstos (nov/2026): parcelas dos pedidos em pré-reserva e em orçamento (ainda não são contas a receber)
+    S.prevLista = await rpc("fin_recebimentos_previstos", { p_empresa: S.emp }).catch(() => []) || [];
     S.saldos = {}; (saldos || []).forEach((s) => { S.saldos[s.conta_id] = Number(s.saldo) || 0; });
     S.recebidoEm = {};
     const baixas = await todos("fin_baixas", "receber_id,data,estornado_em", (q) => q.not("receber_id", "is", null)).catch(() => []);
@@ -76,14 +81,58 @@
     const ids = [...new Set(receber.map((r) => r.pedido_id).filter(Boolean))];
     S.pedidos = {};
     for (let i = 0; i < ids.length; i += 100) {
-      const { data } = await S.sb.from("separacoes_pedidos").select("id,numero_pedido,cliente_nome,tipo_evento,data_evento,data_evento_fim,data_entrega,data_coleta,local_nome,valor_total,status_comercial").in("id", ids.slice(i, i + 100));
+      const { data } = await S.sb.from("separacoes_pedidos").select("id,numero_pedido,cliente_id,cliente_nome,tipo_evento,data_evento,data_evento_fim,data_entrega,data_coleta,local_nome,valor_total,status_comercial").in("id", ids.slice(i, i + 100));
       (data || []).forEach((p) => { S.pedidos[p.id] = p; });
     }
+    // bolinha de Bancos e cartões (nov/2026): conta os lançamentos do extrato ainda sem conciliar já ao abrir o Financeiro,
+    // não só quando a aba é aberta
+    try { S.bancosPend = ((await rpc("fin_bancos_resumo", { p_empresa: S.emp })) || []).reduce((s, r) => s + Number(r.pendentes || 0), 0); } catch (e) { console.error(e); }
+    // fotos dos freelancers pagos pelo A pagar (nov/2026): conta (pagar_id) -> freelancer (free_id) -> foto do cadastro dele
+    S.fotoFree = {};
+    try {
+      const fech = await todos("logistica_fechamentos", "pagar_id,free_id", (q) => q.eq("tipo", "free").not("free_id", "is", null));
+      const ids = [...new Set(fech.map((x) => x.free_id))], fotos = {};
+      for (let i = 0; i < ids.length; i += 100) { const { data } = await S.sb.from("free_cadastros").select("id,foto_url").in("id", ids.slice(i, i + 100)); (data || []).forEach((x) => { fotos[x.id] = x.foto_url; }); }
+      fech.forEach((x) => { if (x.pagar_id && fotos[x.free_id]) S.fotoFree[x.pagar_id] = fotos[x.free_id]; });
+    } catch (e) { console.error(e); }
     contadores();
   }
 
   const conta = (id) => S.contas.find((c) => c.id === id);
+  // Número do pedido no card vermelho da Central de Pedidos (nov/2026)
+  const numeroPedidoCard = (n) => '<span class="fin-num-card" title="Pedido ' + esc(n || "") + '">' + esc(n || "—") + "</span>";
+  // Foto de quem recebe no A pagar (nov/2026): fornecedor (cadastro de fornecedores), decorador do BV (cadastro de cliente:
+  // na conta de BV o fornecedor_id é o id do cliente) ou freelancer (cadastro do freelancer); sem foto, iniciais.
+  function fotoFavorecido(t, cls = "peq") {
+    const nome = String(t.fornecedor_nome || "").trim();
+    let url = null;
+    if (t.origem === "bv") url = (S.clientes || []).find((c) => c.id === t.fornecedor_id)?.catalogo_logo_url;
+    else if (t.origem === "free") url = S.fotoFree?.[t.id];
+    else url = (S.fornecedores || []).find((f) => f.id === t.fornecedor_id)?.foto_url;
+    const ini = nome.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "?";
+    return '<span class="fin-cli-foto ' + cls + '" title="' + esc(nome) + '"><i>' + esc(ini) + "</i>" + (url ? '<img src="' + esc(url) + '" alt="" loading="lazy" onerror="this.remove()">' : "") + "</span>";
+  }
+  // Foto do cliente (nov/2026): a do catálogo (clientes_empresas.catalogo_logo_url), pelo cliente_id ou pelo nome; sem foto, iniciais.
+  function fotoCliente(ped, t, cls = "") {
+    const id = ped?.cliente_id || t?.cliente_id, nome = String(ped?.cliente_nome || t?.cliente_nome || "").trim();
+    const c = (S.clientes || []).find((x) => id && x.id === id) || (nome ? (S.clientes || []).find((x) => String(x.nome_razao || "").trim().toLowerCase() === nome.toLowerCase()) : null);
+    const ini = (nome || c?.nome_razao || "").split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase() || "?";
+    return '<span class="fin-cli-foto ' + cls + '" title="' + esc(nome || c?.nome_razao || "") + '"><i>' + esc(ini) + "</i>" + (c?.catalogo_logo_url ? '<img src="' + esc(c.catalogo_logo_url) + '" alt="" loading="lazy" onerror="this.remove()">' : "") + "</span>";
+  }
   const cat = (id) => S.cats.find((c) => c.id === id);
+  // (nov/2026, trazido da Tecnoweld) parcela no cartão: mostra o cartão e a fatura; ela é paga junto com a fatura (conciliação do banco)
+  const cartaoTag = (t) => { if (!t.cartao_id) return ""; const c = (S.cartoes || []).find((x) => x.id === t.cartao_id);
+    return '<small class="fin-cartao-tag" title="Paga junto com a fatura do cartão (Bancos e cartões → Cartões)">💳 ' + esc((c?.nome || "Cartão") + (c?.final ? " final " + c.final : "")) + " · fatura " + dataBr(t.vencimento) + (t.cartao_compra_em ? " · compra " + dataBr(t.cartao_compra_em) : "") + "</small>"; };
+  // mesma regra do banco (fin_cartao_datas): compra no dia em que vira ou depois vai para a fatura seguinte
+  function cartaoVencimento(c, compra, parcela) {
+    const d = new Date(compra + "T12:00:00"), ult = (y, m) => new Date(y, m + 1, 0).getDate();
+    let y = d.getFullYear(), m = d.getMonth();
+    if (d.getDate() >= Math.min(c.dia_virada, ult(y, m))) m += 1;
+    m += Math.max(1, parcela) - 1;
+    if (!(c.dia_vencimento > c.dia_virada)) m += 1;
+    const dv = new Date(y, m, 1); y = dv.getFullYear(); m = dv.getMonth();
+    return y + "-" + String(m + 1).padStart(2, "0") + "-" + String(Math.min(c.dia_vencimento, ult(y, m))).padStart(2, "0");
+  }
   const vencido = (t) => ["aberto", "parcial", "pendente", "aprovado", "programado"].includes(t.status) && (t.programado_para || t.vencimento) < hoje();
   // Aviso de vencimento em A receber (out/2026): bolinha piscando ao lado da data. Até 3 dias (e vencido) em vermelho,
   // até 7 dias em amarelo. Usa a data local: hoje() é em UTC e viraria o dia às 21h no Brasil.
@@ -95,9 +144,24 @@
   // Abas rápidas de A receber: cada conta em aberto cai em uma só
   const PRAZOS = [["vencidos", "Vencidos", (d) => d < 0], ["hoje", "Vence hoje", (d) => d === 0], ["semana", "Próximos 7 dias", (d) => d >= 1 && d <= 7]];
   const noPrazo = (t, chave) => { const d = diasParaVencer(t); return d !== null && PRAZOS.find(([k]) => k === chave)[2](d); };
+  // A pagar (nov/2026): os mesmos atalhos de vencimento de A receber, pela data programada (senão o vencimento)
+  function diasParaPagar(t) {
+    if (["pago", "cancelado"].includes(t.status) || !(Number(t.aberto) > 0.005)) return null;
+    const v = String(t.programado_para || t.vencimento || "").slice(0, 10); if (!v) return null;
+    const dia = (iso) => Date.UTC(+iso.slice(0, 4), +iso.slice(5, 7) - 1, +iso.slice(8, 10));
+    return Math.round((dia(v) - dia(new Date().toLocaleDateString("sv-SE"))) / 86400000);
+  }
+  const noPrazoP = (t, chave) => { const d = diasParaPagar(t); return d !== null && PRAZOS.find(([k]) => k === chave)[2](d); };
   function alertaVenc(t) {
     if (S.recebidoEm?.[t.id] && Number(t.aberto) <= 0.005) return "";
     const dias = diasParaVencer(t);
+    if (dias === null || dias > 7) return "";
+    const txt = dias < -1 ? "Venceu há " + -dias + " dias" : dias === -1 ? "Venceu ontem" : dias === 0 ? "Vence hoje" : dias === 1 ? "Vence amanhã" : "Vence em " + dias + " dias";
+    return '<span class="fin-venc-alerta ' + (dias <= 3 ? "vermelho" : "amarelo") + '"><i aria-hidden="true"></i>' + txt + "</span>";
+  }
+  // mesmo aviso do A receber no A pagar (pela data programada, senão o vencimento): até 3 dias e vencido em vermelho, até 7 em amarelo
+  function alertaPagar(t) {
+    const dias = diasParaPagar(t);
     if (dias === null || dias > 7) return "";
     const txt = dias < -1 ? "Venceu há " + -dias + " dias" : dias === -1 ? "Venceu ontem" : dias === 0 ? "Vence hoje" : dias === 1 ? "Vence amanhã" : "Vence em " + dias + " dias";
     return '<span class="fin-venc-alerta ' + (dias <= 3 ? "vermelho" : "amarelo") + '"><i aria-hidden="true"></i>' + txt + "</span>";
@@ -125,6 +189,11 @@
     const nR = S.receber.filter((t) => vencido(t)).length, nP = S.pagar.filter((t) => vencido(t) || (t.requer_aprovacao && t.aprovacao === "pendente" && t.status !== "cancelado")).length;
     document.querySelector('[data-cont="receber"]').textContent = nR || "";
     document.querySelector('[data-cont="pagar"]').textContent = nP || "";
+    // Recebimentos previstos (nov/2026): bolinha amarela com quantos pedidos em pré-reserva/orçamento têm previsão
+    const nPrev = new Set((S.prevLista || []).map((x) => x.pedido_id).filter(Boolean)).size, ePrev = document.querySelector('[data-cont="previstos"]');
+    if (ePrev) { ePrev.textContent = nPrev || ""; ePrev.title = nPrev ? nPrev + " pedido(s) com recebimento previsto" : ""; }
+    const eBan = document.querySelector('[data-cont="bancos"]');
+    if (eBan && S.bancosPend != null) eBan.textContent = S.bancosPend || "";
   }
   // Agência, conta, CNPJ/CPF e chave PIX ficam cifrados no banco (cofre): a tela só mostra a máscara.
   const CAMPOS_COFRE = ["agencia", "conta", "titular_documento", "pix_chave"];
@@ -164,17 +233,17 @@
   // ---------------------------------------------------------------- abas
   async function recarregar() {
     try { await carregar(); } catch (e) { console.error(e); mostrarAviso("Não foi possível carregar o financeiro: " + (e.message || e)); return; }
+    try { await window.FinanceiroPosicaoFinal?.atualizarIndicador(S.sb,S.emp); } catch(e) { console.error('Pendências da posição final:',e); }
     pintar();
   }
   function mostrarAviso(msg) { $("finAviso").hidden = !msg; $("finAviso").textContent = msg || ""; }
   // Abas que juntam duas telas (out/2026, para caber tudo numa linha): a aba é a primeira tela e as duas partes
   // aparecem como botões pequenos logo abaixo (#finSubAbas). S.aba continua sendo o nome da tela de dentro.
   const GRUPOS_ABA = {
-    // Decoradores: uma tela só (a "Gestão de créditos" saiu, tudo é feito na conta corrente); a linha fica para
-    // os botões Atualizar / Registrar crédito que financeiro-bv.js põe à direita.
-    bv: [["bv", "Conta dos decoradores"]],
+    // Decoradores: uma tela só, sem linha de sub-abas (Registrar crédito fica na linha da busca do decorador, nov/2026)
     dre: [["dre", "DRE"], ["plano", "Plano de contas"]],
     gerencial: [["gerencial", "Painel"], ["resultados", "Lançar custos dos eventos"]]
+    // Fechamentos de parceiros (Compras, sublocação, transporte) virou aba própria em nov/2026 (antes era sub-aba de A pagar)
   };
   const abaDoGrupo = (aba) => (aba === "contas" || aba === "conciliacao") ? "bancos" : Object.keys(GRUPOS_ABA).find((g) => GRUPOS_ABA[g].some(([k]) => k === aba)) || aba;
   function pintarSubAbas() {
@@ -187,8 +256,57 @@
     $('finConteudo').classList.toggle('fin-bv-extrato', S.aba === 'bv');
     document.querySelectorAll("#finAbas [data-aba]").forEach((b) => b.classList.toggle("ativa", b.dataset.aba === abaDoGrupo(S.aba)));
     pintarSubAbas();
-    const f = { geral: pintarGeral, gerencial: () => window.FinanceiroGerencial.render({ S, esc, brl, dataBr, modal, fecharModal, avisar, rpc, irPara: (aba) => { S.aba = aba; pintar(); } }), receber: pintarReceber, pagar: pintarPagar, bv: () => window.FinanceiroBV.render({ S, rpc, brl, esc, dataBr, card, recarregar, registrarCredito }), resultados: () => window.FinanceiroGestao.resultados({ S, rpc, brl, esc, dataBr, recarregar }), posicao: () => window.FinanceiroPosicaoFinal.render({ S, rpc, brl, esc, dataBr, recarregar }), bancos: pintarConciliacao, clara: () => window.FinanceiroClara.chat(ctxClara()), gateways: () => window.FinanceiroGateways.render(), contas: pintarConciliacao, conciliacao: pintarConciliacao, dre: pintarDre, plano: pintarPlano }[S.aba];
+    const f = { geral: pintarGeral, gerencial: () => window.FinanceiroGerencial.render({ S, esc, brl, dataBr, modal, fecharModal, avisar, rpc, irPara: (aba) => { S.aba = aba; pintar(); } }), receber: pintarReceber, previstos: pintarPrevistos, pagar: pintarPagar, fechamentos: () => window.FinanceiroFechamentos.render(ctxClara()), bv: () => window.FinanceiroBV.render({ S, rpc, brl, esc, dataBr, card, recarregar, registrarCredito }), resultados: () => window.FinanceiroGestao.resultados({ S, rpc, brl, esc, dataBr, recarregar }), posicao: () => window.FinanceiroPosicaoFinal.render({ S, rpc, brl, esc, dataBr, recarregar }), bancos: pintarConciliacao, clara: () => window.FinanceiroClara.chat(ctxClara()), gateways: () => window.FinanceiroGateways.render(), contas: pintarConciliacao, conciliacao: pintarConciliacao, dre: pintarDre, plano: pintarPlano }[S.aba];
     Promise.resolve(f()).catch((e) => { console.error(e); $("finConteudo").innerHTML = '<div class="fin-vazio">Erro: ' + esc(e.message || e) + "</div>"; });
+  }
+
+  // ---------------------------------------------------------------- recebimentos previstos
+  // Aba "Recebimentos previstos" (nov/2026, igual à Tecnoweld): uma linha por parcela dos pedidos em pré-reserva e em
+  // orçamento, em ordem de vencimento, em amarelo. Quando o pedido vira Reservado, as parcelas vão para A receber.
+  async function pintarPrevistos() {
+    try { S.prevLista = (await rpc("fin_recebimentos_previstos", { p_empresa: S.emp })) || []; contadores(); }
+    catch (e) { $("finConteudo").innerHTML = '<div class="fin-vazio">Não foi possível carregar: ' + esc(e.message) + "</div>"; return; }
+    S.prevFiltro = S.prevFiltro || { busca: "", sit: "", ini: "", fim: "" };
+    // dados do pedido (cliente, local, entrega, coleta) para a tabela ficar igual à de A receber (nov/2026)
+    const faltam = [...new Set(S.prevLista.map((x) => x.pedido_id).filter((id) => id && !S.pedidos[id]))];
+    for (let i = 0; i < faltam.length; i += 100) {
+      const { data } = await S.sb.from("separacoes_pedidos").select("id,numero_pedido,cliente_id,cliente_nome,tipo_evento,data_evento,data_evento_fim,data_entrega,data_coleta,local_nome,valor_total,status_comercial").in("id", faltam.slice(i, i + 100));
+      (data || []).forEach((p) => { S.pedidos[p.id] = p; });
+    }
+    desenharPrevistos();
+  }
+  function desenharPrevistos() {
+    const box = $("finConteudo"), f = S.prevFiltro, hj = hoje(), b = f.busca.trim().toLowerCase();
+    const base = (S.prevLista || []).filter((x) => { const d = String(x.dia || "").slice(0, 10);
+      return (!b || [x.pedido_numero, x.cliente_nome, S.pedidos[x.pedido_id]?.local_nome].join(" ").toLowerCase().includes(b)) && (!f.ini || d >= f.ini) && (!f.fim || (d && d <= f.fim)); });
+    const conta = (sit) => base.filter((x) => !sit || x.situacao === sit);
+    const lista = conta(f.sit).sort((a, c) => String(a.dia || "9999").localeCompare(String(c.dia || "9999")) || String(a.pedido_numero).localeCompare(String(c.pedido_numero), "pt-BR", { numeric: true }) || a.parcela - c.parcela);
+    const total = lista.reduce((t, x) => t + Number(x.valor || 0), 0), pedidos = new Set(lista.map((x) => x.pedido_id)).size;
+    const chip = (k, rot) => { const n = new Set(conta(k).map((x) => x.pedido_id)).size; return '<button type="button" class="fin-prazo' + (f.sit === k ? " ativa" : "") + '" data-prev-sit="' + k + '" aria-pressed="' + (f.sit === k) + '">' + rot + '<span class="fin-prev-n">' + n + "</span></button>"; };
+    // mesmas colunas de A receber › por data: Pedido (card vermelho) · Cliente (foto + evento) · Local (nov/2026)
+    const linha = (x) => { const d = String(x.dia || "").slice(0, 10), vencida = d && d < hj, ped = S.pedidos[x.pedido_id] || null;
+      const meta = ped ? metaPedido(ped).filter((m) => m !== ped.local_nome) : ["Evento " + (x.data_evento ? dataBr(x.data_evento) : "—")];
+      return "<tr><td><b>" + (d ? dataBr(d) : "Sem data") + '</b><small class="fin-parcela-venc">' + (x.sem_parcelas ? "Data do evento" : "Parcela " + x.parcela + "/" + x.parcelas) + "</small>" + (vencida ? '<span class="fin-venc-alerta vermelho"><i aria-hidden="true"></i>Já deveria ter entrado</span>' : "") + "</td>" +
+        '<td class="fin-num-ped">' + numeroPedidoCard(x.pedido_numero || ped?.numero_pedido) + "</td>" +
+        '<td class="fin-quem"><div class="fin-quem-foto">' + fotoCliente(ped, x, "peq") + "<div>" + esc((ped && ped.cliente_nome) || x.cliente_nome || "—") + '<small class="fin-linha-meta">' + esc(meta.concat(["pedido " + brl(x.valor_pedido)]).join(" · ")) + "</small></div></div></td>" +
+        '<td class="fin-local">' + esc((ped && ped.local_nome) || "—") + "</td>" +
+        '<td><span class="fin-chip ' + esc(x.componente || "locacao") + '">' + esc(DIV[x.componente] || x.componente || "") + "</span></td>" +
+        '<td><span class="fin-pre-selo">' + esc(SIT_PREV[x.situacao] || x.situacao) + "</span>" + (x.pre_reserva_ate ? '<small class="fin-parcela-venc">até ' + dataBr(x.pre_reserva_ate) + "</small>" : "") + "</td>" + '<td class="num">' + brl(x.valor) + "</td>" +
+        '<td class="num"><a class="fin-btn peq claro" href="../Comercial/Pedidos/pedido.html?pedido=' + encodeURIComponent(x.pedido_id) + '&modo=editar">Abrir pedido</a></td></tr>'; };
+    const tinhaFoco = document.activeElement?.id === "fpvBusca";
+    box.innerHTML = '<div class="fin-barra-ferr fin-barra-uma"><input type="search" id="fpvBusca" class="fin-busca-linha" placeholder="Buscar pedido, cliente ou local" aria-label="Buscar pedido, cliente ou local" value="' + esc(f.busca) + '">' +
+      '<div class="fin-prazos" role="group" aria-label="Situação do pedido">' + chip("", "Todos") + chip("pre_reserva", "Pré-reserva") + chip("orcamento", "Orçamento") + "</div>" +
+      '<div class="fin-periodo" role="group" aria-label="Período de vencimento"><label>De<input type="date" id="fpvIni" value="' + esc(f.ini) + '"></label><label>Até<input type="date" id="fpvFim" value="' + esc(f.fim) + '"></label></div>' +
+      '<span class="fin-esp"></span><b class="fin-prev-total">' + pedidos + " pedido(s) · " + brl(total) + "</b></div>" +
+      (lista.length ? '<section class="fin-pedido fin-receber-data fin-previstos-tab"><div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Vencimento</th><th>Pedido</th><th>Cliente</th><th>Local</th><th>Divisão</th><th>Situação</th><th class="num">Valor</th><th></th></tr></thead><tbody>' +
+        lista.map(linha).join("") + "</tbody></table></div></section>" : '<div class="fin-vazio">Nenhum recebimento previsto com esses filtros.</div>') +
+      '<p class="fin-agenda-ajuda">Parcelas dos pedidos em pré-reserva e em orçamento. Quando o pedido vira Reservado, elas passam para A receber.</p>';
+    const inp = $("fpvBusca");
+    inp.addEventListener("input", () => { f.busca = inp.value; clearTimeout(S.prevT); S.prevT = setTimeout(desenharPrevistos, 250); });
+    if (tinhaFoco) { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }
+    box.querySelectorAll("[data-prev-sit]").forEach((bt) => bt.addEventListener("click", () => { f.sit = bt.dataset.prevSit; desenharPrevistos(); }));
+    $("fpvIni").addEventListener("change", (e) => { f.ini = e.target.value; desenharPrevistos(); });
+    $("fpvFim").addEventListener("change", (e) => { f.fim = e.target.value; desenharPrevistos(); });
   }
 
   // ---------------------------------------------------------------- visão geral
@@ -201,36 +319,102 @@
   const mesNome = (d) => { const t = new Date(d.slice(0, 8) + "01T12:00:00").toLocaleDateString("pt-BR", { month: "long", year: "numeric" }); return t.charAt(0).toUpperCase() + t.slice(1); };
   const compacto = (n) => { const v = Number(n) || 0, a = Math.abs(v); return (v < 0 ? "-" : "") + (a >= 1e6 ? (a / 1e6).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + " mi" : a >= 1e3 ? (a / 1e3).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + " mil" : a.toLocaleString("pt-BR", { maximumFractionDigits: 0 })); };
   const diaDoTitulo = (t) => String(t.programado_para || t.vencimento || "").slice(0, 10);
+  // Fluxo Real x Previsto (nov/2026, igual à Tecnoweld). Previsto = o real + as parcelas dos pedidos em pré-reserva e em
+  // orçamento (fin_recebimentos_previstos), em amarelo. Só entra no saldo o que vence de hoje em diante.
+  const modoFluxo = () => { if (!S.fluxoModo) { try { S.fluxoModo = localStorage.getItem("fin_fluxo_modo") === "previsto" ? "previsto" : "real"; } catch (_) { S.fluxoModo = "real"; } } return S.fluxoModo; };
+  const SIT_PREV = { pre_reserva: "Pré-reserva", orcamento: "Orçamento" };
+  const prevDoDia = (dia) => (S.prevLista || []).filter((x) => String(x.dia || "").slice(0, 10) === dia);
 
   async function pintarGeral() {
-    const abertosR = S.receber.filter((t) => ["aberto", "parcial"].includes(t.status));
-    const porDiv = {}; abertosR.forEach((t) => { porDiv[t.componente] = (porDiv[t.componente] || 0) + Number(t.aberto); });
     // Visão geral em duas colunas (out/2026): calendário à esquerda; saldos por conta e a receber por divisão à direita.
     // Os cartões de totais saíram a pedido do usuário.
     $("finConteudo").innerHTML = '<div class="fin-geral-2col"><div class="fin-geral-cal">' +
       '<section class="fin-bloco fin-calendario" id="finCalendario">' +
-      '<header class="fin-cal-topo"><div><h3>Calendário financeiro</h3><p>Todas as contas</p></div>' +
+      '<header class="fin-cal-topo"><div class="fin-cal-tit">' +
+      '<div class="fin-fluxo-modo" role="group" aria-label="Tipo de fluxo de caixa"><button type="button" data-fluxo-modo="real" aria-pressed="' + (modoFluxo() === "real") + '">Real</button>' +
+      '<button type="button" data-fluxo-modo="previsto" aria-pressed="' + (modoFluxo() === "previsto") + '">Previsto</button></div></div>' +
       '<div class="fin-cal-nav"><button type="button" class="fin-cal-seta" data-cal="-1" aria-label="Mês anterior">‹</button><strong id="finCalMes"></strong>' +
       '<button type="button" class="fin-cal-seta" data-cal="1" aria-label="Próximo mês">›</button><button type="button" class="btn secondary" data-cal="hoje">Hoje</button></div></header>' +
       '<div class="fin-cal-semana"><span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span></div>' +
       '<div class="fin-cal-dias" id="finCalDias"><div class="fin-vazio">Carregando…</div></div>' +
+      '<p class="fin-fluxo-nota" id="finFluxoNota"></p>' +
       '<footer class="fin-cal-legenda"><span><i class="positivo"></i> Saldo positivo</span><span><i class="alerta"></i> No saldo mínimo ou abaixo</span><span><i class="negativo"></i> Saldo negativo</span></footer>' +
       "</section></div>" +
-      '<div class="fin-geral-lado">' +
-      '<section class="fin-bloco"><h3>Saldos por conta</h3>' + (S.contas.length ? '<table class="fin-tabela"><tbody>' + S.contas.filter((c) => c.ativo).map((c) => "<tr><td>" + contaHtml(c.id) + '</td><td class="num"><b>' + brl(S.saldos[c.id] || 0) + "</b></td></tr>").join("") + "</tbody></table>" : '<div class="fin-vazio">Nenhuma conta cadastrada. Cadastre em Contas e PIX.</div>') + "</section>" +
-      '<section class="fin-bloco"><h3>A receber por divisão <small>em aberto</small></h3><table class="fin-tabela"><tbody>' +
-      ["locacao", "frete", "montagem", "outro"].filter((k) => porDiv[k]).map((k) => '<tr><td><span class="fin-chip ' + k + '">' + DIV[k] + "</span></td><td>" + contaHtml(S.cfg["conta_" + k]) + '</td><td class="num"><b>' + brl(porDiv[k]) + "</b></td></tr>").join("") +
-      (Object.keys(porDiv).length ? "" : '<tr><td class="fin-vazio">Nada em aberto.</td></tr>') + "</tbody></table></section>" +
-      "</div></div>";
+      '<aside class="fin-geral-lado"><section class="fin-bloco" id="finAgendaDia"></section></aside></div>';
     S.calMes = S.calMes || mesIni(hoje());
     $("finCalendario").addEventListener("click", (ev) => {
+      const m = ev.target.closest("[data-fluxo-modo]");
+      if (m) { S.fluxoModo = m.dataset.fluxoModo; try { localStorage.setItem("fin_fluxo_modo", S.fluxoModo); } catch (_) {} $("finCalendario").querySelectorAll("[data-fluxo-modo]").forEach((x) => x.setAttribute("aria-pressed", String(x === m))); pintarCalendario(); return; }
       const b = ev.target.closest("[data-cal]");
       if (b) { S.calMes = b.dataset.cal === "hoje" ? mesIni(hoje()) : mesSoma(S.calMes, Number(b.dataset.cal)); pintarCalendario(); return; }
       const dia = ev.target.closest("[data-dia]");
-      if (dia) { S.calDia = dia.dataset.dia; $("finCalDias").querySelectorAll(".fin-cal-dia.selecionado").forEach((d) => d.classList.remove("selecionado")); dia.classList.add("selecionado"); detalheDia(dia); }
+      if (dia) { S.calDia = dia.dataset.dia; $("finCalDias").querySelectorAll(".fin-cal-dia.selecionado").forEach((d) => d.classList.remove("selecionado")); dia.classList.add("selecionado"); fecharDetalheDia(); pintarAgendaDia(); }
     });
+    pintarAgendaDia();
     await pintarCalendario();
   }
+
+  // Agenda do dia (nov/2026, igual à da Tecnoweld): coluna à direita da Visão geral com as contas do dia escolhido no
+  // calendário, em abas Entradas / Saídas / Pré-reservas. Cada conta em 3 linhas: nome e valor; parcela, vencimento e a
+  // data combinada; conta e "Alterar data". Hoje também lista as contas vencidas e ainda em aberto (marcadas VENCIDA).
+  function pintarAgendaDia() {
+    const box = $("finAgendaDia"); if (!box) return;
+    const dia = S.calDia || hoje(), hj = hoje();
+    const pendente = (t) => !["cancelado", "pago", "recebido"].includes(t.status) && Number(t.aberto) > 0.005;
+    const noDia = (t) => diaDoTitulo(t) === dia || (dia === hj && pendente(t) && diaDoTitulo(t) && diaDoTitulo(t) < dia);
+    const nome = (t, tipo) => (t.pedido_id && S.pedidos[t.pedido_id] ? "Pedido " + (S.pedidos[t.pedido_id].numero_pedido || t.pedido_numero || "") + " · " : "") + (t.cliente_nome || t.fornecedor_nome || t.descricao || (tipo === "pagar" ? "Pagamento" : "Recebimento"));
+    const item = (t, tipo) => {
+      const atrasada = pendente(t) && diaDoTitulo(t) < hj;
+      const nomeConta = conta(t.conta_id)?.nome;
+      return '<article class="fin-agenda-item fin-ag2"><div class="fin-ag2-topo"><strong>' + (atrasada ? '<span class="fin-agenda-venc">VENCIDA ' + dataBr(diaDoTitulo(t)) + "</span> " : "") + esc(nome(t, tipo)) + '</strong><span class="fin-agenda-valor">' + brl(pendente(t) ? t.aberto : t.valor) + "</span></div>" +
+        '<small class="fin-ag2-info">' + esc(["Parcela " + t.parcela + "/" + t.parcelas, t.componente ? DIV[t.componente] : "", "venc. " + dataBr(t.vencimento) + (t.programado_para ? " · combinado " + dataBr(t.programado_para) : ""), pendente(t) ? "" : (tipo === "pagar" ? "pago" : "recebido")].filter(Boolean).join(" · ")) + "</small>" +
+        '<div class="fin-ag2-pe">' + (nomeConta ? '<small class="fin-agenda-cnpj" title="' + esc(nomeConta) + '">' + esc(nomeConta) + "</small>" : '<small class="fin-agenda-cnpj">Sem conta</small>') +
+        (pendente(t) ? '<button type="button" class="fin-btn peq claro" data-reagendar="' + esc(t.id) + '" data-tipo="' + tipo + '">Alterar data</button>' : "") + "</div></article>";
+    };
+    const grupo = (tipo, lista) => '<section class="fin-agenda-grupo" data-direcao="' + (tipo === "pagar" ? "saida" : "entrada") + '">' +
+      (lista.length ? lista.map((t) => item(t, tipo)).join("") : '<p class="fin-vazio">Nenhuma conta neste dia.</p>') + "</section>";
+    const entradas = S.receber.filter((t) => t.status !== "cancelado" && noDia(t));
+    const saidas = S.pagar.filter((t) => t.status !== "cancelado" && noDia(t));
+    const comPrevisto = modoFluxo() === "previsto";
+    const pre = comPrevisto ? (S.prevLista || []).filter((x) => { const d = String(x.dia || "").slice(0, 10); return d === dia || (dia === hj && d && d < dia); }) : [];
+    // contas fixas previstas do dia (Plano de contas): só previsão, some quando a conta de verdade é lançada
+    const fixas = (S.calFixas || []).filter((x) => String(x.dia).slice(0, 10) === dia);
+    const fixasHtml = fixas.map((x) => '<article class="fin-agenda-item fin-agenda-prev fin-ag2"><div class="fin-ag2-topo"><strong><span class="fin-pre-selo">Conta fixa</span> ' + esc(x.titulo) + '</strong><span class="fin-agenda-valor">' + brl(x.valor) + '</span></div><small class="fin-ag2-info">' + esc(x.detalhe || "Previsão") + "</small></article>").join("");
+    const preHtml = '<section class="fin-agenda-grupo" data-direcao="entrada">' + (pre.length ? pre.map((x) => '<article class="fin-agenda-item fin-agenda-prev fin-ag2"><div class="fin-ag2-topo"><strong>' +
+      (String(x.dia).slice(0, 10) < hj ? '<span class="fin-agenda-venc">JÁ DEVERIA TER ENTRADO</span> ' : "") + '<span class="fin-pre-selo">' + esc(SIT_PREV[x.situacao] || "Previsto") + "</span> " +
+      esc("Pedido " + (x.pedido_numero || "") + (x.cliente_nome ? " · " + x.cliente_nome : "")) + '</strong><span class="fin-agenda-valor">' + brl(x.valor) + '</span></div><small class="fin-ag2-info">' +
+      esc([x.sem_parcelas ? "Sem parcelas: valor total na data do evento" : "Parcela " + x.parcela + "/" + x.parcelas, DIV[x.componente] || "", x.forma || "", x.pre_reserva_ate ? "pré-reserva até " + dataBr(x.pre_reserva_ate) : ""].filter(Boolean).join(" · ")) + "</small></article>").join("")
+      : '<p class="fin-vazio">Nenhum recebimento previsto neste dia.</p>') + '<p class="fin-agenda-ajuda">Parcelas dos pedidos em pré-reserva e em orçamento: ainda não são contas a receber.</p></section>';
+    let aba = ["receber", "pagar", "previsto"].includes(S.agendaAba) ? S.agendaAba : "receber";
+    if (aba === "previsto" && !comPrevisto) aba = "receber";
+    const tabBt = (k, rot, n) => '<button type="button" role="tab" id="finAgendaTab_' + k + '" aria-controls="finAgendaPainel" aria-selected="' + (aba === k) + '" data-agenda-aba="' + k + '">' + rot + " <span>" + n + "</span></button>";
+    const painel = aba === "pagar" ? (saidas.length || !fixas.length ? grupo("pagar", saidas) : "") + fixasHtml : aba === "previsto" ? preHtml : grupo("receber", entradas);
+    box.innerHTML = "<h3>Agenda do dia · " + dataBr(dia) + "</h3>" +
+      '<div class="fin-agenda-abas" role="tablist" aria-label="Movimentações do dia">' +
+      tabBt("receber", "Entradas", entradas.length) + tabBt("pagar", "Saídas", saidas.length + fixas.length) + (comPrevisto ? tabBt("previsto", "Previsto", pre.length) : "") + "</div>" +
+      '<div id="finAgendaPainel" role="tabpanel" aria-labelledby="finAgendaTab_' + aba + '">' + painel + "</div>";
+    box.querySelectorAll("[data-agenda-aba]").forEach((b) => b.addEventListener("click", () => {
+      S.agendaAba = b.dataset.agendaAba; pintarAgendaDia();
+      box.querySelector('[data-agenda-aba="' + S.agendaAba + '"]').focus();
+    }));
+    box.querySelectorAll("[data-reagendar]").forEach((b) => b.addEventListener("click", () => reagendarTitulo(b.dataset.tipo, b.dataset.reagendar)));
+  }
+
+  async function reagendarTitulo(tipo, id) {
+    const t = (tipo === "receber" ? S.receber : S.pagar).find((x) => x.id === id); if (!t) return;
+    const { data: hist, error } = await S.sb.from("fin_auditoria").select("antes,depois,descricao,created_at").eq("empresa_id", S.emp).eq("entidade", "fin_" + tipo).eq("entidade_id", id).eq("acao", "reagendamento").order("created_at", { ascending: false });
+    if (error) return avisar(error.message, "Alterar data", "erro");
+    modal(tipo === "receber" ? "Alterar a data do recebimento" : "Alterar a data do pagamento",
+      "<p>" + esc(t.cliente_nome || t.fornecedor_nome || t.descricao) + " · <b>" + brl(t.aberto) + "</b></p><p>Vencimento original: " + dataBr(t.vencimento) + (t.programado_para ? " · combinado hoje: " + dataBr(t.programado_para) : "") + "</p>" +
+      '<div class="fin-form"><label>Nova data combinada<input type="date" name="data" value="' + diaDoTitulo(t) + '" required></label><label class="inteiro">Motivo / combinado<textarea name="motivo" required placeholder="Ex.: cliente confirmou o pagamento para sexta"></textarea></label></div>' +
+      "<h4>Histórico de alterações de data</h4>" + ((hist || []).length ? '<ul class="fin-agenda-historico">' + hist.map((h) => "<li><b>" + dataBr(h.antes?.programado_para || h.antes?.vencimento) + " → " + dataBr(h.depois?.programado_para) + "</b><small>" + esc(h.descricao || "") + " · " + dataBr(h.created_at) + "</small></li>").join("") + "</ul>" : "<p>Nenhuma alteração anterior.</p>"),
+      [{ rotulo: "Cancelar", classe: "claro", acao: fecharModal }, { rotulo: "Salvar nova data", acao: async () => {
+        const d = campos($("finModalCorpo"));
+        if (!d.data || String(d.motivo || "").trim().length < 3) return erroModal("Informe a nova data e o combinado.");
+        await executar(() => rpc("fin_reagendar_titulo", { p_empresa: S.emp, p_tipo: tipo, p_id: id, p_data: d.data, p_motivo: d.motivo.trim() }), "Data alterada. O fluxo de caixa foi recalculado.");
+      } }]);
+  }
+
 
   async function pintarCalendario() {
     const caixa = $("finCalDias"); if (!caixa) return;
@@ -238,9 +422,24 @@
     const ini = S.calMes, fim = mesFim(S.calMes);
     $("finCalMes").textContent = mesNome(ini);
     let fluxo = [];
-    try { fluxo = await rpc("fin_fluxo", { p_empresa: S.emp, p_ini: ini, p_fim: fim, p_conta: null }) || []; }
+    try {
+      const [fl, fx] = await Promise.all([rpc("fin_fluxo", { p_empresa: S.emp, p_ini: ini, p_fim: fim, p_conta: null }), rpc("fin_contas_fixas_previstas", { p_empresa: S.emp, p_ini: ini, p_fim: fim }).catch(() => [])]);
+      fluxo = fl || []; S.calFixas = fx || [];
+      if (S.calMes === ini) pintarAgendaDia();
+    }
     catch (e) { console.error(e); caixa.innerHTML = '<div class="fin-vazio">Não foi possível carregar o calendário.</div>'; return; }
     if (S.calMes !== ini) return; // trocou de mês enquanto carregava
+    const previsto = modoFluxo() === "previsto", hj0 = hoje();
+    $("finCalendario")?.classList.toggle("fin-cal-previsto", previsto);
+    const notaEl = $("finFluxoNota");
+    if (notaEl) notaEl.textContent = previsto
+      ? "Previsto: o real mais as parcelas dos pedidos em pré-reserva e/ou em orçamento, conforme Parâmetros › Financeiro (em amarelo). Pedido sem parcelas entra com o valor total na data do evento. Só entra no saldo o que vence de hoje em diante."
+      : "Real: contas a receber e a pagar lançadas, mais a previsão das contas fixas.";
+    // previsto: soma por dia e o que vence entre hoje e o começo do mês (para o saldo dos meses seguintes)
+    const prevMap = new Map(); let prevAntes = 0;
+    if (previsto) (S.prevLista || []).forEach((x) => { const d = String(x.dia || "").slice(0, 10); if (!d) return; const v = Number(x.valor) || 0;
+      if (d >= ini && d <= fim) prevMap.set(d, (prevMap.get(d) || 0) + v); else if (d >= hj0 && d < ini) prevAntes += v; });
+    let prevAcum = prevAntes;
     const porDia = new Map(fluxo.map((d) => [String(d.dia).slice(0, 10), d]));
     S.calFluxo = porDia;
     const minimo = S.contas.filter((c) => c.ativo).reduce((s, c) => s + (Number(c.saldo_minimo) || 0), 0);
@@ -250,49 +449,19 @@
     for (let d = 1; d <= qtd; d++) {
       const chave = ini.slice(0, 8) + String(d).padStart(2, "0"), r = porDia.get(chave) || {};
       const entra = Number(r.previsto_entrada || 0) + Number(r.realizado_entrada || 0), sai = Number(r.previsto_saida || 0) + Number(r.realizado_saida || 0);
-      const saldo = Number(r.saldo_previsto || 0), estado = !porDia.has(chave) ? "neutro" : saldo < 0 ? "negativo" : saldo <= minimo ? "alerta" : "positivo";
-      const pre = (S.previsoes || []).filter((x) => String(x.vencimento || "").slice(0, 10) === chave).reduce((t, x) => t + Number(x.valor || 0), 0);
-      html += '<button type="button" class="fin-cal-dia ' + estado + (chave === hj ? " hoje" : "") + (chave === S.calDia ? " selecionado" : "") + '" data-dia="' + chave + '" aria-label="' + esc(dataBr(chave) + ": entradas " + brl(entra) + ", saídas " + brl(sai) + ", saldo " + brl(saldo)) + '">' +
-        '<span class="fin-cal-num">' + d + '</span><span class="fin-cal-valores"><span class="e">E: ' + compacto(entra) + '</span><span class="s">S: ' + compacto(sai) + '</span><b>Saldo: ' + compacto(saldo) + "</b>" + (pre ? '<span class="p" title="Previsão de pré-reserva, fora do saldo">Pré: ' + compacto(pre) + "</span>" : "") + "</span></button>";
+      const prevRec = prevMap.get(chave) || 0;
+      if (chave >= hj0) prevAcum += prevRec;
+      const saldo = Number(r.saldo_previsto || 0) + (previsto ? prevAcum : 0), estado = !porDia.has(chave) ? "neutro" : saldo < 0 ? "negativo" : saldo <= minimo ? "alerta" : "positivo";
+      html += '<button type="button" class="fin-cal-dia ' + estado + (prevRec > 0.005 ? " previsto" : "") + (chave === hj ? " hoje" : "") + (chave === S.calDia ? " selecionado" : "") + '" data-dia="' + chave + '" aria-label="' + esc(dataBr(chave) + ": entradas " + brl(entra) + ", saídas " + brl(sai) + ", saldo " + brl(saldo)) + '">' +
+        '<span class="fin-cal-num">' + d + '</span><span class="fin-cal-valores"><span class="e">E: ' + compacto(entra) + '</span><span class="s">S: ' + compacto(sai) + '</span><b>Saldo: ' + compacto(saldo) + "</b>" + (prevRec > 0.005 ? '<span class="pv" title="Recebimento previsto (pré-reserva e orçamento)">Previsto: ' + compacto(prevRec) + "</span>" : "") + "</span></button>";
     }
     const resto = (7 - ((vazios + qtd) % 7)) % 7;
     for (let i = 0; i < resto; i++) html += '<span class="fin-cal-dia vazio" aria-hidden="true"></span>';
-    caixa.innerHTML = html;
-    caixa.querySelectorAll("[data-dia]").forEach((b) => {
-      b.addEventListener("mouseenter", () => detalheDia(b));
-      b.addEventListener("focus", () => detalheDia(b));
-      b.addEventListener("mouseleave", fecharDetalheDia);
-      b.addEventListener("blur", fecharDetalheDia);
-    });
+    caixa.innerHTML = html; // o cartão que abria ao passar o mouse no dia saiu (nov/2026, pedido do usuário): o dia fica na Agenda ao lado
   }
 
   function fecharDetalheDia() { const p = document.getElementById("finCalDetalhe"); if (p) p.hidden = true; }
-  function detalheDia(botao) {
-    const dia = botao.dataset.dia, r = S.calFluxo?.get(dia) || {};
-    let p = document.getElementById("finCalDetalhe");
-    if (!p) {
-      p = document.createElement("div"); p.id = "finCalDetalhe"; p.className = "fin-cal-detalhe"; p.setAttribute("role", "tooltip"); document.body.append(p);
-      window.addEventListener("scroll", fecharDetalheDia, true); window.addEventListener("resize", fecharDetalheDia);
-      document.addEventListener("keydown", (e) => { if (e.key === "Escape") fecharDetalheDia(); });
-    }
-    const entradas = S.receber.filter((t) => t.status !== "cancelado" && diaDoTitulo(t) === dia);
-    const saidas = S.pagar.filter((t) => t.status !== "cancelado" && diaDoTitulo(t) === dia);
-    const nomeR = (t) => (t.pedido_id && S.pedidos[t.pedido_id] ? "Pedido " + (S.pedidos[t.pedido_id].numero_pedido || "") + " · " : "") + (t.cliente_nome || t.descricao || "Recebimento");
-    const nomeP = (t) => t.fornecedor_nome || t.descricao || "Pagamento";
-    const lista = (itens, nome) => itens.length
-      ? "<ul>" + itens.slice(0, 5).map((t) => "<li><div><strong>" + esc(nome(t)) + "</strong><small>" + esc([t.descricao, t.componente ? DIV[t.componente] : ""].filter(Boolean).join(" · ")) + "</small></div><b>" + brl(Number(t.aberto) || Number(t.valor) || 0) + "</b></li>").join("") + "</ul>" + (itens.length > 5 ? "<small>+ " + (itens.length - 5) + " lançamento(s) neste dia</small>" : "")
-      : '<p class="fin-cal-nada">Nenhum lançamento neste dia.</p>';
-    p.innerHTML = "<header>" + esc(dataBr(dia)) + "</header>" +
-      '<section class="entrada"><h4><span>Entradas do dia</span><b>' + brl(Number(r.previsto_entrada || 0) + Number(r.realizado_entrada || 0)) + "</b></h4>" + lista(entradas, nomeR) + "</section>" +
-      (() => { const pr = (S.previsoes || []).filter((x) => String(x.vencimento || "").slice(0, 10) === dia); return pr.length ? '<section class="pre"><h4><span>Pré-reservas (previsão, fora do saldo)</span><b>' + brl(pr.reduce((t, x) => t + Number(x.valor || 0), 0)) + "</b></h4><ul>" + pr.slice(0, 5).map((x) => "<li><div><strong>Pedido " + esc(x.pedido_numero || "") + " · " + esc(x.cliente_nome || "") + "</strong><small>" + esc((DIV[x.componente] || "") + " · " + (x.parcela || "")) + "</small></div><b>" + brl(x.valor) + "</b></li>").join("") + "</ul></section>" : ""; })() +
-      '<section class="saida"><h4><span>Saídas do dia</span><b>' + brl(Number(r.previsto_saida || 0) + Number(r.realizado_saida || 0)) + "</b></h4>" + lista(saidas, nomeP) + "</section>";
-    p.hidden = false;
-    const rect = botao.getBoundingClientRect(), largura = Math.min(380, innerWidth - 24);
-    p.style.width = largura + "px";
-    const alto = p.getBoundingClientRect().height;
-    p.style.left = Math.max(12, Math.min(rect.left, innerWidth - largura - 12)) + "px";
-    p.style.top = Math.max(12, rect.bottom + 8 + alto > innerHeight ? rect.top - alto - 8 : rect.bottom + 8) + "px";
-  }
+
   const card = (rot, val, sub, cls = "") => '<div class="fin-card ' + cls + '"><span>' + esc(rot) + "</span><strong>" + val + "</strong><small>" + esc(sub) + "</small></div>";
 
   // ---------------------------------------------------------------- a receber (agrupado por pedido, com a divisão)
@@ -362,32 +531,15 @@
     const total = linhas.reduce((s, t) => s + Number(t.valor), 0), aberto = linhas.reduce((s, t) => s + Number(t.aberto), 0);
     return '<section class="fin-pedido fin-receber-data"><div class="fin-pedido-topo fin-pedido-linha"><strong>Por data</strong><small>' + linhas.length + " parcela(s)" +
       '</small><div class="fin-pedido-tot">Total <b>' + brl(total) + "</b><span>Em aberto <b>" + brl(aberto) + "</b></span></div></div>" +
-      '<div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Vencimento</th><th>Pedido · cliente</th><th>Divisão</th><th>Conta (CNPJ · PIX)</th><th class="num">Valor</th><th>Recebido em</th><th>Status</th><th class="num">Falta no pedido</th><th></th></tr></thead><tbody>' +
+      '<div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Vencimento</th><th>Pedido</th><th>Cliente</th><th>Local</th><th>Divisão</th><th>Conta (CNPJ · PIX)</th><th class="num">Valor</th><th>Status</th><th class="num">Falta no pedido</th><th></th></tr></thead><tbody>' +
       linhas.map((t) => {
         const [cls, rot] = statusR(t), ped = t.pedido_id ? S.pedidos[t.pedido_id] : null;
-        const quem = (ped ? "<b>Pedido " + esc(ped.numero_pedido || t.pedido_numero) + "</b> · " + esc(ped.cliente_nome || t.cliente_nome || "") : esc(t.descricao || "Lançamento") + (t.cliente_nome ? " · " + esc(t.cliente_nome) : "")) +
-          (ped ? '<small class="fin-linha-meta">' + esc(metaPedido(ped).join(" · ")) + "</small>" : "");
+        const numPed = ped ? numeroPedidoCard(ped.numero_pedido || t.pedido_numero) : '<span class="fin-sem-pedido">' + esc(t.descricao || "Lançamento") + "</span>";
+        const quem = esc((ped && ped.cliente_nome) || t.cliente_nome || "—") + (ped ? '<small class="fin-linha-meta">' + esc(metaPedido(ped).filter((x) => x !== ped.local_nome).join(" · ")) + "</small>" : "");
         // Nov/2026: parcela embaixo do vencimento e sem a coluna "Recebido" (linha mais fina, mais espaço para pedido · cliente).
-        return "<tr><td><b>" + dataBr(t.vencimento) + '</b><small class="fin-parcela-venc">Parcela ' + t.parcela + "/" + t.parcelas + "</small>" + alertaVenc(t) + '</td><td class="fin-quem">' + quem + '</td><td><span class="fin-chip ' + t.componente + '">' + DIV[t.componente] + "</span></td><td>" + contaHtml(t.conta_id) +
-          '</td><td class="num">' + brl(t.valor) + (Number(t.recebido) > 0 && Number(t.recebido) < Number(t.valor) ? '<small class="fin-parcial">recebido ' + brl(t.recebido) + "</small>" : "") + "</td>" + recebidoEmHtml(t) + '<td><span class="fin-status ' + cls + '">' + rot + "</span></td>" + faltaNoPedido(t) + acoesR(t) + "</tr>";
+        return "<tr><td><b>" + dataBr(t.vencimento) + '</b><small class="fin-parcela-venc">Parcela ' + t.parcela + "/" + t.parcelas + "</small>" + alertaVenc(t) + '</td><td class="fin-num-ped">' + numPed + '</td><td class="fin-quem"><div class="fin-quem-foto">' + fotoCliente(ped, t, "peq") + "<div>" + quem + '</div></div></td><td class="fin-local">' + esc((ped && ped.local_nome) || "—") + '</td><td><span class="fin-chip ' + t.componente + '">' + DIV[t.componente] + "</span></td><td>" + contaHtml(t.conta_id) +
+          '</td><td class="num">' + brl(t.valor) + (Number(t.recebido) > 0 && Number(t.recebido) < Number(t.valor) ? '<small class="fin-parcial">recebido ' + brl(t.recebido) + "</small>" : "") + "</td>" + '<td><span class="fin-status ' + cls + '">' + rot + "</span></td>" + faltaNoPedido(t) + acoesR(t) + "</tr>";
       }).join("") + "</tbody></table></div></section>";
-  }
-  // Pré-reservas como previsão (nov/2026): selo amarelo, sem cobrança, sem link de PIX e sem baixa.
-  function previsaoHtml(f) {
-    if (["recebidos", "cancelados", "vencidos"].includes(f.status) || f.prazo || f.conta) return "";
-    const b = (f.busca || "").trim().toLowerCase();
-    const lista = (S.previsoes || []).filter((x) => (!f.div || x.componente === f.div) && (!b || [x.cliente_nome, x.pedido_numero].join(" ").toLowerCase().includes(b)));
-    if (!lista.length) return "";
-    const grupos = new Map(); lista.forEach((x) => { if (!grupos.has(x.pedido_id)) grupos.set(x.pedido_id, []); grupos.get(x.pedido_id).push(x); });
-    const total = lista.reduce((t, x) => t + Number(x.valor || 0), 0);
-    return '<details class="fin-previsao"' + (S.previsaoAberta ? " open" : "") + '><summary><span class="fin-pre-selo">Pré-reserva</span><b>Previsão de ' + grupos.size + " pedido(s) em pré-reserva · " + brl(total) + "</b>" +
-      '<small>Não são contas a receber: viram cobrança quando o pedido for Reservado.</small></summary>' +
-      [...grupos.values()].map((ps) => { const x0 = ps[0];
-        return '<article class="fin-previsao-ped"><header><strong>Pedido ' + esc(x0.pedido_numero || "") + " · " + esc(x0.cliente_nome || "") + "</strong>" +
-          '<span class="fin-pre-selo">Pré-reserva' + (x0.pre_reserva_ate ? " até " + dataBr(x0.pre_reserva_ate) : "") + "</span>" + (x0.data_evento ? "<small>Evento " + dataBr(x0.data_evento) + "</small>" : "") + "</header>" +
-          '<table class="fin-tabela"><thead><tr><th>Vencimento</th><th>Parcela</th><th>Divisão</th><th>Forma</th><th class="num">Valor</th></tr></thead><tbody>' +
-          ps.map((x) => "<tr><td>" + (x.vencimento ? dataBr(x.vencimento) : "—") + "</td><td>" + esc(x.parcela || "") + "</td><td>" + esc(DIV[x.componente] || x.componente) + "</td><td>" + esc(x.forma || "") + '</td><td class="num">' + brl(x.valor) + "</td></tr>").join("") +
-          "</tbody></table></article>"; }).join("") + "</details>";
   }
   function pintarReceber() {
     const f = S.filtroR, lista = filtrarR(), porData = modoReceber() === "data";
@@ -399,24 +551,18 @@
       const sit = situacaoPedido(t0.pedido_id || t0.grupo), todosDoGrupo = sit.ts, total = sit.total, aberto = sit.aberto;
       const divs = [...new Set(todosDoGrupo.map((x) => x.componente))];
       const dif = ped && Math.abs(Number(ped.valor_total) - total) > 0.05;
-      const titulo = ped ? "Pedido " + esc(ped.numero_pedido || t0.pedido_numero) + " · " + esc(ped.cliente_nome || t0.cliente_nome || "") : esc(t0.descricao) + (t0.cliente_nome ? " · " + esc(t0.cliente_nome) : "");
+      const titulo = ped ? numeroPedidoCard(ped.numero_pedido || t0.pedido_numero) + "</strong>" + fotoCliente(ped, t0) + "<strong>" + esc(ped.cliente_nome || t0.cliente_nome || "") : esc(t0.descricao) + (t0.cliente_nome ? " · " + esc(t0.cliente_nome) : "");
       const sub = ped ? (ped.status_comercial ? '<span class="fin-ped-st">' + esc(ST_PEDIDO[ped.status_comercial] || ped.status_comercial) + "</span>" : "") : esc(t0.documento || "Lançamento manual");
-      const meta = ped ? metaPedido(ped) : [];
-      const prox = sit.proxima ? "Próxima parcela " + dataBr(sit.proxima.vencimento) + " · " + brl(sit.proxima.aberto) : "Sem parcelas em aberto";
-      const resumo = '<div class="fin-ped-resumo">' + (meta.length ? '<span class="fin-ped-meta">' + meta.map(esc).join("<i>·</i>") + "</span>" : "") +
-        '<span class="fin-ped-quita">' + barraPago(sit.pct) + "<b>" + sit.pct + "% pago</b><span>" + sit.pagas + " de " + todosDoGrupo.length + " parcela(s) recebidas</span><span>" + esc(prox) + "</span></span>" +
-        '<span class="fin-ped-nums"><span>Recebido <b>' + brl(sit.recebido) + "</b></span><span" + (aberto > 0.005 ? ' class="falta"' : "") + ">Falta para quitar <b>" + (aberto > 0.005 ? brl(aberto) : "quitado") + "</b></span>" +
-        (sit.vencido > 0.005 ? '<span class="venc">Vencido <b>' + brl(sit.vencido) + "</b></span>" : "") + "</span></div>";
-      return '<article class="fin-pedido"><div class="fin-pedido-topo fin-pedido-linha"><strong>' + titulo + "</strong><small>" + sub + '</small><div class="fin-divisoes">' +
+      return '<article class="fin-pedido"><div class="fin-pedido-topo fin-pedido-linha">' + (!ped && t0.cliente_nome ? fotoCliente(ped, t0) : "") + "<strong>" + titulo + "</strong><small>" + sub + '</small><div class="fin-divisoes">' +
         divs.map((d) => { const v = todosDoGrupo.filter((x) => x.componente === d).reduce((s, x) => s + Number(x.valor), 0); return '<span class="fin-chip ' + d + '">' + DIV[d] + " " + brl(v) + "</span>"; }).join("") +
         (dif ? '<span class="fin-alerta-dif" title="As parcelas somam ' + brl(total) + " e o pedido está em " + brl(ped.valor_total) + '">As parcelas somam ' + brl(total) + " e o pedido está em " + brl(ped.valor_total) + "</span>" : "") +
         '</div>' + (ped && aberto > 0.005 ? '<button type="button" class="fin-btn peq claro fin-link-pag" data-link-pag="' + t0.pedido_id + '" title="Pedido digital: o cliente vê o pedido e paga pelo mesmo link">Link do pedido</button>' : "") +
-        '<div class="fin-pedido-tot">Total <b>' + brl(total) + "</b></div></div>" + resumo +
-        '<div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Parcela</th><th>Divisão</th><th>Conta (CNPJ · PIX)</th><th>Vencimento</th><th class="num">Valor</th><th class="num">Recebido</th><th>Recebido em</th><th>Status</th><th class="num">Falta no pedido</th><th></th></tr></thead><tbody>' +
+        '<div class="fin-pedido-tot">Total <b>' + brl(total) + "</b></div></div>" +
+        '<div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Parcela</th><th>Divisão</th><th>Conta (CNPJ · PIX)</th><th>Vencimento</th><th class="num">Valor</th><th class="num">Recebido</th><th>Status</th><th class="num">Falta no pedido</th><th></th></tr></thead><tbody>' +
         ts.map((t) => {
           const [cls, rot] = statusR(t);
           return "<tr><td>" + t.parcela + "/" + t.parcelas + '</td><td><span class="fin-chip ' + t.componente + '">' + DIV[t.componente] + "</span></td><td>" + contaHtml(t.conta_id) +
-            "</td><td>" + dataBr(t.vencimento) + alertaVenc(t) + '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.recebido) + "</td>" + recebidoEmHtml(t) + '<td><span class="fin-status ' + cls + '">' + rot + "</span></td>" +
+            "</td><td>" + dataBr(t.vencimento) + alertaVenc(t) + '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.recebido) + "</td>" + '<td><span class="fin-status ' + cls + '">' + rot + "</span></td>" +
             faltaNoPedido(t) + acoesR(t) + "</tr>";
         }).join("") + "</tbody></table></div></article>";
     }).join("");
@@ -430,12 +576,10 @@
       // "Recebidas": atalho para ver só o que já foi recebido (é o filtro de status "Recebidos"); clicar de novo volta.
       '<button type="button" class="fin-recebidas-btn" id="frRecebidas" aria-pressed="' + (f.status === "recebidos") + '">Recebidas</button>' +
       '<button class="fin-btn" id="frNovo">+ Novo recebimento</button></div>' +
-      previsaoHtml(f) +
       (html || '<div class="fin-vazio">Nenhuma conta a receber com esses filtros. Pedido aprovado aparece aqui sozinho, dividido em locação, frete e montagem.</div>');
     const at = () => { const status = $("frStatus").value; S.filtroR = { busca: $("frBusca").value, status, div: $("frDiv").value, conta: $("frConta").value, prazo: status === "abertos" ? S.filtroR.prazo : "" }; pintarReceber(); };
     // clicar de novo na aba escolhida volta a mostrar tudo em aberto
     $("finConteudo").querySelectorAll("[data-prazo]").forEach((b) => b.addEventListener("click", () => { S.filtroR = { ...S.filtroR, status: "abertos", prazo: S.filtroR.prazo === b.dataset.prazo ? "" : b.dataset.prazo }; pintarReceber(); }));
-    $("finConteudo").querySelector(".fin-previsao")?.addEventListener("toggle", (e) => { S.previsaoAberta = e.target.open; });
     $("frBusca").addEventListener("change", at); $("frBusca").addEventListener("keydown", (e) => { if (e.key === "Enter") at(); });
     ["frStatus", "frDiv", "frConta"].forEach((id) => $(id).addEventListener("change", at));
     $("frNovo").addEventListener("click", () => novoTitulo("receber"));
@@ -447,33 +591,104 @@
   function pintarPagar() {
     const f = S.filtroP, b = f.busca.trim().toLowerCase();
     const lista = S.pagar.filter((t) => {
+      if (f.prazo && !noPrazoP(t, f.prazo)) return false;
+      if (f.cat && t.categoria_id !== f.cat) return false;
+      if (f.conta && t.conta_id !== f.conta) return false;
       if (f.status === "abertos" && ["pago", "cancelado"].includes(t.status)) return false;
       if (f.status === "aprovar" && !(t.requer_aprovacao && t.aprovacao === "pendente" && t.status !== "cancelado")) return false;
       if (f.status === "vencidos" && !vencido(t)) return false;
       if (f.status === "pagos" && t.status !== "pago") return false;
       if (f.status === "cancelados" && t.status !== "cancelado") return false;
+      if (f.status !== "cancelados" && f.status !== "todos" && t.status === "cancelado") return false;
       if (b && ![t.fornecedor_nome, t.descricao, t.documento].join(" ").toLowerCase().includes(b)) return false;
       return true;
     });
+    { const g = new Map(), out = [];
+      lista.forEach((t) => {
+        if (t.fatura_id && !t.fechamento_parcela_id) {
+          let x = g.get("fat:" + t.fatura_id);
+          if (!x) {
+            const fa = (S.faturas || []).find((y) => y.id === t.fatura_id) || {}, ct = (S.cartoes || []).find((y) => y.id === (fa.cartao_id || t.cartao_id)) || {};
+            x = { sintetico: true, fatura: true, id: "fat:" + t.fatura_id, fa, cartao: ct, fornecedor_nome: ct.nome || "Cartão de crédito", descricao: "Fatura " + (ct.nome || "do cartão"),
+              vencimento: fa.vencimento || t.vencimento, programado_para: null, valor: 0, aberto: 0, pago: 0, parcela: 1, parcelas: 1, conta_id: ct.conta_id || t.conta_id, status: "pago", comp: [] };
+            g.set("fat:" + t.fatura_id, x); out.push(x);
+          }
+          x.comp.push(t); x.valor += Number(t.valor || 0); x.aberto += Number(t.aberto || 0); x.pago += Number(t.pago || 0);
+          if (!["pago", "cancelado"].includes(t.status)) x.status = x.pago > 0 ? "parcial" : "aberto";
+          return;
+        }
+        if (!t.fechamento_parcela_id) { out.push(t); return; }
+        let x = g.get(t.fechamento_parcela_id);
+        if (!x) {
+          const fp = (S.fechParcelas || []).find((y) => y.id === t.fechamento_parcela_id) || {};
+          x = { sintetico: true, id: "fp:" + t.fechamento_parcela_id, fp, fornecedor_nome: t.fornecedor_nome, fornecedor_id: t.fornecedor_id, descricao: "Fechamento " + (fp.referencia || ""),
+            vencimento: t.vencimento, programado_para: null, valor: 0, aberto: 0, pago: 0, parcela: fp.numero || 1, parcelas: fp.total || 1, conta_id: t.conta_id, status: "pago", comp: [] };
+          g.set(t.fechamento_parcela_id, x); out.push(x);
+        }
+        x.comp.push(t); x.valor += Number(t.valor || 0); x.aberto += Number(t.aberto || 0); x.pago += Number(t.pago || 0);
+        if (!["pago", "cancelado"].includes(t.status)) x.status = x.pago > 0 ? "parcial" : "aberto";
+      });
+      lista.length = 0; out.forEach((t) => lista.push(t));
+      lista.sort((a, c) => String(a.vencimento || "9999").localeCompare(String(c.vencimento || "9999"))); }
+    const linhaAgrupada = (t) => {
+      const [cls, rot] = statusP(t), fa = t.fa || {}, fp = t.fp || {};
+      const sub = t.fatura ? t.comp.length + " compra(s)" + (fa.virada ? " · virou em " + dataBr(fa.virada) : "") + (fa.conferida_em ? " · conferida" : "")
+        : t.comp.length + " conta(s)" + (fp.nf_numero ? " · NF " + fp.nf_numero : "");
+      return '<tr class="fin-fech-linha fin-fat-linha" ' + (t.fatura ? 'data-fat-linha="' + esc(t.id.slice(4)) + '" title="Ver as compras desta fatura"' : 'data-fech-linha="' + esc(t.id.slice(3)) + '" data-fech-fech="' + esc(fp.fechamento_id || "") + '" title="Ver as contas desta parcela"') + ' tabindex="0" aria-expanded="false"><td>' +
+        '<span class="fin-fat-ic" aria-hidden="true">▸</span>' + dataBr(t.vencimento) + alertaPagar(t) + "</td><td>" + esc(t.fornecedor_nome || "-") + (t.fatura && t.cartao.final ? " <small>final " + esc(t.cartao.final) + "</small>" : "") + "</td><td>" +
+        '<div class="fin-pag-descricao">' + esc(t.descricao) + (t.parcelas > 1 ? " <small>(" + t.parcela + "/" + t.parcelas + ")</small>" : "") + "</div><small>" + esc(sub) + "</small></td><td>Várias</td><td>" + contaHtml(t.conta_id) +
+        '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.aberto) + '</td><td><span class="fin-status ' + cls + '">' + esc(rot) + '</span></td><td><small class="fin-sub-acao">' + (t.fatura ? "paga pela fatura" : "paga pelo fechamento") + "</small></td></tr>";
+    };
     $("finConteudo").innerHTML =
       '<div class="fin-barra-ferr"><input type="search" id="fpBusca" placeholder="Buscar fornecedor, descrição, documento" value="' + esc(f.busca) + '">' +
       '<select id="fpStatus">' + [["abertos", "Em aberto"], ["aprovar", "Aguardando aprovação"], ["vencidos", "Vencidos"], ["pagos", "Pagos"], ["cancelados", "Cancelados"], ["todos", "Todos"]].map(([v, r]) => '<option value="' + v + '"' + (f.status === v ? " selected" : "") + ">" + r + "</option>").join("") + "</select>" +
-      '<span class="fin-esp"></span><button class="fin-btn" id="fpNovo">+ Novo pagamento</button></div>' +
-      (lista.length ? '<section class="fin-bloco"><div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Fornecedor</th><th>Descrição</th><th>Categoria</th><th>Vencimento</th><th>Conta</th><th class="num">Valor</th><th class="num">Em aberto</th><th>Status</th><th></th></tr></thead><tbody>' +
+      '<select id="fpCat"><option value="">Todas as categorias</option>' + S.cats.filter((c) => c.tipo === "saida" && (c.ativo !== false || c.id === f.cat)).map((c) => '<option value="' + c.id + '"' + (f.cat === c.id ? " selected" : "") + ">" + esc(c.nome) + "</option>").join("") + "</select>" +
+      '<div class="fin-prazos" role="group" aria-label="Filtrar por vencimento">' + PRAZOS.map(([k, r]) => { const n = S.pagar.filter((t) => noPrazoP(t, k)).length; return '<button type="button" class="fin-prazo' + (f.prazo === k ? " ativa" : "") + '" data-prazo-p="' + k + '" aria-pressed="' + (f.prazo === k) + '">' + r + (n ? '<span class="fin-prazo-n">' + n + "</span>" : "") + "</button>"; }).join("") + "</div>" +
+      // "Pagas": atalho para ver só o que já foi pago (é o filtro de status "Pagos"); clicar de novo volta.
+      '<span class="fin-esp"></span><button type="button" class="fin-recebidas-btn" id="fpPagas" aria-pressed="' + (f.status === "pagos") + '">Pagas</button>' +
+      '<button class="fin-btn" id="fpNovo">+ Novo pagamento</button></div>' +
+      (lista.length ? '<section class="fin-bloco"><div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Vencimento</th><th>Fornecedor</th><th>Descrição</th><th>Categoria</th><th>Conta</th><th class="num">Valor</th><th class="num">Em aberto</th><th>Status</th><th></th></tr></thead><tbody>' +
         lista.map((t) => {
+          if (t.sintetico) return linhaAgrupada(t);
           const [cls, rot] = statusP(t), c = cat(t.categoria_id);
           const bloqueadoServico = t.manutencao_confirmada === false;
           const aberto = !["pago", "cancelado"].includes(t.status), aguard = t.requer_aprovacao && t.aprovacao === "pendente";
-          return '<tr class="fin-linha-click" data-p-linha="' + t.id + '" tabindex="0" title="Ver detalhes"><td>' + esc(t.fornecedor_nome || "-") + "</td><td>" + esc(t.descricao) + (bloqueadoServico ? '<small class="text-danger" style="display:block;margin-top:5px">Pagar somente após confirmação do serviço em Compras → Serviços.</small>' : t.manutencao_confirmada === true ? '<small style="display:block;margin-top:5px">Serviço confirmado em Compras.</small>' : '') + (t.parcelas > 1 ? " <small>(" + t.parcela + "/" + t.parcelas + ")</small>" : "") + "</td><td>" + esc(c?.nome || "-") +
-            "</td><td>" + dataBr(t.vencimento) + "</td><td>" + contaHtml(t.conta_id) + '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.aberto) + '</td><td><span class="fin-status ' + cls + '">' + esc(rot) + "</span></td>" +
+          return '<tr class="fin-linha-click" data-p-linha="' + t.id + '" tabindex="0" title="Ver detalhes"><td>' + dataBr(t.vencimento) + alertaPagar(t) + '</td><td class="fin-quem"><div class="fin-quem-foto">' + fotoFavorecido(t) + "<span>" + esc(t.fornecedor_nome || "-") + "</span></div>" + "</td><td>" + esc(t.descricao) + (bloqueadoServico ? '<small class="text-danger" style="display:block;margin-top:5px">Pagar somente após confirmação do serviço em Compras → Serviços.</small>' : t.manutencao_confirmada === true ? '<small style="display:block;margin-top:5px">Serviço confirmado em Compras.</small>' : '') + (t.parcelas > 1 ? " <small>(" + t.parcela + "/" + t.parcelas + ")</small>" : "") + cartaoTag(t) + (t.aguardando_fechamento ? '<small class="fin-fech-tag" title="Parceiro com fechamento (mensal ou semanal): entra no próximo fechamento dele (aba Fechamentos de parceiros)">Vai no fechamento do parceiro</small>' : "") + "</td><td>" + esc(c?.nome || "-") +
+            "</td><td>" + contaHtml(t.conta_id) + '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.aberto) + '</td><td><span class="fin-status ' + cls + '">' + esc(rot) + "</span></td>" +
             '<td><div class="acoes">' + (aguard ? '<button class="fin-btn peq" data-p-aprovar="' + t.id + '">Aprovar</button><button class="fin-btn peq verm" data-p-reprovar="' + t.id + '">Reprovar</button>' : "") +
-            (S.baixaManual?.baixa_manual_pagar && aberto && !aguard && !bloqueadoServico && t.aprovacao !== "reprovada" && Number(t.aberto) > 0.005 ? '<button class="fin-btn peq verde" data-p-baixar="' + t.id + '">Pago</button>' : "") +
+            (S.baixaManual?.baixa_manual_pagar && aberto && !aguard && !bloqueadoServico && !t.fatura_id && !t.aguardando_fechamento && t.aprovacao !== "reprovada" && Number(t.aberto) > 0.005 ? '<button class="fin-btn peq verde" data-p-baixar="' + t.id + '">Pago</button>' : "") +
             "</div></td></tr>";
         }).join("") + "</tbody></table></div></section>" : '<div class="fin-vazio">Nenhuma conta a pagar com esses filtros.</div>');
+    // linhas agrupadas (fatura do cartão / parcela de fechamento): clique abre embaixo as contas que a compõem
+    $("finConteudo").querySelectorAll("[data-fat-linha],[data-fech-linha]").forEach((tr) => {
+      const alternar = (e) => {
+        if (e.target.closest("button,a,select,input")) return;
+        if (tr.nextElementSibling?.classList.contains("fin-fech-comp")) { tr.nextElementSibling.remove(); tr.setAttribute("aria-expanded", "false"); tr.classList.remove("is-aberta"); return; }
+        const fat = tr.dataset.fatLinha;
+        const comp = S.pagar.filter((x) => (fat ? x.fatura_id === fat : x.fechamento_parcela_id === tr.dataset.fechLinha) && x.status !== "cancelado")
+          .sort((a, c) => String(a.cartao_compra_em || a.emissao || "").localeCompare(String(c.cartao_compra_em || c.emissao || "")));
+        const ex = document.createElement("tr"); ex.className = "fin-fech-comp";
+        ex.innerHTML = '<td colspan="' + tr.children.length + '"><table class="fin-tabela fin-fech-comp-tab"><thead><tr><th>' + (fat ? "Compra em" : "Data") + "</th><th>Favorecido</th><th>Descrição</th><th>Categoria</th><th>Status</th><th class=\"num\">Valor</th></tr></thead><tbody>" +
+          comp.map((x) => { const [c2, r2] = statusP(x); return '<tr class="fin-linha-click" data-p-linha="' + x.id + '"><td>' + dataBr(x.cartao_compra_em || x.emissao) + "</td><td>" + esc(x.fornecedor_nome || "-") + "</td><td>" + esc(x.descricao || "") + (x.parcelas > 1 ? " <small>(" + x.parcela + "/" + x.parcelas + ")</small>" : "") +
+            "</td><td>" + esc(cat(x.categoria_id)?.nome || "-") + '</td><td><span class="fin-status ' + c2 + '">' + esc(r2) + '</span></td><td class="num">' + brl(x.valor) + "</td></tr>"; }).join("") +
+          '</tbody><tfoot><tr><td colspan="5">' + (fat ? "Total da fatura" : "Total da parcela") + '</td><td class="num">' + brl(comp.reduce((a, x) => a + Number(x.valor || 0), 0)) + "</td></tr></tfoot></table></td>";
+        tr.after(ex); tr.setAttribute("aria-expanded", "true"); tr.classList.add("is-aberta");
+      };
+      tr.addEventListener("click", alternar);
+      tr.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target === tr) { e.preventDefault(); alternar(e); } });
+    });
+    if (S.focoFat || S.focoFech) {
+      const sel = S.focoFat ? '[data-fat-linha="' + S.focoFat + '"]' : '[data-fech-fech="' + S.focoFech + '"]'; S.focoFat = S.focoFech = null;
+      const alvos = [...$("finConteudo").querySelectorAll(sel)];
+      if (alvos.length) { alvos.forEach((a) => a.classList.add("fin-fat-foco")); alvos[0].click(); requestAnimationFrame(() => alvos[0].scrollIntoView({ block: "center", behavior: "smooth" })); setTimeout(() => alvos.forEach((a) => a.classList.remove("fin-fat-foco")), 4000); }
+    }
     $("finConteudo").querySelectorAll("[data-p-linha]").forEach((tr) => tr.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target === tr) { e.preventDefault(); detalhesPagar(tr.dataset.pLinha); } }));
-    const at = () => { S.filtroP = { busca: $("fpBusca").value, status: $("fpStatus").value }; pintarPagar(); };
+    const at = () => { const status = $("fpStatus").value; S.filtroP = { busca: $("fpBusca").value, status, cat: $("fpCat").value, conta: "", prazo: status === "abertos" ? S.filtroP.prazo : "" }; pintarPagar(); };
     $("fpBusca").addEventListener("change", at); $("fpBusca").addEventListener("keydown", (e) => { if (e.key === "Enter") at(); });
-    $("fpStatus").addEventListener("change", at);
+    ["fpStatus", "fpCat"].forEach((id) => $(id).addEventListener("change", at));
+    // clicar de novo no atalho escolhido volta a mostrar tudo em aberto
+    $("finConteudo").querySelectorAll("[data-prazo-p]").forEach((b) => b.addEventListener("click", () => { S.filtroP = { ...S.filtroP, status: "abertos", prazo: S.filtroP.prazo === b.dataset.prazoP ? "" : b.dataset.prazoP }; pintarPagar(); }));
+    $("fpPagas").addEventListener("click", () => { S.filtroP = { ...S.filtroP, prazo: "", status: S.filtroP.status === "pagos" ? "abertos" : "pagos" }; pintarPagar(); });
     $("fpNovo").addEventListener("click", () => novoTitulo("pagar"));
   }
 
@@ -492,6 +707,8 @@
       '<label>Centro de custo<select name="centro_custo_id">' + opcoesCcs(null) + "</select></label>" +
       '<label>Conta<select name="conta_id">' + opcoesContas(null) + "</select></label>" +
       '<label>Forma<select name="forma">' + opcoesFormas("PIX") + "</select></label>" +
+      (rec ? "" : '<label data-cc-campo hidden>Cartão<select name="cartao_id"><option value="">Escolha o cartão</option>' + (S.cartoes || []).filter((c) => c.ativo).map((c) => '<option value="' + c.id + '">' + esc(c.nome + (c.final ? " · final " + c.final : "")) + "</option>").join("") + "</select></label>" +
+        '<label data-cc-campo hidden>Data da compra<input type="date" name="cartao_compra_em" value="' + hoje() + '"></label>') +
       '<label>Emissão<input type="date" name="emissao" value="' + hoje() + '"></label>' +
       '<label>Competência<input type="date" name="competencia" value="' + hoje() + '"></label>' +
       '<p class="fin-sub">Valor e parcelas</p>' +
@@ -504,26 +721,38 @@
       '<p class="fin-info" id="finParcelasPrev"></p></div>',
       [{ rotulo: "Cancelar", classe: "claro", acao: fecharModal }, { rotulo: "Salvar", acao: () => salvarNovo(tipo) }],
       (corpo) => {
-        const prev = () => { const p = parcelasDe(campos(corpo)); $("finParcelasPrev").textContent = p.length ? p.map((x, i) => (i + 1) + "ª " + dataBr(x.vencimento) + " " + brl(x.valor)).join(" · ") : "Informe o valor."; };
+        const prev = () => {
+          const d = campos(corpo), cc = !rec && d.forma === "Cartão de crédito";
+          corpo.querySelectorAll("[data-cc-campo]").forEach((x) => { x.hidden = !cc; });
+          const venc = corpo.querySelector("[name=vencimento]"), inter = corpo.querySelector("[name=intervalo]");
+          if (venc) venc.closest("label").hidden = cc; if (inter) inter.closest("label").hidden = cc;
+          if (cc && !(S.cartoes || []).some((c) => c.ativo)) { $("finParcelasPrev").textContent = "Nenhum cartão cadastrado: cadastre em Bancos e cartões → Cartões → Configurar cartões."; return; }
+          const p = parcelasDe(d);
+          $("finParcelasPrev").textContent = p.length ? (cc && d.cartao_id ? "Cada parcela vence na fatura em que cai: " : "") + p.map((x, i) => (i + 1) + "ª " + dataBr(x.vencimento) + " " + brl(x.valor)).join(" · ") : (cc ? "Escolha o cartão e informe o valor." : "Informe o valor.");
+        };
         corpo.addEventListener("input", prev); prev();
       });
   }
   function parcelasDe(d) {
     const total = num(d.valor), n = Math.max(1, parseInt(d.parcelas, 10) || 1), passo = Math.max(1, parseInt(d.intervalo, 10) || 30);
-    if (total <= 0 || !d.vencimento) return [];
+    const cartao = d.forma === "Cartão de crédito" && d.cartao_id ? (S.cartoes || []).find((c) => c.id === d.cartao_id) : null;
+    if (d.forma === "Cartão de crédito" && !cartao && d.cartao_id !== undefined) return [];
+    if (total <= 0 || (!cartao && !d.vencimento) || (cartao && !d.cartao_compra_em)) return [];
     const base = Math.round((total / n) * 100) / 100;
-    return Array.from({ length: n }, (_, i) => ({ vencimento: somaDias(d.vencimento, i * passo), valor: i === n - 1 ? Math.round((total - base * (n - 1)) * 100) / 100 : base }));
+    return Array.from({ length: n }, (_, i) => ({ vencimento: cartao ? cartaoVencimento(cartao, d.cartao_compra_em, i + 1) : somaDias(d.vencimento, i * passo), valor: i === n - 1 ? Math.round((total - base * (n - 1)) * 100) / 100 : base }));
   }
   async function salvarNovo(tipo) {
     const d = campos($("finModalCorpo")), rec = tipo === "receber";
     const parc = parcelasDe(d);
     if (!d.descricao.trim()) return erroModal("Informe a descrição.");
+    if (!rec && d.forma === "Cartão de crédito" && !d.cartao_id) return erroModal("Escolha o cartão de crédito (cadastre em Bancos e cartões → Cartões).");
     if (!parc.length) return erroModal("Informe o valor e o vencimento.");
     const nome = d.parte.trim();
     const achado = rec ? S.clientes.find((c) => c.nome_razao === nome) : S.fornecedores.find((f) => (f.nome_fantasia || f.nome_razao_social) === nome);
     const cab = { descricao: d.descricao, documento: d.documento, categoria_id: d.categoria_id, centro_custo_id: d.centro_custo_id, conta_id: d.conta_id, forma: d.forma, emissao: d.emissao, competencia: d.competencia, observacoes: d.observacoes };
     if (rec) Object.assign(cab, { cliente_id: achado?.id || "", cliente_nome: nome, componente: d.componente });
-    else Object.assign(cab, { fornecedor_id: achado?.id || "", fornecedor_nome: nome, codigo_barras: d.codigo_barras, requer_aprovacao: !!d.requer_aprovacao });
+    else Object.assign(cab, { fornecedor_id: achado?.id || "", fornecedor_nome: nome, codigo_barras: d.codigo_barras, requer_aprovacao: !!d.requer_aprovacao },
+      d.forma === "Cartão de crédito" && d.cartao_id ? { cartao_id: d.cartao_id, cartao_compra_em: d.cartao_compra_em } : {});
     await executar(() => rpc("fin_criar_titulo", { p_empresa: S.emp, p_tipo: tipo, p_cab: cab, p_parcelas: parc }), rec ? "Recebimento lançado." : "Pagamento lançado.");
   }
 
@@ -866,7 +1095,7 @@
     return out;
   }
   // Conciliação = Clara, a assistente financeira (financeiro-clara.js).
-  const ctxClara = () => ({ pintarContas, logoContaHtml, S, rpc, brl, esc, dataBr, avisar, confirmar, modal, fecharModal, erroModal, campos, carregar, recarregar, todos, lerOfx, opcoesCats, opcoesCcs });
+  const ctxClara = () => ({ verFechamentoNoPagar: (fid) => { S.focoFech = fid; S.filtroP = { ...S.filtroP, status: "abertos", prazo: "" }; S.aba = "pagar"; pintar(); }, verFaturaNoPagar: (fid) => { S.focoFat = fid; S.filtroP = { ...S.filtroP, status: "abertos", prazo: "" }; S.aba = "pagar"; pintar(); }, pintarContas, logoContaHtml, S, rpc, brl, esc, dataBr, avisar, confirmar, modal, fecharModal, erroModal, campos, carregar, recarregar, todos, lerOfx, opcoesCats, opcoesCcs });
   async function pintarConciliacao() {
     if (!window.FinanceiroClara) { $("finConteudo").innerHTML = '<div class="fin-vazio">A assistente não carregou. Recarregue a página.</div>'; return; }
     await window.FinanceiroClara.render(ctxClara());
@@ -940,18 +1169,22 @@
       const raiz = S.cats.filter((c) => c.tipo === tipo && !c.pai_id);
       return raiz.map((r) => linhaCat(r, 0) + S.cats.filter((c) => c.pai_id === r.id).map((f) => linhaCat(f, 1)).join("")).join("");
     };
-    $("finConteudo").innerHTML = '<div class="fin-grade fin-grade-plano"><section class="fin-bloco"><h3>Plano de contas <button class="fin-btn peq" id="fpcNova">+ Categoria</button></h3><p class="cl-dica">O centro de custo de cada categoria vale para os títulos que não têm centro próprio, na DRE e no extrato.</p><table class="fin-tabela fin-plano"><thead><tr><th>Categoria</th><th>Centro de custo</th><th title="Para o ponto de equilíbrio no Gerencial">Fixo ou variável</th><th></th></tr></thead><tbody>' +
-      '<tr class="grupo"><td colspan="4">Entradas</td></tr>' + arv("entrada") + '<tr class="grupo"><td colspan="4">Saídas</td></tr>' + arv("saida") + "</tbody></table></section>" +
+    $("finConteudo").innerHTML = '<div class="fin-grade fin-grade-plano"><section class="fin-bloco"><h3>Plano de contas <button class="fin-btn peq" id="fpcNova">+ Categoria</button></h3><p class="cl-dica">O centro de custo de cada categoria vale para os títulos que não têm centro próprio, na DRE e no extrato.</p><table class="fin-tabela fin-plano"><thead><tr><th>Categoria</th><th>Centro de custo</th><th title="Para o ponto de equilíbrio no Gerencial">Fixo ou variável</th><th class="num" title="Contas fixas: valor previsto, entra no fluxo de caixa">Previsão</th><th title="Contas fixas: dia em que a previsão entra no fluxo de caixa">Dia do pagamento</th><th></th></tr></thead><tbody>' +
+      '<tr class="grupo"><td colspan="6">Entradas</td></tr>' + arv("entrada") + '<tr class="grupo"><td colspan="6">Saídas</td></tr>' + arv("saida") + "</tbody></table></section>" +
       '<section class="fin-bloco"><h3>Centros de custo <button class="fin-btn peq" id="fpcCc">+ Centro de custo</button></h3><table class="fin-tabela"><tbody>' +
       S.ccs.map((c) => "<tr" + (c.ativo ? "" : ' style="opacity:.5"') + "><td>" + esc((c.codigo ? c.codigo + " · " : "") + c.nome) + '</td><td class="num"><button class="fin-btn peq claro" data-cc-tog="' + c.id + '">' + (c.ativo ? "Desativar" : "Ativar") + "</button></td></tr>").join("") + "</tbody></table></section></div>";
     $("finConteudo").querySelectorAll("[data-cat-nat]").forEach((sel) => sel.addEventListener("change", async () => {
       const id = sel.dataset.catNat, v = sel.value || null;
-      const r = await S.sb.from("fin_categorias").update({ natureza: v }).eq("id", id).eq("empresa_id", S.emp);
+      // variável não tem previsão de conta fixa: limpa; marcar Fixo já pede a previsão (pode deixar para depois)
+      const limpa = v === "variavel" ? { previsao_meses: null, previsao_dia: null } : {};
+      const r = await S.sb.from("fin_categorias").update({ natureza: v, ...limpa }).eq("id", id).eq("empresa_id", S.emp);
       if (r.error) { avisar(r.error.message || "Não foi possível salvar.", "Financeiro", "erro"); return; }
-      const c = S.cats.find((x) => x.id === id); if (c) c.natureza = v;
+      const c = S.cats.find((x) => x.id === id); if (c) Object.assign(c, { natureza: v }, limpa);
+      if (v === "fixo") { pintarPlano(); previsaoFixa(id); return; }
       avisar("Categoria marcada como " + (v === "variavel" ? "variável" : v === "fixo" ? "fixa" : "automática") + ".", "Financeiro", "sucesso");
       pintarPlano();
     }));
+    $("finConteudo").querySelectorAll("[data-cat-prev]").forEach((b) => b.addEventListener("click", () => previsaoFixa(b.dataset.catPrev)));
     $("finConteudo").querySelectorAll("[data-cat-cc]").forEach((sel) => sel.addEventListener("change", async () => {
       const id = sel.dataset.catCc, v = sel.value || null;
       const r = await S.sb.from("fin_categorias").update({ centro_custo_id: v }).eq("id", id).eq("empresa_id", S.emp);
@@ -968,6 +1201,59 @@
         [{ rotulo: "Cancelar", classe: "claro", acao: fecharModal }, { rotulo: "Salvar", acao: async () => { const d = campos($("finModalCorpo")); if (!d.nome.trim()) return erroModal("Informe o nome."); await executar(async () => { const r = await S.sb.from("fin_centros_custo").insert({ empresa_id: S.emp, codigo: d.codigo || null, nome: d.nome.trim() }); if (r.error) throw r.error; }, "Centro de custo criado."); } }]);
     });
   }
+  // Contas fixas (nov/2026, igual à Tecnoweld, com valor previsto POR MÊS): 12 valores (janeiro a dezembro, repetem todo
+  // ano) + dia do pagamento. Mês sem valor = sem previsão. Entra no fluxo de caixa como saída prevista daquele dia; no
+  // mês, o que for lançado de verdade na categoria abate a previsão (fin_contas_fixas_previstas). Não cria conta a pagar.
+  const MES3 = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+  const mesesPrev = (c) => Array.isArray(c.previsao_meses) && c.previsao_meses.length === 12 ? c.previsao_meses.map((x) => Number(x) || 0) : null;
+  const ehFixaCat = (c) => c.tipo === "saida" && (c.natureza ? c.natureza === "fixo" : (window.FinanceiroGerencial?.naturezaDe ? window.FinanceiroGerencial.naturezaDe(c, S.cats) : "fixo") === "fixo");
+  function previsaoCels(c) {
+    const nada = '<span class="fin-dre-semcc">—</span>';
+    if (c.tipo !== "saida") return '<td class="num">' + nada + "</td><td>" + nada + "</td>";
+    const ms = mesesPrev(c);
+    if (ms && ms.some((v) => v > 0) && c.previsao_dia) {
+      const com = ms.filter((v) => v > 0), total = com.reduce((a, b) => a + b, 0);
+      const igual = com.length === 12 && com.every((v) => Math.abs(v - com[0]) < 0.005);
+      const titulo = ms.map((v, i) => MES3[i] + ": " + (v > 0 ? brl(v) : "—")).join(" · ");
+      const rot = igual ? brl(com[0]) + " por mês" : "Varia por mês · " + brl(total) + " no ano";
+      const mesHoje = new Date().getMonth();
+      return '<td class="num"><button type="button" class="fin-btn peq claro" data-cat-prev="' + c.id + '" title="' + esc(titulo) + '">' + esc(rot) + "</button>" +
+        (igual ? "" : '<small class="fin-prev-mes">' + MES3[mesHoje] + ": " + (ms[mesHoje] > 0 ? brl(ms[mesHoje]) : "sem previsão") + "</small>") +
+        '</td><td><button type="button" class="fin-btn peq claro" data-cat-prev="' + c.id + '">Dia ' + c.previsao_dia + "</button></td>";
+    }
+    if (c.natureza === "fixo") return '<td class="num"><button type="button" class="fin-btn peq verm" data-cat-prev="' + c.id + '" title="Conta fixa sem previsão">Preencher previsão</button></td><td>' + nada + "</td>";
+    if (ehFixaCat(c)) return '<td class="num"><button type="button" class="fin-btn peq claro" data-cat-prev="' + c.id + '">Informar previsão</button></td><td>' + nada + "</td>";
+    return '<td class="num">' + nada + "</td><td>" + nada + "</td>";
+  }
+  function previsaoFixa(id) {
+    const c = cat(id); if (!c) return;
+    const MESES_L = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    const ms = mesesPrev(c) || Array(12).fill(0), tem = ms.some((v) => v > 0) && c.previsao_dia;
+    const fmt = (v) => (v > 0 ? Number(v).toFixed(2).replace(".", ",") : "");
+    modal("Conta fixa · " + c.nome, "<p>Informe quanto deve ser pago em cada mês (repete todo ano). Mês em branco fica sem previsão. A previsão entra no fluxo de caixa no dia do pagamento; quando a conta de verdade é lançada nesta categoria, ela ocupa o lugar da previsão (só fica a diferença).</p>" +
+      '<div class="fin-form"><label>Dia do pagamento *<input name="dia" type="number" min="1" max="31" value="' + esc(c.previsao_dia || "") + '"></label>' +
+      '<label>Mesmo valor em todos os meses<span class="fin-prev-todos"><input name="todos" inputmode="decimal" placeholder="Ex.: 1.200,00"><button type="button" class="fin-btn peq claro" id="finPrevTodos">Repetir</button></span></label></div>' +
+      '<div class="fin-prev-meses">' + MESES_L.map((m, i) => "<label>" + m + '<input name="m' + (i + 1) + '" inputmode="decimal" value="' + fmt(ms[i]) + '"></label>').join("") + "</div>" +
+      '<p class="fin-prev-total">Total no ano: <b id="finPrevTotal"></b></p>',
+      [{ rotulo: "Cancelar", classe: "claro", acao: fecharModal },
+        tem ? { rotulo: "Tirar a previsão", classe: "claro", acao: async () => { await executar(async () => { const r = await S.sb.from("fin_categorias").update({ previsao_meses: null, previsao_dia: null }).eq("id", id).eq("empresa_id", S.emp); if (r.error) throw r.error; }, "Previsão retirada."); } } : null,
+        { rotulo: "Salvar", acao: async () => {
+          const d = campos($("finModalCorpo")), dia = Number(d.dia || 0);
+          const meses = MESES_L.map((_, i) => Math.round(num(d["m" + (i + 1)]) * 100) / 100);
+          if (meses.some((v) => v < 0)) return erroModal("Os valores não podem ser negativos.");
+          if (!meses.some((v) => v > 0)) return erroModal("Informe o valor previsto de pelo menos um mês.");
+          if (!(dia >= 1 && dia <= 31)) return erroModal("Informe o dia do pagamento (1 a 31).");
+          await executar(async () => { const r = await S.sb.from("fin_categorias").update({ natureza: "fixo", previsao_meses: meses, previsao_dia: dia }).eq("id", id).eq("empresa_id", S.emp); if (r.error) throw r.error; }, "Previsão da conta fixa salva. Ela já entra no fluxo de caixa.");
+        } }].filter(Boolean));
+    const corpo = $("finModalCorpo");
+    const total = () => { $("finPrevTotal").textContent = brl(MESES_L.reduce((a, _, i) => a + num(corpo.querySelector('[name="m' + (i + 1) + '"]').value), 0)); };
+    corpo.addEventListener("input", total); total();
+    $("finPrevTodos").addEventListener("click", () => {
+      const v = num(corpo.querySelector('[name="todos"]').value);
+      if (!(v > 0)) return erroModal("Informe o valor para repetir.");
+      corpo.querySelectorAll('.fin-prev-meses input').forEach((el) => { el.value = fmt(v); }); total();
+    });
+  }
   // Fixo ou variável (ponto de equilíbrio do Gerencial). "Automático" mostra o que vale hoje (regra em financeiro-gerencial.js).
   function naturezaSelect(c) {
     if (c.tipo === "entrada") return '<span class="fin-dre-semcc">—</span>';
@@ -977,7 +1263,7 @@
       op("", "Automático (" + (auto === "variavel" ? "variável" : "fixo") + ")") + op("fixo", "Fixo") + op("variavel", "Variável") + "</select>";
   }
   const linhaCat = (c, nivel) => "<tr" + (c.ativo ? "" : ' style="opacity:.5"') + '><td style="padding-left:' + (10 + nivel * 22) + 'px">' + esc((c.codigo ? c.codigo + " " : "") + c.nome) + (c.chave ? ' <small style="color:#8a6c48">automática</small>' : "") + '</td><td><select class="fin-cat-cc" data-cat-cc="' + c.id + '" aria-label="Centro de custo de ' + esc(c.nome) + '"><option value="">— nenhum —</option>' +
-    S.ccs.filter((x) => x.ativo || x.id === c.centro_custo_id).map((x) => '<option value="' + x.id + '"' + (x.id === c.centro_custo_id ? " selected" : "") + ">" + esc(x.nome) + "</option>").join("") + '</select></td><td>' + naturezaSelect(c) + '</td><td class="num"><button class="fin-btn peq claro" data-cat-tog="' + c.id + '">' + (c.ativo ? "Desativar" : "Ativar") + "</button></td></tr>";
+    S.ccs.filter((x) => x.ativo || x.id === c.centro_custo_id).map((x) => '<option value="' + x.id + '"' + (x.id === c.centro_custo_id ? " selected" : "") + ">" + esc(x.nome) + "</option>").join("") + '</select></td><td>' + naturezaSelect(c) + "</td>" + previsaoCels(c) + '<td class="num"><button class="fin-btn peq claro" data-cat-tog="' + c.id + '">' + (c.ativo ? "Desativar" : "Ativar") + "</button></td></tr>";
 
   // ---------------------------------------------------------------- eventos
   function ligar() {

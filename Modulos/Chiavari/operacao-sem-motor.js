@@ -346,7 +346,7 @@
     var baseSemana=await Promise.all([
       emLote(pedIds,function(b){return c.from('operacao_etapas').select(SEL_ETAPA).in('pedido_id',b);}),
       emLote(soltas,function(b){return c.from('operacao_etapas').select(SEL_ETAPA).in('id',b);}),
-      emLote(pedIds,function(b){return c.from('separacoes_pedidos').select('id,numero_pedido,cliente_nome,local_nome,local_id,data_evento,status_comercial,status').in('id',b);})
+      emLote(pedIds,function(b){return c.from('separacoes_pedidos').select('id,numero_pedido,cliente_id,cliente_nome,local_nome,local_id,data_evento,status_comercial,status').in('id',b);})
     ]);
     var etapas=baseSemana[0].concat(baseSemana[1]),etIds=etapas.map(function(e){return e.id;}),peds=baseSemana[2];
     peds=peds.filter(function(p){return ['aprovado','enviado','finalizado'].includes(p.status_comercial)&&p.status!=='cancelado';});
@@ -364,6 +364,18 @@
     ]);
     var locais=complementos[0],infos=complementos[1],alertas=complementos[2],regs=complementos[3],trocas=complementos[4],vagas=complementos[5],andamento=complementos[6];
     var insc=await emLote(vagas.map(function(v){return v.id;}),function(b){return c.from('free_inscricoes').select('*').in('vaga_id',b);});
+    // Foto do decorador (nov/2026): catalogo_logo_url do cliente do pedido (pelo id; sem id, pelo nome)
+    var fotoId = {}, fotoNome = {};
+    try {
+      var cids = Array.from(new Set(peds.map(function (p) { return p.cliente_id; }).filter(Boolean)));
+      var cnomes = Array.from(new Set(peds.filter(function (p) { return !p.cliente_id && p.cliente_nome; }).map(function (p) { return p.cliente_nome; })));
+      var fc = await Promise.all([
+        emLote(cids, function (b) { return c.from("clientes_empresas").select("id,catalogo_logo_url").eq("empresa_id", emp).in("id", b); }),
+        emLote(cnomes, function (b) { return c.from("clientes_empresas").select("nome_razao,catalogo_logo_url").eq("empresa_id", emp).in("nome_razao", b); })
+      ]);
+      fc[0].forEach(function (x) { if (x.catalogo_logo_url) fotoId[x.id] = x.catalogo_logo_url; });
+      fc[1].forEach(function (x) { if (x.catalogo_logo_url) fotoNome[String(x.nome_razao).trim().toLowerCase()] = x.catalogo_logo_url; });
+    } catch (e) { console.error("Fotos dos decoradores indisponíveis:", e); }
 
     var mP = {}; peds.forEach(function (p) { mP[p.id] = p; });
     var mL = {}; locais.forEach(function (l) { mL[l.id] = l; });
@@ -380,6 +392,7 @@
       if (!grupos[chave]) {
         var info = (p && mI[p.id]) || {}, al = p && mA[p.id];
         grupos[chave] = { pedido: p ? String(p.numero_pedido || "") : "", chave: chave, pedidoSistemaId: p ? p.id : "", cliente: p ? p.cliente_nome || "" : "",
+          clienteFoto: p ? (fotoId[p.cliente_id] || fotoNome[String(p.cliente_nome || "").trim().toLowerCase()] || "") : "",
           local: p ? localTexto(p, mL[p.local_id]) : "", dataEvento: p && p.data_evento ? br(p.data_evento) : "",
           alertaMotorista: al ? { problema: al.problema, observacao: al.observacao, enviadoPor: al.enviado_por, status: al.status, abertoEm: dataHoraTexto(al.criado_em), resolucao: al.resolucao || "", resolvidoEm: dataHoraTexto(al.resolvido_em) } : null,
           infoLogistica: { baldeacao: info.baldeacao || "", escada: info.escada || "", caminhaoPerto: info.caminhao_perto || "", horarioLimite: info.horario_limite || "", lona: info.lona || "" },
@@ -581,7 +594,7 @@
     }
     var planejamento=Object.fromEntries(fila.map(function(p){return [p.id,p];}));
     var detalhesPainel = await emLote(fila.map(function(p){return p.id;}), function(b){return c.from('separacoes_pedidos').select('id,local_id,local_nome,data_entrega,data_coleta,data_evento,observacoes').eq('empresa_id',emp).in('id',b);});
-    var locaisPainel = await emLote(detalhesPainel.map(function(p){return p.local_id;}), function(b){return c.from('locais_empresas').select('id,endereco,numero_endereco,ponto_referencia').eq('empresa_id',emp).in('id',b);});
+    var locaisPainel = await emLote(detalhesPainel.map(function(p){return p.local_id;}), function(b){return c.from('locais_empresas').select('id,endereco,numero_endereco,ponto_referencia,particularidades').eq('empresa_id',emp).in('id',b);});
     var acessosPainel = await emLote(fila.map(function(p){return p.id;}), function(b){return c.from('operacao_pedidos_info').select('pedido_id,baldeacao,escada,caminhao_perto,horario_limite,lona').eq('empresa_id',emp).in('pedido_id',b);});
     var detalhesPorId = Object.fromEntries(detalhesPainel.map(function(p){return [p.id,p];}));
     var locaisPorId = Object.fromEntries(locaisPainel.map(function(l){return [l.id,l];}));
@@ -609,7 +622,7 @@
     var hoje = hojeISO(), mConf = {}; (conflitos || []).forEach(function (x) { (mConf[x.etapa_id] = mConf[x.etapa_id] || []).push(x.mensagem); });
     var vagaDe = {}; vagas.forEach(function (v) { vagaDe[v.etapa_id] = v.id; });
     return { inicio: inicio, fim: fim, hoje: hoje, preenchidas: preenchidas || 0, regras: regras,
-      ocupacoes:ocupacoes.map(function(e){return {id:e.id,data:e.data,responsavel:responsavelDe(e),equipe:equipeDe(e),caminhoes:caminhoesDe(e)};}),
+      ocupacoes:ocupacoes.map(function(e){return {id:e.id,data:e.data,hora:hhmm(e.hora),tipo:tipoRegra(e.tipo),etapa:e.nome,pedido:e.pedido?String(e.pedido.numero_pedido||''):'',cliente:e.pedido?.cliente_nome||'',local:e.pedido?.local_nome||'',responsavel:responsavelDe(e),equipe:equipeDe(e),caminhoes:caminhoesDe(e)};}),
       pessoas: pess.map(function (p) { return { nome: p.nome, foto_url: p.foto_url || (!p.free && p.id ? c.storage.from("avatares").getPublicUrl(emp + "/" + p.id + ".jpg").data.publicUrl : ""), equipe: p.equipe, lider: p.lider, free: p.free }; }),
       caminhoes: cams.map(function (k) { return { id: k.id, foto_url: k.foto_url || "", modelo: k.modelo, codigo: k.codigo || "", placa: k.placa, capacidade: Number(k.capacidade_m3) || 0, empresa: k.empresa_nome || "", vinculo: k.tipo === "proprio" ? "Próprio" : "Terceiro" }; }),
       etapas: etapas.map(function (e) {
@@ -630,10 +643,10 @@
           }
         }
         return { id: e.id, pedido: e.pedido ? String(e.pedido.numero_pedido || "") : "", cliente: e.pedido ? e.pedido.cliente_nome || "" : "", local: e.pedido ? e.pedido.local_nome || "" : "",
-          etapa: e.nome, tipo: tipoRegra(e.tipo), servico: semCaminhao, data: e.data, hora: hhmm(e.hora), responsavel: resp, equipe: eq, caminhoes: cs, pedidoSistemaId: e.pedido_id || "",
+          etapa: e.nome, tipo: tipoRegra(e.tipo), servico: semCaminhao, montagem_extra: (semCaminhao && tipoRegra(e.tipo) === "montagem") || ((detalhesPorId[e.pedido_id] || {}).observacoes?.projeto_comercial?.dados?.servicos || []).some(function(s){return s.etapa === "montagem";}), data: e.data, hora: hhmm(e.hora), responsavel: resp, equipe: eq, caminhoes: cs, pedidoSistemaId: e.pedido_id || "",
           supervisor: (function(){
             var p=detalhesPorId[e.pedido_id]||e.pedido||{}, obs=p.observacoes||{}, l=locaisPorId[p.local_id]||{}, info=acessosPorId[e.pedido_id]||{};
-            return {local:p.local_nome||'',endereco:[l.endereco,l.numero_endereco].filter(Boolean).join(', '),referencia:l.ponto_referencia||'',data_evento:p.data_evento||'',data_entrega:p.data_entrega||'',data_coleta:p.data_coleta||'',horario_entrega:obs.horario_entrega||'',horario_coleta:obs.horario_coleta||'',observacoes_entrega:obs.observacoes_entrega||'',observacoes_coleta:obs.observacoes_coleta||'',observacao_etapa:e.observacao||'',acesso:info};
+            return {local:p.local_nome||'',endereco:[l.endereco,l.numero_endereco].filter(Boolean).join(', '),referencia:l.ponto_referencia||'',particularidades:l.particularidades||'',data_evento:p.data_evento||'',data_entrega:p.data_entrega||'',data_coleta:p.data_coleta||'',horario_entrega:obs.horario_entrega||'',horario_coleta:obs.horario_coleta||'',observacoes_entrega:obs.observacoes_entrega||'',observacoes_coleta:obs.observacoes_coleta||'',observacao_etapa:e.observacao||'',acesso:info};
           })(),
           m3: m3, pecas: Number(v.pecas) || 0, volumeEstimado: estimado, sugerido: sug,
           freeConfirmados: insc.filter(function (i) { return i.vaga_id === vagaDe[e.id]; }).map(function (i) { return i.nome; }),
@@ -1012,13 +1025,13 @@
     return { token: r.token, nome: r.nome, perfil: r.perfil };
   };
   L.MONT_sair = function (t) { return rpc("app_sair", { p_token: t }); };
+  // Nov/2026: o extrato do bônus sai da Edge Function central-metas (Supabase), não mais do servidor antigo.
   L.MONT_bonusExtrato = async function (token) {
-    const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) && location.port === "3000";
-    const servidor = local || /\.vercel\.app$/i.test(location.hostname) ? "" : "https://easyloc-zeta.vercel.app";
-    const r = await fetch(servidor + "/api/gs", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projeto: "central", fn: "equipeExtratoMontador", args: [token] }) });
-    const dados = await r.json();
-    if (!r.ok || !dados.ok) throw new Error(dados.erro || "Não foi possível carregar seu bônus.");
+    const r = await fetch("https://awemuohtvwvrdzfxwrmd.supabase.co/functions/v1/central-metas", { method: "POST",
+      headers: { "Content-Type": "application/json", apikey: "sb_publishable_tlm-v5vvX9jgChODJmDCtw_JqMxLtpZ" },
+      body: JSON.stringify({ fn: "equipeExtratoMontador", args: [token] }) });
+    const dados = await r.json().catch(function () { return {}; });
+    if (!r.ok || dados.error) throw new Error(dados.error || "Não foi possível carregar seu bônus.");
     return dados.resultado;
   };
   L.MONT_appCarregar = async function (token, idExtra) {
@@ -1028,7 +1041,7 @@
       var r = e.registros || {}, info = e.info || {}, ch = r.equipe && r.equipe.chegada, p = ch && ch.em ? partes(ch.em) : null;
       return { id: e.id, pedido: e.pedido, dataEvento: e.dataEvento || "", cliente: e.cliente, local: e.local, etapa: e.etapa, dataISO: e.dataISO, horario: e.horario || "",
         caminhao: e.caminhao || "", responsavel: e.responsavel, equipe: e.equipe || [], observacao: e.observacao || "", lat: e.lat == null ? "" : e.lat, lng: e.lng == null ? "" : e.lng,
-        clienteFoto: e.clienteFoto || "", localNome: e.localNome || "", endereco: e.endereco || "",
+        clienteFoto: e.clienteFoto || "", localNome: e.localNome || "", endereco: e.endereco || "", particularidades: e.particularidades || "",
         lona: info.lona || "", confirmadoDecorador: true, operacao: e.tipo === "montagem" || e.tipo === "desmontagem" ? e.tipo : "",
         registros: (r.equipe ? 1 : 0) + (r.sacolas ? 1 : 0) + (r.conferencia_entrega || r.posicionamento ? 1 : 0) + (r.lista_assinada ? 1 : 0),
         chegadaEquipe: r.equipe ? { empresa: r.equipe.empresa, quantidade: r.equipe.quantidade, foto: r.equipe.foto, data: p ? p.day + "/" + p.month + "/" + p.year : "", hora: p ? p.hour + ":" + p.minute : "",

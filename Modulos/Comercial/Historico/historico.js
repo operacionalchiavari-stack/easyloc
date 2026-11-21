@@ -50,10 +50,10 @@
     const { data } = await s.sb.rpc("comercial_historico", { p_empresa_id: s.empresa, p_de: hojeMenos(6), p_limite: 5000 });
     const lista = Array.isArray(data) ? data : [];
     const hoje = diaDe(Date.now());
-    $("hcKpiHoje").textContent = lista.filter((h) => diaDe(h.quando) === hoje).length;
-    $("hcKpiSemana").textContent = lista.length + (lista.length >= 5000 ? "+" : "");
-    $("hcKpiPedidos").textContent = new Set(lista.map((h) => h.pedido_id || h.projeto_id).filter(Boolean)).size;
-    $("hcKpiPessoas").textContent = new Set(lista.filter((h) => h.autor_tipo !== "sistema").map((h) => h.autor)).size;
+    if ($("hcKpiHoje")) $("hcKpiHoje").textContent = lista.filter((h) => diaDe(h.quando) === hoje).length;
+    if ($("hcKpiSemana")) $("hcKpiSemana").textContent = lista.length + (lista.length >= 5000 ? "+" : "");
+    if ($("hcKpiPedidos")) $("hcKpiPedidos").textContent = new Set(lista.map((h) => h.pedido_id || h.projeto_id).filter(Boolean)).size;
+    if ($("hcKpiPessoas")) $("hcKpiPessoas").textContent = new Set(lista.filter((h) => h.autor_tipo !== "sistema").map((h) => h.autor)).size;
     // "Quem": todas as pessoas que aparecem no histórico recente (mantém a escolhida)
     const atual = $("hcAutor").value;
     const pessoas = [...new Set(lista.map((h) => h.autor).filter(Boolean))].sort((a, b) => a.localeCompare(b, "pt-BR"));
@@ -65,6 +65,33 @@
     ? `Projeto ${h.projeto_nome || ""}`.trim()
     : `Pedido ${h.pedido_numero || "—"}`;
   const iniciais = (nome) => String(nome || "?").trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join("").toUpperCase();
+
+  // 16/11/2026: foto do cliente e local do evento na lista de pedidos (lidos à parte, uma vez por pedido)
+  s.extras = new Map();
+  let buscandoExtras = false;
+  async function buscarExtras(grupos) {
+    const faltaP = grupos.filter((g) => g.pedido && !s.extras.has(g.chave)).map((g) => g.pedido);
+    const faltaC = grupos.filter((g) => g.projeto && !s.extras.has(g.chave)).map((g) => g.projeto);
+    if (buscandoExtras || (!faltaP.length && !faltaC.length)) return;
+    buscandoExtras = true;
+    try {
+      const [rp, rc] = await Promise.all([
+        faltaP.length ? s.sb.from("separacoes_pedidos").select("id,cliente_id,cliente_nome,local_nome").in("id", faltaP) : { data: [] },
+        faltaC.length ? s.sb.from("projetos").select("id,cliente_id,local_evento").in("id", faltaC) : { data: [] }
+      ]);
+      const linhas = [...(rp.data || []).map((r) => ({ chave: "p:" + r.id, cliente: r.cliente_id, nome: r.cliente_nome, local: r.local_nome })),
+                      ...(rc.data || []).map((r) => ({ chave: "c:" + r.id, cliente: r.cliente_id, local: r.local_evento }))];
+      const ids = [...new Set(linhas.map((l) => l.cliente).filter(Boolean))];
+      const nomes = [...new Set(linhas.filter((l) => !l.cliente && l.nome).map((l) => l.nome))];
+      const fotos = new Map();
+      if (ids.length) { const { data } = await s.sb.from("clientes_empresas").select("id,catalogo_logo_url").in("id", ids); (data || []).forEach((c) => fotos.set(c.id, c.catalogo_logo_url)); }
+      if (nomes.length) { const { data } = await s.sb.from("clientes_empresas").select("nome_razao,catalogo_logo_url").eq("empresa_id", s.empresa).in("nome_razao", nomes); (data || []).forEach((c) => fotos.set("n:" + c.nome_razao, c.catalogo_logo_url)); }
+      linhas.forEach((l) => s.extras.set(l.chave, { local: l.local || "", foto: fotos.get(l.cliente) || fotos.get("n:" + l.nome) || "" }));
+      [...faltaP.map((x) => "p:" + x), ...faltaC.map((x) => "c:" + x)].forEach((k) => { if (!s.extras.has(k)) s.extras.set(k, {}); });
+    } catch (_) { [...faltaP.map((x) => "p:" + x), ...faltaC.map((x) => "c:" + x)].forEach((k) => s.extras.set(k, {})); }
+    buscandoExtras = false;
+    pintarPedidos();
+  }
 
   function pintarPedidos() {
     const filtro = $("hcBuscaPedido").value.trim().toLowerCase();
@@ -79,7 +106,9 @@
     const ativo = s.pedido ? "p:" + s.pedido : s.projeto ? "c:" + s.projeto : "";
     $("hcListaPedidos").innerHTML =
       `<li><button type="button" class="hc-ped${!ativo ? " is-ativo" : ""}" data-hc-ped=""><strong>Todos os pedidos</strong><span>${s.linhas.length} alteração(ões)</span></button></li>` +
-      grupos.map((g) => `<li><button type="button" class="hc-ped${ativo === g.chave ? " is-ativo" : ""}" data-hc-ped="${esc(g.chave)}"><strong>${esc(g.rotulo)}</strong><span>${esc(g.cliente)}</span><b>${g.n}</b></button></li>`).join("");
+      grupos.map((g) => { const x = s.extras.get(g.chave) || {}; const foto = /^https?:/i.test(x.foto || "") ? x.foto : "";
+        return `<li><button type="button" class="hc-ped hc-ped-v2${ativo === g.chave ? " is-ativo" : ""}" data-hc-ped="${esc(g.chave)}"><span class="hc-ped-foto">${esc(iniciais(g.cliente || g.rotulo))}${foto ? `<img src="${esc(foto)}" alt="" loading="lazy" onerror="this.remove()">` : ""}</span><span class="hc-ped-txt"><strong class="hc-ped-num">${esc(g.rotulo)}</strong><span>${esc(g.cliente)}</span>${x.local ? `<small class="hc-ped-local">${esc(x.local)}</small>` : ""}</span><b>${g.n}</b></button></li>`; }).join("");
+    buscarExtras(grupos);
   }
 
   function pintarTopo() {

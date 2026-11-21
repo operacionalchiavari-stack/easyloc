@@ -24,7 +24,7 @@
   }
   if(!document.querySelector('script[data-filter-inputs]')){
     const filters=document.createElement('script');
-    filters.src=new URL('filterInputs.js?v=20261020-autofill2',scriptUrl).href;
+    filters.src=new URL('filterInputs.js?v=20261114-autofill-email',scriptUrl).href;
     filters.dataset.filterInputs='';document.head.appendChild(filters);
   }
   if(!document.querySelector('script[data-global-loading]')){
@@ -47,7 +47,7 @@
   }
   if (!window.__COMPANY_THEME) {
     try {
-      const empresaId = window.__CONTEXT?.empresa_id || sessionStorage.getItem('empresa_id');
+      const empresaId = window.__CONTEXT?.empresa_id || (sessionStorage.getItem('empresa_id') || localStorage.getItem('acervo_ultima_empresa'));
       const cached = empresaId && localStorage.getItem('easyloc_theme_' + empresaId);
       aplicar(cached ? JSON.parse(cached) : window.EasyLocTheme?.DEFAULT_THEME);
     } catch (_) { aplicar(window.EasyLocTheme?.DEFAULT_THEME); }

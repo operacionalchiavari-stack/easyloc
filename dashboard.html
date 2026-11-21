@@ -18,11 +18,13 @@
   <!-- SortableJS -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 
-  <script src="js/core/limpezaDados.js?v=20261026"></script><script src="js/core/themePrepaint.js"></script>
+  <script src="js/core/limpezaDados.js?v=20261026"></script><script src="js/core/systemZoom.js?v=20261108"></script>
+<script src="js/core/themePrepaint.js?v=20261120-sem-vinho"></script>
+<script src="js/core/abertura.js?v=20261120-voo-certo4" data-abertura="sistema"></script>
 
-  <link rel="stylesheet" href="styles/shell.css?v=20261026-acentos">
+  <link rel="stylesheet" href="styles/shell.css?v=20261120-sem-vinho">
 
-  <link rel="stylesheet" href="styles/tokens.css?v=20260913b">
+  <link rel="stylesheet" href="styles/tokens.css?v=20261120-sem-vinho">
   <link rel="stylesheet" href="styles/base.css?v=20260913b">
   <link rel="stylesheet" href="styles/buttons.css?v=20260913b">
   <link rel="stylesheet" href="styles/forms.css?v=20260913b">
@@ -34,9 +36,10 @@
   <link rel="stylesheet" href="styles/design-system.css?v=20261023-sem-lia">
   <link rel="stylesheet" href="styles/global-help.css?v=20260913b">
   <link rel="stylesheet" href="styles/tema-chiavari.css?v=20261107-titulos-30">
-  <link rel="stylesheet" href="styles/portal-shell.css?v=20261106-novo-icone">
-  <link rel="stylesheet" href="styles/menu-topo.css?v=20261101-sair-suave">
+  <link rel="stylesheet" href="styles/portal-shell.css?v=20261120-sem-vinho">
+  <link rel="stylesheet" href="styles/menu-topo.css?v=20261108-menu-foto-fonte">
   <link rel="stylesheet" href="styles/apps-links.css?v=20261031-links">
+  <link rel="stylesheet" href="styles/festive-themes.css?v=20261115-periodo">
 <script src="js/core/loading.js?v=20261020" data-global-loading defer></script>
 <script src="js/core/filterInputs.js?v=20261020-autofill2" data-filter-inputs defer></script>
 <link rel="stylesheet" href="styles/table-text.css?v=20261020" data-table-text>
@@ -52,7 +55,7 @@
     <!-- Clicar na logo leva ao Início (o botão Início saiu do menu, pedido do usuário). -->
     <button type="button" class="menu-nome" onclick="portalIrInicio()" title="Início" aria-label="Ir para o Início">
       <!-- Logo da empresa (EasyLocTheme troca o src em js/core/companyTheme.js). -->
-      <img id="sidebarLogo" class="menu-logo-empresa" src="logo%20nova%20branca%20-%20sem%20fundo.png" alt="Logo da empresa"
+      <img id="sidebarLogo" class="menu-logo-empresa" alt="Logo da empresa"
         onload="this.classList.toggle('is-quadrada', !!this.naturalWidth && this.naturalWidth / this.naturalHeight < 1.6)">
       <!-- Menu fechado: a própria logo recortada no 1º bloco de letras ("Ch"), gerado por js/ui/menuMonograma.js. -->
       <img id="sidebarMonograma" class="menu-monograma" alt="" aria-hidden="true" hidden>
@@ -62,7 +65,7 @@
     // Anti-flash: aplica a logo da empresa guardada em cache (mesma URL que
     // EasyLocTheme.withCacheBust gera) antes do resto da página carregar.
     try {
-      const empresaId = sessionStorage.getItem("empresa_id");
+      const empresaId = sessionStorage.getItem("empresa_id") || localStorage.getItem("acervo_ultima_empresa");
       const cached = empresaId && localStorage.getItem("easyloc_theme_" + empresaId);
       const theme = cached ? JSON.parse(cached) : null;
       if (theme?.logo_url) {
@@ -81,7 +84,7 @@
   </script>
 
   <nav class="menu-lista" id="appMenu"></nav>
-  <script src="js/ui/sidebarMenu.js?v=20261107-teste-usuario"></script>
+  <script src="js/ui/sidebarMenu.js?v=20261118-clientes-finais"></script>
 
   <div class="menu-rodape">
     <div class="usuario" role="button" tabindex="0" aria-label="Opções da conta" onclick="toggleUserMenu(event)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleUserMenu(event);}">
@@ -143,7 +146,7 @@
       <div class="global-help-player">
         <iframe
           id="globalHelpIframe"
-          src="https://www.youtube.com/embed/A8Gn9rZjJic"
+          src="about:blank"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowfullscreen>
         </iframe>
@@ -192,11 +195,11 @@
 <script src="js/core/qrCode.js"></script>
 
 <!-- CONTEXTO GLOBAL -->
-<script src="js/core/companyTheme.js?v=20260913m"></script>
+<script src="js/core/companyTheme.js?v=20261120-sem-acervo"></script>
 <script src="js/core/preload.js?v=20261014-colunas"></script>
 <script src="js/core/listPager.js?v=20261026-rolagem"></script>
 <script src="js/core/context.js?v=20261026-limpeza"></script>
-<script src="js/core/permissions.js?v=20261105-terceirizacoes"></script>
+<script src="js/core/permissions.js?v=20261118-clientes-finais"></script>
 <script src="js/core/google.config.js"></script>
 <script src="js/core/google.js"></script>
 
@@ -204,7 +207,7 @@
 <script src="js/core/auth.js"></script>
 
 <!-- LOADER DE MÓDULOS (carregarNaMain) -->
-<script src="js/core/moduleLoader.js?v=20261102-insumos-kits"></script>
+<script src="js/core/moduleLoader.js?v=20261115-live-server"></script>
 <script src="js/core/appShell.js?v=20261102-insumos-kits"></script>
 <script src="js/ui/apps-links.js?v=20261103-app-triagem"></script>
 
@@ -217,7 +220,8 @@
 <!-- SIDEBAR / MENU -->
 <script src="js/ui/portalNav.js?v=20261023-menu-topo"></script>
 <script src="js/ui/menuMonograma.js?v=20261009-monograma"></script>
-<script src="js/ui/portalMural.js?v=20261106-numeros"></script>
+<script src="js/ui/festiveScene.js?v=20261115"></script>
+<script src="js/ui/portalMural.js?v=20261120-voo-certo2"></script>
 
 <!-- SISTEMA DE MODAIS -->
 <script src="js/ui/modais.js"></script>

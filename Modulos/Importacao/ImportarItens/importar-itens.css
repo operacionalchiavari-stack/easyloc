@@ -514,3 +514,8 @@
     max-width: 100%;
   }
 }
+
+/* 15/11/2026: opção de atualizar a quantidade (Qt) dos itens já cadastrados — só na implantação */
+.import-preview-actions{align-items:center}
+.import-qt-opcao{margin-right:auto;display:inline-flex;align-items:center;gap:8px;font-size:13px;color:#4f4f4f;cursor:pointer}
+.import-qt-opcao input{width:16px;height:16px;accent-color:#123f86}

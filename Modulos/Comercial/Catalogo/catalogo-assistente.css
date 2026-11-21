@@ -22,7 +22,7 @@ html.cas-trava-rolagem,html.cas-trava-rolagem body{overflow:hidden}
 .cas-panel{position:fixed;z-index:203;inset:0;display:flex;flex-direction:column;background:#f4f1ec;font-family:"Manrope",sans-serif;color:#2f2b27;animation:cas-in .34s cubic-bezier(.22,1,.36,1) both}
 .cas-panel[hidden]{display:none}
 @keyframes cas-in{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
-.cas-head{display:flex;flex:none;align-items:center;gap:14px;height:76px;padding:0 clamp(14px,2.2vw,40px);background:#5a5a55;color:#fff}
+.cas-head{display:flex;flex:none;align-items:center;gap:14px;height:76px;padding:0 clamp(14px,2.2vw,40px);background:var(--color-sidebar,#5a5a55);color:#fff}
 .cas-head-copy{flex:1;min-width:0;line-height:1.2;overflow:hidden}
 .cas-head-copy strong{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:600 1.45rem "Cormorant Garamond",serif;letter-spacing:.02em}
 .cas-head-copy small{display:flex;min-width:0;white-space:nowrap;align-items:center;gap:6px;color:rgba(255,255,255,.8);font-size:.8rem}
@@ -48,7 +48,7 @@ html.cas-trava-rolagem,html.cas-trava-rolagem body{overflow:hidden}
 .cas-msg:has(.cas-itens){max-width:100%}
 .cas-msg.is-eu{align-self:flex-end;align-items:flex-end}
 .cas-bubble{padding:12px 16px;border-radius:18px 18px 18px 6px;background:#fff;box-shadow:0 1px 2px rgba(31,24,19,.06);font-size:1rem;line-height:1.55;overflow-wrap:anywhere}
-.is-eu .cas-bubble{border-radius:18px 18px 6px 18px;background:#5a5a55;color:#fff}
+.is-eu .cas-bubble{border-radius:18px 18px 6px 18px;background:var(--color-sidebar,#5a5a55);color:#fff}
 .cas-bubble strong{font-weight:700}
 .cas-digitando{display:flex;gap:5px;padding:15px 18px}
 .cas-digitando i{width:8px;height:8px;border-radius:50%;background:#a49a8d;animation:cas-pulo 1.1s infinite ease-in-out}
@@ -88,7 +88,7 @@ html.cas-trava-rolagem,html.cas-trava-rolagem body{overflow:hidden}
 .cas-form textarea{flex:1;max-height:160px;padding:13px 18px;border:1px solid #e3dccf;border-radius:24px;background:#fff;color:#2f2b27;font:inherit;font-size:1rem;line-height:1.45;resize:none}
 .cas-form textarea:focus{outline:none;border-color:#b18a5a}
 .cas-form-dica{display:block;width:min(720px,100%);margin:6px auto 0;padding-left:18px;color:#a39a8f;font-size:.75rem}
-.cas-send{display:grid;flex:none;width:48px;height:48px;place-items:center;border:0;border-radius:50%;background:#5a5a55;color:#fff;cursor:pointer}
+.cas-send{display:grid;flex:none;width:48px;height:48px;place-items:center;border:0;border-radius:50%;background:var(--el-button-primary-bg,#7d603d);color:#fff;cursor:pointer}
 .cas-send:hover,.cas-send:focus-visible{background:#b18a5a;outline:none}
 .cas-send svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round}
 
@@ -111,7 +111,7 @@ html.cas-trava-rolagem,html.cas-trava-rolagem body{overflow:hidden}
 .cas-lado-ambs li b{color:#6f5537;font-size:1rem}
 .cas-lado-nada{margin:0;color:#a39a8f;font-size:.8rem}
 .cas-lado-total{margin:24px 0 14px;padding-top:16px;border-top:1px solid #eee8de;color:#2f2b27;font:500 1.35rem "Cormorant Garamond",serif}
-.cas-lado-enviar{flex:none;height:52px;border:0;border-radius:999px;background:#5a5a55;color:#fff;font:600 .85rem "Manrope",sans-serif;letter-spacing:.03em;cursor:pointer}
+.cas-lado-enviar{flex:none;height:52px;border:0;border-radius:999px;background:var(--el-button-primary-bg,#7d603d);color:#fff;font:600 .85rem "Manrope",sans-serif;letter-spacing:.03em;cursor:pointer}
 .cas-lado-enviar:hover,.cas-lado-enviar:focus-visible{background:#b18a5a;outline:none}
 
 /* Áudio: o microfone fica no lugar do "enviar" enquanto o campo está vazio (como no WhatsApp). */
@@ -161,12 +161,12 @@ html.cas-trava-rolagem,html.cas-trava-rolagem body{overflow:hidden}
 .cas-pedido-btn{position:relative;display:none;flex:none;align-items:center;gap:7px;max-width:46vw;height:38px;padding:0 12px;border:1px solid rgba(255,255,255,.3);border-radius:999px;background:rgba(255,255,255,.12);color:#fff;font:600 .8rem "Manrope",sans-serif;cursor:pointer}
 .cas-pedido-btn svg{flex:none;width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round}
 .cas-pedido-btn span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
-.cas-pedido-btn b{flex:none;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#fff;color:#5a5a55;font:700 .72rem/22px "Manrope",sans-serif;text-align:center}
+.cas-pedido-btn b{flex:none;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#fff;color:var(--color-sidebar,#5a5a55);font:700 .72rem/22px "Manrope",sans-serif;text-align:center}
 .cas-pedido-btn b:empty{display:none}
-.cas-pedido-novo{position:absolute;top:-3px;right:-3px;display:none;width:12px;height:12px;border:2px solid #5a5a55;border-radius:50%;background:#e3b05c}
+.cas-pedido-novo{position:absolute;top:-3px;right:-3px;display:none;width:12px;height:12px;border:2px solid var(--color-sidebar,#5a5a55);border-radius:50%;background:#e3b05c}
 .cas-pedido-btn.tem-novidade .cas-pedido-novo{display:block;animation:cas-novo 1.2s ease-in-out infinite}
 @keyframes cas-novo{50%{transform:scale(1.35)}}
-.cas-lado-fechar{display:none;position:absolute;top:12px;right:12px;width:38px;height:38px;border:0;border-radius:50%;background:#f4f1ec;color:#5a5a55;font-size:1.4rem;line-height:1;cursor:pointer}
+.cas-lado-fechar{display:none;position:absolute;top:12px;right:12px;width:38px;height:38px;border:0;border-radius:50%;background:#f4f1ec;color:var(--color-sidebar,#5a5a55);font-size:1.4rem;line-height:1;cursor:pointer}
 .cas-lado{position:relative}
 .cas-lado-ambs li span{display:flex;flex-direction:column;min-width:0}
 .cas-lado-ambs li span small{color:#8a8279;font-size:.75rem}
@@ -240,7 +240,7 @@ html.cas-trava-rolagem,html.cas-trava-rolagem body{overflow:hidden}
 
 /* Arquivos (planta em PDF ou foto) ----------------------------------------------------------------------------------- */
 .cas-clip{display:grid;flex:none;width:44px;height:48px;place-items:center;border:0;background:transparent;color:#77716a;cursor:pointer;border-radius:50%}
-.cas-clip:hover,.cas-clip:focus-visible{color:#5a5a55;background:#f1ede6;outline:none}
+.cas-clip:hover,.cas-clip:focus-visible{color:var(--color-sidebar,#5a5a55);background:#f1ede6;outline:none}
 .cas-clip svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .cas-form:has(.cas-gravando:not([hidden])) .cas-clip{display:none}
 .cas-anexos-pend{display:flex;flex-wrap:wrap;gap:8px;width:min(720px,100%);margin:0 auto 10px}
@@ -248,7 +248,7 @@ html.cas-trava-rolagem,html.cas-trava-rolagem body{overflow:hidden}
 .cas-pend{display:inline-flex;align-items:center;gap:8px;max-width:260px;padding:5px 6px 5px 5px;border:1px solid #e3dccf;border-radius:12px;background:#fff;font-size:.8rem;color:#3d3630}
 .cas-pend img{width:38px;height:38px;object-fit:cover;border-radius:8px}
 .cas-pend>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cas-pend button{flex:none;width:26px;height:26px;border:0;border-radius:50%;background:#f1ede6;color:#5a5a55;font-size:1rem;cursor:pointer}
+.cas-pend button{flex:none;width:26px;height:26px;border:0;border-radius:50%;background:#f1ede6;color:var(--color-sidebar,#5a5a55);font-size:1rem;cursor:pointer}
 .cas-pdf-ico{display:grid;flex:none;width:38px;height:38px;place-items:center;border-radius:8px;background:#b0473d;color:#fff;font:700 .75rem "Manrope",sans-serif;font-style:normal;letter-spacing:.04em}
 .cas-arquivo{display:flex;flex-direction:column;align-items:flex-end;gap:4px;margin:6px 0 0}
 .cas-arquivo .cas-foto-ver{display:block;padding:0;border:0;background:none;cursor:zoom-in}
@@ -282,7 +282,7 @@ html.cas-trava-rolagem,html.cas-trava-rolagem body{overflow:hidden}
 .cas-local-fonte{color:#b18a5a;font:700 .7rem "Manrope",sans-serif;letter-spacing:.12em;text-transform:uppercase}
 .cas-local-copy strong{font:600 1.05rem "Cormorant Garamond",serif;line-height:1.2}
 .cas-local-copy small{color:#77716a;font-size:.8rem;line-height:1.4}
-.cas-local-ok{align-self:flex-start;margin:8px 14px 14px;padding:8px 18px;border:1px solid #5a5a55;border-radius:999px;background:#5a5a55;color:#fff;font:600 .8rem "Manrope",sans-serif;cursor:pointer}
+.cas-local-ok{align-self:flex-start;margin:8px 14px 14px;padding:8px 18px;border:1px solid var(--color-sidebar,#5a5a55);border-radius:999px;background:var(--color-sidebar,#5a5a55);color:#fff;font:600 .8rem "Manrope",sans-serif;cursor:pointer}
 .cas-local-ok:hover{background:#44443f}
 .cas-lig-itens .cas-local{width:240px}
 .cas-lig-itens .cas-local iframe{height:130px}
@@ -385,19 +385,19 @@ body.cas-mini-aberta .catalog-notifications{bottom:120px}
 /* Dentro do pedido comercial (23/out/2026, pedido do usuário: "ficou muito espremida"): sem a faixa grafite do topo
    (foto, nome e status da Helena saem). Ligar e Minimizar viram dois botões pequenos, de ícone, no canto de cima à
    direita: em cima da coluna do pedido em tela larga e da conversa nas menores. Só neste modo; no catálogo nada muda. */
-html.catalogo-comercial-pedido .cas-head{position:absolute;top:12px;right:14px;z-index:8;height:auto;padding:0;gap:6px;background:transparent;color:#5a5a55}
+html.catalogo-comercial-pedido .cas-head{position:absolute;top:12px;right:14px;z-index:8;height:auto;padding:0;gap:6px;background:transparent;color:var(--color-sidebar,#5a5a55)}
 html.catalogo-comercial-pedido .cas-head>.cas-voltar,
 html.catalogo-comercial-pedido .cas-head>.cas-avatar,
 html.catalogo-comercial-pedido .cas-head>.cas-head-copy,
 html.catalogo-comercial-pedido .cas-head>[data-cas-limpar]{display:none!important}
 html.catalogo-comercial-pedido .cas-head .cas-head-btn:not([hidden]):not([data-cas-limpar]){display:inline-flex!important}
-html.catalogo-comercial-pedido .cas-head .cas-head-btn{width:34px;height:34px;padding:0;border:1px solid #ddd6cc;border-radius:50%;background:#fff;color:#5a5a55;box-shadow:0 2px 8px rgba(15,23,42,.08)}
-html.catalogo-comercial-pedido .cas-head .cas-head-btn:hover{border-color:#5a5a55}
+html.catalogo-comercial-pedido .cas-head .cas-head-btn{width:34px;height:34px;padding:0;border:1px solid #ddd6cc;border-radius:50%;background:#fff;color:var(--color-sidebar,#5a5a55);box-shadow:0 2px 8px rgba(15,23,42,.08)}
+html.catalogo-comercial-pedido .cas-head .cas-head-btn:hover{border-color:var(--color-sidebar,#5a5a55)}
 html.catalogo-comercial-pedido .cas-head .cas-head-btn span{display:none}
 html.catalogo-comercial-pedido .cas-head .cas-head-btn svg{width:16px;height:16px}
 html.catalogo-comercial-pedido .cas-head .cas-ligar.em-ligacao{border-color:#3f9a63;background:#e6f4ea;color:#2f7a4c}
-html.catalogo-comercial-pedido .cas-head .cas-pedido-btn{height:34px;border-color:#ddd6cc;background:#fff;color:#5a5a55}
-html.catalogo-comercial-pedido .cas-head .cas-pedido-btn b{background:#5a5a55;color:#fff}
+html.catalogo-comercial-pedido .cas-head .cas-pedido-btn{height:34px;border-color:#ddd6cc;background:#fff;color:var(--color-sidebar,#5a5a55)}
+html.catalogo-comercial-pedido .cas-head .cas-pedido-btn b{background:var(--color-sidebar,#5a5a55);color:#fff}
 /* Conversa ainda vazia: a saudação fica no meio da área (antes encostava no campo de escrever). Com mensagens, continua
    em cima delas, como antes (23/out/2026). */
 .cas-boasvindas:only-child{margin:auto 0;padding-top:0}

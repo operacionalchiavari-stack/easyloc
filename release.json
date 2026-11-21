@@ -1,0 +1,24 @@
+{
+  "versao": "2026-11-20-correcao-implantacao",
+  "gerado_em": "2026-11-20T22:42:15.015Z",
+  "arquivos": {
+    "Modulos/Comercial/Pedidos/CentralPedidos.html": "e19182b573d14f94495023ba6aa7f9d59463fb899e5d68ce5395d64ade665e89",
+    "Modulos/Comercial/Pedidos/CentralPedidos.js": "971f03e3407e5ae70b5f0748efc5dc9b4a2e940b14b0ee51eaafd0702933de6c",
+    "Modulos/Comercial/Pedidos/CentralPedidos.css": "75e539ea7a02d83416a810ef34b6abee5cb4bfa87c584eddd95e1796de27fb73",
+    "Modulos/Estoque/TriagemApp/triagem.html": "ca71faf69fed8f1b61182193debc6b480840045f5cc2c8ef9e54d5154991222e",
+    "Modulos/Estoque/TriagemApp/triagem.js": "412fa238ace51a0e54e3156b6608a79a23b6f08f998635722efc3df9da9a952f",
+    "Modulos/Chiavari/Feedback/feedback.html": "3818e2db39f08a77013698673b875cef3b32ffeb0e0d2a1560e6e323d1acb3e2",
+    "Modulos/Chiavari/Feedback/posvenda.js": "dd91d03a83f116e100df857a4d1be32ecf12e50b0a7db8612db904f2e318c412",
+    "Modulos/Chiavari/Feedback/posvenda-detalhe.css": "a1c0c1e633e9321b6a790496fe5bfa520b52157140d1214b0dee894c9fbf0438",
+    "Modulos/Chiavari/Ocorrencias/ocorrencia-tela.js": "b3a15e7a29cb18f63231f6366535c725a37b13aaabe8323d7f95ca7cf680214d",
+    "Modulos/Chiavari/Ocorrencias/ocorrencia-tela.css": "002c32a9b10a8fb64cc98ffd9ddac17798d8cf7a0b83264ffd9d2b9ba84b01c8",
+    "Modulos/Comercial/Contratos/contratos.html": "4233390413ea21d55fb0addbf1fb72fb68bfe89644bf8d484efe38f21cfdd8f4",
+    "Modulos/Comercial/Contratos/contratos.css": "c2789ee536d4e0b9551e727ccc07d7e4432a259b6bd69ffa528a21f193f298bb",
+    "Modulos/Estoque/Acervo/acervo.html": "69965072920e5c3c06976781ad9a5c8a8d80a9b23ff815c28115bd320c60854c",
+    "Modulos/Estoque/Acervo/acervo-saidas.js": "d1bfab2f3ff2812c0cc255a1dcd42eae18357dfbc8e16078c347b50eab548574",
+    "Modulos/Estoque/Acervo/acervo-tabela.css": "aed8da342fb61809589bdd782bdf67655bf3373494bef45e82ec5320f06b0b4d",
+    "Modulos/Almoxarifado/almoxarifado.html": "982c1846d7678614460850e67069d72612f6c05f3db2dd6e795552bb6e01d6ed",
+    "Modulos/Almoxarifado/almox-exemplos.js": "b0fba52656bc8aaa8a7ddee9503056d72996b09fe02eb6e677e14fc3f25c1468",
+    "js/ui/sidebarMenu.js": "91ed5a01001b035dc7623d56d1c30828477741612b7cacc2dd2b5517bd36b13d"
+  }
+}

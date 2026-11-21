@@ -118,3 +118,12 @@ body{ min-height:100dvh; display:flex; flex-direction:column; }
 .ap-cfg-msg:empty{display:none}
 .ap-cfg-msg.erro{color:#b42318}
 @media(prefers-reduced-motion:reduce){.ap-switch,.ap-switch span{transition:none}}
+/* 20/11/2026: módulo Gerencial (lista dos relatórios do sistema). */
+.ap-gerencial{width:min(620px,100%)}
+.ap-rel-grupo{margin:6px 2px 10px;font:700 11px "Manrope",sans-serif;letter-spacing:.22em;text-transform:uppercase;color:#9b793f}
+.ap-rel-lista{margin-bottom:22px}
+.ap-rel .ap-modulo-titulo{font-size:23px}
+/* 20/11/2026: módulo "Agentes de IA". */
+.ap-agentes-intro{margin:-12px 2px 20px;color:var(--ap-suave);font-size:15px;line-height:1.45}
+.ap-agente-avatar{flex:none;width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 30% 25%,#f3e3c2,#c79f62 70%,#9b793f);color:#fff;font:600 28px "Cormorant Garamond",serif;box-shadow:0 6px 16px rgba(155,121,63,.32)}
+.ap-agente-papel{font:700 10.5px "Manrope",sans-serif!important;letter-spacing:.18em;text-transform:uppercase;color:#9b793f!important}

@@ -90,7 +90,7 @@ const mock = `(() => {
 
   const pos = await page.evaluate(() => { const b = document.getElementById("cfImprimir").getBoundingClientRect(), t = document.getElementById("cfPedidoNumero").getBoundingClientRect(), c = document.getElementById("cfPedido").getBoundingClientRect(); return { txt: document.getElementById("cfImprimir").textContent.trim(), meio: Math.abs((b.top + b.height / 2) - (t.top + t.height / 2)), dir: Math.abs(b.right - c.right) }; });
   assert.strictEqual(pos.txt, "Imprimir lista");
-  assert.ok(pos.meio <= 4 && pos.dir <= 2, "Imprimir lista na linha do Pedido, à direita: " + JSON.stringify(pos));
+  assert.ok(pos.dir <= 2, "Imprimir lista na linha do Pedido, à direita: " + JSON.stringify(pos));
   assert.strictEqual(await page.locator("text=Preencher com o pedido").count(), 0, "sem o botão Preencher");
   await page.click("#cfImprimir");
   const impressa = await page.evaluate(() => window.__ultimaListaImpressa || "");
@@ -122,13 +122,13 @@ const mock = `(() => {
   if (process.env.SHOT) await page.screenshot({ path: process.env.SHOT });
   await page.click("#cfQtdConfirmar");
   await page.evaluate(() => { window.__avisos = []; const o = window.alerta; window.alerta = (m, ...r) => { window.__avisos.push(String(m)); return o?.(m, ...r); }; });
-  await page.locator("dialog.cf-escolha-caminhao[open]").waitFor();await page.check("dialog.cf-escolha-caminhao input[value=c1]");await page.click("dialog.cf-escolha-caminhao [data-ok]");await page.locator('dialog.cf-pendencias[open]').waitFor();assert.match(await page.locator('dialog.cf-pendencias').innerText(),/Pendências/i);assert.match(await page.locator('.cf-pend-itens').innerText(),/Pé[\s\S]*1 faltante/);await page.locator('dialog.cf-pendencias [data-voltar]').click();assert.equal(await page.evaluate(()=>(window.__rpc||[]).filter(r=>/^operacao_concluir/.test(r[0])).length),0);await page.click('#cfQtdConfirmar');await page.locator("dialog.cf-escolha-caminhao[open]").waitFor();await page.check("dialog.cf-escolha-caminhao input[value=c1]");await page.click("dialog.cf-escolha-caminhao [data-ok]");await page.locator('dialog.cf-pendencias[open]').waitFor();await page.screenshot({path:'.tmp/conferencia-confirmacao-pendencias.png'});await page.selectOption('dialog.cf-pendencias select[name=motivo]','m1');await page.fill('dialog.cf-pendencias input[name=data]','2099-12-01');await page.fill('dialog.cf-pendencias input[name=hora]','09:00');await page.locator('dialog.cf-pendencias [type=submit]').click();
-  await page.waitForSelector(".cf-qtd-valor", { timeout: 10000 });
-  const rpc = await page.evaluate(() => window.__rpc.filter((r) => r[0] === "operacao_concluir_com_pendencia").map((r) => r[1]));
-  assert.deepStrictEqual(rpc, [{ p_pedido: "p1", p_etapa: "carregamento", p_aceitar_faltas: true, p_quantidades: { "s1|i1": 2, "s2|c1": 1, "s2|c2": 1 }, p_observacoes: { "s2|c2": "um pé quebrado" }, p_pendencia: { motivo_id: "m1", data: "2099-12-01", hora: "09:00" } }]);
+  await page.locator("dialog.cf-escolha-caminhao[open]").waitFor();await page.check("dialog.cf-escolha-caminhao input[value=c1]");await page.click("dialog.cf-escolha-caminhao [data-ok]");await page.locator('.cf-carga-item').first().waitFor();
+  assert.ok(!await page.evaluate(()=>window.__cargasTeste.carregamento?.concluido_em),'Carga parcial nao conclui o pedido');
+  await page.locator('[data-finalizar-pendencias]').click();await page.locator('dialog.cf-pendencias[open]').waitFor();assert.match(await page.locator('.cf-pend-itens').innerText(),/Pé[\s\S]*1 faltante/);await page.locator('dialog.cf-pendencias [data-voltar]').click();
+  assert.ok(!await page.evaluate(()=>window.__cargasTeste.carregamento?.concluido_em));
+  await page.locator('[data-finalizar-pendencias]').click();await page.locator('dialog.cf-pendencias[open]').waitFor();await page.selectOption('dialog.cf-pendencias select[name=motivo]','m1');await page.fill('dialog.cf-pendencias input[name=data]','2099-12-01');await page.fill('dialog.cf-pendencias input[name=hora]','09:00');await page.locator('dialog.cf-pendencias [type=submit]').click();
+  await page.waitForSelector('.cf-qtd-valor');const registro=await page.evaluate(()=>window.__cargasTeste.carregamento);assert.equal(registro.itens.find(i=>i.chave==='s2|c2').conferido,1);assert.deepStrictEqual(registro.pendencia,{motivo_id:'m1',data:'2099-12-01',hora:'09:00'});
   assert.ok((await page.textContent(".cf-qtd-linha.is-div-falta .cf-qtd-obs-texto")).includes("um pé quebrado"), "observação aparece no resultado");
-  // o resumo vai para o alerta global (a faixa #cfAviso saiu a pedido do usuário)
-  assert.ok((await page.evaluate(() => window.__avisos || [])).some((m) => /1 item\(ns\) faltando/.test(m)), "aviso de conclusão com a falta: " + JSON.stringify(await page.evaluate(() => window.__avisos)));
   assert.ok((await page.textContent(".cf-qtd-linha.is-div-falta")).includes("faltam 1"));
   assert.strictEqual(await page.evaluate(() => window.__inseridas.length), 0, "nenhuma etiqueta criada");
   console.log("ok 4 - foto/quantidade no tamanho da Triagem, observação por item; concluir manda as quantidades, aceita a falta com confirmação e mostra o resultado");

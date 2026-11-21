@@ -1425,12 +1425,33 @@ html:root .triagem-compacta .card-divergencia .card-divergencia-resumo{display:i
 
 /* Nov/2026: bolinha vermelha piscando (estilo do PCP da Tecnoweld) no cartão do pedido com problema reportado na separação. */
 .separacao-order-card.tem-problema{position:relative}
-.sep-problema-dot{position:absolute;top:10px;right:10px;width:10px;height:10px;border-radius:50%;background:#e60012;z-index:2}
-.sep-problema-dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid #e60012;animation:sep-problema-pulsa .9s ease-out infinite}
+.sep-problema-dot{position:absolute;top:16px;left:12px;right:auto;width:10px;height:10px;border-radius:50%;background:#dc2626;z-index:2;animation:sep-aviso-expedicao 1.6s ease-in-out infinite}
+.sep-problema-dot::after{content:none}
+@keyframes sep-aviso-expedicao{0%,100%{opacity:1;box-shadow:0 0 0 0 #dc26264d}50%{opacity:.45;box-shadow:0 0 0 4px transparent}}
 @keyframes sep-problema-pulsa{0%{transform:scale(.5);opacity:1}100%{transform:scale(2.1);opacity:0}}
-@media (prefers-reduced-motion: reduce){.sep-problema-dot::after{animation:none;opacity:0}}
+@media (prefers-reduced-motion: reduce){.sep-problema-dot{animation:none}.sep-problema-dot::after{animation:none;opacity:0}}
 /* A bolinha vai para cima da foto do decorador (js/ui/decorador-cards.js calcula a posição). */
 .separacao-card-mainline.com-foto-decorador{position:relative}
 .separacao-card-mainline.com-foto-decorador>.sep-problema-dot{top:0;left:44px;right:auto;box-shadow:0 0 0 2px #fff}
 
 .separacao-modo-trava{margin:4px 0 12px;padding:8px 12px;border-radius:8px;background:#fdf6dd;color:#5c4a12;font-size:13px}
+
+.separacao-card-top .separacao-order-number{display:inline-flex;align-items:center;gap:8px}.separacao-card-top .sep-problema-dot{position:static!important;display:inline-block;flex:none;margin:0!important;transform:none!important}
+/* Botão "Cancelar liberação ao Comercial" (texto longo) não espreme o nome do cliente: quebra em 2 linhas (nov/2026) */
+html:root .triagem-compacta .triagem-cliente-acao :is([data-separacao-action="liberar-retirada"], [data-separacao-action="reabrir-triagem"]){max-width:150px !important;white-space:normal !important;text-align:center;line-height:1.25 !important}
+/* O botão (Cancelar liberação / Reabrir triagem) vai para baixo das informações, sem espremer o nome (nov/2026) */
+html:root .triagem-compacta .separacao-order-card:has(.triagem-cliente-acao){grid-template-columns:56px minmax(0,1fr) !important}
+html:root .triagem-compacta .triagem-cliente-acao :is([data-separacao-action="liberar-retirada"], [data-separacao-action="reabrir-triagem"]){grid-column:2 !important;grid-row:auto !important;justify-self:start !important;align-self:start !important;max-width:100% !important;white-space:nowrap !important;margin-top:6px !important}
+/* 15/11/2026: aviso de material de proteção (capas/caixas) na separação */
+.separacao-capas-banner{margin:0 0 12px;padding:10px 14px;border:1px solid #f3dcb0;border-radius:10px;background:#fff8e8;color:#7a4b04;font-size:13.5px;line-height:1.45}
+.separacao-capas-banner.is-falta{border-color:#f6c9c4;background:#fdecea;color:#8a1c12}
+.separacao-capas-banner strong{display:block;margin-bottom:4px;font-size:14px}
+.separacao-capas-banner ul{margin:0;padding-left:18px}
+.separacao-capas-banner small{display:block;margin-top:4px;font-size:12px;opacity:.85}
+
+/* Na Triagem, a coluna define a cor tanto na ida quanto no retorno. */
+html:root:is(#acervo-separacao,html) .separacao-page:not(.exp-page) .separacao-order-card[data-coluna="aguardando"]{background:#fff9ea!important;border-color:#eadcc1!important}
+html:root:is(#acervo-separacao,html) .separacao-page:not(.exp-page) .separacao-order-card[data-coluna="andamento"]{background:#eff6ff!important;border-color:#c8dbf5!important}
+
+html:root:is(#acervo-separacao,html) .item-card.item-card-producao{background:#f1f3f5!important;border-color:#d7dde3!important}
+html:root:is(#acervo-separacao,html) .item-card-producao .producao-aviso{color:#596574}

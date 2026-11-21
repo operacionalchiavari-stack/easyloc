@@ -105,8 +105,8 @@
       progresso = '<div class="exp-lidos">' + n + " peça" + (n === 1 ? "" : "s") + " lida" + (n === 1 ? "" : "s") + "</div>";
     }
     const carregados = p.operacao?.carregamento?.caminhoes || p.operacao?.carregamento_caminhoes || [];
-    const usaCarregados = volta || descarga || col === "conferidos" || col === "pendencias";
-    const lista = usaCarregados ? carregados : (s.caminhoes?.get(String(p.id)) || []);
+    const usaCarregados = !descarga && (volta || col === "conferidos" || col === "pendencias");
+    const lista = descarga ? (s.caminhoesVolta?.get(String(p.id)) || []) : usaCarregados ? carregados : (s.caminhoes?.get(String(p.id)) || []);
     const caminhoes = !lista.length ? "" :
       '<div class="exp-caminhoes"><span>' + (usaCarregados ? "Carregado em" : "Caminh&#245;es programados") + "</span>" +
       lista.map((c) => '<b title="' + esc([c.placa, c.modelo].filter(Boolean).join(" · ")) + '">' + esc(c.codigo || c.placa || "Caminhão") + (c.codigo && c.placa && !/^SEM PLACA/i.test(c.placa) ? "<small>" + esc(c.placa) + "</small>" : "") + "</b>").join("") + "</div>";
@@ -191,6 +191,12 @@
         const {data:ocorrencias,error:erroOcorrencias}=await s.sb.from('operacao_ocorrencias').select('pedido_id,codigo,resolvida_em').eq('empresa_id',s.empresa).eq('tipo','falta').in('pedido_id',s.pedidos.slice(i,i+100).map(p=>p.id));
         if(erroOcorrencias)throw erroOcorrencias;
         for(const o of ocorrencias||[]){const mapa=s.ocorrencias.get(String(o.pedido_id))||new Map();mapa.set(o.codigo,o);s.ocorrencias.set(String(o.pedido_id),mapa);}
+      }
+      s.caminhoesVolta=new Map();
+      for(let i=0;i<s.pedidos.length;i+=100){
+        const {data:cams,error}=await s.sb.rpc('operacao_caminhoes_volta_programados',{p_pedidos:s.pedidos.slice(i,i+100).map(p=>p.id)});
+        if(error){console.warn('caminhoes da coleta',error);break;}
+        for(const c of cams||[]){const k=String(c.pedido_id);const lista=s.caminhoesVolta.get(k)||[];lista.push(c);s.caminhoesVolta.set(k,lista);}
       }
       s.caminhoes=new Map();
       for(let i=0;i<s.pedidos.length;i+=100){

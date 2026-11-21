@@ -7,8 +7,8 @@ export function instalarProtecaoSaida({temAlteracoes,salvar,rascunho=()=>{},jane
    rascunho();
    const texto='Este pedido tem alterações não salvas. Salve antes de sair para não perder informações. Deseja salvar agora?';
    const sim=janela.confirmarGlobal?await janela.confirmarGlobal(texto,'Salvar pedido antes de sair'):janela.confirm(texto);
-   if(!sim)return false;
-   try{return await salvar()===true;}catch(e){janela.alerta?.(e.message||'Não foi possível salvar o pedido.','Pedido','erro');return false;}
+   if(!sim){liberado=true;return true;}
+   try{const salvo=await salvar()===true;if(salvo)liberado=true;return salvo;}catch(e){janela.alerta?.(e.message||'Não foi possível salvar o pedido.','Pedido','erro');return false;}
   })();
   try{return await pendente;}finally{pendente=null;}
  }

@@ -135,7 +135,7 @@ const mock = `(() => {
   await page.waitForFunction(()=>document.querySelectorAll('#separacaoColunaDivergencias [data-pedido-id=pd]').length===0);
   console.log('ok 6b - divergencias ficam na Triagem ate o estoque finalizar a contagem');
   assert.equal(await page.locator('#separacaoKanban [data-pedido-id=p1] .sep-problema-dot').count(),1,'pedido com problema aberto tem a bolinha');
-  assert.equal(await page.locator('#separacaoKanban [data-pedido-id=p1] .sep-problema-dot').evaluate(d=>getComputedStyle(d).backgroundColor),'rgb(230, 0, 18)');
+  assert.equal(await page.locator('#separacaoKanban [data-pedido-id=p1] .sep-problema-dot').evaluate(d=>getComputedStyle(d).backgroundColor),'rgb(220, 38, 38)');
   assert.equal(await page.locator('#separacaoKanban [data-pedido-id=standby] .sep-problema-dot').count(),0,'sem problema, sem bolinha');
   await page.waitForTimeout(100);
   const sob=await page.locator('#separacaoKanban [data-pedido-id=p1]').first().evaluate(c=>{const d=c.querySelector('.sep-problema-dot').getBoundingClientRect(),f=c.querySelector('.decorador-card-foto').getBoundingClientRect();return {d:[d.left,d.top,d.right,d.bottom],f:[f.left,f.top,f.right,f.bottom]};});

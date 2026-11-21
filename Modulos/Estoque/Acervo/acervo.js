@@ -2,7 +2,7 @@
  const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const nomes={aguardando_retorno:'Aguardando retorno físico',triagem:'Triagem',limpeza:'Limpeza',reparo:'Reparo',inspecao:'Inspeção final',investigacao:'Item não encontrado',liberado:'Liberado para locação',baixado:'Baixa patrimonial'};
  const destinos={triagem:['limpeza','reparo','inspecao'],limpeza:['inspecao'],reparo:['inspecao'],inspecao:['liberado','reparo','baixado'],investigacao:['triagem','baixado']};
- const s={sb:null,empresa:null,aba:'retorno',dados:null,itens:[],busca:'',estado:'abertos',inv:null};
+ const s={sb:null,empresa:null,aba:(['saidas','ocorrencias','divergencias','inventario','cora'].includes(new URLSearchParams(location.search).get('aba'))?new URLSearchParams(location.search).get('aba'):'saidas'),dados:null,itens:[],busca:'',estado:'abertos',inv:null};
  const msg=(v,erro=false)=>{$('acStatus').textContent=v;$('acStatus').classList.toggle('erro',erro);for(const dlg of document.querySelectorAll('.ac-dialogo[open]')){let aviso=dlg.querySelector('[data-ac-aviso]');if(!aviso){aviso=document.createElement('p');aviso.dataset.acAviso='';aviso.setAttribute('role','status');dlg.querySelector('.ac-dialogo-topo').after(aviso);}aviso.textContent=v;aviso.style.color=erro?'#b34238':'#467f68';}};
  const brl=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
  async function rpc(nome,args){const {data,error}=await s.sb.rpc(nome,{p_empresa:s.empresa,...args});if(error)throw Error(error.message);return data;}
@@ -18,7 +18,11 @@
   if(seq!==cargaPainel)return;s.dados=dados;render();}
 
  async function executar(botao,fn){botao.disabled=true;try{await fn();if($('acDetalhe').open)$('acDetalhe').close();await carregar();msg('Registro salvo.');}catch(e){msg(e.message,true);}finally{botao.disabled=false;}}
- function render(){document.querySelectorAll('[data-aba]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.aba===s.aba)));if(s.aba==='retorno')retornos();else if(s.aba==='ocorrencias'){window.SeparacaoOcorrencias.painel({host:$('acConteudo'),sb:s.sb,empresa:s.empresa,fila:'acervo',layout:'pedidos'});}else if(s.aba==='divergencias'){window.AcervoDivergencias.render({host:$('acConteudo'),sb:s.sb,empresa:s.empresa,esc,msg});}else inventarios();}
+ function render(){document.querySelectorAll('[data-aba]').forEach(b=>b.setAttribute('aria-selected',String(b.dataset.aba===s.aba)));if(s.aba==='retorno')retornos();else if(s.aba==='ocorrencias'){
+  // (16/11/2026) "Em aberto | Resolvidos": os problemas de separação já resolvidos ficam consultáveis (só leitura)
+  $('acConteudo').innerHTML='<div class="ac-oc-barra" role="tablist" aria-label="Problemas de separação"><button type="button" role="tab" data-oc-hist="0" aria-selected="'+!s.ocHistorico+'">Em aberto</button><button type="button" role="tab" data-oc-hist="1" aria-selected="'+!!s.ocHistorico+'">Resolvidos</button></div><div id="acOcorrencias"></div>';
+  $('acConteudo').querySelectorAll('[data-oc-hist]').forEach(b=>b.onclick=()=>{s.ocHistorico=b.dataset.ocHist==='1';render();});
+  window.SeparacaoOcorrencias.painel({host:$('acOcorrencias'),sb:s.sb,empresa:s.empresa,fila:'acervo',layout:'pedidos',resolvidas:!!s.ocHistorico});}else if(s.aba==='divergencias'){window.AcervoDivergencias.render({host:$('acConteudo'),sb:s.sb,empresa:s.empresa,esc,msg});}else if(s.aba==='saidas'){window.AcervoSaidas.render({host:$('acConteudo'),sb:s.sb,empresa:s.empresa,esc,msg});}else if(s.aba==='cora'){window.AcervoCora?.render({host:$('acConteudo'),sb:s.sb,empresa:s.empresa,esc,msg});}else inventarios();}
  function retornos(){window.AcervoPainel.render({host:$('acConteudo'),s,esc,nomes,abrir:abrirCard,gerenciar:gerenciarOS,abrirPedido});}
  async function abrirPedido(evento,selecionado){
   let dlg=$('acPedido');if(!dlg){dlg=document.createElement('dialog');dlg.id='acPedido';dlg.className='ac-dialogo ac-pedido-dialogo';document.body.append(dlg);}
@@ -89,5 +93,5 @@
 const {count}=await s.sb.from('acervo_contagens_gerais').select('id',{count:'exact',head:true}).eq('empresa_id',s.empresa).eq('status','pendente');const b=document.querySelector('[data-aba="divergencias"] .tab-badge');if(b)b.textContent=count||'';}catch{}}
  const atualizarPainel=()=>{if(s.empresa&&!document.hidden&&s.aba==='retorno'&&!document.querySelector('.ac-dialogo[open]')&&!document.activeElement?.matches('input,select'))carregar().catch(e=>msg(e.message,true));};setInterval(atualizarPainel,30000);document.addEventListener('visibilitychange',atualizarPainel);
  document.querySelectorAll('[data-aba]').forEach(b=>b.onclick=()=>{if(b.dataset.aba==='inventario'&&s.aba!=='inventario')s.inv=null;s.aba=b.dataset.aba;render();});
- (async()=>{const c=await window.aguardarContexto();s.sb=window.supabaseClient;s.empresa=c.empresa_id;await carregar();contarDivergencias();window.finalizarCarregamentoModulo?.();})().catch(e=>msg(e.message,true));
+ (async()=>{const c=await window.aguardarContexto();s.sb=window.supabaseClient;s.empresa=c.empresa_id;await carregar();contarDivergencias();window.AcervoSaidas?.contar({sb:s.sb,empresa:s.empresa});window.finalizarCarregamentoModulo?.();})().catch(e=>msg(e.message,true));
 })();

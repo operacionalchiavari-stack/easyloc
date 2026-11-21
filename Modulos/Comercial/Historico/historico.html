@@ -5,30 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Histórico</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
-  <link rel="stylesheet" href="historico.css?v=20261021-historico2">
+  <link rel="stylesheet" href="historico.css?v=20261116-ped-foto3">
 </head>
 <body>
 <div class="container el-page hc-page">
-  <div class="header-list">
+  <div class="header-list hc-topo">
     <h2>Histórico</h2>
-  </div>
-
-  <!-- Resumo dos últimos dias -->
-  <section class="hc-kpis" aria-label="Resumo">
-    <div class="hc-kpi"><small>Hoje</small><strong id="hcKpiHoje">—</strong><span>alterações</span></div>
-    <div class="hc-kpi"><small>Últimos 7 dias</small><strong id="hcKpiSemana">—</strong><span>alterações</span></div>
-    <div class="hc-kpi"><small>Pedidos movimentados</small><strong id="hcKpiPedidos">—</strong><span>nos últimos 7 dias</span></div>
-    <div class="hc-kpi"><small>Pessoas</small><strong id="hcKpiPessoas">—</strong><span>fizeram alterações em 7 dias</span></div>
-  </section>
-
-  <!-- Filtros -->
-  <section class="hc-filtros" aria-label="Filtros">
-    <label class="hc-busca"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input type="search" id="hcBusca" placeholder="Pedido, cliente, item ou o que mudou" autocomplete="off"></label>
-    <label class="hc-campo"><span>Tipo</span><select id="hcTipo">
+    <!-- 16/11/2026: filtros na linha do título (Limpar e Exportar saíram) -->
+    <div class="hc-topo-esq"><label class="hc-busca"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input type="search" id="hcBusca" placeholder="Pedido, cliente, item ou o que mudou" autocomplete="off"></label></div>
+    <div class="hc-topo-dir"><label class="hc-campo" hidden><span>Tipo</span><select id="hcTipo">
       <option value="">Todos os tipos</option>
       <option value="pedido">Pedido criado / excluído</option>
       <option value="status">Situação</option>
@@ -40,14 +30,16 @@
       <option value="contrato">Contrato</option>
       <option value="catalogo">Projetos do catálogo</option>
     </select></label>
-    <label class="hc-campo"><span>Quem</span><select id="hcAutor"><option value="">Todas as pessoas</option></select></label>
+    <label class="hc-campo" hidden><span>Quem</span><select id="hcAutor"><option value="">Todas as pessoas</option></select></label>
     <label class="hc-campo"><span>De</span><input type="date" id="hcDe"></label>
-    <label class="hc-campo"><span>Até</span><input type="date" id="hcAte"></label>
-    <div class="hc-filtros-acoes">
+    <label class="hc-campo"><span>Até</span><input type="date" id="hcAte"></label></div>
+    <div class="hc-filtros-acoes" hidden>
       <button type="button" class="btn secondary" id="hcLimpar">Limpar</button>
       <button type="button" class="btn secondary" id="hcExportar">Exportar</button>
     </div>
-  </section>
+  </div>
+
+
 
   <div class="hc-corpo">
     <!-- Pedidos: escolher um mostra só o histórico dele -->
@@ -68,10 +60,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
-<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261021-historico"></script>
-<script src="historico.js?v=20261021-historico"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+<script src="historico.js?v=20261116-ped-foto"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
 </body>
 </html>

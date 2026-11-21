@@ -1,6 +1,6 @@
 {
   "name": "acervo-api",
   "private": true,
-  "description": "Funcoes da Vercel (motor dos sistemas que vieram do Google Apps Script). So usam o Node, sem dependencias.",
+  "description": "Funcoes da Vercel (hoje so a leitura de propostas de Compras com IA). So usam o Node, sem dependencias.",
   "type": "commonjs"
 }

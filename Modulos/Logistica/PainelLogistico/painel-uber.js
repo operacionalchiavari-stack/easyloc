@@ -8,16 +8,19 @@
   const $ = (id) => document.getElementById(id);
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const brl = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-  const S = { sb: null, emp: null, vagas: [], faixas: [], pronto: false, editavel: true };
+  const S = { sb: null, emp: null, vagas: [], faixas: [], pronto: false, editavel: true, inicio:null, fim:null, sequencia:0 };
   const iconeCarro = '<svg viewBox="0 0 64 40" aria-hidden="true"><path d="M8 22l6-12h36l6 12v10H8z" fill="currentColor"/><circle cx="18" cy="32" r="6" fill="currentColor" stroke="white" stroke-width="3"/><circle cx="46" cy="32" r="6" fill="currentColor" stroke="white" stroke-width="3"/></svg>';
 
   const iso = (d) => d.toISOString().slice(0, 10);
   async function carregar() {
     if (!S.sb || !S.emp) return;
     const hoje = new Date(), de = new Date(hoje.getTime() - 30 * 864e5), ate = new Date(hoje.getTime() + 400 * 864e5);
-    const { data, error } = await S.sb.rpc("uber_painel", { p_empresa: S.emp, p_inicio: iso(de), p_fim: iso(ate) });
+    S.inicio=S.inicio||iso(de);S.fim=S.fim||iso(ate);const sequencia=++S.sequencia;
+    const { data, error } = await S.sb.rpc("uber_painel", { p_empresa: S.emp, p_inicio: S.inicio, p_fim: S.fim });
+    if(sequencia!==S.sequencia)return;
     if (error) { console.warn("Uber do painel:", error.message); return; }
     S.vagas = data?.vagas || []; S.faixas = data?.faixas || []; S.pronto = true;
+    window.dispatchEvent(new Event("painel-uber-atualizado"));
     document.querySelectorAll(".pl-etapa.pl-painel[data-id]").forEach(pintarEm);
   }
 
@@ -58,6 +61,7 @@
   }
 
   function infoEtapa(id) {
+    const atual=window.PainelLogisticoEquipe?.infoEtapa?.(id);if(atual)return atual;
     const s = document.querySelector('.pl-servico[data-selecionar="' + CSS.escape(id) + '"]');
     return { local: s?.querySelector(".pl-local")?.textContent?.trim() || "", hora: s?.querySelector(".pl-hora")?.textContent?.trim() || "" };
   }
@@ -212,6 +216,9 @@
     await carregar();
     setInterval(() => { if (!document.hidden && !$("plUberDialog")?.open) carregar(); }, 30000);
   }
-  window.PainelUber = { recarregar: carregar };
+  window.PainelUber = { recarregar: carregar,
+    resumo(id){const vagas=S.vagas.filter(v=>v.etapa_id===id),quantidade=vagas.reduce((s,v)=>s+Number(v.quantidade||0),0),confirmadas=vagas.reduce((s,v)=>s+Number(v.confirmadas||0),0);return {quantidade,confirmadas,texto:quantidade?confirmadas+' / '+quantidade+' carro(s)':'\u2014'};},
+    definirPeriodo(de,ate){const mudou=!S.inicio||de<S.inicio||!S.fim||ate>S.fim;S.inicio=S.inicio&&S.inicio<de?S.inicio:de;S.fim=S.fim&&S.fim>ate?S.fim:ate;if(mudou)carregar().catch(()=>{});}
+  };
   iniciar();
 })();

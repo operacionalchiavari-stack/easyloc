@@ -1,16 +1,42 @@
-import {carregarCadastros,ligarMoeda,numeroMoeda,moedaBR} from '../../../js/shared/custos-personalizacao.mjs';
+// Parâmetros > Almoxarifado (16/11/2026, Almoxarifado novo copiado da Tecnoweld):
+//  - Categorias de insumos (warehouse_material_categories): aparecem no Cadastro de insumos.
+//  - Tipos de item (warehouse_material_types): nome, sigla e unidade; o código do material sai do tipo (TEC-001-01).
+// Custo por hora, margem e taxas das personalizações ficam em Parâmetros > Produção > Personalizações.
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const UNIDADES=['UN','M','M²','KG','L','PAR','CX','RL','PCT'];
+async function categorias(root,sb){
+ const card=document.createElement('section');card.className='pr-card';root.append(card);
+ const {data,error}=await sb.from('warehouse_material_categories').select('nome,ordem').order('ordem').order('nome');
+ if(error){card.textContent='Não foi possível carregar as categorias: '+error.message;return;}
+ let lista=(data||[]).map(c=>c.nome);
+ card.innerHTML='<h3>Categorias de insumos</h3><p class="pr-ajuda">Aparecem no Cadastro de insumos do Almoxarifado. Uma categoria que já tem material não é apagada.</p><form><div class="pr-grade"><label class="pr-campo">Nova categoria<div style="display:flex;gap:8px"><input name="categoria" maxlength="80" placeholder="Nome da categoria"><button type="button" class="btn" data-adicionar>Adicionar</button></div></label><div data-lista style="display:flex;gap:8px;flex-wrap:wrap;align-items:start"></div></div><div class="pr-acoes"><span role="status"></span><button type="submit" class="btn primary">Salvar categorias</button></div></form>';
+ const f=card.querySelector('form'),status=card.querySelector('[role=status]');
+ const pintar=()=>{card.querySelector('[data-lista]').innerHTML=lista.map((c,i)=>'<button type="button" data-remover="'+i+'" aria-label="Remover categoria '+esc(c)+'" style="border:1px solid #ced9e6;border-radius:20px;background:#f4f7fb;padding:8px 12px">'+esc(c)+' ×</button>').join('');};pintar();
+ card.addEventListener('click',e=>{const b=e.target.closest('[data-remover]');if(b){lista.splice(Number(b.dataset.remover),1);pintar();}if(e.target.closest('[data-adicionar]')){const v=f.elements.categoria.value.trim();if(v&&!lista.some(c=>c.toLocaleLowerCase()===v.toLocaleLowerCase()))lista.push(v);f.elements.categoria.value='';pintar();}});
+ f.addEventListener('submit',async e=>{e.preventDefault();const b=f.querySelector('[type=submit]');b.disabled=true;status.textContent='Salvando…';try{const r=await sb.rpc('almox_categorias_salvar',{p_lista:lista});if(r.error)throw r.error;lista=r.data||lista;pintar();status.textContent='Categorias salvas.';}catch(err){status.textContent=err.message;}finally{b.disabled=false;}});
+}
+async function tipos(root,sb){
+ const card=document.createElement('section');card.className='pr-card';root.append(card);
+ const carregar=async()=>{const r=await sb.rpc('warehouse_material_types_list');if(r.error)throw r.error;return r.data||[];};
+ let lista=[];
+ const pintar=()=>{card.querySelector('tbody').innerHTML=lista.map(t=>'<tr data-id="'+t.id+'"><td><input data-k="nome" value="'+esc(t.nome)+'" maxlength="60"></td><td><input data-k="sigla" value="'+esc(t.sigla)+'" maxlength="6" style="width:80px;text-transform:uppercase" '+(t.itens?'disabled title="Já tem itens com este código"':'')+'></td><td><select data-k="unidade">'+UNIDADES.concat(UNIDADES.includes(t.unidade)?[]:[t.unidade]).map(u=>'<option'+(u===t.unidade?' selected':'')+'>'+esc(u)+'</option>').join('')+'</select></td><td style="text-align:center"><input type="checkbox" data-k="ativo" '+(t.ativo?'checked':'')+'></td><td style="text-align:right">'+(t.itens||0)+'</td><td><button type="button" class="btn" data-salvar>Salvar</button> '+(t.itens?'':'<button type="button" class="btn" data-apagar>Excluir</button>')+'</td></tr>').join('')+'<tr data-novo><td><input data-k="nome" placeholder="Novo tipo (ex.: Tecido)" maxlength="60"></td><td><input data-k="sigla" placeholder="TEC" maxlength="6" style="width:80px;text-transform:uppercase"></td><td><select data-k="unidade">'+UNIDADES.map(u=>'<option>'+u+'</option>').join('')+'</select></td><td style="text-align:center"><input type="checkbox" data-k="ativo" checked></td><td></td><td><button type="button" class="btn primary" data-salvar>Adicionar</button></td></tr>';};
+ card.innerHTML='<h3>Tipos de item</h3><p class="pr-ajuda">O tipo dá o código do material (sigla + número, ex.: TEC-001-01) e a unidade. A sigla não muda depois que o tipo tem itens; desative em vez de excluir.</p><div class="pr-tabela-wrap"><table class="pr-tabela" style="width:100%"><thead><tr><th>Tipo</th><th>Sigla</th><th>Unidade</th><th>Ativo</th><th style="text-align:right">Itens</th><th></th></tr></thead><tbody></tbody></table></div><p role="status"></p>';
+ const status=card.querySelector('[role=status]');
+ try{lista=await carregar();pintar();}catch(e){status.textContent='Não foi possível carregar os tipos: '+e.message;}
+ card.addEventListener('click',async e=>{
+  const tr=e.target.closest('tr');if(!tr)return;
+  const v=k=>{const el=tr.querySelector('[data-k="'+k+'"]');return el.type==='checkbox'?el.checked:el.value.trim();};
+  try{
+   if(e.target.closest('[data-salvar]')){status.textContent='Salvando…';const r=await sb.rpc('warehouse_material_type_save',{p_id:tr.dataset.id||null,p_nome:v('nome'),p_sigla:v('sigla'),p_ativo:v('ativo'),p_unidade:v('unidade')});if(r.error)throw r.error;}
+   else if(e.target.closest('[data-apagar]')){if(!confirm('Excluir este tipo?'))return;const r=await sb.rpc('warehouse_material_type_delete',{p_id:tr.dataset.id});if(r.error)throw r.error;}
+   else return;
+   lista=await carregar();pintar();status.textContent='Tipos salvos.';
+  }catch(err){status.textContent=err.message;}
+ });
+}
 async function init(){
  const root=document.getElementById('pr-painel-almoxarifado');if(!root)return;
- const card=document.createElement('section');card.className='pr-card';root.append(card);
- try{
-  const ctx=await window.aguardarContexto(),sb=window.supabaseClient,config=await carregarCadastros(sb,ctx.empresa_id);
-  let categorias=[...config.categorias];
-  card.innerHTML='<h3>Categorias de insumos e preço das personalizações</h3><p>As categorias ficam disponíveis no cadastro de insumos. Custo por hora, margem desejada e acréscimos de complexidade são regras fixas da empresa para novos cálculos de personalização.</p><form><div class="pr-grade"><label class="pr-campo">Nova categoria<div style="display:flex;gap:8px"><input name="categoria" maxlength="80" placeholder="Nome da categoria"><button type="button" data-adicionar>Adicionar</button></div></label><div data-categorias style="display:flex;gap:8px;flex-wrap:wrap;align-items:start"></div><label class="pr-campo">Custo por hora<input name="custo_hora" required value="'+esc(moedaBR(config.custos.custo_hora))+'"></label><label class="pr-campo">Margem desejada sobre o custo (%)<input name="margem" type="number" min="0" max="1000000" step="0.01" required value="'+esc(config.custos.margem)+'"></label>'+[['simples','Simples'],['media','Média'],['alta','Alta']].map(([k,t])=>'<label class="pr-campo">Acréscimo de complexidade '+t+' (%)<input name="'+k+'" type="number" min="0" max="1000" step="0.01" required value="'+esc(config.custos.complexidades[k])+'"></label>').join('')+'</div><p>Preço sugerido = custo × (1 + margem / 100) × (1 + acréscimo / 100). Pedidos já fechados preservam seu histórico.</p><div class="pr-acoes"><span role="status"></span><button type="submit" class="btn primary">Salvar categorias e custos</button></div></form>';
-  const f=card.querySelector('form'),status=f.querySelector('[role=status]');ligarMoeda(f.elements.custo_hora);
-  const pintar=()=>{card.querySelector('[data-categorias]').innerHTML=categorias.map((c,i)=>'<button type="button" data-remover="'+i+'" aria-label="Remover categoria '+esc(c)+'" style="border:1px solid #ced9e6;border-radius:20px;background:#f4f7fb;padding:8px 12px">'+esc(c)+' ×</button>').join('');};pintar();
-  card.addEventListener('click',e=>{const b=e.target.closest('[data-remover]');if(b){categorias.splice(Number(b.dataset.remover),1);pintar();}if(e.target.closest('[data-adicionar]')){const v=f.elements.categoria.value.trim();if(v&&!categorias.some(c=>c.toLocaleLowerCase()===v.toLocaleLowerCase()))categorias.push(v);f.elements.categoria.value='';pintar();}});
-  f.addEventListener('submit',async e=>{e.preventDefault();const b=f.querySelector('[type=submit]');b.disabled=true;status.textContent='Salvando…';try{if(!categorias.length)throw Error('Cadastre pelo menos uma categoria.');const custos={custo_hora:numeroMoeda(f.elements.custo_hora.value),margem:Number(f.elements.margem.value),complexidades:Object.fromEntries(['simples','media','alta'].map(k=>[k,Number(f.elements[k].value)]))};const r=await sb.rpc('operacao_cadastros_salvar',{p_empresa:ctx.empresa_id,p_config:{categorias,custos}});if(r.error)throw r.error;status.textContent='Categorias e regras de custo salvas.';}catch(err){status.textContent=err.message;}finally{b.disabled=false;}});
- }catch(e){card.textContent='Não foi possível carregar categorias e custos: '+e.message;}
+ await window.aguardarContexto();const sb=window.supabaseClient;
+ try{await tipos(root,sb);await categorias(root,sb);}catch(e){console.warn(e);}
 }
 init();

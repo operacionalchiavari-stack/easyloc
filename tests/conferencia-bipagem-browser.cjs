@@ -19,6 +19,11 @@ const mock = `(() => {
     separacoes_leituras: [],
     logistica_motivos: [{ id: "m1", empresa_id: "e1", etapa: "carregamento", nome: "Falta de espaço no caminhão", ativo: true }]
   };
+  if(location.search.includes('etapa=descarregamento')){
+    banco.separacoes_pedidos[0].operacao={carregamento:{concluido_em:'2026-11-01'},carregamento_caminhoes:[{id:'c1',codigo:'IDA',placa:'IDA0001'}]};
+    banco.separacoes_etiquetas.filter(e=>e.separacao_pedido_id==='p1').forEach(e=>e.lida_carregamento_em='2026-11-01');
+  }
+  if(location.search.includes('manual=1')){banco.conferenciaManual=true;banco.separacoes_pedidos[0].modo_separacao='manual';}
   function consulta(t){
     let linhas = (banco[t] || []).slice(), unico = false, acao = null, dados = null;
     const q = {
@@ -97,22 +102,42 @@ const mock = `(() => {
 
   await page.evaluate(() => { window.confirmarGlobal = async () => true; });
   await page.click("#cfConcluir");
-  await page.locator("dialog.cf-escolha-caminhao[open]").waitFor();assert.strictEqual(await page.locator("dialog.cf-confirmacao[open]").count(),0,"caminhão é confirmado antes das pendências");assert.match(await page.locator("dialog.cf-escolha-caminhao h3").innerText(),/Em qual caminhão o pedido foi carregado/);await page.check("dialog.cf-escolha-caminhao input[value=c1]");await page.click("dialog.cf-escolha-caminhao [data-ok]");await page.locator("dialog.cf-pendencias[open]").waitFor();await page.click("dialog.cf-pendencias [type=submit]");assert.match(await page.locator("dialog.cf-pendencias [data-erro]").innerText(),/motivo/i,"exige motivo");assert.ok(await page.locator("dialog.cf-pendencias .cf-pend-itens img").count()>0,"foto do item");await page.selectOption("dialog.cf-pendencias select[name=motivo]","m1");await page.click("dialog.cf-pendencias [type=submit]");assert.match(await page.locator("dialog.cf-pendencias [data-erro]").innerText(),/data/i,"exige data");await page.fill("dialog.cf-pendencias input[name=data]",new Date(Date.now()+86400000).toISOString().slice(0,10));await page.fill("dialog.cf-pendencias input[name=hora]","14:30");await page.click("dialog.cf-pendencias [type=submit]");
-  await page.waitForFunction(() => window.__pendencia, null, { timeout: 8000 });
-  const pend = await page.evaluate(() => window.__pendencia);
-  assert.strictEqual(pend.motivo_id, "m1"); assert.strictEqual(pend.hora, "14:30");
-  console.log("ok 4b - caminhão confirmado primeiro; pendências com foto, motivo e data/hora obrigatórios");
-  await page.waitForFunction(() => window.__gravados.some((g) => g.t === "separacoes_pedidos"));
-  const fim = await page.evaluate(() => window.__gravados.find((g) => g.t === "separacoes_pedidos").p);
-  assert.strictEqual(fim.status_operacional, "carregado");
-  assert.strictEqual(fim.operacao.carregamento.lidas, 2);
-  assert.deepStrictEqual(fim.operacao.carregamento.faltando.map((f) => f.codigo), ["12-002"]);
-  assert.ok(fim.operacao.carregamento.por && fim.operacao.carregamento.concluido_em, "quem e quando");
-  await page.waitForFunction(() => document.getElementById("cfConcluir").disabled, null, { timeout: 8000 });
-  assert.strictEqual(await page.locator("#cfConcluir").textContent(), "Conferência concluída", "depois de concluir não oferece concluir de novo");
-  assert.ok(await page.evaluate(() => document.getElementById("cfEntrada").disabled), "leitura travada depois de concluir");
-  console.log("ok 5 - concluir com pendência grava carregado, 2 de 3 e o que faltou; botão e leitura travados");
+  await page.locator('dialog.cf-escolha-caminhao[open]').waitFor();await page.check('dialog.cf-escolha-caminhao input[value=c1]');await page.click('dialog.cf-escolha-caminhao [data-ok]');
+  await page.waitForFunction(()=>window.__cargasTeste?.carga_por_veiculo?.length===1);assert.ok(!await page.evaluate(()=>window.__cargasTeste.carregamento?.concluido_em));assert.ok(!await page.locator('#cfEntrada').isDisabled(),'Leitor segue ativo depois do primeiro caminhao');
+  await bipar('ACERVO:ENV:12-002');assert.equal(await page.textContent('#cfContagem'),'3 de 3 volumes');
+  await page.click('#cfConcluir');await page.locator('dialog.cf-escolha-caminhao[open]').waitFor();assert.ok(await page.locator('dialog.cf-escolha-caminhao input[value=c1]').isDisabled());await page.check('dialog.cf-escolha-caminhao input[value=c2]');assert.equal(await page.locator('.cf-escolha-item input:checked').count(),1);await page.click('dialog.cf-escolha-caminhao [data-ok]');
+  await page.waitForFunction(()=>!!window.__cargasTeste?.carregamento?.concluido_em);const fim=await page.evaluate(()=>window.__cargasTeste);assert.equal(fim.carga_por_veiculo.length,2);assert.equal(fim.carregamento.lidas,3);assert.equal(fim.carregamento.total,3);assert.equal(fim.carregamento.faltando.length,0);
+  assert.ok(await page.locator('#cfConcluir').isDisabled());assert.ok(await page.locator('#cfEntrada').isDisabled());
+  console.log('ok 5 - bipagem distribui somente leituras novas no segundo caminhao e conclui quando toda carga esta atribuida');
 
+  await page.goto(BASE + "Modulos/Logistica/Conferencia/conferencia.html?pedido=p1&etapa=descarregamento");
+  await page.waitForSelector('#cfCorpo:not([hidden])');
+  await page.waitForFunction(()=>document.getElementById('cfCaminhoes').textContent.includes('XYZ9K87'));
+  assert.ok(!(await page.locator('#cfCaminhoes').innerText()).includes('IDA0001'),'usa planejamento da volta e nao caminhao da ida');
+  await bipar('ACERVO:ENV:12-001');await bipar('ACERVO:ENV:12-003');
+  await page.click('#cfConcluir');await page.locator('dialog.cf-escolha-caminhao[open]').waitFor();
+  assert.match(await page.locator('dialog.cf-escolha-caminhao h3').innerText(),/descarregados/);
+  await page.check('dialog.cf-escolha-caminhao input[value=c2]');await page.click('dialog.cf-escolha-caminhao [data-ok]');
+  await page.waitForFunction(()=>window.__cargasTeste?.descarga_por_veiculo?.length===1);
+  assert.ok(!await page.locator('#cfEntrada').isDisabled());assert.equal(await page.locator('.cf-carga-item').count(),2);
+  await bipar('ACERVO:ENV:12-002');await page.click('#cfConcluir');await page.locator('dialog.cf-escolha-caminhao[open]').waitFor();
+  assert.ok(await page.locator('dialog.cf-escolha-caminhao input[value=c2]').isDisabled());
+  await page.check('dialog.cf-escolha-caminhao input[value=c1]');await page.click('dialog.cf-escolha-caminhao [data-ok]');
+  await page.waitForFunction(()=>!!window.__cargasTeste?.descarregamento?.concluido_em);
+  const volta=await page.evaluate(()=>window.__cargasTeste);assert.equal(volta.descarga_por_veiculo.length,2);assert.equal(volta.descarregamento.lidas,3);assert.equal(volta.carregamento_caminhoes[0].placa,'IDA0001');
+  assert.ok(await page.locator('#cfEntrada').isDisabled());
+  console.log('ok - descarregamento sequencial, planejamento da coleta, colunas independentes e um caminhao por vez');
+  await page.goto(BASE + "Modulos/Logistica/Conferencia/conferencia.html?pedido=p1&etapa=descarregamento&manual=1");
+  await page.waitForSelector('#cfQtd:not([hidden]) .cf-qtd-input');
+  await page.locator('.cf-qtd-input[data-i="0"]').fill('1');
+  await page.click('#cfQtdConfirmar');await page.locator('dialog.cf-escolha-caminhao[open]').waitFor();await page.check('dialog.cf-escolha-caminhao input[value=c2]');await page.click('dialog.cf-escolha-caminhao [data-ok]');
+  await page.waitForFunction(()=>window.__cargasTeste?.descarga_por_veiculo?.length===1);
+  assert.equal(await page.locator('.cf-carga-item').count(),1);assert.ok(!await page.locator('#cfQtdConfirmar').isDisabled());
+  await page.locator('.cf-qtd-input[data-i="0"]').fill('1');await page.locator('.cf-qtd-input[data-i="1"]').fill('1');
+  await page.click('#cfQtdConfirmar');await page.locator('dialog.cf-escolha-caminhao[open]').waitFor();await page.check('dialog.cf-escolha-caminhao input[value=c1]');await page.click('dialog.cf-escolha-caminhao [data-ok]');
+  await page.waitForFunction(()=>!!window.__cargasTeste?.descarregamento?.concluido_em);
+  assert.equal(await page.locator('.cf-carga-item').count(),3);
+  console.log('ok - descarregamento por quantidade em dois caminhoes, mantendo colunas e saldo');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(BASE + "Modulos/Logistica/Conferencia/conferencia.html?pedido=p1&etapa=retorno");
   // Desde 03/11 a volta é sempre por quantidade (sem bipe): o quadro de bipagem não aparece.

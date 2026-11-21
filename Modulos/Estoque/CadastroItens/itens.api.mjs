@@ -256,32 +256,21 @@ const volumeCubico = Number(
     const subcategoria = document.getElementById("itensSubcategoria")?.value?.trim() || "";
     const grupoSeparacao = document.getElementById("itensGrupoSeparacao")?.value?.trim() || "";
     const estilo = document.getElementById("itensEstilo")?.value?.trim() || "";
-    // Quantidade em estoque (estoque_total): usada pela Disponibilidade de Itens, pelo pedido e pela assistente comercial.
-    // Sem o campo na tela (outros formulários), não mexe no valor gravado.
-    const estoqueRaw = document.getElementById("itensEstoqueTotal")?.value?.trim();
-    const estoqueTotal = estoqueRaw === undefined ? undefined : (estoqueRaw === "" ? null : Math.max(0, Math.round(Number(estoqueRaw.replace(",", ".")) || 0)));
+    // Quantidade em estoque (estoque_total): não é gravada por esta tela (15/11/2026). Ela entra pela importação de
+    // implantação e depois por Compras; correções pelo inventário. O banco recusa alteração feita direto pela tela.
     const fornecedorId = document.getElementById("itensFornecedor")?.value || null;
 
-    const ordemExposicaoRaw = document.getElementById("itensOrdemExposicao")?.value?.trim();
-    const ordemExposicao = ordemExposicaoRaw ? parseInt(ordemExposicaoRaw, 10) : null;
 
     const exibirSite = document.getElementById("itensExibirSite")?.value === "true";
-    const destaqueSite = document.getElementById("itensDestaqueSite")?.value === "true";
     const capaCategoria = document.getElementById("itensCapaCategoria")?.value === "true";
     const locarSomenteKit = document.getElementById("itensLocarSomenteKit")?.value === "true";
     const exclusivo = document.getElementById("itensExclusivo")?.value === "true";
 
-    const custo = parseFloat(
-      document.getElementById("itensCusto")?.value.replace(",",".")
-    ) || 0;
+    const custo = valorMoeda(document.getElementById("itensCusto")?.value);
 
-    const valorLocacao = parseFloat(
-      document.getElementById("itensValorLocacao")?.value.replace(",",".")
-    ) || 0;
+    const valorLocacao = valorMoeda(document.getElementById("itensValorLocacao")?.value);
 
-    const valorReposicao = parseFloat(
-      document.getElementById("itensValorReposicao")?.value.replace(",",".")
-    ) || 0;
+    const valorReposicao = valorMoeda(document.getElementById("itensValorReposicao")?.value);
 
     /* =====================================================
        STATUS / TIPO
@@ -351,7 +340,7 @@ const itemData = {
 
   id: itemId,
   empresa_id: empresaId,
-  qr_code: window.itemAtualQrCode || gerarQrCodeCadastro(),
+  // qr_code: gerado e protegido pelo banco (gatilho itens_qr_protegido); a tela não envia
 
   codigo,
   produto,
@@ -376,7 +365,6 @@ const itemData = {
   subcategoria,
   grupo_separacao: grupoSeparacao,
   estilo,
-  ...(estoqueTotal === undefined ? {} : { estoque_total: estoqueTotal }),
   fornecedor_id: fornecedorId,
 
   custo,
@@ -386,9 +374,7 @@ const itemData = {
   tipo,
   ativo,
   exibir_no_site: exibirSite,
-  destaque_site: destaqueSite,
   capa_categoria: capaCategoria,
-  ordem_exposicao_site: ordemExposicao,
   locar_somente_kit: locarSomenteKit,
   exclusivo,
 
@@ -422,7 +408,7 @@ const itemData = {
       }
 
       console.log("Item atualizado");
-      window.itemAtualQrCode = itemData.qr_code;
+      window.itemAtualQrCode = (await supabase.from("itens").select("qr_code").eq("id", window.itemAtualId || itemId).maybeSingle()).data?.qr_code || null;
       const fotosOk = await window.itens_salvarFotosAdicionais?.(window.itemAtualId, empresaId);
       if(fotosOk === false) return false;
 
@@ -452,7 +438,7 @@ const itemData = {
       }
 
       console.log("Item criado");
-      window.itemAtualQrCode = itemData.qr_code;
+      window.itemAtualQrCode = (await supabase.from("itens").select("qr_code").eq("id", window.itemAtualId || itemId).maybeSingle()).data?.qr_code || null;
       window.itemAtualId = itemId;
       const fotosOk = await window.itens_salvarFotosAdicionais?.(itemId, empresaId);
       if(fotosOk === false) return false;
@@ -524,3 +510,11 @@ window.itens_gerarCodigoFormatado = function(){
   return codigo;
 
 };
+
+/* 15/11/2026: custo, locação e reposição aparecem como moeda ("R$ 1.234,50"); aceita também "1234.5". */
+export function valorMoeda(v){
+  let t=String(v??"").replace(/R\$|\s/g,"").trim();
+  if(!t)return 0;
+  if(t.includes(","))t=t.replace(/\./g,"").replace(",",".");
+  const n=Number(t);return Number.isFinite(n)?n:0;
+}

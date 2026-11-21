@@ -1,4 +1,4 @@
-const {configuracao,liberarOrigem,usuarioDaSessao}=require('./gs');
+const {configuracao,liberarOrigem,usuarioDaSessao}=require('./_sessao');
 module.exports=async(req,res)=>{
   liberarOrigem(res);res.setHeader('Cache-Control','no-store');
   if(req.method==='OPTIONS')return res.status(204).end();

@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Cadastro de Locais</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
-  <link rel="stylesheet" href="cadastro-locais.css?v=20261026-acentos">
+  <link rel="stylesheet" href="cadastro-locais.css?v=20261118-particularidades">
 </head>
 <body>
 <div class="container el-page locais-container">
@@ -255,6 +256,12 @@
           <div class="local-map-tip">Arraste o marcador para ajustar o ponto exato.</div>
         </section>
       </div>
+
+      <div class="form-group el-field local-particularidades col-full">
+        <label for="locaisParticularidades">Particularidades deste local</label>
+        <textarea class="el-input" id="locaisParticularidades" rows="3" maxlength="2000" placeholder="Ex.: não pode passar caminhão em cima da grama (tem irrigação); entrada de serviço pela rua de trás"></textarea>
+        <small>Aparece para o Comercial no pedido e para a equipe de entrega e montagem.</small>
+      </div>
     </div>
 
 
@@ -327,7 +334,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
-<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
 <script src="../../../js/core/listPager.js?v=20261026-rolagem"></script>
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
@@ -335,9 +342,9 @@
 <script src="../../../js/core/google.js"></script>
 <script src="../../../js/core/campoProtegido.js?v=20261023-cofre-doc"></script>
 <script src="../../../js/core/etiquetasCadastro.js?v=20261026"></script>
-<script src="../../../js/ui/complexidade-cadastros.js?v=20261107-teste-usuario"></script>
-<script src="cadastro-locais.js?v=20261107-teste-usuario"></script>
+<script src="../../../js/ui/complexidade-cadastros.js?v=20261114-automatica"></script>
+<script src="cadastro-locais.js?v=20261118-particularidades"></script>
 <script>lucide.createIcons();</script>
-<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
 </body>
 </html>

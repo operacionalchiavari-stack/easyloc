@@ -40,6 +40,17 @@ export const CONTRATO_TAG_GROUPS = [
       ["{{cliente_documento}}", "Documento"],
       ["{{cliente_telefone}}", "Telefone"],
       ["{{cliente_email}}", "E-mail"],
+      ["{{cliente_rg}}", "RG / Inscrição estadual"],
+      ["{{cliente_endereco}}", "Endereço"],
+      ["{{contratantes}}", "Todos os contratantes (qualificação)"],
+    ],
+  },
+  {
+    titulo: "Decorador",
+    tags: [
+      ["{{decorador_nome}}", "Nome"],
+      ["{{decorador_documento}}", "Documento"],
+      ["{{decorador_telefone}}", "Telefone"],
     ],
   },
   {
@@ -217,6 +228,13 @@ function tabelaItens(itens = []){
   }).join('') + '</tbody></table>';
 }
 
+// "Ana Souza, CPF 123..., RG ..., residente em ..., telefone ...; e Bruno ..." (18/11/2026)
+function qualificacao(lista){
+  if(!Array.isArray(lista) || !lista.length) return "";
+  const doc = (v) => { const d = String(v || "").replace(/\D/g, ""); return d.length === 11 ? "CPF " + d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4") : d.length === 14 ? "CNPJ " + d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5") : (v || ""); };
+  const partes = lista.filter((p) => p?.nome).map((p) => [p.nome, p.documento && doc(p.documento), p.rg && "RG " + p.rg, p.ie && "inscrição estadual " + p.ie, p.endereco && "residente em " + p.endereco, p.telefone && "telefone " + p.telefone, p.email && "e-mail " + p.email].filter(Boolean).join(", "));
+  return partes.length > 1 ? partes.slice(0, -1).join("; ") + "; e " + partes.at(-1) : (partes[0] || "");
+}
 export function renderizarContrato(conteudoModelo = "", dadosPedido = {}, { formatado = false } = {}){
   const dados = {
     pedido_numero: valor(dadosPedido.pedido?.numero || dadosPedido.pedido_numero),
@@ -224,6 +242,12 @@ export function renderizarContrato(conteudoModelo = "", dadosPedido = {}, { form
     cliente_documento: valor(dadosPedido.cliente?.documento || dadosPedido.cliente_documento),
     cliente_telefone: valor(dadosPedido.cliente?.telefone || dadosPedido.cliente_telefone),
     cliente_email: valor(dadosPedido.cliente?.email || dadosPedido.cliente_email),
+    cliente_rg: valor(dadosPedido.cliente?.rg || dadosPedido.cliente_rg),
+    cliente_endereco: valor(dadosPedido.cliente?.endereco || dadosPedido.cliente_endereco),
+    contratantes: valor(qualificacao(dadosPedido.contratantes)),
+    decorador_nome: valor(dadosPedido.decorador?.nome || dadosPedido.decorador_nome),
+    decorador_documento: valor(dadosPedido.decorador?.documento || dadosPedido.decorador_documento),
+    decorador_telefone: valor(dadosPedido.decorador?.telefone || dadosPedido.decorador_telefone),
     local_nome: valor(dadosPedido.local?.nome || dadosPedido.local_nome),
     local_endereco: valor(dadosPedido.local?.endereco || dadosPedido.local_endereco),
     local_cidade: valor(dadosPedido.local?.cidade || dadosPedido.local_cidade),

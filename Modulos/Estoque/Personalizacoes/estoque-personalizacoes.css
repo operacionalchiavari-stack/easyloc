@@ -995,3 +995,183 @@ input[placeholder="Digite para buscar item..."]:focus {
 .personalizacao-resultados button{display:flex;align-items:center;gap:14px;width:100%;text-align:left;padding:10px 14px;border:0;border-bottom:1px solid #edf1f6;background:white;color:#23354b;font:14px/1.45 Inter,system-ui;cursor:pointer}
 .personalizacao-resultados button:hover,.personalizacao-resultados button:focus-visible{background:#edf3fb}
 .personalizacao-resultados img{width:60px;height:60px;object-fit:contain;flex:none;background:#f5f7fa;border-radius:8px}
+
+/* 15/11/2026: botão de cadastro na mesma linha do título, à direita (mesmo padrão de Itens e Locais) */
+html:root:is(#pers-topo,#pers-topo2,html) body .personalizacao-list-view>.page-top.page-top{position:relative!important}
+html:root:is(#pers-topo,#pers-topo2,html) body .personalizacao-list-view>.page-top>.page-actions.page-actions{position:absolute!important;top:50%!important;right:0!important;transform:translateY(-50%);margin:0!important;display:flex!important;width:auto!important;z-index:2}
+@media(max-width:1000px){html:root:is(#pers-topo,#pers-topo2,html) body .personalizacao-list-view>.page-top>.page-actions.page-actions{position:static!important;transform:none;justify-content:flex-end;margin-top:12px!important}}
+
+/* 15/11/2026: lista com foto e nome completo (medidas embaixo), coluna Item/Kit/Componente */
+.pers-item-cel{display:flex;align-items:center;gap:12px;min-width:0}
+.pers-item-foto{width:56px;height:46px;flex:none;border-radius:8px;background:#f3f5f6;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.pers-item-foto img{width:100%;height:100%;object-fit:contain}
+.pers-item-txt{display:flex;flex-direction:column;min-width:0}
+.pers-item-nome{font-size:13.5px;color:#1f2020;line-height:1.35}
+.pers-item-medidas{font-size:12px;color:#6b6b6b;margin-top:2px}
+.badge.pers-tipo-item{background:#eef1f5;color:#4b5563;font-weight:500}
+/* foto do item escolhido no detalhe */
+.pers-vinculo-row{position:relative}
+.pers-vinculo-row .pers-vinculo-foto{float:right;width:88px;height:72px;margin:0 0 6px 12px;border-radius:10px;background:#f3f5f6;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#9aa0a6;font-size:11px}
+.pers-vinculo-row .pers-vinculo-foto img{width:100%;height:100%;object-fit:contain}
+.pers-obs-ajuda{display:block;margin-top:4px;color:#6b6b6b;font-size:12px}
+/* card só das etapas */
+html:root .pers-mao-obra-oculta[hidden]{display:none!important}
+html:root .pers-etapas-card .producao-cadastro{margin-top:0;padding:0;border:0;background:transparent}
+.producao-etapas-total{margin:10px 0 8px;color:#4b5563;font-size:13px}
+/* formação de preço em amarelo bem claro */
+html:root:is(#pers-cor,#pers-cor2,html) body .resume-card{background:#fffbea!important;border-color:#f1e4b3!important}
+html:root:is(#pers-cor,#pers-cor2,html) body .resume-card .resume-box{background:#fffdf5!important}
+
+/* foto do item ao lado do campo de busca */
+html:root .pers-vinculo-row{display:grid;grid-template-columns:88px minmax(0,1fr);column-gap:12px;row-gap:6px;align-items:center}
+html:root .pers-vinculo-row>label{grid-column:1/-1}
+html:root .pers-vinculo-row .pers-vinculo-foto{float:none;margin:0;grid-column:1;grid-row:2;height:64px;width:88px}
+html:root .pers-vinculo-row>input,html:root .pers-vinculo-row>#listaVinculos{grid-column:2}
+
+/* 15/11/2026: título, abas e botão numa linha só, sem a linha embaixo do título (abas à esquerda, título no centro, botão à direita) */
+html:root:is(#pt#pt#pt#pt,html) body .personalizacao-list-view>.page-top.page-top{display:grid!important;grid-template-columns:1fr auto 1fr!important;align-items:center!important;column-gap:16px;padding:14px 0 10px!important;margin:0 0 14px!important;border:0!important;position:relative!important}
+html:root:is(#pt#pt#pt#pt,html) body .personalizacao-list-view>.page-top.page-top::before,
+html:root:is(#pt#pt#pt#pt,html) body .personalizacao-list-view>.page-top.page-top::after,
+html:root:is(#pt#pt#pt#pt,html) body .personalizacao-list-view>.page-top .page-title::before,
+html:root:is(#pt#pt#pt#pt,html) body .personalizacao-list-view>.page-top .page-title::after{display:none!important;content:none!important}
+html:root:is(#pt#pt#pt#pt,html) body .personalizacao-list-view>.page-top>.page-title{grid-column:2;grid-row:1;padding:0!important;margin:0!important;border:0!important}
+html:root:is(#pt#pt#pt#pt,html) body .personalizacao-list-view>.page-top>.pers-abas{grid-column:1;grid-row:1;justify-self:start;margin:0!important;border-bottom:0!important}
+html:root:is(#pt#pt#pt#pt,html) body .personalizacao-list-view>.page-top>.page-actions.page-actions{grid-column:3;grid-row:1;justify-self:end;position:static!important;transform:none!important;margin:0!important}
+@media(max-width:1100px){html:root:is(#pt#pt#pt#pt,html) body .personalizacao-list-view>.page-top.page-top{grid-template-columns:1fr auto!important;row-gap:10px}
+ html:root:is(#pt#pt#pt#pt,html) body .personalizacao-list-view>.page-top>.page-title{grid-column:1/-1}
+ html:root:is(#pt#pt#pt#pt,html) body .personalizacao-list-view>.page-top>.pers-abas{grid-column:1;grid-row:2}
+ html:root:is(#pt#pt#pt#pt,html) body .personalizacao-list-view>.page-top>.page-actions.page-actions{grid-column:2;grid-row:2}}
+
+/* =====================================================================
+   15/11/2026: tela "Editar personalização" refeita - mesma distribuição,
+   mais compacta e com um acabamento só (cards, campos, rótulos).
+   html:root:is(#pz#pz#pz#pz,html) #modalOverlay = html:root:is(#pz#pz#pz#pz,html) #modalOverlay (vence design-system/tema).
+   ===================================================================== */
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay{--pz-borda:#e3e7ec;--pz-campo:#d8dee6;--pz-texto:#1f2020;--pz-suave:#6b6b6b;--pz-azul:#123f86}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .personalizacao-detail-card{max-width:1480px;margin:0 auto;padding:0 clamp(14px,2vw,28px) 28px;background:transparent;box-shadow:none;border:0}
+/* topo: voltar, título, status e salvar numa linha */
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .modal-header{display:flex;align-items:center;gap:14px;padding:26px 0 0;margin:0 0 18px;border:0;background:transparent;position:static}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .modal-header .back-btn{width:38px;height:38px;min-height:0;flex:none;border-radius:50%;border:1px solid var(--pz-borda);background:#fff;display:inline-flex;align-items:center;justify-content:center;padding:0;box-shadow:none}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .modal-header-left{flex:1;min-width:0;padding:0}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .modal-header-left h3{margin:0;font-size:clamp(19px,1.9vw,26px);letter-spacing:.14em;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .modal-header-right{display:flex;align-items:center;gap:12px;flex:none}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .status-toggle{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--pz-borda);border-radius:999px;background:#fff}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .status-btn{min-height:0;height:30px;padding:0 14px;border:0;border-radius:999px;background:transparent;font-size:13px;font-weight:500;color:var(--pz-suave);box-shadow:none;letter-spacing:0;text-transform:none}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .status-btn.active[data-status="ATIVO"]{background:#e6f4ea;color:#1f7a44}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .status-btn.active[data-status="INATIVO"]{background:#fdecea;color:#b42318}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay #btnSalvar{min-height:0;height:38px;padding:0 22px}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .modal-footer[hidden]{display:none!important}
+/* grade: formulário + resumo */
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .modal-body{padding:0;overflow:visible;max-height:none}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .modal-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,360px);gap:16px;align-items:start}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .form-col{display:flex;flex-direction:column;gap:14px;min-width:0}
+/* cards */
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .card-section{margin:0;padding:16px 18px;background:#fff;border:1px solid var(--pz-borda);border-radius:12px;box-shadow:0 1px 3px rgba(15,23,42,.06)}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .card-title{margin:0 0 12px;font-size:15px;font-weight:600;color:var(--pz-texto);letter-spacing:0;text-transform:none}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .identificacao-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .identificacao-header .card-title{margin:0}
+/* Item / Kit e Componente como um interruptor de dois lados */
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .identificacao-radio{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--pz-borda);border-radius:999px;background:#f7f9fb}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .radio-pill{display:inline-flex;align-items:center;margin:0;padding:0;border:0;background:none;cursor:pointer;min-height:0;height:auto;box-shadow:none}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .radio-pill input{position:absolute;opacity:0;pointer-events:none}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .radio-pill span{display:inline-flex;align-items:center;height:28px;padding:0 14px;border-radius:999px;font-size:13px;font-weight:500;color:var(--pz-suave)}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .radio-pill input:checked+span{background:var(--pz-azul);color:#fff}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .radio-pill input:focus-visible+span{outline:2px solid var(--pz-azul);outline-offset:2px}
+/* campos */
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .form-row{display:flex;flex-direction:column;gap:5px;margin:0 0 12px}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .card-section>.form-row:last-child{margin-bottom:0}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .form-row.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .form-row.two>div{display:flex;flex-direction:column;gap:5px;min-width:0}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay label{margin:0;font-size:12px;font-weight:500;color:#5b6470;letter-spacing:0;text-transform:none}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay :is(.el-input,.el-select,.el-textarea,.insumo-row input,.insumo-row select){box-sizing:border-box;width:100%;min-height:0;height:40px;padding:0 12px;border:1px solid var(--pz-campo);border-radius:8px;background:#fff;font-size:14px;font-weight:400;color:var(--pz-texto);box-shadow:none}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .el-textarea{height:auto;min-height:72px;padding:10px 12px;line-height:1.45;resize:vertical}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay :is(.el-input,.el-select,.el-textarea,.insumo-row input,.insumo-row select):focus{outline:none;border-color:var(--pz-azul);box-shadow:0 0 0 3px rgba(18,63,134,.12)}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay :is(.el-input,.el-textarea,.insumo-row input)::placeholder{color:#9aa3ad}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .el-input[readonly],html:root:is(#pz#pz#pz#pz,html) #modalOverlay .insumo-row input[readonly]{background:#fff}
+/* item escolhido: foto pequena ao lado da busca */
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .pers-vinculo-row{display:grid;grid-template-columns:48px minmax(0,1fr);column-gap:10px;row-gap:5px;align-items:center;position:relative}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .pers-vinculo-row>*{grid-column:1/-1}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .pers-vinculo-row>.pers-vinculo-foto{grid-column:1;width:48px;height:48px;margin:0;border-radius:8px;overflow:hidden;background:#f3f5f6;border:1px solid var(--pz-borda)}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .pers-vinculo-foto img{width:100%;height:100%;object-fit:contain}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .pers-vinculo-row>.pers-vinculo-foto+.el-input{grid-column:2;height:48px}
+/* materiais */
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .pers-mat-dica{margin:-4px 0 12px;font-size:12.5px;line-height:1.5;color:var(--pz-suave)}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay #insumosContainer{display:flex;flex-direction:column;gap:8px}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay #insumosContainer:empty{display:none}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .insumo-row{display:grid;grid-template-columns:minmax(0,1fr) 110px 120px 32px;gap:10px;align-items:center;margin:0;padding:0;border:0;background:none;box-shadow:none}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .insumo-row.is-cartela{padding:8px 10px;border:1px dashed #c8d3e3;border-radius:10px;background:#f7f9fd}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .insumo-cartela-sel{display:flex;flex-direction:column;gap:4px;min-width:0}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .insumo-cartela-sel span{font-size:12px;color:#5b6470}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .insumo-total{font-size:14px;font-weight:500;text-align:right;white-space:nowrap;color:var(--pz-texto)}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .insumo-row.is-cartela .insumo-total{font-size:12px;color:var(--pz-suave);white-space:normal}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .insumo-remove{width:32px;height:32px;min-height:0;padding:0;border:0;border-radius:8px;background:transparent;color:#9aa3ad;font-size:15px;cursor:pointer;box-shadow:none}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .insumo-remove:hover{background:#fdecea;color:#b42318}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .insumo-acoes{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .insumo-acoes .btn{min-height:0;height:34px;padding:0 14px;font-size:12.5px;font-weight:500;letter-spacing:0;text-transform:none;border-radius:8px;box-shadow:none}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay #btnAddInsumo{background:#fff;color:var(--pz-azul);border:1px solid var(--pz-azul)}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay #btnAddCartela{background:#fff;color:#4b5563;border:1px dashed #b8c2cf}
+/* etapas da produção (editor vem de producao-cadastro.mjs) */
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .producao-cadastro{margin:0;padding:0;border:0}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .producao-cadastro>p{margin:-4px 0 10px;font-size:12.5px;line-height:1.5;color:var(--pz-suave)}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .producao-etapas-editor>div{grid-template-columns:2fr 1.4fr 80px 110px 32px;gap:10px;margin:0 0 8px}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .producao-etapas-editor label{font-size:12px}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .producao-etapas-editor :is(input,select){height:40px;padding:0 10px;border:1px solid var(--pz-campo);border-radius:8px;font-size:14px}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .producao-etapas-editor [data-remover]{height:32px;width:32px;padding:0;border:0;background:transparent;color:#9aa3ad;font-size:16px;align-self:end;margin-bottom:4px}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .producao-etapas-editor [data-remover]:hover{background:#fdecea;color:#b42318}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .producao-etapas-total{font-size:12.5px;color:var(--pz-suave);margin:4px 0 8px}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .producao-cadastro [data-adicionar]{height:34px;padding:0 14px;border:1px solid var(--pz-azul);border-radius:8px;background:#fff;color:var(--pz-azul);font-size:12.5px;font-weight:500}
+/* resumo: formação de preço */
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-col{position:sticky;top:14px}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-card{padding:16px 18px;border:1px solid #efe2c4;border-radius:12px;background:#fffaf0;box-shadow:0 1px 3px rgba(15,23,42,.06);display:flex;flex-direction:column;gap:12px}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-title{margin:0;font-size:15px;font-weight:600;color:var(--pz-texto)}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-box{margin:0;padding:10px 12px;border-radius:10px;background:#fff;border:1px solid #f1e8d4;box-shadow:none}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-line{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:4px 0;font-size:13px;color:#4b5563}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-line strong{font-weight:500;color:var(--pz-texto);white-space:nowrap}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-sep{height:1px;margin:6px 0;background:#eee6d6}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-line.big{font-size:14px;color:var(--pz-texto)}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-line.big strong{font-weight:600}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-card .form-row{margin:0}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-highlight{margin:0;padding:12px 14px;border-radius:10px;background:var(--pz-azul);border:0;color:#fff;box-shadow:none}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-highlight .hl-label{font-size:12px;font-weight:500;color:rgba(255,255,255,.8)}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-highlight .hl-value{margin:2px 0;font-size:28px;font-weight:600;line-height:1.15;color:#fff}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-highlight .hl-sub{font-size:12px;color:rgba(255,255,255,.8)}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .toggle-row{display:flex;align-items:center;gap:10px;margin:0;padding:0;background:none;border:0}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .toggle-title{font-size:13px;font-weight:500;color:var(--pz-texto)}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .toggle-sub{font-size:12px;color:var(--pz-suave)}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay #btnRecalcular{min-height:0;height:34px;font-size:12.5px;font-weight:500;letter-spacing:0;text-transform:none;border-radius:8px}
+@media(max-width:1000px){
+  html:root:is(#pz#pz#pz#pz,html) #modalOverlay .modal-grid{grid-template-columns:1fr}
+  html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-col{position:static}
+}
+@media(max-width:700px){
+  html:root:is(#pz#pz#pz#pz,html) #modalOverlay .modal-header{flex-wrap:wrap}
+  html:root:is(#pz#pz#pz#pz,html) #modalOverlay .modal-header-right{width:100%;justify-content:space-between}
+  html:root:is(#pz#pz#pz#pz,html) #modalOverlay .form-row.two{grid-template-columns:1fr}
+  html:root:is(#pz#pz#pz#pz,html) #modalOverlay .identificacao-header{flex-wrap:wrap}
+  html:root:is(#pz#pz#pz#pz,html) #modalOverlay .insumo-row{grid-template-columns:minmax(0,1fr) 80px 32px}
+  html:root:is(#pz#pz#pz#pz,html) #modalOverlay .insumo-row .insumo-total{grid-column:1/-1;text-align:left}
+  html:root:is(#pz#pz#pz#pz,html) #modalOverlay .producao-etapas-editor>div{grid-template-columns:1fr 1fr}
+}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay :is(.el-input,.el-select,.el-textarea,.insumo-row input,.insumo-row select){background:#fff!important;border:1px solid #d8dee6!important}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .el-textarea{min-height:76px!important;height:76px}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .insumo-acoes{align-items:center}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .insumo-acoes .btn{margin:0!important;height:34px!important;min-height:0!important;padding:0 14px!important;border-radius:8px!important;font-size:12.5px!important;box-shadow:none!important}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay #btnAddInsumo{background:#fff!important;color:#123f86!important;border:1px solid #123f86!important}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay #btnAddCartela{background:#fff!important;color:#4b5563!important;border:1px dashed #b8c2cf!important}
+/* 15/11/2026: Formação de preço com as cores do sistema (branco + azul-marinho), sem bege/marrom */
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-card{background:#fff!important;border:1px solid #e3e7ec!important}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-box{background:#f7f9fb!important;border:1px solid #e3e7ec!important}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-sep{background:#e3e7ec!important}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-highlight{background:#eaf0fa!important;border:1px solid #c9d6ec!important;color:#123f86!important}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-highlight .hl-label,html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-highlight .hl-sub{color:#4b5d7a!important}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .resume-highlight .hl-value{color:#123f86!important}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .toggle-row{padding:10px 12px!important;border:1px solid #e3e7ec!important;border-radius:10px!important;background:#fff!important}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay .toggle input:checked+.toggle-ui{background:#123f86!important;border-color:#123f86!important}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay #btnRecalcular{background:#fff!important;color:#123f86!important;border:1px solid #123f86!important;box-shadow:none!important}
+html:root:is(#pz#pz#pz#pz,html) #modalOverlay #btnRecalcular:hover{background:#eaf0fa!important}
+/* lista: colunas de custo e etapas */
+html:root:is(#pz#pz#pz#pz,html) #tbodyPersonalizacoes td.pers-num{white-space:nowrap;font-variant-numeric:tabular-nums}
+html:root:is(#pz#pz#pz#pz,html) #tbodyPersonalizacoes .pers-etapas-cel{display:flex;flex-direction:column;gap:1px;line-height:1.25}
+html:root:is(#pz#pz#pz#pz,html) #tbodyPersonalizacoes .pers-etapas-cel b{font-weight:500;color:#1f2020}
+html:root:is(#pz#pz#pz#pz,html) #tbodyPersonalizacoes .pers-etapas-cel small{font-size:12px;color:#6b6b6b}
+html:root:is(#pz#pz#pz#pz,html) #tbodyPersonalizacoes .pers-etapas-cel.is-vazio{color:#b42318;font-size:12.5px}

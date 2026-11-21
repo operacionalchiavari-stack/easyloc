@@ -3,6 +3,13 @@
 const { chromium } = require('playwright'); const express = require('express'); const assert = require('node:assert/strict');
 const { installMock } = require('./mock-projetos.cjs');
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64');
+const { createCanvas } = require('@napi-rs/canvas');
+function fotoTeste(cor) {
+  const canvas = createCanvas(600, 300), ctx = canvas.getContext('2d');
+  ctx.fillStyle = cor; ctx.fillRect(0, 0, 600, 300);
+  return canvas.toBuffer('image/png');
+}
+const FOTO_RENDER = fotoTeste('#ec3060'), FOTO_PLANTA = fotoTeste('#d8e2e8');
 (async () => {
   const app = express();
   app.get('/host-pedido.html', (req, res) => {
@@ -27,6 +34,8 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     const page = await context.newPage(); const errors = []; page.on('pageerror', (e) => errors.push(e.message));
     await context.route('https://**/*', (r) => r.fulfill({ body: '', contentType: 'text/javascript' }));
     await context.route('https://fixture/**', (r) => r.fulfill({ contentType: 'image/png', body: PNG }));
+    await context.route('https://fixture/planta.png', r => r.fulfill({ contentType: 'image/png', body: FOTO_PLANTA }));
+    await context.route('https://fixture/r9.png', r => r.fulfill({ contentType: 'image/png', body: FOTO_RENDER }));
     await context.addInitScript(() => { sessionStorage.setItem('login_ok', '1'); try { localStorage.clear(); } catch {} });
     await context.addInitScript(installMock, { staff: true, cartela: true });
     // Tabelas que o mock geral não tem: serviços adicionais e componentes.
@@ -74,6 +83,25 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     await page.waitForFunction(() => window.__sincronizados.at(-1)?.dados?.plantas?.[0]?.legendas?.[0]?.renderId === 'r9', null, { timeout: 8000 });
     assert.match(await cat.locator('.cpj-planta-label-render').first().getAttribute('src'), /r9\.png/);
     console.log('ok 3 - clicar na legenda troca o formato (o atual vem marcado)');
+    // Foto na área branca da folha, inteiramente fora do retângulo central da planta.
+    for (let i = 0; i < 5; i++) await cat.locator('[data-cpj="planta-tamanho-menos"]').click();
+    const papelEditor = await cat.locator('[data-cpj-planta-pagina]').boundingBox();
+    const fotoEditor = await cat.locator('.cpj-planta-label-render').boundingBox();
+    await page.mouse.move(fotoEditor.x + fotoEditor.width / 2, fotoEditor.y + fotoEditor.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(papelEditor.x + papelEditor.width * .4 + fotoEditor.width / 2,
+      papelEditor.y + 12 + fotoEditor.height / 2, { steps: 15 });
+    await page.mouse.up();
+    await page.waitForFunction(() => window.__sincronizados.at(-1)?.dados?.plantas?.[0]?.legendas?.[0]?.pos);
+    const posicaoEditor = await frame().evaluate(() => {
+      const folha = document.querySelector('[data-cpj-planta-pagina]').getBoundingClientRect();
+      const foto = document.querySelector('.cpj-planta-label-render').getBoundingClientRect();
+      const planta = document.querySelector('[data-cpj-planta-stage]').getBoundingClientRect();
+      return { x: (foto.left - folha.left) / folha.width, y: (foto.top - folha.top) / folha.height,
+        w: foto.width / folha.width, h: foto.height / folha.height,
+        naAreaBranca: foto.bottom < planta.top && foto.top >= folha.top && foto.right <= folha.right };
+    });
+    assert.ok(posicaoEditor.naAreaBranca, 'foto inteira na área branca acima da planta');
     // Aba "Pedido": prévia com a planta antes do resumo e das parcelas, e o PDF com a planta também.
     await frame().evaluate(() => window.abrirPedidoComercialPedido());
     await cat.locator('.cpj-aba-pedido .cpj-order-planta-folha').waitFor({ timeout: 20000 });
@@ -88,15 +116,58 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     assert.ok(ordem.plantaAntes, 'planta antes do resumo e das parcelas');
     assert.ok(ordem.imgs.some(u => /planta\.png/.test(u)) && ordem.imgs.some(u => /r9\.png/.test(u)), 'planta e a foto da legenda na cópia');
     assert.ok(ordem.alto > 200, 'planta com tamanho de verdade');
-    assert.deepEqual(ordem.botoes.slice(-2), ['Imprimir', 'Gerar PDF']);
+    const posicaoPedido = await frame().evaluate(() => {
+      const conteudo = document.querySelector('.cpj-order-planta-conteudo');
+      const transform = conteudo.style.transform; conteudo.style.transform = 'none';
+      const folha = conteudo.querySelector('.cpj-order-planta-folha').getBoundingClientRect();
+      const foto = conteudo.querySelector('.cpj-planta-label-render').getBoundingClientRect();
+      const posicao = { x: (foto.left - folha.left) / folha.width, y: (foto.top - folha.top) / folha.height,
+        w: foto.width / folha.width, h: foto.height / folha.height };
+      conteudo.style.transform = transform;
+      return posicao;
+    });
+    for (const chave of ['x', 'y', 'w', 'h']) assert.ok(Math.abs(posicaoEditor[chave] - posicaoPedido[chave]) < .005,
+      'posição e tamanho da foto na folha preservados no pedido: ' + chave);
+    assert.ok(ordem.botoes.includes('Imprimir') && ordem.botoes.includes('Gerar PDF'));
+    assert.ok(ordem.botoes.at(-1).startsWith('Renderizar com IA'));
+    assert.equal(await cat.locator('.cpj-layout-mini').count(),2);
+    const acoesFit=await cat.locator('.cpj-aba-pedido-topo').evaluate(el=>{const r=el.getBoundingClientRect();return [...el.querySelectorAll('.cpj-aba-pedido-acoes button')].every(b=>b.getBoundingClientRect().right<=r.right+1);});
+    assert.ok(acoesFit,'Acoes cabem na lateral do pedido');
+    if(process.env.FOTOPEDIDO)await page.screenshot({path:process.env.FOTOPEDIDO,fullPage:true});
     if (process.env.FOTO3) await cat.locator('.cpj-aba-pedido .cpj-order-plantas').screenshot({ path: process.env.FOTO3 });
     await frame().evaluate(() => { window.__impresso = null; const orig = HTMLIFrameElement.prototype; window.__printDoc = null;
       new MutationObserver(() => { document.querySelectorAll('iframe[title="Impressão do documento"]').forEach(f => { if (f.__espiao) return; f.__espiao = 1; f.addEventListener('load', () => { f.contentWindow.print = () => { window.__impresso = f.contentDocument.documentElement.outerHTML; }; }); }); }).observe(document.body, { childList: true }); });
     await cat.locator('[data-pedido-pdf]').click();
     await page.waitForFunction(() => document.getElementById('cat').contentWindow.__impresso, null, { timeout: 30000 });
-    const doc = (await frame().evaluate(() => window.__impresso)).split('<body')[1] || '';
+    const htmlImpressao = await frame().evaluate(() => window.__impresso);
+    const doc = htmlImpressao.split('<body')[1] || '';
     assert.ok(doc.indexOf('cpj-order-planta-folha') > 0 && doc.indexOf('cpj-order-planta-folha') < doc.indexOf('cpj-order-financeiro'), 'PDF com a planta antes do financeiro');
-    console.log('ok 4 - aba Pedido: prévia com a planta antes do resumo/parcelas, Imprimir e Gerar PDF');
+    const impressao = await context.newPage();
+    await impressao.setContent(htmlImpressao);
+    await impressao.waitForFunction(() => [...document.images].every(i => i.complete));
+    const buffer = await impressao.pdf({ path: '.tmp/pedido-foto-fora-planta.pdf', preferCSSPageSize: true, printBackground: true });
+    const { getDocument } = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    const pdf = await getDocument({ data: new Uint8Array(buffer) }).promise;
+    let fotoImpressa = false;
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const pagina = await pdf.getPage(i), texto = await pagina.getTextContent();
+      if (!texto.items.some(t => /planta do evento/i.test(t.str))) continue;
+      const viewport = pagina.getViewport({ scale: 1 });
+      const canvas = createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
+      const ctx = canvas.getContext('2d');
+      await pagina.render({ canvasContext: ctx, viewport, canvas }).promise;
+      const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+      let rosa = 0;
+      for (let p = 0; p < pixels.length; p += 4) if (pixels[p] > 220 && pixels[p + 1] < 75 && pixels[p + 2] > 75 && pixels[p + 2] < 120) rosa++;
+      const escalaFolha = Math.floor(Math.min(269 / 297, 172 / 210) * 10000) / 10000;
+      const areaEsperada = 297 * 210 * ((72 / 25.4 * escalaFolha) ** 2) * posicaoEditor.w * posicaoEditor.h;
+      assert.ok(rosa > areaEsperada * .96 && rosa < areaEsperada * 1.04, 'a foto na área branca aparece inteira no PDF');
+      require('node:fs').writeFileSync('.tmp/pedido-foto-fora-planta.png', canvas.toBuffer('image/png'));
+      fotoImpressa = true;
+    }
+    assert.ok(fotoImpressa, 'página da planta encontrada no PDF');
+    await pdf.destroy(); await impressao.close();
+    console.log('ok 4 - prévia e PDF preservam a folha inteira, inclusive foto na área branca fora da planta');
     // botão da Lista Completa leva pra aba
     assert.deepEqual(errors, []);
   } finally { await browser.close(); server.close(); }

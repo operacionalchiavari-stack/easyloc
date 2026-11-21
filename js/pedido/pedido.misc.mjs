@@ -204,8 +204,8 @@ export function imprimirPedido() {
   if(!janela) return;
 
   const printTheme = window.__COMPANY_THEME || {};
-  const printPrimary = printTheme.cor_sidebar || "#0B1F44";
-  const printAccent = printTheme.cor_destaque || "#F59E0B";
+  const printPrimary = printTheme.cor_sidebar || "#5a5a55";
+  const printAccent = printTheme.cor_destaque || "#7d603d";
 
   janela.document.write(`
     <!doctype html>

@@ -1,9 +1,12 @@
+import { instrucoesEmpresa } from '../_shared/ia-config.ts';
+import { esquemaMontagem, sistemaMontagem, validarMontagem } from '../_shared/montagem-assistente.mjs';
 // Solicitações com assistente (nov/2026): no lugar de preencher um formulário, a pessoa conversa com uma especialista
 // (compras ou manutenção da estrutura). Ela faz perguntas até entender o pedido e devolve um resumo com os campos que a
 // tela grava. Quem grava é o navegador, depois que a pessoa confirma (compras_galpao 'criar' ou
 // manutencao_predial_operar 'criar'). Ações: conversar {empresa_id, tipo, mensagens:[{papel, texto}]} e
 // transcrever {empresa_id, audio: dataURL}. Só a equipe logada (vínculo + funcionário ativo + 2FA). Nada é guardado aqui.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { esquemaSeparacao, sistemaSeparacao, validarSeparacao } from "../_shared/separacao-assistente.mjs";
 import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
 
 const corsHeaders = {
@@ -41,7 +44,7 @@ async function autenticar(req: Request, empresaId: string) {
   const service = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const { data: f } = await service.from("funcionarios_acesso").select("nome").eq("id", user.id).maybeSingle();
   const { data: u } = await service.from("usuarios").select("nome").eq("id", user.id).maybeSingle();
-  return { nome: String(f?.nome || u?.nome || user.email || "").trim() };
+  return { nome: String(f?.nome || u?.nome || user.email || "").trim(), usuario };
 }
 
 function hojeTexto() {
@@ -160,6 +163,8 @@ O resumo (quando pronto=true):
   risco, o que já foi feito e o que se espera (4 a 10 frases).`;
 
 const ESQUEMAS: Record<string, any> = {
+  separacao: esquemaSeparacao,
+  montagem: esquemaMontagem,
   compra: {
     name: "resposta_compra", strict: true,
     schema: {
@@ -235,14 +240,14 @@ function validarManutencao(r: any) {
 async function conversar(nome: string, body: any) {
   const key = Deno.env.get("OPENAI_API_KEY");
   if (!key) return json({ erro: "A assistente está indisponível agora." }, 500);
-  const tipo = body?.tipo === "manutencao" ? "manutencao" : body?.tipo === "compra" ? "compra" : "";
+  const tipo = body?.tipo === "manutencao" ? "manutencao" : body?.tipo === "compra" ? "compra" : body?.tipo === "separacao" ? "separacao" : body?.tipo === "montagem" ? "montagem" : "";
   if (!tipo) return json({ erro: "Tipo de solicitação inválido." }, 400);
   const lista = Array.isArray(body?.mensagens) ? body.mensagens : [];
   if (!lista.length) return json({ erro: "Conte o que você precisa para começar." }, 400);
   if (lista.length > 60) return json({ erro: "A conversa ficou longa demais. Envie o resumo ou comece de novo." }, 400);
   // Fotos: só do bucket de evidências da própria empresa, e no máximo as 6 mais recentes (as outras viram só texto).
-  const prefixo = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/solicitacoes-evidencias/${body.empresa_id}/`;
-  let restantes = 6;
+  const prefixo = tipo === "montagem" ? `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/sign/montagem-relatos/${body.empresa_id}/` : tipo === "separacao" ? `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/sign/separacao-ocorrencias/${body.empresa_id}/` : `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/solicitacoes-evidencias/${body.empresa_id}/`;
+  let restantes = ["separacao","montagem"].includes(tipo) ? 12 : 6;
   const mensagens = lista.slice().reverse().map((m: any) => {
     const texto = String(m?.texto || "").slice(0, 4000);
     if (m?.papel === "ia") return { role: "assistant", content: texto };
@@ -250,9 +255,10 @@ async function conversar(nome: string, body: any) {
     if (!fotos.length) return { role: "user", content: texto };
     const usar = fotos.slice(0, Math.max(0, restantes)); restantes -= usar.length;
     const legenda = (texto.trim() || "(foto)") + (usar.length < fotos.length ? ` [+${fotos.length - usar.length} foto(s) sem análise]` : "");
-    return { role: "user", content: [{ type: "text", text: legenda }, ...usar.map((u: string) => ({ type: "image_url", image_url: { url: u, detail: "low" } }))] };
+    return { role: "user", content: [{ type: "text", text: legenda }, ...usar.map((u: string) => ({ type: "image_url", image_url: { url: u, detail: ["separacao","montagem"].includes(tipo) ? "high" : "low" } }))] };
   }).reverse().filter((m: any) => typeof m.content !== "string" || m.content.trim());
-  const sistema = tipo === "compra" ? SISTEMA_COMPRA(nome) : SISTEMA_MANUTENCAO(nome);
+  const sistemaBase = tipo === "montagem" ? sistemaMontagem(nome,body.contexto_validado) : tipo === "separacao" ? sistemaSeparacao(nome,body.contexto_validado) : tipo === "compra" ? SISTEMA_COMPRA(nome) : SISTEMA_MANUTENCAO(nome);
+  const sistema=sistemaBase+await instrucoesEmpresa(body.empresa_id,tipo);
   const r = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -263,8 +269,15 @@ async function conversar(nome: string, body: any) {
   if (!r.ok) { console.warn("openai:", d?.error?.message); return json({ erro: "A assistente não conseguiu responder agora. Tente de novo." }, 502); }
   let saida: any;
   try { saida = JSON.parse(d?.choices?.[0]?.message?.content || "{}"); } catch { saida = {}; }
-  let resumo = saida?.pronto ? (tipo === "compra" ? validarCompra(saida.resumo) : validarManutencao(saida.resumo)) : null;
+  let resumo = saida?.pronto ? (tipo === "montagem" ? validarMontagem(saida.resumo) : tipo === "separacao" ? validarSeparacao(saida.resumo,body.contexto_validado,lista.flatMap((m:any)=>m.fotos||[]).filter((u:any)=>typeof u==="string"&&u.startsWith(prefixo))) : tipo === "compra" ? validarCompra(saida.resumo) : validarManutencao(saida.resumo)) : null;
   let resposta = corta(saida?.resposta, 2000) || "Pode me contar um pouco mais?";
+  if(tipo === "separacao" && saida?.pronto && !resumo){
+    const fotos=lista.flatMap((m:any)=>m.fotos||[]).filter((u:any)=>typeof u==="string"&&u.startsWith(prefixo));
+    const motivo=body.contexto_validado.motivos.find((m:any)=>m.id===saida.resumo?.motivo_id);
+    const dano=saida.resumo?.danificado||/danific|avaria|quebrad/i.test(motivo?.nome||"");
+    resposta=dano&&!fotos.length ? "Para enviar um relato de dano ao Acervo, a foto é obrigatória. A conversa fica salva enquanto você providencia. Pode anexar uma foto que mostre o item e a parte danificada?" : dano&&saida.resumo?.fotos_dano_claras!==true ? "Ainda preciso entender o dano pela imagem. Pode enviar uma foto mais próxima e nítida da parte afetada, identificando a unidade?" : "Ainda falta completar os dados para mostrar o resumo. Pode confirmar quantas unidades foram afetadas e descrever o problema que devemos registrar?";
+  }
+  if(tipo === "montagem" && saida?.pronto && !resumo)resposta="Ainda falta esclarecer as orientações indispensáveis para a desmontagem. "+(Array.isArray(saida.resumo?.pendencias_obrigatorias)&&saida.resumo.pendencias_obrigatorias.length?"Pode esclarecer: "+saida.resumo.pendencias_obrigatorias.join('; ')+"?":"Pode confirmar os acessos, cuidados e pendências para a próxima equipe?");
   // Manutenção sem o setor/sala: não fecha; pergunta o local (a IA às vezes resumia com "Setor (informar qual)").
   if (resumo && tipo === "manutencao" && localVago(resumo.local)) {
     resumo = null;
@@ -311,7 +324,19 @@ Deno.serve(async (req) => {
   if ("erro" in quem) return json({ erro: quem.erro }, quem.status);
   try {
     if (body?.acao === "transcrever") return await transcrever(body);
-    if (body?.acao === "conversar") return await conversar(quem.nome, body);
+    if (body?.acao === "conversar") {
+      if(body?.tipo === "montagem"){
+        const {data,error}=await quem.usuario.rpc("mont_assistente_contexto",{p_token:body.app_token,p_etapa:body.etapa_id});
+        if(error||!data||data.empresa_id!==body.empresa_id||data.etapa!=="montagem")return json({erro:"Sem acesso à montagem deste evento."},403);
+        body.contexto_validado=data;
+      }
+      if(body?.tipo === "separacao"){
+        const {data,error}=await quem.usuario.rpc("separacao_assistente_contexto",{p_empresa:body.empresa_id,p_pedido:body.pedido_id,p_linha:body.linha_id,p_item:body.item_id});
+        if(error||!data)return json({erro:"Sem acesso a este item ou pedido."},403);
+        body.contexto_validado=data;
+      }
+      return await conversar(quem.nome, body);
+    }
     return json({ erro: "Ação desconhecida" }, 400);
   } catch (e) {
     console.error(e);

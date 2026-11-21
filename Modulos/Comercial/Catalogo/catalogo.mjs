@@ -1,10 +1,12 @@
 import { getEmpresaAtualId } from "../../Estoque/CadastroItens/itens.api.mjs";
 import { iniciarDetalhesEstoque } from "./pedido-estoque-tooltip.mjs?v=20261029-mesma-conta";
 import { iniciarVitrineLogin } from "./catalogo-login-vitrine.mjs?v=20260926-login-nomes";
-import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261102-3d-persistente";
+import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261118-3d-personalizacao";
+import {prepararImagemPersonalizacao} from './catalogo-personalizacao-imagem.mjs?v=20261118-personalizacao';
 import { initCatalogAssistente } from "./catalogo-assistente.mjs?v=20261102-planta-desativada";
 import { initCatalogBiblioteca, openCatalogBiblioteca, backCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20261021-subpastas";
-import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos, personalizacoesDoItem, abrirPersonalizarItem } from "./catalogo-projetos.mjs?v=20261107-lista-sublocacao3";
+import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos, personalizacoesDoItem, abrirPersonalizarItem, registrarPersonalizacaoGerada, adicionarPersonalizacaoAoProjeto, buscarPersonalizacoesGeradas } from "./catalogo-projetos.mjs?v=20261118-fixo";
+import { chaveEscolha } from './catalogo-personalizacao-modal.mjs?v=20261118-reuso';
 
 const supabase = window.supabaseClient;
 const modoPedido = new URLSearchParams(location.search).get('comercial') === 'pedido' && window.parent !== window;
@@ -459,6 +461,7 @@ async function carregarItens(){
 async function carregarEmpresa(){
   if(state.company) return state.company;
   const empresaId = state.catalogSession?.empresa_id || await getEmpresaAtualId();
+  await window.EasyLocTheme?.applyForEmpresa(empresaId);
   const { data, error } = await supabase.from("empresas").select("nome,logo_url").eq("id", empresaId).maybeSingle();
   if(error) console.warn("Não foi possível carregar a identidade da empresa:", error);
   return data || null;
@@ -1108,7 +1111,7 @@ function currentViewLabel(){
 function screenLabelFor(screen){
   if(screen.overlay === "project-entry") return "Catálogo";
   if(screen.overlay === "biblioteca") return "Biblioteca";
-  if(screen.overlay === "projetos") return "Projetos";
+  if(screen.overlay === "projetos") return "Pedidos";
   if(screen.overlay === "studio") return "3D Livre";
   if(screen.activeView === GATEWAY_VIEW) return "Home";
   if(screen.activeView === HOME_VIEW) return "Categorias";
@@ -2819,6 +2822,7 @@ async function flattenImageOnCatalogBackground(src){
 }
 
 function personalizacaoPintura(item){return personalizacoesDoItem(item.id).some(p=>/pintura|tinta/i.test(p.tipo||p.nome||''))&&!personalizacoesDoItem(item.id).some(p=>/forra|tecido|estof/i.test(p.tipo||p.nome||''));}
+const imagemPersonalizacao=item=>prepararImagemPersonalizacao(item,{fotoPlaceholder:FOTO_PLACEHOLDER,capturar3D:id=>cenaEditor.fotoDoItem(id)});
 function openCustomizeDialog(item){
   if(state.fabricGenerating){
     $("catalogCustomizeDialog").showModal();
@@ -2832,10 +2836,7 @@ function openCustomizeDialog(item){
   $('catalogCustomizeGenerate').textContent=pintura?'Aplicar cor com IA':'Aplicar tecido com IA';
   state.fabricDataUrl = "";
   state.fabricFile = null;
-  // Só a PRÉVIA visível no diálogo é otimizada — o valor bruto de
-  // item.photo continua sendo mandado como referência pra IA em
-  // generateFabricVariation() (scene.preview), lido direto do objeto do
-  // item, nunca desta <img>.
+  // A mesma foto válida (ou captura do modelo) alimenta a prévia e a IA.
   $("catalogCustomizeProduct").src = otimizarFoto(item.customizedPhoto || item.photo, IMG_WIDTH.card);
   $("catalogCustomizeProduct").alt = item.name;
   $("catalogFabricPreview").src = "";
@@ -2845,6 +2846,13 @@ function openCustomizeDialog(item){
   $("catalogCustomizeGenerate").disabled = true;
   $("catalogCustomizeStatus").textContent = "";
   $("catalogCustomizeDialog").showModal();
+  const referencia={item,promise:imagemPersonalizacao(item)};state.customizeReference=referencia;
+  $("catalogCustomizeStatus").textContent='Preparando a imagem do móvel…';
+  referencia.promise.then(src=>{
+    if(state.customizeReference!==referencia)return;
+    $("catalogCustomizeProduct").src=src;
+    if(!state.fabricGenerating)$("catalogCustomizeStatus").textContent='';
+  }).catch(error=>{if(state.customizeReference===referencia&&!state.fabricGenerating)$("catalogCustomizeStatus").textContent=error.message;});
   window.CatalogCredits.prepareFabric();
 }
 
@@ -2872,6 +2880,7 @@ async function generateFabricVariation(cartela = null){
   if($("catalogCustomizeDialog").open) $("catalogCustomizeDialog").close();
     const workingToast = notify({ title: "Personalização em andamento", message: cartela ? `${item.name} com ${cartela.descricao}. Você pode continuar navegando.` : `${item.name} está recebendo ${material}. Você pode continuar navegando.`, status: "working", duration: 0 });
   try{
+    const imagemProduto=await (!cartela&&state.customizeReference?.item===item?state.customizeReference.promise:imagemPersonalizacao(item));
     const empresaId = state.catalogSession.empresa_id;
     const { data, error } = await window.CatalogCredits.invoke("studio-ai-engine", {
       body: {
@@ -2880,8 +2889,9 @@ async function generateFabricVariation(cartela = null){
         prompt: cartela ? cartela.prompt : pintura ? `Edite exclusivamente a pintura das superfícies pintadas do móvel ${item.name} da primeira imagem, aplicando a cor e o acabamento da amostra da segunda imagem. Preserve geometria, estrutura, perspectiva, iluminação e sombras. Preserve tecidos, vidros, metais e partes não pintadas. Fundo branco puro #FFFFFF.` : `Edite exclusivamente o revestimento têxtil do móvel da primeira imagem, aplicando com alta fidelidade o tecido fornecido na segunda imagem. Preserve absolutamente o mesmo ${item.name}: geometria, desenho, estrutura, junco, madeira, metal, pés, costuras, almofadas, volumes, perspectiva, enquadramento, iluminação, sombras e resolução. O fundo deve ser liso, uniforme e totalmente opaco no branco puro exato do catálogo #FFFFFF, sem cenário, textura, gradiente, preto ou transparência. O contorno do móvel deve permanecer limpo, natural e sem halos. Não redesenhe o móvel, não altere cores de partes não estofadas e não modifique o ambiente. A textura deve acompanhar dobras, costuras e direção real do tecido.`,
         scene: {
           referencePolicy: "fabric_customization",
+          personalizacao: { item_id: item.id, tipo: pintura ? 'tinta' : 'tecido', descricao: cartela?.descricao || (pintura ? 'Tinta personalizada' : 'Tecido personalizado'), escolha: cartela?.escolha || null },
           fabricReference,
-          preview: item.photo,
+          preview: imagemProduto,
           objects: [{ itemId: item.id, itemName: cartela ? cartela.descricao : pintura?"Amostra de cor":"Amostra de tecido", itemImage: fabricReference }],
           options: { formato: { largura: 1536, altura: 1024 }, convidados: "Sem convidados", ambientacao: [] },
         },
@@ -2902,7 +2912,11 @@ async function generateFabricVariation(cartela = null){
       ? (String(result.base64).startsWith("data:") ? result.base64 : `data:image/png;base64,${result.base64}`)
       : result?.url;
     if(!rawSrc) throw new Error(data?.erro || data?.error?.message || "A IA não retornou a imagem.");
-    const src = await flattenImageOnCatalogBackground(rawSrc);
+    const src = data.personalizacaoSalva?.url || await flattenImageOnCatalogBackground(rawSrc);
+    const resultado = data.personalizacaoSalva || { url: src, personalizacao: { item_id: item.id, tipo: pintura ? 'tinta' : 'tecido', descricao: cartela?.descricao || '', escolha: cartela?.escolha || null } };
+    if(cartela?.escolha)resultado.personalizacao={...resultado.personalizacao,escolha:structuredClone(cartela.escolha)};
+    item.customizedResult = resultado;
+    registrarPersonalizacaoGerada(item.id, resultado);
     item.customizedPhoto = src;
     $("catalogCustomizeProduct").src = src;
     $("catalogCustomizeStatus").textContent = "Personalização aplicada. A imagem acima e a foto do catálogo foram atualizadas.";
@@ -2915,12 +2929,12 @@ async function generateFabricVariation(cartela = null){
     }
     workingToast.update({
       status: "done",
-      title: "Sua personalização ficou pronta",
-      message: `${item.name} já está com ${material}.`,
+      title: data.reutilizada ? 'Versão já renderizada reutilizada' : 'Sua personalização ficou pronta',
+      message: data.reutilizada ? `${item.name}. Nenhum crédito de IA utilizado.` : data.personalizacaoSalva ? `${item.name}. Salva em Comercial › Personalizações IA › Itens personalizáveis.` : (data.personalizacaoErro || 'A imagem ainda não foi salva em Personalizações IA. Baixe o resultado para preservá-lo.'),
       image: src,
       actionLabel: "Ver resultado",
-      duration: 12000,
-      onAction: () => openFabricResultPreview(item, src),
+      duration: 0,
+      onAction: () => openFabricResultPreview(item, src, resultado),
     });
   }catch(error){
     console.error("Erro ao personalizar tecido:", error);
@@ -2958,6 +2972,17 @@ async function amostraDataUrl(escolha){
 const ehTinta = (tipo) => /tint|pint|laca|esmalt|verniz|^cor\b/i.test(String(tipo || ""));
 const descreverEscolha = (tipo, o) => `${String(tipo || "").toLowerCase()} ${o.codigo} ${o.nome}${o.fornecedor ? ` (${o.fornecedor})` : ""}${o.cor ? `, cor ${o.cor}` : ""}`;
 async function gerarComCartela(item, escolha){
+  try{
+    const fotos=await buscarPersonalizacoesGeradas(item.id);
+    const existente=fotos.find(f=>chaveEscolha(f.personalizacao?.escolha)===chaveEscolha(escolha));
+    if(existente){
+      const resultado={...existente,personalizacao:{...existente.personalizacao,escolha:structuredClone(escolha)}};
+      item.customizedResult=resultado;registrarPersonalizacaoGerada(item.id,resultado);
+      openFabricResultPreview(item,resultado.url,resultado);
+      notify({title:'Essa combinação já está renderizada',message:'Reutilizamos a imagem pronta. Nenhum crédito de IA utilizado.',status:'done'});
+      return;
+    }
+  }catch(error){notify({title:'Não foi possível verificar as versões renderizadas',message:'Tente novamente antes de usar a IA.',status:'error'});return;}
   const entradas = Object.entries(escolha?.escolhas || {}).filter(([, o]) => o?.opcao_id);
   if(!entradas.length) return;
   let referencia = "", principal = entradas[0];
@@ -2976,7 +3001,7 @@ async function gerarComCartela(item, escolha){
     : `Edite exclusivamente o revestimento têxtil do móvel da primeira imagem, aplicando com alta fidelidade o tecido da amostra da segunda imagem (${descreverEscolha(tipo, o)}). A textura deve acompanhar dobras, costuras e a direção real do tecido. Não altere as cores de partes não estofadas.`;
   const extra = outras.length ? ` Aplique também: ${outras.join("; ")}.` : "";
   if(state.catalogSession?.token) await window.CatalogCredits.prepareFabric();
-  generateFabricVariation({ item, referencia, descricao, ehTinta:ehTinta(tipo), prompt: `${acao}${extra} ${preserva} ${regraFundo}` });
+  generateFabricVariation({ item, referencia, descricao, escolha:structuredClone(escolha), ehTinta:ehTinta(tipo), prompt: `${acao}${extra} ${preserva} ${regraFundo}` });
 }
 async function textoCustoIA(){
   if(!state.catalogSession?.token) return "";
@@ -2990,13 +3015,16 @@ async function textoCustoIA(){
 // upload/dropzone/botão de aplicar, que não fazem sentido pra só OLHAR o
 // que já foi gerado) — abre uma prévia minimalista, só a foto grande +
 // um link de baixar (mesmo padrão do resultado do Painel 3D).
-function openFabricResultPreview(item, src){
+function openFabricResultPreview(item, src, resultado = item.customizedResult){
+  const tipo = resultado?.personalizacao?.tipo === 'tinta' ? 'tinta' : 'tecido';
   $("catalogFabricResultImage").src = src;
-  $("catalogFabricResultImage").alt = `${item.name} com tecido personalizado`;
+  $("catalogFabricResultImage").alt = `${item.name} com ${tipo} personalizado`;
   $("catalogFabricResultTitle").textContent = item.name;
   const download = $("catalogFabricResultDownload");
   download.href = src;
-  download.download = `${slugify(item.name)}-tecido-personalizado.png`;
+  download.download = `${slugify(item.name)}-${tipo}-personalizado.png`;
+  const botao=$('catalogFabricResultAdd');
+  botao.onclick=async()=>{if(await adicionarPersonalizacaoAoProjeto(resultado,{botao}))$('catalogFabricResultDialog').close();};
   $("catalogFabricResultDialog").showModal();
 }
 

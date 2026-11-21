@@ -1,3 +1,4 @@
+import { instrucoesEmpresa } from '../_shared/ia-config.ts';
 // Assistente comercial do catálogo (out/2026).
 //
 // Uma "representante comercial" dentro do catálogo: conversa humanizada com o decorador (ou a equipe testando), consulta
@@ -1127,7 +1128,7 @@ async function conversar(ctx: Ctx, body: any) {
   const dataDoEvento = /^\d{4}-\d{2}-\d{2}$/.test(String(projeto?.data_evento || "")) ? String(projeto!.data_evento) : "";
   if (dataDoEvento) mapas.set(dataDoEvento, await mapaDisponibilidade(ctx, dataDoEvento));
   const messages: any[] = [
-    { role: "system", content: promptDoSistema({ ctx, perfil, projeto, modo, empresa: empresa?.nome, formatos, acervo, dispEvento: dataDoEvento ? mapas.get(dataDoEvento) : null }) + OBJETIVIDADE },
+    { role: "system", content: promptDoSistema({ ctx, perfil, projeto, modo, empresa: empresa?.nome, formatos, acervo, dispEvento: dataDoEvento ? mapas.get(dataDoEvento) : null }) + OBJETIVIDADE + await instrucoesEmpresa(ctx.empresaId,"catalogo") },
     ...passadas.map((m: any) => ({ role: m.papel, content: textoComArquivos(m) + locaisDaMensagem(m) + pecasDaMensagem(m, acervo) + ((m.anexos || []).some((a: any) => a.tipo === "imagem") ? `\n[foto da composição enviada na conversa — ref ${refFoto(m.id)}: ${((m.anexos || []).find((a: any) => a.tipo === "imagem")?.itens || []).join(", ")}]` : "") })),
     { role: "user", content: porAudio ? `[mensagem de voz transcrita — pode ter pequenos erros de transcrição em nomes; interprete pelo contexto e pelo acervo]\n${mensagem}` : mensagem },
   ];

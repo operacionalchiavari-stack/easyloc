@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Pedido</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
-  <link rel="stylesheet" href="pedido.css?v=20261107-lista-sublocacao">
+  <link rel="stylesheet" href="pedido.css?v=20261118-cf-fixo">
+  <link rel="stylesheet" href="../../../styles/pedido-pagamentos-responsivo.css?v=20261118-varios">
   <link rel="stylesheet" href="../../../styles/sublocacoes.css?v=20261102-sublocacoes">
 </head>
 <body>
@@ -191,12 +193,9 @@
 
         </section>
 
-        <section class="finance-card pagamento-card pagamento-card-wide pagamento-minimal-card">
+        <section class="finance-card pagamento-card pagamento-card-wide pagamento-minimal-card" aria-labelledby="pagamentosPedidoTitulo">
+          <h2 class="pagamento-secao-titulo" id="pagamentosPedidoTitulo">Pagamentos</h2>
           <div class="pagamento-card-head">
-            <div class="pagamento-title-block sr-only">
-              <h2>Financeiro do pedido</h2>
-              <p>Parcelas, baixas e cobranças Pix</p>
-            </div>
             <div class="pagamento-head-tools">
               <div class="pagamento-top-summary" aria-label="Resumo financeiro">
                 <div class="pagamento-mini-card">
@@ -221,17 +220,21 @@
                   <label>
                     <span>BV</span>
                     <input class="el-input" type="number" id="pagamentoAbatimentoBV" min="0" step="0.01" placeholder="R$ 0,00">
+                    <small id="pagamentoDisponivelBV"></small>
                   </label>
                   <label>
                     <span>Crédito</span>
                     <input class="el-input" type="number" id="pagamentoAbatimentoCredito" min="0" step="0.01" placeholder="R$ 0,00">
+                    <small id="pagamentoDisponivelCredito"></small>
                   </label>
+                  <p id="pagamentoAbatimentoErro" role="alert" hidden></p>
                   <button type="button" class="pagamento-abatimento-submit" id="btnConfirmarAbatimento">Adicionar</button>
                 </div>
               </div>
             </div>
           </div>
 
+          <section id="pagamentoAbatimentosAplicados" class="pagamento-abatimentos-aplicados pg-componente-card" aria-label="Abatimentos neste pedido" aria-live="polite" hidden></section>
           <div class="pagamento-internal-config sr-only" aria-hidden="true">
             <select id="pagamentoMetodo">
               <option>PIX</option>
@@ -245,7 +248,6 @@
             <input type="number" id="pagamentoParcelas" value="1" min="0" step="1">
             <input type="date" id="pagamentoDataBase">
             <input type="number" id="pagamentoDiaFixo" min="1" max="31" step="1">
-            <input type="number" id="pagamentoDescontoComercial" value="0" min="0" step="0.01">
             <input type="number" id="bvTotal" value="0" min="0" step="0.01">
             <input type="number" id="bvAbatido" value="0" min="0" step="0.01">
             <input type="number" id="pagamentoCreditoCliente" value="0" min="0" step="0.01">
@@ -294,19 +296,24 @@
           <div class="resumo-linha"><span>Valor de locação</span><strong id="resumoLocacaoBruto">R$ 0,00</strong></div>
           <div class="resumo-linha"><span>Desconto</span><strong id="resumoLocacaoDesconto">R$ 0,00</strong></div>
           <div class="resumo-linha"><span>Customizações</span><strong id="resumoCustomizacoes">R$ 0,00</strong></div>
+          <div class="resumo-linha" hidden><span>Desconto em customizações</span><strong id="resumoCustomizacoesDesconto">R$ 0,00</strong></div>
           <div class="resumo-linha"><span>Itens sublocados</span><strong id="resumoTerceirizados">R$ 0,00</strong></div>
           <div class="resumo-linha subtotal"><span>Subtotal</span><strong id="resumoSubtotal">R$ 0,00</strong></div>
           <div class="resumo-linha"><span>Frete</span><strong id="resumoFreteBruto">R$ 0,00</strong></div>
-          <div class="resumo-linha sr-only"><span>Desconto frete</span><strong id="resumoFreteDesconto">- R$ 0,00</strong></div>
+          <div class="resumo-linha" hidden><span>Desconto frete</span><strong id="resumoFreteDesconto">- R$ 0,00</strong></div>
           <div class="resumo-linha"><span>Montagem</span><strong id="resumoMontagemBruto">R$ 0,00</strong></div>
-          <div class="resumo-linha sr-only"><span>Desconto montagem</span><strong id="resumoMontagemDesconto">- R$ 0,00</strong></div>
+          <div class="resumo-linha" hidden><span>Desconto montagem</span><strong id="resumoMontagemDesconto">- R$ 0,00</strong></div>
           <div class="resumo-linha sr-only"><span>Servicos</span><strong id="resumoServicos">R$ 0,00</strong></div>
+          <div class="resumo-linha" hidden><span>Desconto comercial</span><strong id="resumoDescontoComercial">R$ 0,00</strong></div>
+          <div class="resumo-linha" hidden><span>BV aplicado</span><strong id="resumoAbatimentoBV">R$ 0,00</strong></div>
+          <div class="resumo-linha" hidden><span>Crédito aplicado</span><strong id="resumoAbatimentoCredito">R$ 0,00</strong></div>
+          <div class="resumo-linha" hidden><span>Desconto especial</span><strong id="resumoDescontoBvPedido">R$ 0,00</strong></div>
           <div class="resumo-linha total"><span>Total do pedido</span><strong id="resumoTotalGeral">R$ 0,00</strong></div>
         </section>
 
         <section class="finance-card logistica-card" id="cardLogisticaPedido">
           <div class="frete-topo">
-            <h2>Frete</h2>
+            <div class="pedido-logistica-titulo"><h2>Frete</h2><label class="pedido-mostrar-desconto"><input type="checkbox" data-exibicao-financeiro="frete_desconto"> Mostrar desconto no pedido</label></div>
             <div class="logistica-extra">
               <div><span>Volume</span><strong id="freteVolumeTotal">0 m3</strong></div>
               <div class="frete-km-chip" title="Clique para ajustar a distância"><span>Distância</span><strong id="freteDistanciaKm">0 km</strong><input id="freteKmManual" type="number" min="0" step="0.1" aria-label="Distância para cálculo (km)" hidden></div>
@@ -318,7 +325,7 @@
           <div id="freteDetalheCaminhoes" class="frete-detalhe-container"></div>
         </section>
         <section class="finance-card logistica-card montagem-card" id="cardMontagemPedido">
-          <h2>Montagem</h2>
+          <div class="pedido-logistica-titulo montagem-topo"><h2>Montagem</h2><label class="pedido-mostrar-desconto"><input type="checkbox" data-exibicao-financeiro="montagem_desconto"> Mostrar desconto no pedido</label></div>
           <div class="frete-detalhe-container">
             <div class="logistica-detail-row"><span>Qtd. ajudantes</span><strong id="montagemQtd">-</strong></div>
             <div class="logistica-detail-row"><span>Valor bruto</span><strong id="montagemCusto">R$ 0,00</strong></div>
@@ -328,6 +335,24 @@
           <div class="montagem-info" id="montagemInfo">-</div>
           <strong class="sr-only" id="logisticaTotalOperacao">R$ 0,00</strong>
 
+        </section>
+        <section class="finance-card pedido-desconto-card" id="cardDescontoPedido" aria-labelledby="descontoPedidoTitulo">
+          <h2 id="descontoPedidoTitulo">Desconto no pedido</h2>
+          <div class="pedido-desconto-corpo">
+            <table class="pedido-descontos-tabela">
+              <thead><tr><th scope="col">Aplicar em</th><th scope="col">Desconto (R$)</th></tr></thead>
+              <tbody>
+                <tr><th scope="row"><label for="descontoAreaLocacao">Locação</label></th><td><input class="el-input" id="descontoAreaLocacao" data-desconto-area="locacao" type="number" value="0" min="0" step="0.01" inputmode="decimal" aria-describedby="descontoComercialErro"></td></tr>
+                <tr><th scope="row"><label for="descontoAreaFrete">Frete</label></th><td><input class="el-input" id="descontoAreaFrete" data-desconto-area="frete" type="number" value="0" min="0" step="0.01" inputmode="decimal" aria-describedby="descontoComercialErro"></td></tr>
+                <tr><th scope="row"><label for="descontoAreaMontagem">Montagem</label></th><td><input class="el-input" id="descontoAreaMontagem" data-desconto-area="montagem" type="number" value="0" min="0" step="0.01" inputmode="decimal" aria-describedby="descontoComercialErro"></td></tr>
+                <tr><th scope="row"><label for="descontoAreaCustomizacao">Customização</label></th><td><input class="el-input" id="descontoAreaCustomizacao" data-desconto-area="customizacao" type="number" value="0" min="0" step="0.01" inputmode="decimal" aria-describedby="descontoComercialErro"></td></tr>
+              </tbody>
+            </table>
+            <input type="number" id="pagamentoDescontoComercial" value="0" hidden>
+            <p id="descontoComercialErro" class="pedido-desconto-erro" role="alert" hidden></p>
+            <div class="pedido-desconto-aplicado"><span>Desconto aplicado</span><strong id="descontoComercialAplicado">R$ 0,00</strong></div>
+            <button type="button" class="pedido-desconto-remover" id="btnRemoverDescontoComercial" hidden>Remover descontos</button>
+          </div>
         </section>
       </aside>
     </div>
@@ -534,28 +559,39 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
-<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/google.config.js"></script>
 <script src="../../../js/core/google.js"></script>
 <script src="../../../js/core/paymentPix.js?v=20261021-divisao"></script>
-<script src="../../../js/core/linkPagamento.js?v=20261030-pedido-digital"></script>
+<script src="../../../js/core/linkPagamento.js?v=20261117-abertura-link"></script>
 <script>
   // Link de pagamento do pedido (out/2026): o cliente vê as parcelas e gera o PIX de cada uma, na conta certa
   // o botão "Link do pedido" fica na aba Pedido (coluna da esquerda, junto do Gerar PDF), dentro do catálogo
-  window.__pedidoAbrirLink = () => window.EasyLocLinkPagamento.abrir({
+  window.__pedidoAbrirLink = (opcoes = {}) => window.EasyLocLinkPagamento.abrir({
     empresaId: window.__CONTEXT?.empresa_id || sessionStorage.getItem("empresa_id"), pedidoId: window.__PEDIDO_ATUAL_ID,
     numero: document.getElementById("orcamentoNumero")?.textContent.trim() || "", cliente: document.getElementById("clienteInput")?.value || "",
-    telefone: document.getElementById("telefoneInput")?.value || "" });
-  window.__pedidoLinkPlantas = (plantas) => { const id = window.__PEDIDO_ATUAL_ID; if (id) window.supabaseClient.rpc("pagamento_link_plantas_salvar", { p_empresa: window.__CONTEXT?.empresa_id || sessionStorage.getItem("empresa_id"), p_pedido: id, p_plantas: plantas || [] }).then(({ error }) => { if (error) console.warn("Planta no link:", error.message); }); };
+    telefone: document.getElementById("telefoneInput")?.value || "", preparar: opcoes.preparar });
+  let filaPlantasLink=Promise.resolve();
+  window.__pedidoLinkPlantas = plantas => {
+    const id=window.__PEDIDO_ATUAL_ID,empresa=window.__CONTEXT?.empresa_id || sessionStorage.getItem('empresa_id');
+    if(!id || !empresa)return Promise.resolve(false);
+    const copia=structuredClone(plantas || []);
+    const gravar=async()=>{
+      const {error}=await window.supabaseClient.rpc('pagamento_link_plantas_salvar',{p_empresa:empresa,p_pedido:id,p_plantas:copia});
+      if(error)throw error;return true;
+    };
+    filaPlantasLink=filaPlantasLink.catch(()=>{}).then(gravar);
+    return filaPlantasLink;
+  };
   window.__pedidoLinkPagamento = () => window.EasyLocLinkPagamento.paraDocumento({ empresaId: window.__CONTEXT?.empresa_id || sessionStorage.getItem("empresa_id"), pedidoId: window.__PEDIDO_ATUAL_ID });
 </script>
-<link rel="stylesheet" href="../produtividade.css?v=20261031">
-<script src="../produtividade.js?v=20261031"></script>
+<link rel="stylesheet" href="../produtividade.css?v=20261115-foto-cliente">
+<script src="../produtividade.js?v=20261119-admin-ve-todos"></script>
 <script src="../../../js/ui/sublocacoes.js?v=20261102-remessas-parciais"></script>
-<script type="module" src="../../../js/pedido/pedido.mjs?v=20261107-lista-sublocacao"></script>
+<script type="module" src="../../../js/pedido/pedido.mjs?v=20261118-cf-fixo"></script>
 <script>lucide.createIcons();</script>
-<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
 </body>
 </html>

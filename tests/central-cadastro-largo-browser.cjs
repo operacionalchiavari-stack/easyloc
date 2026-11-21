@@ -13,7 +13,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
 const mockSupabase = `
 (() => {
   const banco = {
-    separacoes_pedidos: [{ id: "p1", empresa_id: "e1", numero_pedido: "003", cliente_nome: "Lis Baêtas", status: "orcamento",
+    separacoes_pedidos: [{ id: "p1", empresa_id: "e1", numero_pedido: "003", cliente_id:"c1",local_id:"l1", cliente_nome: "Lis Baêtas", status: "orcamento",
       data_evento: "2026-11-11", data_evento_fim: "2026-11-13", local_nome: "Vale dos Desejos", valor_total: 900,
       created_at: "2026-10-09T10:00:00Z", data_hora: "2026-10-09T10:00:00Z",
       observacoes: { projeto_comercial: { noivos: "Lis Baêtas", dados: { ambientes: [
@@ -27,9 +27,10 @@ const mockSupabase = `
       { id: "i1", empresa_id: "e1", produto: "Berlim", produto_base: "Sofá", descricao_total: "Sofá Berlim Linho (L) 2.58 m (A) 0.73 m (P) 0.89 m", foto_url: "https://fixture/sofa.png", referencia: "SOF001", categoria: "Sofás", largura: 2.58, altura: 0.73, profundidade: 0.89, valor_locacao: 300, valor_reposicao: 5000 },
       { id: "i2", empresa_id: "e1", produto: "Bistrol", produto_base: "Bar", descricao_total: "Bar Bistrol", foto_url: "https://fixture/bar.png", referencia: "BAR002", categoria: "Bares", valor_locacao: 200, valor_reposicao: 3000 },
       { id: "i3", empresa_id: "e1", produto: "Goa", produto_base: "Mesa", descricao_total: "Mesa Goa", foto_url: "", referencia: "MES003", categoria: "Mesas", valor_locacao: null, valor_reposicao: null } ],
+    usuarios_empresas:[{user_id:"u1",empresa_id:"e1"}],
     empresas: [{ id: "e1", nome: "Chiavari", logo_url: "https://fixture/logo.png" }],
     clientes_empresas: [{ id: "c1", empresa_id: "e1", nome_razao: "Lis Baêtas", catalogo_logo_url: "https://fixture/lis.png", telefone: "11999998888", email: "lis@exemplo.com", cpf_cnpj: "12.345.678/0001-90", status: "Ativo", endereco: "Rua das Flores, 120 — São Paulo", observacoes: "Prefere atendimento por WhatsApp", tags: ["Decoradora", "VIP"] }],
-    locais_empresas: [{ id: "l1", empresa_id: "e1", nome: "Vale dos Desejos", endereco: "Estrada do Vale, 2000 — Itu", ponto_referencia: "Após o posto", responsavel: "Marcos", telefone: "11988887777", latitude: -23.2, longitude: -47.3, observacoes: "Portão largo" }]
+    locais_empresas: [{ id: "l1", empresa_id: "e1", nome_razao:"Vale dos Desejos", tags:{}, status:"Ativo", nome: "Vale dos Desejos", endereco: "Estrada do Vale, 2000 — Itu", ponto_referencia: "Após o posto", responsavel: "Marcos", telefone: "11988887777", latitude: -23.2, longitude: -47.3, observacoes: "Portão largo" }]
   };
   function consulta(tabela){
     let linhas = (banco[tabela] || []).slice(), unico = false;
@@ -71,25 +72,28 @@ const mockSupabase = `
     if (url.startsWith(BASE)) {
       const arquivo = path.join(raiz, decodeURIComponent(new URL(url).pathname));
       if (!fs.existsSync(arquivo)) return rota.fulfill({ status: 404, body: "" });
-      const tipo = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css" }[path.extname(arquivo)] || "application/octet-stream";
+      const tipo = { ".html": "text/html", ".js": "text/javascript", ".mjs":"text/javascript", ".css": "text/css" }[path.extname(arquivo)] || "application/octet-stream";
       return rota.fulfill({ contentType: tipo, body: fs.readFileSync(arquivo) });
     }
     return rota.abort();
   });
   await page.goto(BASE + "Modulos/Comercial/Pedidos/CentralPedidos.html");
   await page.waitForSelector('[data-pedido-id="p1"] [data-action="abrir-cliente"]', { timeout: 15000 });
-  const medir = () => page.evaluate(() => { const d = document.querySelector(".central-cadastro-dialog"), b = document.querySelector(".central-cadastro-body");
-    return { largura: Math.round(d.getBoundingClientRect().width), rola: b.scrollHeight > b.clientHeight + 1, alturaJanela: Math.round(d.getBoundingClientRect().height) }; });
-  for (const tipo of ["cliente", "local"]) {
-    await page.click('[data-pedido-id="p1"] [data-action="abrir-' + tipo + '"]');
-    await page.waitForSelector(tipo === "cliente" ? ".cad-hero" : ".cad-local");
-    await page.waitForTimeout(300);
-    const m = await medir();
-    if (process.env.FOTO) await page.screenshot({ path: process.env.FOTO.replace(".png", "-" + tipo + ".png") });
-    assert.ok(m.largura >= 1100, tipo + ": janela larga (" + m.largura + "px)");
-    assert.ok(!m.rola, tipo + ": sem barra de rolagem (" + JSON.stringify(m) + ")");
-    console.log("ok - " + tipo + ": " + m.largura + "px de largura, sem barra de rolagem");
-    await page.click("#btnFecharCadastroRelacionado");
+  await page.locator('#pesquisaGeralPedidos').click();
+  await page.locator('#pesquisaGeralPedidos').fill('003');
+  for(const tipo of ['cliente','local']){
+    await page.click('[data-pedido-id="p1"] [data-action="abrir-'+tipo+'"]');
+    const frame=page.frameLocator('#pedidoCadastroTela'),nome=tipo==='cliente'?'#nome':'#locaisNome';
+    const esperado=tipo==='cliente'?'Lis Ba\u00eatas':'Vale dos Desejos';
+    await page.waitForFunction(({nome,esperado})=>document.querySelector('#pedidoCadastroTela')?.contentDocument?.querySelector(nome)?.value===esperado,{nome,esperado});
+    assert.equal(await frame.locator(nome).inputValue(),esperado);
+    assert.equal(await page.locator('#centralCadastroRelacionadoModal').isVisible(),false);
+    assert.equal(await frame.locator('.back-btn').getAttribute('title'),'Voltar para a Central de Pedidos');
+    await frame.locator('.back-btn').click();
+    await page.locator('#pedidoCadastroTela').waitFor({state:'detached'});
+    assert.equal(await page.locator('#pesquisaGeralPedidos').inputValue(),'003');
+    assert.equal(await page.locator('[data-pedido-id="p1"]').count(),1);
+    console.log('OK - '+tipo+': detalhes completos e retorno para Central com filtro preservado');
   }
   assert.deepStrictEqual(erros, []);
   await browser.close();

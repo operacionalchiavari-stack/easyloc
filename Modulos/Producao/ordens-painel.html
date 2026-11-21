@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>O.S e O.P</title>
+<script src="../../js/core/limpezaDados.js?v=20261026"></script><script src="../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../js/core/themePrepaint.js"></script>
+<link rel="stylesheet" href="../../styles/global.css?v=20261107-titulos-30">
+</head><body>
+<main style="padding:14px"><p id="ordCarregando" role="status">Carregando ordens...</p></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="../../js/core/supabase.js"></script><script src="../../js/core/context.js?v=20261026-limpeza"></script><script src="../../js/core/permissions.js?v=20261116-os-op"></script>
+<script>
+(async()=>{
+  try { await window.EasyLocPermissions?.load?.(); } catch {}
+  const cache=window.EasyLocPermissions?._cache;
+  const tem=key=>!cache||cache.legacyAdmin||cache.permissions?.get?.(key)===true;
+  const permitido={producao:cache?.active!==false&&(tem('producao.ordens.visualizar')||tem('estoque.almoxarifado.visualizar')),servico:cache?.active!==false&&tem('estoque.almoxarifado.visualizar')};
+  const query=new URLSearchParams(location.search),solicitada=query.get('aba')||'producao';
+  const aba=permitido[solicitada]?solicitada:Object.keys(permitido).find(key=>permitido[key]);
+  if(!aba){document.getElementById('ordCarregando').textContent='Sem acesso a esta tela.';return;}
+  const destino=new URL(aba==='servico'?'../Chiavari/CentralMetas/itens-danificados.html':'ordens.html',location.href);
+  for(const [key,value] of query)if(!['aba','embutido','v'].includes(key))destino.searchParams.set(key,value);
+  destino.searchParams.set('painel_ordens','1');
+  location.replace(destino.href);
+})();
+</script></body></html>

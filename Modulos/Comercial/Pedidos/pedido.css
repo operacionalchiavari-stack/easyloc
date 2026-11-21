@@ -830,6 +830,31 @@
   overflow-wrap: anywhere;
 }
 
+#clienteLista .autocomplete-novo-cliente {
+  width:100%;box-sizing:border-box;border:0;border-top:1px solid #e3e7ec;
+  border-radius:0;background:#f8fafc;color:#123f86;text-align:left;
+  padding:12px 14px;font:inherit;white-space:normal;min-height:62px;
+}
+#clienteLista .autocomplete-novo-cliente:hover,#clienteLista .autocomplete-novo-cliente:focus-visible{background:#eaf0fa}
+#clienteLista .autocomplete-novo-cliente:focus-visible{outline:2px solid #123f86;outline-offset:-3px}
+.cliente-novo-icone{display:grid;place-items:center;flex:0 0 32px;height:32px;border:1px solid #d4dfef;border-radius:50%;background:#fff;font-size:22px;font-weight:400}
+.cliente-novo-texto{display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere}
+.cliente-novo-texto strong{font-size:13px;font-weight:600}
+.cliente-novo-texto small{font-size:12px;color:#64748b}
+
+.pagamento-mini-card:has(#pgResumoBV),.pagamento-mini-card:has(#pgResumoCredito){cursor:help}
+.pagamento-mini-card:focus-visible{outline:2px solid #123f86;outline-offset:3px}
+.pedido-saldo-tooltip[hidden]{display:none!important}
+.pedido-saldo-tooltip{position:fixed;z-index:10045;box-sizing:border-box;max-height:calc(100vh - 32px);overflow:auto;padding:18px;border:1px solid #e1e5eb;border-radius:14px;background:#fff;color:#26313d;box-shadow:0 12px 40px #172b4d26;font:400 13px/1.5 Inter,system-ui,sans-serif}
+.pedido-saldo-tooltip h3{margin:0 0 8px;font:600 15px/1.4 Inter,system-ui,sans-serif}
+.pedido-saldo-tooltip p{margin:8px 0;color:#64748b}
+.pedido-saldo-tooltip-total{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-block:1px solid #edf0f4}
+.pedido-saldo-tooltip-total strong{color:#138159;white-space:nowrap}
+.pedido-saldo-tooltip ul{list-style:none;padding:0;margin:8px 0;max-height:240px;overflow:auto}
+.pedido-saldo-tooltip li{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px solid #edf0f4}
+.pedido-saldo-tooltip li>div{min-width:0;overflow-wrap:anywhere}.pedido-saldo-tooltip li>strong{white-space:nowrap}
+.pedido-saldo-tooltip small{display:block;font-size:11px;color:#64748b}
+
 .autocomplete-item:hover {
   background: #f1f5f9;
 }
@@ -5738,6 +5763,7 @@ tr:first-child {
   display: grid;
   place-items: center;
   padding: 24px;
+  box-sizing: border-box;
 }
 
 .pedido-map-modal-backdrop {
@@ -5750,8 +5776,11 @@ tr:first-child {
 .pedido-map-dialog {
   position: relative;
   z-index: 1;
-  width: min(880px, calc(100vw - 48px));
-  height: min(570px, calc(100vh - 56px));
+  width: min(880px, 100%);
+  height: min(570px, 100%);
+  max-height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
@@ -5821,7 +5850,7 @@ tr:first-child {
 }
 
 .pedido-map-large {
-  min-height: 320px;
+  min-height: 0;
   background:
     linear-gradient(135deg, rgba(230, 244, 234, .92), rgba(31,32,32,0.78)),
     repeating-linear-gradient(45deg, rgba(31,32,32,0.08) 0 1px, transparent 1px 14px);
@@ -5843,8 +5872,8 @@ body.pedido-map-modal-open {
   }
 
   .pedido-map-dialog {
-    width: calc(100vw - 20px);
-    height: min(620px, calc(100vh - 20px));
+    width: 100%;
+    height: min(620px, 100%);
     border-radius: 18px;
   }
 
@@ -7034,9 +7063,9 @@ html:root .pedido-screen .pg-componente-card{min-width:0;border:1px solid #dfe5e
 html:root .pedido-screen .pg-componente-card>.pg-grupo{padding:18px 20px;background:#f8f9fb;border-bottom:1px solid #e6e9ee}
 html:root .pedido-screen .pg-componente-card .pg-grupo-chip{padding:0;border:0;border-radius:0;background:transparent;color:#26313d;font-size:18px;font-weight:600;letter-spacing:0}
 html:root .pedido-screen .pg-componente-card .pg-grupo-total{margin-left:8px}
-html:root .pedido-screen .pg-card-tabela{overflow-x:auto}
+html:root .pedido-screen .pg-card-tabela{overflow:visible}
 html:root .pedido-screen .pg-card-vazio{padding:18px 20px;margin:0;color:#64748b;font-size:13px}
-@media(min-width:761px){html:root .pedido-screen .pg-card-tabela .cronograma-table{min-width:750px}}
+html:root .pedido-screen .pg-componente-card{container-type:inline-size}
 @media(max-width:760px){html:root .pedido-screen .pg-componente-card>.pg-grupo{padding:16px}html:root .pedido-screen .pg-card-tabela{padding:10px;overflow:visible}html:root .pedido-screen .pg-componente-card .pg-grupo-total{margin-left:0}}
 
 /* Financeiro do pedido sem o container grande (23/out/2026, pedido do usuário): o título e o resumo ficam soltos no fundo
@@ -7287,3 +7316,42 @@ html:is(#pedido-local-tags,html) body .pedido-screen .local-tag-real{min-height:
 .pedido-screen .entrada-cli-tag.cor-laranja::before{background:#f97316}
 .pedido-screen .entrada-cli-tag.cor-vermelho::before{background:#dc2626}
 .pedido-screen .entrada-cli-tag.cor-roxo::before{background:#7c3aed}
+
+/* Etiquetas do cliente seguem o mesmo tratamento das condicoes do local. */
+.pedido-screen .entrada-cli-tag::before{content:none}
+.pedido-screen .entrada-cli-tag{background:#fff7ed;border-color:#f3c79b;color:#9a3d07}
+.pedido-screen .entrada-cli-tag small{color:inherit}
+/* Particularidades do local (18/11/2026) */
+.pedido-screen .local-particularidades-row{display:grid;gap:2px;margin-top:8px;padding:8px 10px;border-radius:10px;background:#fff7e6;border:1px solid #f1d9a6;font-size:13px;line-height:1.45;color:#5c4511}
+.pedido-screen .local-particularidades-row strong{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#8a5a00}
+.pedido-screen .local-particularidades-row span{white-space:pre-line}
+
+/* Desconto fixo do decorador (18/11/2026) */
+.pedido-screen .pedido-desconto-fixo-nota{margin:0 0 8px;padding:7px 10px;border-radius:10px;background:#eaf0fa;border:1px solid #c9d7ee;color:#123f86;font:500 12px/1.4 Inter,system-ui,sans-serif}
+.pedido-screen .pedido-desconto-fixo-nota{display:grid;gap:6px}
+.pedido-screen .pedido-desconto-fixo-mostrar{display:inline-flex;align-items:center;gap:7px;font:500 12px Inter,system-ui,sans-serif;color:#1f2020;cursor:pointer}
+.pedido-screen .pedido-desconto-fixo-mostrar input{width:16px;height:16px;margin:0;accent-color:#123f86}
+/* Clientes finais (18/11/2026) */
+.pedido-screen .pedido-clientes-finais{margin-top:20px;padding:16px 18px;border:1px solid #e7dccb;border-radius:16px;background:#faf8f3;display:grid;gap:12px}
+.pedido-screen .pedido-clientes-finais header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.pedido-screen .pedido-clientes-finais h4{margin:0;font:500 17px "Cormorant Garamond",Georgia,serif;letter-spacing:.12em;text-transform:uppercase;color:#1f2020}
+.pedido-screen .pedido-clientes-finais header p{margin:4px 0 0;font:400 12.5px/1.45 Inter,system-ui,sans-serif;color:#6b6b6b}
+.pedido-screen .pedido-cf-add{border:1px solid #123f86;background:#fff;color:#123f86;border-radius:999px;padding:7px 14px;font:600 12.5px Inter,system-ui,sans-serif;cursor:pointer}
+.pedido-screen .pedido-cf-pessoa{display:grid;gap:8px}
+.pedido-screen .pedido-cf-pessoa+.pedido-cf-pessoa{padding-top:12px;border-top:1px dashed #e0d5c3}
+.pedido-screen .pedido-cf-pessoa-topo{display:flex;align-items:center;justify-content:space-between;font:600 12px Inter,system-ui,sans-serif;color:#4f4f4f}
+.pedido-screen .pedido-cf-pessoa-topo button{border:0;background:none;color:#b42318;font:500 12px Inter,system-ui,sans-serif;cursor:pointer}
+/* 18/11: duas linhas — nome, CPF/CNPJ e RG (ou inscrição estadual) em cima; telefone, e-mail e endereço embaixo. */
+.pedido-screen .pedido-cf-grade{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px 12px}
+.pedido-screen .pedido-cf-nome{grid-column:span 6}
+.pedido-screen .pedido-cf-documento,.pedido-screen .pedido-cf-rg,.pedido-screen .pedido-cf-ie{grid-column:span 3}
+.pedido-screen .pedido-cf-telefone,.pedido-screen .pedido-cf-email{grid-column:span 3}
+.pedido-screen .pedido-cf-endereco{grid-column:span 6}
+.pedido-screen .pedido-cf-campo[hidden]{display:none!important}
+.pedido-screen .pedido-cf-campo{display:grid;gap:4px;min-width:0}
+.pedido-screen .pedido-cf-campo span{font:500 12px Inter,system-ui,sans-serif;color:#4f4f4f}
+.pedido-screen .pedido-cf-campo i{color:#b42318;font-style:normal}
+.pedido-screen .pedido-cf-campo input{width:100%;box-sizing:border-box;height:38px;min-height:38px;background:#fff}
+.pedido-screen .pedido-cf-campo.is-invalido input{border-color:#d92d20;box-shadow:0 0 0 3px rgba(217,45,32,.12)}
+@media(max-width:1100px){.pedido-screen .pedido-cf-grade{grid-template-columns:1fr 1fr}.pedido-screen .pedido-cf-grade>.pedido-cf-campo{grid-column:auto}.pedido-screen .pedido-cf-grade>.pedido-cf-nome,.pedido-screen .pedido-cf-grade>.pedido-cf-endereco{grid-column:1/-1}}
+@media(max-width:600px){.pedido-screen .pedido-cf-grade{grid-template-columns:1fr}}

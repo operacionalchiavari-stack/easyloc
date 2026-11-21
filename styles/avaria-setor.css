@@ -1,0 +1,28 @@
+/* Escolha do setor de manutenção (js/ui/avaria-setor.js) — 16/11/2026 */
+.as-setor{display:flex;flex-direction:column;gap:10px;margin:6px 0 4px}
+.as-titulo{font-size:13px;font-weight:600;color:#1f2020}
+.as-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+html:root:is(#as#as#as#as,html) .as-grade [data-setor]{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;background:#fff;border:1px solid #dfe4ea;border-radius:10px;padding:9px 11px;cursor:pointer;color:#1f2020;font:inherit;text-transform:none;letter-spacing:0;min-height:0;height:auto;box-shadow:none}
+html:root:is(#as#as#as#as,html) .as-grade [data-setor] b{font-size:13px;font-weight:600}
+html:root:is(#as#as#as#as,html) .as-grade [data-setor] small{font-size:11.5px;color:#6b6b6b;font-weight:400}
+html:root:is(#as#as#as#as,html) .as-grade [data-setor]:hover{border-color:#9aa7b8}
+html:root:is(#as#as#as#as,html) .as-grade [data-setor][aria-checked="true"]{border:2px solid #123f86;padding:8px 10px;background:#eaf0fa}
+html:root:is(#as#as#as#as,html) .as-duvida{align-self:flex-start;background:none;border:0;color:#123f86;font:inherit;font-size:13px;font-weight:600;padding:2px 0;cursor:pointer;text-transform:none;letter-spacing:0;min-height:0;height:auto;box-shadow:none}
+.as-chat{border:1px solid #e3e7ec;border-radius:12px;background:#f7f9fb;padding:10px;display:flex;flex-direction:column;gap:8px}
+.as-chat .as-msgs{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow:auto}
+.as-chat .as-msg{max-width:88%;padding:7px 10px;border-radius:10px;font-size:13px;line-height:1.4}
+.as-chat .as-msg.eu{align-self:flex-end;background:#2b3240;color:#fff}
+.as-chat .as-msg.ia{align-self:flex-start;background:#fff;border:1px solid #e3e7ec;color:#1f2020}
+.as-chat .as-digitando{color:#6b6b6b;font-style:italic}
+html:root:is(#as#as#as#as,html) .as-usar{display:block;margin-top:6px;background:#123f86;color:#fff;border:0;border-radius:999px;padding:5px 12px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;text-transform:none;letter-spacing:0;min-height:0;height:auto}
+.as-chat .as-campo{display:flex;gap:6px}
+.as-chat .as-campo input{flex:1;min-width:0;height:38px;border:1px solid #dfe4ea;border-radius:10px;padding:0 10px;font:inherit;font-size:13px}
+.as-dlg{border:0;border-radius:16px;padding:0;width:min(640px,94vw);box-shadow:0 20px 60px rgba(15,23,42,.25)}
+.as-dlg::backdrop{background:rgba(15,23,42,.45)}
+.as-dlg form{padding:18px 20px;display:flex;flex-direction:column;gap:10px}
+.as-dlg header{display:flex;justify-content:space-between;align-items:center}
+.as-dlg h3{margin:0;font-size:17px}
+.as-dlg .as-x{background:none;border:0;font-size:22px;cursor:pointer;color:#6b6b6b}
+.as-dlg .as-item{margin:0;font-size:13px;color:#4f4f4f}
+.as-dlg .as-acoes{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.as-chat[hidden]{display:none!important}

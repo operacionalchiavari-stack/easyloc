@@ -468,3 +468,14 @@ html:root .pl-page #plDias>.pl-vazio{grid-column:1/-1;width:100%;text-align:cent
 /* Entrega e coleta acompanham a largura lateral da montagem da equipe. */
 @media(min-width:761px){html:root .pl-page #plModuloEntregas .ec-layout{grid-template-columns:minmax(270px,.6fr) minmax(0,2.85fr);gap:20px}}
 @media(min-width:761px) and (max-width:1200px){html:root .pl-page #plModuloEntregas .ec-layout{grid-template-columns:270px minmax(0,1fr)}}
+
+.pl-montagem-extra{display:block;margin-top:7px;font-size:11px;font-weight:600;color:#526176}
+
+html:root #plAbasDias#plAbasDias[hidden]{display:none!important}
+#plModuloFreteiros .pl-freteiros-nota{margin:4px 0 10px;font-size:13px;color:#6b6b6b}
+
+/* Mesmo contador do Almoxarifado: número fixo com anel vermelho pulsante. */
+html:root .pl-page #plModuloAbas#plModuloAbas .pl-alerta-aba{position:absolute;top:-9px;right:-6px;z-index:3;display:grid;place-items:center;box-sizing:border-box;min-width:20px;width:auto;height:20px;padding:0 5px;border-radius:50%;background:#e60012!important;color:#fff!important;font:900 10px/1 Inter,system-ui,sans-serif!important;letter-spacing:0;box-shadow:0 0 0 3px #f4f6f8!important;animation:none!important;opacity:1!important;pointer-events:none}
+html:root .pl-page #plModuloAbas#plModuloAbas .pl-alerta-aba::after{content:"";position:absolute;inset:-2px;border:2px solid #e60012;border-radius:50%;pointer-events:none;animation:pl-alerta-aba-anel 1.45s ease-out infinite}
+@keyframes pl-alerta-aba-anel{0%{transform:scale(.8);opacity:.9}70%,100%{transform:scale(1.7);opacity:0}}
+@media(prefers-reduced-motion:reduce){html:root .pl-page #plModuloAbas#plModuloAbas .pl-alerta-aba::after{animation:none!important}}

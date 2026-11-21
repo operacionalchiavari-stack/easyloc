@@ -3,7 +3,7 @@ import {
   textoParaHtml,
   CONTRATO_ESTILOS,
   blocoAssinaturasContrato,
-} from "../core/contracts.mjs";
+} from "../core/contracts.mjs?v=20261118-rg-ie";
 import { parseCurrency } from "./pedido.utils.mjs";
 
 
@@ -188,6 +188,8 @@ function enderecoCompletoLocal(local = {}){
   ].filter(Boolean).join(", ");
 }
 
+const juntar = (lista) => { const l = lista.filter(Boolean); return l.length > 1 ? l.slice(0, -1).join(", ") + " e " + l.at(-1) : (l[0] || ""); };
+function formatarDocumento(v){ const d = String(v || "").replace(/\D/g, ""); if(d.length === 11) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4"); if(d.length === 14) return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5"); return String(v || ""); }
 async function coletarDadosContrato(){
   const [empresa, cliente, local, assinatura] = await Promise.all([
     carregarEmpresa(),
@@ -196,9 +198,11 @@ async function coletarDadosContrato(){
     state.supabase.from('contratos_assinaturas_empresa').select('nome_signatario,imagem').eq('empresa_id',state.empresaId).maybeSingle(),
   ]);
   const localCidadeEstado = extrairCidadeEstado(local);
+  const decorador = { nome: $("clienteInput")?.value?.trim() || "", documento: await documentoCliente(cliente), telefone: $("telefoneInput")?.value?.trim() || cliente.telefone || "", email: cliente.email || "", endereco: [cliente.endereco, cliente.numero_endereco].filter(Boolean).join(", ") };
+  const finais = (window.__pedidoClientesFinais?.() || []).filter((p) => p.nome);
   const valorLocacao = valorResumo("resumoLocacaoBruto") + valorResumo("resumoTerceirizados");
   const valorServicos = valorResumo("resumoServicos") + valorResumo("resumoFreteBruto") + valorResumo("resumoMontagemBruto");
-  const desconto = Math.abs(valorResumo("resumoLocacaoDesconto")) + Math.abs(valorResumo("resumoFreteDesconto")) + Math.abs(valorResumo("resumoMontagemDesconto"));
+  const desconto = Math.abs(valorResumo("resumoLocacaoDesconto")) + Math.abs(valorResumo("resumoCustomizacoesDesconto")) + Math.abs(valorResumo("resumoFreteDesconto")) + Math.abs(valorResumo("resumoMontagemDesconto"));
   const total = valorResumo("resumoTotalGeral");
 
   return {
@@ -211,12 +215,17 @@ async function coletarDadosContrato(){
       data_recolha: $("dataColeta")?.value || "",
       hora_recolha: $("horaColeta")?.value || "",
     },
-    cliente: {
-      nome: $("clienteInput")?.value?.trim() || "",
-      documento: await documentoCliente(cliente),
-      telefone: $("telefoneInput")?.value?.trim() || cliente.telefone || "",
-      email: cliente.email || "",
-    },
+    // 18/11/2026: com clientes finais preenchidos, o contrato sai no nome deles; o decorador vai nas tags {{decorador_*}}.
+    cliente: finais.length ? {
+      nome: juntar(finais.map((p) => p.nome)),
+      documento: juntar(finais.map((p) => formatarDocumento(p.documento))),
+      rg: juntar(finais.map((p) => p.rg || p.ie).filter(Boolean)),
+      telefone: finais.find((p) => p.telefone)?.telefone || "",
+      email: finais.find((p) => p.email)?.email || "",
+      endereco: finais.find((p) => p.endereco)?.endereco || "",
+    } : decorador,
+    contratantes: finais.length ? finais : [decorador],
+    decorador,
     local: {
       nome: $("localInput")?.value?.trim() || local.nome_razao || "",
       endereco: enderecoCompletoLocal(local) || $("localObservacoes")?.innerText?.trim() || "",

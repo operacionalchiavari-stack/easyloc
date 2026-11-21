@@ -21,15 +21,19 @@ test('kit parcial desconta materiais recebidos, devoluções e pacotes já separ
  const pre=structuredClone(item);pre.pedido.status='pre_reserva';
  assert.match(renderizarSeparacaoKits([pre],{pedido:'p1',podeSeparar:true}),/data-acao="separar-kit" data-etapa="e1" disabled/);
 });
-test('saída permanece bloqueada ao recusar ou falhar o salvamento; chamadas simultâneas compartilham a confirmação',async()=>{
- let confirmar=0,gravar=0,resposta=false,resultado=false,sujo=true;
- const janela={document:{addEventListener(){}},addEventListener(){},confirmarGlobal:async()=>{confirmar++;return resposta;}};
- const sair=instalarProtecaoSaida({janela,temAlteracoes:()=>sujo,salvar:async()=>{gravar++;return resultado;}});
- assert.equal(await sair(),false);assert.equal(gravar,0);
- resposta=true;assert.equal(await sair(),false);assert.equal(gravar,1);
+test('Nao sai sem salvar nem bloquear beforeunload; Sim bloqueia se salvar falhar',async()=>{
+ let confirmar=0,gravar=0,resposta=false,resultado=false;
+ const eventos={};
+ const janela={document:{addEventListener(){}},addEventListener(nome,fn){eventos[nome]=fn;},confirmarGlobal:async()=>{confirmar++;return resposta;}};
+ const instalar=()=>instalarProtecaoSaida({janela,temAlteracoes:()=>true,salvar:async()=>{gravar++;return resultado;}});
+ const descartar=instalar();
+ assert.equal(await descartar(),true);assert.equal(gravar,0);
+ let bloqueou=false;eventos.beforeunload({preventDefault(){bloqueou=true;}});assert.equal(bloqueou,false);
+ resposta=true;const sair=instalar();assert.equal(await sair(),false);assert.equal(gravar,1);
  resultado=true;confirmar=0;assert.deepEqual(await Promise.all([sair(),sair()]),[true,true]);assert.equal(confirmar,1);
- sujo=false;assert.equal(await sair(),true);
+ bloqueou=false;eventos.beforeunload({preventDefault(){bloqueou=true;}});assert.equal(bloqueou,false);
 });
+
 test('complexidade da peça aumenta apenas a avaliação do setor correspondente',()=>{
  const c={config:cx.padrao(),itens:[{}],pecas:[{quantidade:1}],servicos:[{tipo:'Pintura',quantidade:2,personalizacao_complexidade:1,etapas:[{setor:'pintura'}]}],excecoes:{respostas:Object.fromEntries(cx.perguntas.map(q=>[q.id,{valor:false,motivo:'Conferido'}]))}};
  const simples=cx.avaliar(c);c.servicos[0].personalizacao_complexidade=1.3;c.custos_personalizacao={complexidades:{simples:0,media:20,alta:50}};

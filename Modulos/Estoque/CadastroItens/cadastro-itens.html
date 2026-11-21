@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Cadastro de Itens</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
-  <link rel="stylesheet" href="cadastro-itens.css?v=20261103-fonte-original">
+  <link rel="stylesheet" href="cadastro-itens.css?v=20261115-estoque">
 </head>
 <body>
 <div class="container el-page">
@@ -17,13 +18,12 @@
   <!-- ================= HEADER ================= -->
   <div class="header-list" id="itensListHeader">
     <h2>Itens Cadastrados</h2>
+    <!-- 15/11/2026: o ícone do resumo (Total / Itens / Componentes / Kits) fica ao lado da pesquisa. -->
+    <div class="itens-busca-linha">
     <input type="search" class="el-input itens-pesquisa-topo" aria-label="Pesquisar item"
       id="itensSearchInput"
       placeholder="Pesquisar item..."
       oninput="itens_aplicarFiltros()" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
-
-<div class="header-actions">
-  <!-- Resumo (Total / Itens / Componentes / Kits) num ícone pequeno: abre ao clicar (pedido do usuário). -->
   <div class="itens-resumo">
     <button type="button" class="itens-resumo-btn" id="itensResumoBtn" aria-expanded="false" aria-controls="itensResumoPop" title="Resumo do cadastro"><i data-lucide="bar-chart-3"></i></button>
     <div class="itens-resumo-pop" id="itensResumoPop" hidden>
@@ -47,11 +47,14 @@
     </div>
     </div>
   </div>
+    </div>
+
+<div class="header-actions">
 
 
-  <button type="button" class="add-btn btn primary" onclick="itens_abrirNovoItem()">+ Adicionar Item</button>
+  <button type="button" class="add-btn btn primary" onclick="itens_abrirNovoItem()">Adicionar item/componente</button>
 
-  <button type="button" class="add-btn outline btn secondary" onclick="kits_openAdd()">🧩 Montar Kit</button>
+  <button type="button" class="add-btn btn primary" onclick="kits_openAdd()">Montar kit</button>
 
 
 </div>
@@ -70,10 +73,12 @@
     <th style="width:80px;">Código</th>
     <th style="width:120px;">Tipo</th>
     <th>Item</th>
+    <th style="width:150px;">Subcategoria</th>
+    <th style="width:120px;">Estilo</th>
     <th style="width:140px;">Setor</th>
-    <th style="width:140px;">Valor</th>
+    <th style="width:130px;">Valor</th>
+    <th style="width:130px;">Valor de compra</th>
     <th style="width:90px;">Estoque</th>
-    <th style="width:70px;">QR</th>
     <th style="width:110px;">Status</th>
   </tr>
 </thead>
@@ -860,14 +865,14 @@ alt="Ambientada 03"
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
-<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
 <script src="../../../js/core/listPager.js?v=20261026-rolagem"></script>
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/qrCode.js"></script>
-<script src="../../../js/ui/complexidade-cadastros.js?v=20261107-teste-usuario"></script>
-<script type="module" src="cadastro-itens.mjs?v=20261103-kit-unificado"></script>
+<script src="../../../js/ui/complexidade-cadastros.js?v=20261114-automatica"></script>
+<script type="module" src="cadastro-itens.mjs?v=20261115-estoque"></script>
 <script>lucide.createIcons();</script>
-<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
 </body>
 </html>

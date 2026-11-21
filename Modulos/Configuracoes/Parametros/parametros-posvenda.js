@@ -25,8 +25,8 @@
       + '<div class="pr-card-acoes"><span class="pr-card-status" role="status"></span>' + (pode ? '<button type="submit" class="btn primary">Salvar regras</button>' : '') + '</div></form>';
     const form = document.createElement('section');
     form.className = 'pr-card pr-posvenda-form';
-    form.innerHTML = '<h3>Pós-venda: formulário da ligação</h3><p class="pr-ajuda">Perguntas de múltipla escolha que o Comercial marca na ligação. Marque como <b>ruim</b> as opções que precisam de atenção: o feedback com uma delas aparece em "Precisam de atenção".</p>'
-      + '<div data-perguntas></div>' + (pode ? '<button type="button" class="btn" data-nova-pergunta>+ Pergunta</button>' : '')
+    form.innerHTML = '<h3>Pós-venda: formulário da ligação</h3><p class="pr-ajuda">Organize as perguntas em <b>categorias</b> (ex.: Atendimento, Entrega e montagem, Móveis, Coleta). Na ligação elas aparecem agrupadas, na ordem daqui. Marque como <b>ruim</b> as opções que precisam de atenção: o feedback com uma delas aparece em "Precisam de atenção".</p>'
+      + '<div data-perguntas></div>' + (pode ? '<button type="button" class="btn" data-nova-cat>+ Categoria</button>' : '')
       + '<div class="pr-card-acoes"><span class="pr-card-status" role="status"></span>' + (pode ? '<button type="button" class="btn primary" data-salvar-form>Salvar formulário</button>' : '') + '</div>';
     host.append(regras, form);
     if (error) { regras.querySelector('[role=status]').textContent = 'Não foi possível carregar: ' + error.message; return; }
@@ -37,21 +37,38 @@
       fr.elements.agrupar.checked = cfg.agrupar !== false; fr.elements.observacao.checked = cfg.observacao !== false;
     }
     let perguntas = JSON.parse(JSON.stringify(cfg.perguntas || []));
+    let categorias = JSON.parse(JSON.stringify(cfg.categorias || []));
+    // 15/11/2026: formulário antigo sem categorias: tudo entra numa categoria "Geral" (pode renomear).
+    function arrumarCategorias(){
+      if (!categorias.length) categorias.push({ id: novoId('c'), nome: 'Geral' });
+      perguntas.forEach(p => { if (!categorias.some(c => c.id === p.categoria)) p.categoria = categorias[0].id; });
+    }
+    arrumarCategorias();
     const lista = form.querySelector('[data-perguntas]');
-    function pintarPerguntas(){
-      lista.innerHTML = perguntas.map((p, i) => '<div class="pr-pv-pergunta" data-i="' + i + '">'
+    function perguntaHtml(p, i){
+      return '<div class="pr-pv-pergunta" data-i="' + i + '">'
         + '<div class="pr-pv-pergunta-topo"><input class="pr-pv-texto" data-k="texto" value="' + esc(p.texto) + '" placeholder="Pergunta"' + (pode ? '' : ' disabled') + '>'
         + '<select data-k="tipo"' + (pode ? '' : ' disabled') + '><option value="unica"' + (p.tipo !== 'multipla' ? ' selected' : '') + '>Uma resposta</option><option value="multipla"' + (p.tipo === 'multipla' ? ' selected' : '') + '>Várias respostas</option></select>'
         + '<label class="pr-pv-mini"><input type="checkbox" data-k="obrigatoria"' + (p.obrigatoria ? ' checked' : '') + (pode ? '' : ' disabled') + '> Obrigatória</label>'
         + (pode ? '<span class="pr-pv-ordem"><button type="button" data-subir="' + i + '" aria-label="Subir">↑</button><button type="button" data-descer="' + i + '" aria-label="Descer">↓</button><button type="button" data-remover-p="' + i + '" aria-label="Remover pergunta">×</button></span>' : '') + '</div>'
         + '<div class="pr-pv-opcoes">' + (p.opcoes || []).map((o, j) => '<span class="pr-pv-opcao' + (o.ruim ? ' is-ruim' : '') + '" data-j="' + j + '"><input data-o="texto" value="' + esc(o.texto) + '" placeholder="Opção"' + (pode ? '' : ' disabled') + '>'
           + '<label title="Resposta que precisa de atenção"><input type="checkbox" data-o="ruim"' + (o.ruim ? ' checked' : '') + (pode ? '' : ' disabled') + '> ruim</label>' + (pode ? '<button type="button" data-remover-o="' + j + '" aria-label="Remover opção">×</button>' : '') + '</span>').join('')
-        + (pode ? '<button type="button" class="pr-pv-nova-op" data-nova-op>+ opção</button>' : '') + '</div></div>').join('');
+        + (pode ? '<button type="button" class="pr-pv-nova-op" data-nova-op>+ opção</button>' : '') + '</div>'
+        + (categorias.length > 1 ? '<label class="pr-pv-mini pr-pv-mover">Categoria <select data-k="categoria"' + (pode ? '' : ' disabled') + '>' + categorias.map(c => '<option value="' + esc(c.id) + '"' + (c.id === p.categoria ? ' selected' : '') + '>' + esc(c.nome || 'Sem nome') + '</option>').join('') + '</select></label>' : '') + '</div>';
+    }
+    function pintarPerguntas(){
+      lista.innerHTML = categorias.map((c, ci) => '<section class="pr-pv-cat" data-ci="' + ci + '"><div class="pr-pv-cat-topo"><input class="pr-pv-cat-nome" data-c="nome" value="' + esc(c.nome) + '" placeholder="Nome da categoria"' + (pode ? '' : ' disabled') + '>'
+        + '<small>' + perguntas.filter(p => p.categoria === c.id).length + ' pergunta(s)</small>'
+        + (pode ? '<span class="pr-pv-ordem"><button type="button" data-cat-subir="' + ci + '" aria-label="Subir categoria">↑</button><button type="button" data-cat-descer="' + ci + '" aria-label="Descer categoria">↓</button><button type="button" data-cat-remover="' + ci + '" aria-label="Remover categoria">×</button></span>' : '') + '</div>'
+        + perguntas.map((p, i) => p.categoria === c.id ? perguntaHtml(p, i) : '').join('')
+        + (pode ? '<button type="button" class="btn pr-pv-nova-perg" data-nova-pergunta="' + esc(c.id) + '">+ Pergunta em ' + esc(c.nome || 'esta categoria') + '</button>' : '') + '</section>').join('');
     }
     function ler(){
+      lista.querySelectorAll('.pr-pv-cat').forEach(sec => { categorias[Number(sec.dataset.ci)].nome = sec.querySelector('[data-c=nome]').value; });
       lista.querySelectorAll('.pr-pv-pergunta').forEach(div => {
         const p = perguntas[Number(div.dataset.i)];
         p.texto = div.querySelector('[data-k=texto]').value; p.tipo = div.querySelector('[data-k=tipo]').value; p.obrigatoria = div.querySelector('[data-k=obrigatoria]').checked;
+        const cs = div.querySelector('[data-k=categoria]'); if (cs) p.categoria = cs.value;
         div.querySelectorAll('.pr-pv-opcao').forEach(sp => { const o = p.opcoes[Number(sp.dataset.j)]; o.texto = sp.querySelector('[data-o=texto]').value; o.ruim = sp.querySelector('[data-o=ruim]').checked; });
       });
     }
@@ -59,14 +76,29 @@
 
     form.addEventListener('click', e => {
       const div = e.target.closest('.pr-pv-pergunta'), i = div ? Number(div.dataset.i) : -1;
-      if (e.target.closest('[data-nova-pergunta]')) { ler(); perguntas.push({ id: novoId('p'), texto: '', tipo: 'unica', obrigatoria: true, opcoes: [{ id: novoId('o'), texto: '' }, { id: novoId('o'), texto: '' }] }); pintarPerguntas(); lista.lastElementChild?.querySelector('input')?.focus(); return; }
+      const np = e.target.closest('[data-nova-pergunta]');
+      if (np) { ler(); const nova = { id: novoId('p'), categoria: np.dataset.novaPergunta, texto: '', tipo: 'unica', obrigatoria: true, opcoes: [{ id: novoId('o'), texto: '' }, { id: novoId('o'), texto: '' }] }; perguntas.push(nova); pintarPerguntas(); lista.querySelector('.pr-pv-pergunta[data-i="' + (perguntas.length - 1) + '"] input')?.focus(); return; }
+      if (e.target.closest('[data-nova-cat]')) { ler(); categorias.push({ id: novoId('c'), nome: '' }); pintarPerguntas(); lista.lastElementChild?.querySelector('.pr-pv-cat-nome')?.focus(); return; }
+      const cs = e.target.closest('[data-cat-subir]'), cd = e.target.closest('[data-cat-descer]'), cr = e.target.closest('[data-cat-remover]');
+      if (cs) { ler(); const ci = Number(cs.dataset.catSubir); if (ci > 0) [categorias[ci - 1], categorias[ci]] = [categorias[ci], categorias[ci - 1]]; pintarPerguntas(); return; }
+      if (cd) { ler(); const ci = Number(cd.dataset.catDescer); if (ci < categorias.length - 1) [categorias[ci + 1], categorias[ci]] = [categorias[ci], categorias[ci + 1]]; pintarPerguntas(); return; }
+      if (cr) {
+        ler(); const ci = Number(cr.dataset.catRemover), cat = categorias[ci], qtd = perguntas.filter(p => p.categoria === cat.id).length;
+        if (categorias.length === 1) { form.querySelector('[role=status]').textContent = 'O formulário precisa de pelo menos uma categoria.'; return; }
+        if (qtd && !confirm('A categoria "' + (cat.nome || '') + '" tem ' + qtd + ' pergunta(s). Remover a categoria e as perguntas dela?')) return;
+        perguntas = perguntas.filter(p => p.categoria !== cat.id); categorias.splice(ci, 1); pintarPerguntas(); return;
+      }
       if (e.target.closest('[data-nova-op]')) { ler(); perguntas[i].opcoes.push({ id: novoId('o'), texto: '' }); pintarPerguntas(); return; }
       const ro = e.target.closest('[data-remover-o]'); if (ro) { ler(); perguntas[i].opcoes.splice(Number(ro.dataset.removerO), 1); pintarPerguntas(); return; }
       if (e.target.closest('[data-remover-p]')) { ler(); perguntas.splice(i, 1); pintarPerguntas(); return; }
-      if (e.target.closest('[data-subir]') && i > 0) { ler(); [perguntas[i - 1], perguntas[i]] = [perguntas[i], perguntas[i - 1]]; pintarPerguntas(); return; }
-      if (e.target.closest('[data-descer]') && i < perguntas.length - 1) { ler(); [perguntas[i + 1], perguntas[i]] = [perguntas[i], perguntas[i + 1]]; pintarPerguntas(); return; }
+      const vizinha = (dir) => { for (let k = i + dir; k >= 0 && k < perguntas.length; k += dir) if (perguntas[k].categoria === perguntas[i].categoria) return k; return -1; };
+      if (e.target.closest('[data-subir]')) { ler(); const k = vizinha(-1); if (k >= 0) [perguntas[k], perguntas[i]] = [perguntas[i], perguntas[k]]; pintarPerguntas(); return; }
+      if (e.target.closest('[data-descer]')) { ler(); const k = vizinha(1); if (k >= 0) [perguntas[k], perguntas[i]] = [perguntas[i], perguntas[k]]; pintarPerguntas(); return; }
     });
-    form.addEventListener('change', e => { if (e.target.matches('[data-o=ruim]')) e.target.closest('.pr-pv-opcao').classList.toggle('is-ruim', e.target.checked); });
+    form.addEventListener('change', e => {
+      if (e.target.matches('[data-o=ruim]')) e.target.closest('.pr-pv-opcao').classList.toggle('is-ruim', e.target.checked);
+      if (e.target.matches('[data-k=categoria]') || e.target.matches('[data-c=nome]')) { ler(); pintarPerguntas(); }
+    });
 
     async function salvar(novo, status){
       status.textContent = 'Salvando…';
@@ -83,8 +115,12 @@
     });
     form.querySelector('[data-salvar-form]')?.addEventListener('click', async () => {
       ler();
-      const limpas = perguntas.map(p => ({ ...p, texto: p.texto.trim(), opcoes: p.opcoes.filter(o => o.texto.trim()).map(o => ({ ...o, texto: o.texto.trim() })) }));
-      if (await salvar({ ...cfg, perguntas: limpas }, form.querySelector('[role=status]'))) { perguntas = JSON.parse(JSON.stringify(cfg.perguntas)); pintarPerguntas(); }
+      const st = form.querySelector('[role=status]');
+      const cats = categorias.map(c => ({ id: c.id, nome: (c.nome || '').trim() }));
+      if (cats.some(c => !c.nome)) { st.textContent = 'Dê um nome a todas as categorias.'; return; }
+      // grava as perguntas na ordem das categorias (é a ordem em que aparecem na ligação)
+      const limpas = cats.flatMap(c => perguntas.filter(p => p.categoria === c.id)).map(p => ({ ...p, texto: p.texto.trim(), opcoes: p.opcoes.filter(o => o.texto.trim()).map(o => ({ ...o, texto: o.texto.trim() })) }));
+      if (await salvar({ ...cfg, categorias: cats, perguntas: limpas }, st)) { perguntas = JSON.parse(JSON.stringify(cfg.perguntas)); categorias = JSON.parse(JSON.stringify(cfg.categorias || cats)); arrumarCategorias(); pintarPerguntas(); }
     });
   };
 })();

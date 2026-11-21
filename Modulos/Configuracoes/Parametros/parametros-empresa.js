@@ -5,8 +5,9 @@
   const salvar = document.getElementById('salvarEmpresaParametros');
   const abas = [...document.querySelectorAll('[data-parametro-aba]')];
   // Abas com formulário e botão Salvar próprios (fora do bloco dos dados da empresa).
-  const PROPRIAS = ['operacao', 'catalogo', 'almoxarifado', 'producao', 'seguranca', 'rh'];
+  const PROPRIAS = ['operacao', 'catalogo', 'acervo', 'almoxarifado', 'producao', 'complexidade', 'ocorrencias', 'seguranca', 'rh', 'ia'];
   let atual = 'dados', pronto = false, ocupado = false;
+  const podeEditar=()=>window.EasyLocPermissions?.hasPermission?.('configuracoes.empresa.editar')!==false;
   const state = { parametros: true, sections: {}, refs: {} };
   const api = window.empresa.api;
   const texto = id => root.querySelector('#' + id)?.value.trim() || '';
@@ -21,7 +22,10 @@
     return resultado.data;
   };
   async function carregarSecao(nome) {
+    if(nome==='ia') await window.carregarParametrosIa(document.getElementById('pr-painel-ia'),state.empresaId);
     if(nome==='rh') await window.carregarParametrosRh(document.getElementById('pr-painel-rh'),state.empresaId);
+    if(nome==='complexidade') await window.carregarParametrosComplexidade?.(document.getElementById('pr-painel-complexidade'),state.empresaId); // aba própria (nov/2026)
+    if(nome==='ocorrencias') await window.carregarParametrosOcorrencias?.(document.getElementById('pr-painel-ocorrencias'),state.empresaId);
     if (PROPRIAS.includes(nome) || state.sections[nome]) return;
     const secao = window.empresa.sections[nome];
     const host = root.querySelector('[data-empresa-secao="' + nome + '"]');
@@ -32,6 +36,7 @@
       await window.carregarParametrosCronogramaVisual(host,state.empresaId);
       await window.carregarModosSeparacao(host, state.empresaId);
       await window.carregarSetoresSeparacao?.(host, state.empresaId);
+      await window.carregarGruposSeparacao?.(host, state.empresaId);
       const escalaHost=document.createElement('div');host.appendChild(escalaHost);
       await window.carregarParametrosEscala(escalaHost,state.empresaId);
       await window.carregarMotivosLogistica(host, state.empresaId);
@@ -43,8 +48,9 @@
       // Junta os cards da antiga aba Operação e separa cada assunto num card (parametros-organizar.js).
       window.prOrganizarLogistica?.(host);
     }
-    if (nome === 'comercial') { await window.carregarParametrosLogisticaManual(host, state.empresaId); await window.carregarEtiquetasCadastro?.(host, state.empresaId); await window.carregarParametrosComplexidade?.(host,state.empresaId); await window.carregarMotivosCancelamento?.(host, state.empresaId); await window.carregarPapeisEquipe?.(host, state.empresaId); await window.carregarCondicoesPagamento?.(host, state.empresaId); await window.carregarParametrosPosVenda?.(host, state.empresaId); await window.carregarParametrosAcompanhamento?.(host, state.empresaId); await window.carregarParametrosAvisosPedido?.(host, state.empresaId); }
+    if (nome === 'comercial') { await window.carregarParametrosLogisticaManual(host, state.empresaId); await window.carregarEtiquetasCadastro?.(host, state.empresaId); await window.carregarMotivosCancelamento?.(host, state.empresaId); await window.carregarMotivosBV?.(host, state.empresaId); await window.carregarPapeisEquipe?.(host, state.empresaId); await window.carregarCondicoesPagamento?.(host, state.empresaId); await window.carregarParametrosPosVenda?.(host, state.empresaId); await window.carregarParametrosAcompanhamento?.(host, state.empresaId); await window.carregarParametrosConfirmarDatas?.(host, state.empresaId); await window.carregarParametrosAvisosPedido?.(host, state.empresaId); await window.carregarParametrosAssinatura?.(host, state.empresaId); }
     if(nome === 'comercial') await window.carregarParametrosProdutividade?.(host,state.empresaId);
+    if(nome === 'financeiro') await window.carregarMotivosPosicaoFinal?.(host,state.empresaId);
     state.sections[nome] = { cleanup };
   }
   async function selecionar(nome) {
@@ -54,6 +60,7 @@
     try {
       await carregarSecao(nome);
       atual = nome;
+      document.dispatchEvent(new CustomEvent('parametros-secao-aberta',{detail:{nome}}));
       abas.forEach(aba => {
         const ativa = aba.dataset.parametroAba === nome;
         aba.setAttribute('aria-selected', String(ativa));
@@ -64,13 +71,13 @@
       root.querySelector('.pr-acoes').hidden = PROPRIAS.includes(nome) || nome === 'logistica';
       status.textContent = '';
       window.prParametrosAoTrocar?.(nome);
-    } catch (erro) { status.textContent = 'Não foi possível abrir a aba: ' + erro.message; }
-    finally { ocupado = false; salvar.disabled = false; }
+    } catch (erro) { status.textContent = 'Não foi possível abrir a seção: ' + erro.message; window.alerta?.(status.textContent,'Parâmetros','erro'); }
+    finally { ocupado = false; salvar.disabled = !podeEditar(); }
   }
   abas.forEach(aba => aba.addEventListener('click', () => selecionar(aba.dataset.parametroAba)));
 
   salvar.addEventListener('click', async () => {
-    if (!pronto || ocupado) return;
+    if (!pronto || ocupado || !podeEditar()) return;
     ocupado = true; salvar.disabled = true; status.textContent = 'Salvando…';
     try {
       if (atual === 'dados') {
@@ -82,7 +89,7 @@
         const nome = window.parent.document.getElementById('empresaNome');
         if (nome) nome.textContent = payload.nome;
       } else if (atual === 'tributacao') {
-        const campos = { simples_nacional: 'simplesInput', tipo_tributacao: 'tipoTributacaoInput', natureza: 'naturezaInput', regime: 'regimeInput' };
+        const campos = { simples_nacional: 'simplesInput', tipo_tributacao: 'tipoTributacaoInput', natureza_tributacao: 'naturezaInput', regime_tributacao: 'regimeInput' };
         const payload = Object.fromEntries(Object.entries(campos).map(([campo, id]) => [campo, texto(id)]));
         payload.aliquota_iss = numero('aliquotaIssInput');
         payload.aliquota_ir = numero('aliquotaIrInput');
@@ -103,6 +110,8 @@
         payload.producao_pagamento_exige = root.querySelector('#financeiroProducaoExige')?.checked === true;
         payload.baixa_manual_receber = root.querySelector('#financeiroBaixaReceber')?.checked === true;
         payload.baixa_manual_pagar = root.querySelector('#financeiroBaixaPagar')?.checked === true;
+        payload.previsto_pre_reserva = root.querySelector('#financeiroPrevistoPre')?.checked !== false;
+        payload.previsto_orcamento = root.querySelector('#financeiroPrevistoOrc')?.checked !== false;
         payload.producao_pagamento_percent = numero('financeiroProducaoPercent');
         if (!(payload.producao_pagamento_percent >= 1 && payload.producao_pagamento_percent <= 100) || !Number.isInteger(payload.producao_pagamento_percent)) throw Error('Producao: use um percentual inteiro de 1 a 100%.');
         if (!(payload.pagamento_percent > 0 && payload.pagamento_percent <= 100)) throw Error('Pagamento mínimo: use de 1 a 100%.');
@@ -113,18 +122,18 @@
         await window.salvarParametrosLogisticaManual(state.empresaId);
         await window.__salvarServicosComercial();
         await window.salvarEtiquetasCadastro?.(state.empresaId);
-        await window.salvarParametrosComplexidade?.(state.empresaId);
       } else if (atual === 'identidade') {
         if (!await window.__salvarIdentidadeVisual()) throw Error('Revise a identidade visual antes de salvar.');
       }
       status.textContent = 'Parâmetros salvos.';
     } catch (erro) { status.textContent = 'Não foi possível salvar: ' + erro.message; }
-    finally { ocupado = false; salvar.disabled = false; }
+    finally { ocupado = false; salvar.disabled = !podeEditar(); }
   });
 
   (async () => {
     try {
       const contexto = await window.aguardarContexto?.();
+      await window.EasyLocPermissions?.load?.();
       state.empresaId = contexto?.empresa_id || window.__CONTEXT?.empresa_id;
       if (!state.empresaId) throw Error('Empresa não identificada.');
       const sb = window.supabaseClient;
@@ -137,7 +146,7 @@
       ]);
       if (!empresa) throw Error('Dados da empresa não encontrados.');
       Object.assign(state, { empresa, config: config || {}, financeiro, identidadeVisual, dashboard: dashboard || {} });
-      await carregarSecao('dados'); pronto = true; salvar.disabled = false; status.textContent = '';
+      await carregarSecao('dados'); pronto = true; salvar.disabled = !podeEditar(); status.textContent = '';
     } catch (erro) { status.textContent = 'Não foi possível carregar os parâmetros: ' + erro.message; }
   })();
 })();

@@ -1,8 +1,12 @@
 # Material de proteção: capas e caixas
 
+A tela abre com exemplos de funcionamento em todas as abas: seis materiais, fabricações, manutenção, conferências de quatro pedidos e perdas divididas pela equipe. É possível registrar movimentações de teste e acompanhar os saldos. Os dados e as alterações da demonstração ficam na memória da tela e reiniciam ao recarregar. O aviso e os botões da demonstração foram removidos. A preferência interna de dados reais por empresa continua respeitada durante a sessão.
+
 No cadastro do item, selecione Não utiliza, Capa ou Caixa. O nome é gerado automaticamente como "Capa " ou "Caixa " seguido do nome do item e não permite edição livre. O tipo padrão dos registros anteriores é Capa; saldos, IDs e históricos permanecem preservados. Os nomes internos de tabelas e funções capas_* foram mantidos por compatibilidade.
 
-O módulo tem as abas Materiais, Fabricações e Conferências. Nas duas últimas, a coluna esquerda pesquisa e seleciona itens com sua foto principal (ou foto da galeria sem cliente); a direita apresenta os registros. Se o item não tiver foto, mostra Sem foto.
+O módulo tem as abas Materiais, Histórico e Perdas da equipe. No Histórico, a coluna esquerda pesquisa e seleciona itens com sua foto principal (ou foto da galeria sem cliente); a direita reúne fabricações, movimentações e conferências por pedido. Nessa mesma aba é possível registrar movimentações e confirmar perdas de pedidos. Se o item não tiver foto, mostra Sem foto.
+
+Perdas da equipe segue o painel de Produtividade comercial: dados gerenciais à esquerda e gráficos em rosca à direita. O período é consultado com De, Até e Consultar. O resumo distingue perdas em eventos e no galpão; a tabela de integrantes mostra eventos, materiais perdidos nesses eventos e a parcela do valor por pessoa. A mesma ocorrência pode aparecer para várias pessoas, mas o valor do evento é dividido entre os integrantes. Os gráficos mostram a quantidade por local e o valor de eventos por integrante, sem incluir perdas do galpão no rateio. A tabela de ocorrências mantém os pedidos e materiais para conferência. Valores sem custo cadastrado ficam zerados, com indicação na ocorrência; filtros sem resultados exibem totais zerados e gráficos vazios.
 
 # Capas de proteção: contagem e estoque
 

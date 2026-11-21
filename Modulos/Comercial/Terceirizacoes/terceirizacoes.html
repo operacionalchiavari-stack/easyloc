@@ -5,10 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Sublocações</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
-  <link rel="stylesheet" href="terceirizacoes.css?v=20261105-sublocacoes">
+  <link rel="stylesheet" href="../../../styles/planilha.css?v=20261030">
+  <link rel="stylesheet" href="../comercial-relatorios.css?v=20261030c">
+  <link rel="stylesheet" href="terceirizacoes.css?v=20261120-abas-topo">
+<script src="../../../js/app/relatorio-app.js?v=20261120-agentes2" data-titulo="Sublocações" data-esconder="#tzCabecalho > h2, #tzCabecalho .tz-abas, #tzCabecalho .tz-topo-acoes"></script>
 </head>
 <body>
 <!-- Sublocações (nov/2026; módulo criado como "Terceirizações"): empresas que alugam itens para nós (fornecedores marcados como terceirização) e os itens
@@ -16,12 +20,27 @@
 <div class="container el-page tz-page" id="tzPage">
   <div class="header-list" id="tzCabecalho">
     <h2>Sublocações</h2>
-    <input type="search" id="tzBusca" placeholder="Pesquisar item" autocomplete="off" data-lpignore="true">
+    <nav class="el-tabs tz-abas" role="tablist" aria-label="Sublocações">
+    <button type="button" role="tab" data-tz-aba="cadastro" aria-selected="true" class="active">Empresas e itens</button>
+    <button type="button" role="tab" data-tz-aba="relatorios" aria-selected="false">Relatórios</button>
+  </nav>
     <div class="tz-topo-acoes">
+      <input type="search" id="tzBusca" placeholder="Pesquisar item" autocomplete="off" data-lpignore="true">
       <button type="button" class="btn primary" id="tzNovaEmpresa">+ Empresa</button>
       <button type="button" class="btn primary" id="tzNovoItem" disabled>+ Item</button>
     </div>
   </div>
+  <section id="tzRelatorios" class="sr-pagina" hidden>
+    <div class="sr-filtros">
+      <label>Eventos de <input type="date" id="srDe"></label>
+      <label>Até <input type="date" id="srAte"></label>
+      <label>Situação <select id="srSituacao"><option value="reservados">Reservados</option><option value="pre">Reservados e pré-reservas</option><option value="todos">Reservados, pré-reservas e orçamentos</option></select></label>
+      <button type="button" class="btn secondary" id="srExemplo" aria-pressed="false">Ver com exemplo</button>
+    </div>
+    <p class="sr-aviso" id="srAviso" hidden>Nenhum pedido usou sublocação ainda. Os relatórios aparecem quando um item for incluído pelo botão "Sublocação" da Lista Completa do pedido. Use "Ver com exemplo" para ver como fica.</p>
+    <p class="sr-aviso amarelo" id="srAvisoExemplo" hidden>Dados de exemplo, só nesta tela (com os itens reais do cadastro). Nada foi gravado.</p>
+    <div id="srConteudo"></div>
+  </section>
   <div class="tz-layout">
     <aside class="tz-empresas" aria-label="Empresas de sublocação">
       <div class="tz-empresas-topo">
@@ -51,10 +70,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
-<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261105-terceirizacoes"></script>
-<script src="terceirizacoes.js?v=20261105-item-pagina"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+<script src="terceirizacoes.js?v=20261120-relatorios"></script>
+<script src="sublocacoes-relatorios.js?v=20261120-relatorios"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
 </body>
 </html>

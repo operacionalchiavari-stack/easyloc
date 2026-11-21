@@ -90,3 +90,67 @@ test('mounting: shared records, trustworthy origin and company access',async()=>
   await db.exec("set test.negar='sim'");await assert.rejects(db.query('select logistica_montagem_registros($1)',[pedido]),/acesso/);
  }finally{await db.close();}
 });
+
+test('sequential loads: one vehicle per lot, append only, automatic final completion and rollback',async()=>{
+ const db=await fixture();try{
+  await db.exec(migration('20261102000500_carga_por_veiculo'));
+  await db.exec(`alter table caminhoes add column status text default 'ativo';update fin_receber set aberto=0;
+   create function operacao_registrar_caminhoes(p_pedido uuid,p_caminhoes uuid[]) returns jsonb language plpgsql as $$begin return to_jsonb(p_caminhoes);end$$;
+   create function operacao_concluir_com_pendencia(p_pedido uuid,p_etapa text,p_aceitar_faltas boolean,p_quantidades jsonb,p_observacoes jsonb,p_pendencia jsonb) returns jsonb language plpgsql as $$begin return operacao_concluir_conferencia(p_pedido,p_etapa,p_aceitar_faltas,p_quantidades,p_observacoes);end$$;
+   create or replace function operacao_concluir_conferencia(p_pedido uuid,p_etapa text,p_aceitar_faltas boolean default false,p_quantidades jsonb default null,p_observacoes jsonb default null,p_primeira jsonb default null) returns jsonb language plpgsql as $$declare r jsonb;begin
+    perform operacao_carga_distribuicao_conferir(p_pedido,p_quantidades);
+    if current_setting('test.falhar',true)='sim' then raise exception 'falha final';end if;
+    r:=jsonb_build_object('concluido_em',now(),'quantidades',p_quantidades,'observacoes',p_observacoes);
+    update separacoes_pedidos set operacao=jsonb_set(operacao,'{carregamento}',r) where id=p_pedido;return r;end$$;`);
+  await db.exec(migration('20261108000400_carregamento_sequencial'));
+  const base=async()=>(await db.query('select operacao_carga_veiculo_base($1) b',[pedido])).rows[0].b;
+  const save=async(cam,q,token,obs={})=>(await db.query('select operacao_carregamento_lote($1,$2,$3,$4,$5) r',[pedido,cam,[{chave:'cadeira',quantidade:q},{chave:'mesa',quantidade:1}],token,obs])).rows[0].r;
+  const b=await base();await assert.rejects(save(c1,11,b.token),/excede/);assert.equal((await base()).veiculos.length,0);
+  const primeiro=await save(c1,6,b.token,{cadeira:'Primeiro lote'});assert.equal(primeiro.registro,null);assert.equal(primeiro.base.concluido,false);assert.equal(primeiro.base.veiculos.length,1);
+  await assert.rejects(save(c1,4,primeiro.base.token),/ja teve/);
+  await assert.rejects(save(c2,4,b.token),/mudou/);
+  await db.exec("set test.falhar='sim'");await assert.rejects(save(c2,4,primeiro.base.token),/falha final/);assert.equal((await base()).veiculos.length,1);await db.exec("set test.falhar=''");
+  const ultimo=await save(c2,4,primeiro.base.token,{mesa:'Segundo lote'});assert.equal(ultimo.base.concluido,true);assert.equal(ultimo.base.veiculos.length,2);assert.deepEqual(ultimo.registro.quantidades,{cadeira:10,mesa:2});assert.deepEqual(ultimo.registro.observacoes,{cadeira:'Primeiro lote',mesa:'Segundo lote'});
+  await assert.rejects(save(c2,4,ultimo.base.token),/concluido/);
+ }finally{await db.close();}
+});
+
+
+test('sequential unloading: independent vehicles, stale token, quantities, rollback and shortages',async()=>{
+ const db=await fixture();try{
+  await db.exec(`alter table caminhoes add column status text default 'ativo',add column modelo text,add column tipo text,add column foto_url text;
+   alter table separacoes_pedidos add column modo_separacao text default 'manual';
+   alter table separacoes_etiquetas add column empresa_id uuid,add column lida_descarregamento_em timestamptz;
+   create table operacao_etapas(id uuid,empresa_id uuid,pedido_id uuid,tipo text);
+   create table operacao_etapa_caminhoes(etapa_id uuid,caminhao_id uuid);
+   create function pedido_grupo(uuid) returns uuid[] language sql as $$select array[$1]$$;
+   create function pedido_grupo_carregamento(uuid) returns jsonb language sql as $$select null::jsonb$$;
+   create function operacao_conferencia_pecas(uuid,boolean) returns setof pecas language sql as $$select * from pecas$$;
+   create function operacao_validar_etapa(separacoes_pedidos,text) returns void language plpgsql as $$begin end$$;
+   create or replace function operacao_concluir_conferencia(p_pedido uuid,p_etapa text,p_aceitar_faltas boolean default false,p_quantidades jsonb default null,p_observacoes jsonb default null,p_primeira jsonb default null) returns jsonb language plpgsql as $$declare r jsonb;begin
+    if current_setting('test.falhar',true)='sim' then raise exception 'falha final';end if;
+    r:=jsonb_build_object('concluido_em',now(),'quantidades',p_quantidades,'aceitar_faltas',p_aceitar_faltas);
+    update separacoes_pedidos set operacao=jsonb_set(operacao,'{descarregamento}',r) where id=p_pedido;return r;end$$;
+   update separacoes_pedidos set operacao='{"carga_por_veiculo":[{"caminhao_id":"ida"}]}';
+   insert into operacao_etapas values('${etapa}','${emp}','${pedido}','desmontagem');
+   insert into operacao_etapa_caminhoes values('${etapa}','${c2}');`);
+  await db.exec(migration('20261108000600_descarregamento_sequencial'));
+  const base=async()=>(await db.query('select operacao_descarga_veiculo_base($1) b',[pedido])).rows[0].b;
+  const save=async(cam,q,t,final=false)=>(await db.query('select operacao_descarregamento_lote($1,$2,$3,$4,$5,$6) r',[pedido,cam,q,t,{},final])).rows[0].r;
+  const lot=(c,m)=>[{chave:'cadeira',quantidade:c},{chave:'mesa',quantidade:m}];
+  assert.equal((await db.query('select * from operacao_caminhoes_volta_programados($1)',[[pedido]])).rows[0].caminhao_id,c2);
+  let b=await base();assert.equal(b.veiculos.length,0);
+  await assert.rejects(save(c1,lot(-1,0),b.token),/invalida/);
+  await assert.rejects(save(c1,lot(0,0),b.token),/Informe/);
+  const first=await save(c1,lot(6,1),b.token);assert.equal(first.registro,null);assert.equal(first.base.veiculos.length,1);
+  await assert.rejects(save(c1,lot(1,0),first.base.token),/ja teve/);
+  await assert.rejects(save(c2,lot(4,1),b.token),/mudou/);
+  await db.exec("set test.falhar='sim'");await assert.rejects(save(c2,lot(4,1),first.base.token),/falha final/);assert.equal((await base()).veiculos.length,1);await db.exec("set test.falhar=''");
+  const last=await save(c2,lot(4,1),first.base.token);assert.equal(last.base.concluido,true);assert.deepEqual(last.registro.quantidades,{cadeira:10,mesa:2});
+  assert.equal(last.operacao.carga_por_veiculo[0].caminhao_id,'ida');
+  await assert.rejects(save(c2,lot(1,0),last.base.token),/concluido/);
+  await db.exec(`update separacoes_pedidos set operacao=operacao-'descarga_por_veiculo'-'descarregamento'`);
+  b=await base();const partial=await save(c2,lot(2,0),b.token);const missing=await save(null,null,partial.base.token,true);
+  assert.equal(missing.base.concluido,true);assert.equal(missing.registro.aceitar_faltas,true);assert.deepEqual(missing.registro.quantidades,{cadeira:2,mesa:0});
+ }finally{await db.close();}
+});

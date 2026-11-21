@@ -94,3 +94,138 @@ html:root #centralPedidosPage table.cp-acomp-table .cp-acomp-valor{color:#41785e
 html:root #centralPedidosPage table.cp-acomp-table .cp-texto-vermelho{color:#b44944!important}
 html:root #centralPedidosPage table.cp-acomp-table .cp-texto-ambar{color:#996815!important}
 html:root #centralPedidosPage table.cp-acomp-table .cp-texto-azul{color:#37649a!important}
+
+/* nov/2026: os cards de indicadores saíram; De/Até/Visualizar/Consultar ficam na linha do título (título no centro, filtros à direita). */
+html:root:is(#cp-topo#cp-topo#cp-topo,html) body #produtividadeComercial > .header-list.cp-topo{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(max-content,1fr)!important;align-items:center!important;column-gap:24px!important}
+html:root:is(#cp-topo#cp-topo#cp-topo,html) body #produtividadeComercial > .header-list.cp-topo > h2{grid-column:2!important;grid-row:1!important;margin:0!important;white-space:nowrap}
+html:root:is(#cp-topo#cp-topo#cp-topo,html) body #produtividadeComercial > .header-list.cp-topo > .cp-filtros{grid-column:3!important;grid-row:1!important;justify-self:end;padding:0!important;gap:12px!important;flex-wrap:nowrap!important;align-items:flex-end}
+html:root:is(#cp-topo#cp-topo#cp-topo,html) body #produtividadeComercial .cp-topo .cp-filtros label{flex:0 0 145px!important}
+html:root:is(#cp-topo#cp-topo#cp-topo,html) body #produtividadeComercial .cp-topo .cp-filtros label:has(select){flex:0 0 210px!important}
+#produtividadeComercial > .cp-status{margin:8px 0 16px;font-size:13px;color:var(--cp-suave,#6b6b6b)}
+@media(max-width:1100px){html:root:is(#cp-topo#cp-topo#cp-topo,html) body #produtividadeComercial > .header-list.cp-topo{grid-template-columns:1fr!important;row-gap:14px!important}html:root:is(#cp-topo#cp-topo#cp-topo,html) body #produtividadeComercial > .header-list.cp-topo > .cp-filtros{grid-column:1!important;grid-row:2!important;justify-self:center;flex-wrap:wrap!important}}
+#produtividadeComercial .cp-pessoa{display:inline-flex;align-items:center;gap:10px}
+#produtividadeComercial .cp-pessoa-foto{position:relative;width:36px;height:36px;flex:0 0 36px;border-radius:50%;overflow:hidden;background:#e8eef6;color:#123f86;display:grid;place-items:center;font:600 12px Inter,sans-serif}
+#produtividadeComercial .cp-pessoa-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#produtividadeComercial > .cp-status:empty{display:none}
+#produtividadeComercial .cp-filtros label[hidden]{display:none!important}
+.cp-ind-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:14px;margin:10px 0 18px}
+.cp-ind-grupo h5{margin:0 0 6px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#6b6b6b}
+.cp-ind{display:flex;gap:10px;align-items:flex-start;padding:8px 10px;border:1px solid #e3e7ec;border-radius:9px;margin-bottom:6px;background:#fff;cursor:pointer}
+.cp-ind input{margin-top:3px;accent-color:#123f86}.cp-ind b{display:block;font-size:13.5px;font-weight:600}.cp-ind small{display:block;color:#6b6b6b;font-size:12px;line-height:1.45;margin-top:2px}
+#produtividadeComercial [data-pessoas] td,#produtividadeComercial .cp-scroll thead th:not(:first-child){text-align:right;white-space:nowrap}
+@media(max-width:1100px){html:root:is(#cp-topo#cp-topo#cp-topo,html) body #produtividadeComercial > .header-list.cp-topo > h2{white-space:normal!important}html:root:is(#cp-topo#cp-topo#cp-topo,html) body #produtividadeComercial .cp-topo .cp-filtros label{flex:1 1 130px!important;min-width:0}html:root:is(#cp-topo#cp-topo#cp-topo,html) body #produtividadeComercial > .header-list.cp-topo > .cp-filtros{max-width:100%}}
+#produtividadeComercial .cp-scroll{overflow-x:auto!important;max-width:100%}#produtividadeComercial .cp-bloco{min-width:0;max-width:100%}
+@media(max-width:1100px){html:root:is(#cp-topo#cp-topo#cp-topo,html) body #produtividadeComercial > .header-list.cp-topo{display:flex!important;flex-direction:column!important;align-items:center!important}html:root:is(#cp-topo#cp-topo#cp-topo,html) body #produtividadeComercial > .header-list.cp-topo > h2{max-width:100%!important;width:auto!important;overflow-wrap:anywhere}}@media(max-width:600px){html:root:is(#cp-topo#cp-topo#cp-topo,html) body #produtividadeComercial > .header-list.cp-topo > h2{font-size:20px!important;letter-spacing:.08em!important}}
+
+/* Painel gerencial (nov/2026): gráficos da equipe + um cartão por pessoa, sem barra horizontal (os números quebram linha). */
+#produtividadeComercial .cp-graficos{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px;margin:0 0 18px}
+#produtividadeComercial .cp-graf{background:#fff;border:1px solid #e3e7ec;border-radius:12px;padding:18px 20px;box-shadow:0 0 8px rgba(15,23,42,.08);min-width:0}
+#produtividadeComercial .cp-graf h3{margin:0 0 12px;font:600 15px Inter,sans-serif;color:#1f2020;letter-spacing:0;text-transform:none}
+#produtividadeComercial .cp-graf-sub{margin:-6px 0 12px;font-size:12.5px;color:#6b6b6b}
+#produtividadeComercial .cp-rosca{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+#produtividadeComercial .cp-rosca svg{width:170px;height:170px;flex:0 0 auto}
+#produtividadeComercial .cp-rosca-rot{font:500 11px Inter,sans-serif;fill:#6b6b6b}#produtividadeComercial .cp-rosca-val{font:600 14px Inter,sans-serif;fill:#1f2020}
+#produtividadeComercial .cp-legenda{list-style:none;margin:0;padding:0;display:grid;gap:8px;flex:1 1 180px;min-width:0}
+#produtividadeComercial .cp-legenda li{display:grid;grid-template-columns:12px minmax(0,1fr) auto auto;gap:8px;align-items:center;font-size:13px}
+#produtividadeComercial .cp-legenda i{width:12px;height:12px;border-radius:3px}#produtividadeComercial .cp-legenda b{font-weight:600}#produtividadeComercial .cp-legenda small{color:#6b6b6b;min-width:36px;text-align:right}
+#produtividadeComercial .cp-legenda-linha{display:flex;flex-wrap:wrap;gap:14px;margin:-4px 0 12px}#produtividadeComercial .cp-legenda-linha li{display:flex;gap:6px}
+#produtividadeComercial .cp-barras,#produtividadeComercial .cp-medidores{display:grid;gap:12px}
+#produtividadeComercial .cp-barra-pessoa{display:grid;grid-template-columns:120px minmax(0,1fr);gap:10px;align-items:center}
+#produtividadeComercial .cp-barra-nome{font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#produtividadeComercial .cp-barra-grupo{display:grid;gap:3px}
+#produtividadeComercial .cp-barra-linha{display:flex;align-items:center;gap:8px;min-width:0}
+#produtividadeComercial .cp-barra{display:block;height:10px;border-radius:0 4px 4px 0;min-width:2px;flex:0 0 auto;max-width:calc(100% - 90px)}
+#produtividadeComercial .cp-barra-linha b{font-size:12px;font-weight:600;white-space:nowrap}
+#produtividadeComercial .cp-medidor{display:grid;grid-template-columns:120px minmax(0,1fr) 46px 64px;gap:10px;align-items:center}
+#produtividadeComercial .cp-trilho{height:10px;border-radius:5px;background:#e8eef6;overflow:hidden}#produtividadeComercial .cp-trilho span{display:block;height:100%;background:#1baf7a;border-radius:5px}
+#produtividadeComercial .cp-medidor b{font-size:13px;text-align:right}#produtividadeComercial .cp-medidor small{font-size:12px;color:#6b6b6b}
+#produtividadeComercial .cp-pessoas-cards{display:grid;gap:14px;padding:16px 20px 20px}
+#produtividadeComercial .cp-pessoa-card{border:1px solid #e3e7ec;border-left:4px solid var(--cor);border-radius:10px;padding:14px 16px;background:#fff}
+#produtividadeComercial .cp-pessoa-card header{display:block;margin:0 0 12px;padding:0;border:0;font-weight:600;font-size:15px}
+#produtividadeComercial .cp-pessoa-card .cp-pessoa-foto{width:40px;height:40px;flex-basis:40px}
+#produtividadeComercial .cp-ind-grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:12px}
+#produtividadeComercial .cp-ind-bloco h4{margin:0 0 6px;font:600 11px Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#6b6b6b}
+#produtividadeComercial .cp-ind-bloco dl{margin:0;display:grid;gap:4px}
+#produtividadeComercial .cp-ind-bloco dl>div{display:flex;justify-content:space-between;gap:10px;padding:6px 10px;background:#f6f8fa;border-radius:7px;cursor:help}
+#produtividadeComercial .cp-ind-bloco dt{font-size:13px;color:#4f4f4f}#produtividadeComercial .cp-ind-bloco dd{margin:0;font-size:14px;font-weight:600;white-space:nowrap}
+#produtividadeComercial .cp-vazio{padding:20px;color:#6b6b6b}
+@media(max-width:600px){#produtividadeComercial .cp-barra-pessoa,#produtividadeComercial .cp-medidor{grid-template-columns:1fr}#produtividadeComercial .cp-medidor{grid-template-columns:1fr auto}#produtividadeComercial .cp-medidor .cp-trilho{grid-column:1/-1}}
+
+#produtividadeComercial .cp-destaques{margin:0 0 18px}
+#produtividadeComercial .cp-dest-h{margin:0 0 10px;font:600 15px Inter,sans-serif;color:#1f2020;letter-spacing:0;text-transform:none}
+#produtividadeComercial .cp-dest-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,230px),1fr));gap:12px}
+#produtividadeComercial .cp-dest{background:#fff;border:1px solid #e3e7ec;border-top:3px solid #1baf7a;border-radius:12px;padding:14px 16px;box-shadow:0 0 8px rgba(15,23,42,.08);display:flex;flex-direction:column;gap:8px;min-width:0;cursor:help}
+#produtividadeComercial .cp-dest-atencao{border-top-color:#e34948}
+#produtividadeComercial .cp-dest-tit{font-size:12px;font-weight:600;color:#4f4f4f;letter-spacing:.02em}
+#produtividadeComercial .cp-dest-atencao .cp-dest-tit{color:#b42318}
+#produtividadeComercial .cp-dest-quem{display:flex;flex-direction:column;gap:6px;font-weight:600;font-size:14px}
+#produtividadeComercial .cp-dest strong{font:700 22px Inter,sans-serif;color:#1f2020}
+#produtividadeComercial .cp-dest small{font-size:12px;color:#6b6b6b;margin-top:-6px}
+#produtividadeComercial .cp-dest-resto{list-style:none;margin:2px 0 0;padding:8px 0 0;border-top:1px solid #eef1f4;display:grid;gap:4px}
+#produtividadeComercial .cp-dest-resto li{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:#4f4f4f}
+#produtividadeComercial .cp-dest-resto span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Painel por categoria (nov/2026): uma faixa por categoria, tabela à esquerda e gráfico à direita. */
+#produtividadeComercial .cp-categorias{display:grid;gap:18px}
+#produtividadeComercial .cp-cat{background:#fff;border:1px solid #e3e7ec;border-radius:14px;box-shadow:0 0 8px rgba(15,23,42,.08);overflow:hidden}
+#produtividadeComercial .cp-cat-cab{display:flex;align-items:center;gap:10px;padding:14px 22px;border-bottom:1px solid #eef1f4;background:#fafbfc}
+#produtividadeComercial .cp-cat-cab h2{margin:0;font:600 16px Inter,sans-serif;letter-spacing:0;text-transform:none;color:#1f2020}
+#produtividadeComercial .cp-cat-ic{font-size:18px;line-height:1}
+#produtividadeComercial .cp-cat-corpo{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:0}
+#produtividadeComercial .cp-cat-corpo.sem-grafico{grid-template-columns:1fr}
+#produtividadeComercial .cp-cat-dados{padding:16px 22px;min-width:0}
+#produtividadeComercial .cp-cat-graf{padding:16px 22px;border-left:1px solid #eef1f4;min-width:0}
+#produtividadeComercial .cp-cat-graf h4{margin:0 0 12px;font:600 13px Inter,sans-serif;color:#4f4f4f;letter-spacing:0;text-transform:none}
+#produtividadeComercial .cp-cat-graf h4:not(:first-child){margin-top:22px}
+#produtividadeComercial .cp-cat-tab{width:100%;border-collapse:collapse;table-layout:fixed}
+#produtividadeComercial .cp-cat-tab th,#produtividadeComercial .cp-cat-tab td{padding:9px 10px;border-bottom:1px solid #eef1f4;font-size:13.5px;text-align:right;overflow-wrap:anywhere}
+#produtividadeComercial .cp-cat-tab thead th{font:600 12.5px Inter,sans-serif;color:#1f2020;text-transform:none;letter-spacing:0;vertical-align:bottom;background:transparent}
+#produtividadeComercial .cp-cat-tab th:first-child{text-align:left;width:34%;font-weight:500;color:#4f4f4f}
+#produtividadeComercial .cp-cat-tab thead th:first-child{color:#8a8a8a;font-weight:500;font-size:12px}
+#produtividadeComercial .cp-cat-tab tbody tr{cursor:help}#produtividadeComercial .cp-cat-tab tbody tr:hover{background:#f7f9fb}
+#produtividadeComercial .cp-cat-tab td{font-weight:600;color:#1f2020;white-space:nowrap}
+#produtividadeComercial .cp-cat-pessoa{display:inline-flex;justify-content:flex-end;border-bottom:3px solid var(--cor);padding-bottom:6px}
+#produtividadeComercial .cp-cat-pessoa .cp-pessoa{flex-direction:column;gap:4px;font-size:12px;text-align:center}
+#produtividadeComercial .cp-cat-pessoa .cp-pessoa-foto{width:34px;height:34px;flex-basis:34px}
+#produtividadeComercial td.cp-melhor{color:#13784f;background:#e9f7f0}
+#produtividadeComercial td.cp-pior{color:#b42318;background:#fdecec}
+#produtividadeComercial .cp-cat-legenda{margin:10px 0 0;font-size:11.5px;color:#8a8a8a}
+#produtividadeComercial .cp-cat-legenda .cp-melhor{color:#13784f;font-weight:600}#produtividadeComercial .cp-cat-legenda .cp-pior{color:#b42318;font-weight:600}
+@media(max-width:1000px){#produtividadeComercial .cp-cat-corpo{grid-template-columns:1fr}#produtividadeComercial .cp-cat-graf{border-left:0;border-top:1px solid #eef1f4}}
+@media(max-width:600px){#produtividadeComercial .cp-cat-tab th,#produtividadeComercial .cp-cat-tab td{padding:7px 4px;font-size:12px;white-space:normal}#produtividadeComercial .cp-cat-dados,#produtividadeComercial .cp-cat-graf{padding:12px}}
+
+#produtividadeComercial .cp-resumo{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px}
+#produtividadeComercial .cp-res{background:#fff;border:1px solid #e3e7ec;border-top:3px solid #1baf7a;border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;box-shadow:0 0 8px rgba(15,23,42,.08);cursor:help;min-width:0}
+#produtividadeComercial .cp-res-atencao{border-top-color:#e34948}
+#produtividadeComercial .cp-res-tit{font-size:12px;font-weight:600;color:#6b6b6b}
+#produtividadeComercial .cp-res-atencao .cp-res-tit{color:#b42318}
+#produtividadeComercial .cp-res-quem{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:600}
+#produtividadeComercial .cp-res strong{font:700 20px Inter,sans-serif;color:#1f2020}#produtividadeComercial .cp-res strong small{font-size:12px;font-weight:500;color:#6b6b6b}
+#produtividadeComercial .cp-categorias>.cp-cat-legenda{margin:-4px 0 0}
+
+/* Gaveta lateral dos dados (nov/2026) */
+#produtividadeComercial .cp-num{all:unset;cursor:pointer;display:inline-block;padding:2px 6px;margin:-2px -6px;border-radius:6px;font:inherit;color:inherit;font-weight:600}
+#produtividadeComercial .cp-num:hover,#produtividadeComercial .cp-num:focus-visible{background:#e8eef6;color:#123f86;text-decoration:underline;outline:none}
+.cp-gaveta{position:fixed;inset:0;z-index:1000;pointer-events:none}
+.cp-gaveta-fundo{position:absolute;inset:0;background:rgba(15,23,42,.35);opacity:0;transition:opacity .25s}
+.cp-gaveta-painel{position:absolute;top:0;right:0;bottom:0;width:min(720px,100vw);background:#fff;box-shadow:-12px 0 40px rgba(15,23,42,.18);transform:translateX(100%);transition:transform .28s cubic-bezier(.22,1,.36,1);display:flex;flex-direction:column;font-family:Inter,sans-serif}
+.cp-gaveta.aberta{pointer-events:auto}.cp-gaveta.aberta .cp-gaveta-fundo{opacity:1}.cp-gaveta.aberta .cp-gaveta-painel{transform:none}
+@media(prefers-reduced-motion:reduce){.cp-gaveta-fundo,.cp-gaveta-painel{transition:none}}
+.cp-gaveta-painel header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 22px;border-bottom:1px solid #eef1f4}
+.cp-gaveta-painel h3{margin:0 0 8px;font-size:16px;font-weight:600;letter-spacing:0;text-transform:none}
+.cp-gaveta-painel h3 .cp-pessoa{display:inline-flex;align-items:center;gap:10px}
+.cp-gaveta-painel h3 .cp-pessoa-foto{position:relative;width:38px;height:38px;border-radius:50%;overflow:hidden;background:#e8eef6;color:#123f86;display:grid;place-items:center;font:600 12px Inter,sans-serif}
+.cp-gaveta-painel h3 .cp-pessoa-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cp-gaveta-sub{margin:0;display:grid;gap:3px;font-size:13px;color:#4f4f4f}.cp-gaveta-sub b{font-size:15px;color:#1f2020}.cp-gaveta-sub small{color:#8a8a8a}
+.cp-gaveta-x{border:0;background:#f1f4f7;border-radius:50%;width:34px;height:34px;font-size:20px;line-height:1;cursor:pointer;color:#4f4f4f;flex:0 0 auto}
+.cp-gaveta-corpo{padding:16px 22px 24px;overflow:auto;flex:1}
+.cp-gaveta-total{margin:0 0 10px;font-size:13px;color:#4f4f4f}
+.cp-det{width:100%;border-collapse:collapse;font-size:13px}
+.cp-det th{text-align:left;font-weight:600;color:#6b6b6b;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;padding:8px;border-bottom:1px solid #e3e7ec;background:#fff;position:sticky;top:-16px}
+.cp-det td{padding:9px 8px;border-bottom:1px solid #eef1f4;vertical-align:top}
+.cp-det .num{text-align:right;white-space:nowrap}
+.cp-det-ped{display:inline-block;padding:2px 9px;border-radius:999px;background:rgba(220,38,38,.10);color:#b91c1c;font-weight:600;text-decoration:none}
+.cp-vazio{color:#6b6b6b}
+html.cp-gaveta-aberta,html.cp-gaveta-aberta body{overflow:hidden}
+html:root body .cp-gaveta .cp-gaveta-x{background:#f1f4f7!important;color:#4f4f4f!important;border:0!important;box-shadow:none!important;min-height:0!important;padding:0!important}html:root body .cp-gaveta .cp-gaveta-x:hover{background:#e3e7ec!important}
+.cp-det-cli{display:inline-flex;align-items:center;gap:8px}.cp-det-foto{position:relative;width:30px;height:30px;flex:0 0 30px;border-radius:50%;overflow:hidden;background:#e8eef6;color:#123f86;display:grid;place-items:center;font:600 10.5px Inter,sans-serif}.cp-det-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.cp-det td{vertical-align:middle}

@@ -1,3 +1,4 @@
+import { instrucoesEmpresa } from '../_shared/ia-config.ts';
 // Ideia Premiada (nov/2026): assistente que ouve a ideia do funcionário, faz perguntas até entender (o problema, a
 // solução, os benefícios) e devolve um resumo para a pessoa aprovar. Quem grava a ideia é o navegador, depois que a
 // pessoa aprova, pela RPC ideias_premiadas_enviar (cai em Recebidas, na Gestão de Pessoas).
@@ -92,7 +93,7 @@ async function conversar(nome: string, body: any) {
   const r = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: MODELO, temperature: 0.4, response_format: { type: "json_schema", json_schema: ESQUEMA }, messages: [{ role: "system", content: SISTEMA(nome) }, ...mensagens] }),
+    body: JSON.stringify({ model: MODELO, temperature: 0.4, response_format: { type: "json_schema", json_schema: ESQUEMA }, messages: [{ role: "system", content: SISTEMA(nome)+await instrucoesEmpresa(body.empresa_id,"ideia") }, ...mensagens] }),
     signal: AbortSignal.timeout(60000),
   });
   const d = await r.json().catch(() => ({}));

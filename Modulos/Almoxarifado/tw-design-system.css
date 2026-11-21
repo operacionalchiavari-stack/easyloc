@@ -1,0 +1,1526 @@
+/*
+ * Tecnoweld Design System
+ * Camada visual carregada por ultimo em todas as telas. Mantem a estrutura e
+ * o comportamento dos modulos, mas consolida tipografia, controles, estados,
+ * superficies e espacamentos em uma unica linguagem visual.
+ */
+
+:root {
+  --color-primary: var(--tw-brand-primary, #b60412);
+  --color-primary-hover: var(--tw-brand-secondary, #8f0710);
+  --color-background: var(--tw-bg, #f4f6f8);
+  --color-surface: var(--tw-surface, #fff);
+  --color-surface-muted: var(--tw-surface-soft, #f6f7f9);
+  --color-text-primary: var(--tw-text, #142033);
+  --color-text-secondary: #526176;
+  --color-text-muted: var(--tw-muted, #6b7789);
+  --color-border: var(--tw-line, #d9dee6);
+  --color-border-soft: var(--tw-line-soft, #e8ebef);
+  --color-success: var(--tw-green, #087a5b);
+  --color-warning: var(--tw-orange, #ad6508);
+  --color-danger: var(--tw-danger, #c81d2a);
+  --color-info: #315f8c;
+
+  --radius-sm: 7px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-md: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 22px;
+  --control-height-sm: 32px;
+  --control-height-md: 38px;
+  --control-height-lg: 44px;
+  --shadow-surface: 0 0 8px rgba(15, 23, 42, .15), 0 0 2px rgba(15, 23, 42, .12);
+  --shadow-overlay: 0 20px 55px rgba(15, 23, 42, .18);
+}
+
+body {
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
+  font-size: var(--font-size-md);
+  line-height: 1.45;
+}
+
+/* Hierarquia tipografica compartilhada. */
+:where(.page-header, .detail-topbar-title, .operator-header, .pcp-head, .supplier-head, .ter-head) h1 {
+  margin-block: 0 var(--spacing-xs);
+  color: var(--color-text-primary);
+  font-size: clamp(21px, 2vw, 27px);
+  line-height: 1.15;
+  font-weight: 750;
+  letter-spacing: -.02em;
+}
+
+:where(.page-header, .detail-topbar-title, .operator-header, .pcp-head, .supplier-head, .ter-head) p {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+}
+
+:where(.section-title, .section-head, .card-header, .modal-header, .drawer-header) h2,
+:where(.section-title, .section-head, .card-header, .modal-header, .drawer-header) h3 {
+  color: var(--color-text-primary);
+  font-weight: 750;
+  letter-spacing: -.01em;
+}
+
+label:not(.service-option):not(.supplier-switch) {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 650;
+}
+
+small,
+.helper-text,
+.field-hint {
+  color: var(--color-text-muted);
+}
+
+/* Controles: uma proporcao central, preservando checkboxes, uploads e afins. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="hidden"]),
+select,
+textarea,
+.tw-field {
+  min-height: var(--control-height-md) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  background-color: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+  font-size: var(--font-size-md) !important;
+  box-shadow: none !important;
+}
+
+/* Campos digitaveis (texto/numero/etc. e textarea) ganham um fundo cinza
+   bem sutil para se destacarem; selects e campos nao-digitaveis (readonly,
+   disabled) continuam com o fundo padrao. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="hidden"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([readonly]):not(:disabled),
+textarea:not([readonly]):not(:disabled),
+.tw-field:not(select):not([readonly]):not(:disabled) {
+  background-color: var(--color-surface-muted) !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]):not([type="hidden"]),
+select {
+  padding-inline: 12px;
+}
+
+textarea {
+  min-height: 88px !important;
+  padding: 10px 12px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+::placeholder {
+  color: #929cab;
+  opacity: 1;
+}
+
+:where(input, select, textarea):hover:not(:disabled) {
+  border-color: #b9c2ce !important;
+}
+
+:where(input, select, textarea):focus {
+  border-color: var(--color-info) !important;
+  outline: 0 !important;
+  box-shadow: 0 0 0 3px rgba(49, 95, 140, .12) !important;
+}
+
+:where(input, select, textarea):disabled {
+  background: #f0f2f4 !important;
+  color: #7b8491 !important;
+  opacity: 1;
+}
+
+/* Botoes existentes recebem a mesma metrica sem alterar eventos ou markup. */
+:where(
+  .btn, .tw-btn, .supplier-button, .primary-button, .secondary-button,
+  .action-button, .back-button, .btn-back, .back-btn, .detail-back,
+  .modal-footer button, .dialog-card footer button, .drawer footer button
+) {
+  min-height: var(--control-height-md) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: 0 14px !important;
+  border-radius: var(--radius-md) !important;
+  font-size: var(--font-size-sm) !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: none !important;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+}
+
+:where(.btn, .tw-btn, .supplier-button, .primary-button, .secondary-button, .action-button) svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  stroke-width: 2;
+}
+
+:where(.btn-primary, .tw-btn-primary, .primary-button, .supplier-button.primary, button.primary) {
+  border: 1px solid var(--color-primary) !important;
+  background: var(--color-primary) !important;
+  color: #fff !important;
+}
+
+:where(.btn-primary, .tw-btn-primary, .primary-button, .supplier-button.primary, button.primary):hover:not(:disabled) {
+  border-color: var(--color-primary-hover) !important;
+  background: var(--color-primary-hover) !important;
+}
+
+:where(.btn-secondary, .tw-btn-secondary, .secondary-button, .supplier-button.secondary, button.secondary, .back-button, .btn-back, .back-btn, .detail-back) {
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text-secondary) !important;
+}
+
+:where(.btn-secondary, .tw-btn-secondary, .secondary-button, .supplier-button.secondary, button.secondary, .back-button, .btn-back, .back-btn, .detail-back):hover:not(:disabled) {
+  border-color: #b9c2ce !important;
+  background: var(--color-surface-muted) !important;
+  color: var(--color-text-primary) !important;
+}
+
+:where(.btn-danger, .tw-btn-danger, .danger-button, .btn-delete, .btn-destructive) {
+  border-color: var(--color-danger) !important;
+  background: var(--color-danger) !important;
+  color: #fff !important;
+}
+
+:where(.btn-success, .tw-btn-success) {
+  border-color: var(--color-success) !important;
+  background: var(--color-success) !important;
+  color: #fff !important;
+}
+
+:where(.icon-btn, .icon-button, .btn-icon, .tw-icon-btn, .modal-close, .drawer-close, .ter-close) {
+  width: var(--control-height-md) !important;
+  min-width: var(--control-height-md) !important;
+  height: var(--control-height-md) !important;
+  min-height: var(--control-height-md) !important;
+  display: inline-grid !important;
+  place-items: center;
+  padding: 0 !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text-secondary) !important;
+  box-shadow: none !important;
+}
+
+:where(.icon-btn, .icon-button, .btn-icon, .tw-icon-btn, .modal-close, .drawer-close, .ter-close) svg {
+  width: 17px;
+  height: 17px;
+}
+
+button:disabled,
+.disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed !important;
+  opacity: .56 !important;
+  box-shadow: none !important;
+}
+
+/* Superficies: borda discreta, raio unico e sombra minima. */
+:where(
+  .tw-card, .content-card, .table-card, .summary-card, .filters-card,
+  .policy-card, .financial-table-card, .supplier-summary article,
+  .supplier-toolbar, .supplier-table-card, .ter-toolbar, .ter-table-wrap,
+  .metrics, .timeline, .dialog-card
+) {
+  border-color: var(--color-border) !important;
+  border-radius: var(--radius-lg) !important;
+  background-color: var(--color-surface) !important;
+  box-shadow: var(--shadow-surface) !important;
+}
+
+:where(
+  .compras-board-card, .approval-order-card, .budget-view-card,
+  .project-board-card, .project-card, .tarefa-kanban-card, .tarefa-card,
+  .qa-order-card, .ter-card, .montagem-card, .delivery-card,
+  .log-released-route-card, .separation-queue-card,
+  .separation-package-card, .manut-ticket-card, .ticket-request-card,
+  .customer-card, .attention-card, .prereserve-card
+) {
+  border-color: var(--color-border) !important;
+  border-radius: var(--radius-lg) !important;
+  background-color: var(--color-surface) !important;
+  box-shadow: var(--shadow-surface) !important;
+}
+
+/* Tabelas e paginacao. */
+:where(.tw-table-scroll, .table-wrap, .supplier-table-card, .ter-table-wrap) {
+  border-color: var(--color-border) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--color-surface) !important;
+  box-shadow: none !important;
+}
+
+table {
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+table thead th {
+  padding-block: 11px !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  background: #f3f5f7 !important;
+  color: var(--color-text-secondary) !important;
+  font-size: var(--font-size-xs) !important;
+  font-weight: 750 !important;
+  letter-spacing: .025em;
+  text-transform: none;
+}
+
+table tbody td {
+  padding-block: 11px;
+  border-color: var(--color-border-soft) !important;
+}
+
+table tbody tr:hover {
+  background: #f7f9fa !important;
+}
+
+:where(.table-footer, .pagination, .table-pagination) {
+  min-height: 48px;
+  border-color: var(--color-border-soft) !important;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+/* Tabs: linha inferior neutra e estado ativo pela cor principal. */
+:where(.tabs, .detail-tabs, .pcp-tabs, .tab-list, .tarefas-tabs, .qi-tabs, .settings-tabs, [role="tablist"]) {
+  gap: var(--spacing-xl) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  background: transparent !important;
+}
+
+:where(.tabs, .detail-tabs, .pcp-tabs, .tab-list, .tarefas-tabs, .qi-tabs, .settings-tabs, [role="tablist"]) :where(button, [role="tab"], a) {
+  min-height: var(--control-height-md);
+  padding: 0 2px !important;
+  border: 0 !important;
+  border-bottom: 2px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--color-text-muted) !important;
+  font-size: var(--font-size-sm) !important;
+  font-weight: 650 !important;
+  box-shadow: none !important;
+}
+
+:where(.tabs, .detail-tabs, .pcp-tabs, .tab-list, .tarefas-tabs, .qi-tabs, .settings-tabs, [role="tablist"]) :where(.active, .is-active, [aria-selected="true"]) {
+  border-bottom-color: var(--color-primary) !important;
+  color: var(--color-text-primary) !important;
+}
+
+/* Badges e status: paleta semantica suave, nunca cores de modulo. */
+:where(.badge, .tw-badge, .status, .status-pill, .status-tag, .status-chip, .ter-chip) {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 7px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+:where(
+  .status-concluido, .status-concluida, .status-aprovado, .status-aprovada,
+  .status-ativo, .status-conforme, .status-success, .status-done,
+  .status-disponivel,
+  .badge-success, .tw-badge-success, .status-chip.ok, .status-tag.active
+) {
+  border-color: #bfe5d8 !important;
+  background: #e9f7f2 !important;
+  color: #087255 !important;
+}
+
+:where(
+  .status-pendente, .status-aguardando, .status-a_iniciar, .status-a-iniciar,
+  .status-atencao, .status-alerta, .status-waiting, .status-chip.warn,
+  .status-em_desenvolvimento, .status-somente_cotado,
+  .badge-warning, .tw-badge-warning, .ter-chip.warn
+) {
+  border-color: #f0d6a8 !important;
+  background: #fff6e7 !important;
+  color: #945508 !important;
+}
+
+:where(
+  .status-erro, .status-recusado, .status-recusada, .status-nao-conforme,
+  .status-nonconform, .status-bloqueado, .status-bloqueada, .status-atrasada,
+  .status-late, .status-parado, .status-pausada, .status-chip.danger,
+  .status-reprovado, .status-reprovada, .status-faltando,
+  .badge-danger, .tw-badge-danger
+) {
+  border-color: #efc2c7 !important;
+  background: #fcecee !important;
+  color: #a61d2b !important;
+}
+
+:where(
+  .status-em_andamento, .status-em-andamento, .status-andamento,
+  .status-progress, .badge-info, .tw-badge-info
+) {
+  border-color: #c8d8e8 !important;
+  background: #edf3f8 !important;
+  color: #315f8c !important;
+}
+
+:where(.status-inativo, .status-inactive, .status-cancelado, .status-cancelada, .status-pending, .status-obsoleto, .status-arquivado) {
+  border-color: #d9dee5 !important;
+  background: #f1f3f5 !important;
+  color: #5f6875 !important;
+}
+
+/* Modais e drawers preservam tamanhos funcionais, mas compartilham identidade. */
+:where(.modal, .modal-backdrop, .supplier-modal-backdrop, [class*="modal-backdrop"]) {
+  background-color: rgba(15, 23, 42, .54) !important;
+  backdrop-filter: blur(2px);
+}
+
+dialog::backdrop {
+  background: rgba(15, 23, 42, .54) !important;
+  backdrop-filter: blur(2px);
+}
+
+:where(.modal-panel, .modal-content, .supplier-modal, dialog, .drawer, .supplier-drawer, .ter-drawer) {
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-lg) !important;
+  background: var(--color-surface) !important;
+  color: var(--color-text-primary) !important;
+  box-shadow: var(--shadow-overlay) !important;
+}
+
+:where(.modal-header, .modal-footer, .drawer-header, .supplier-modal header, .supplier-modal footer, .dialog-card header, .dialog-card footer) {
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-color: var(--color-border-soft) !important;
+  background: var(--color-surface) !important;
+}
+
+:where(.modal-body, .drawer-body) {
+  padding: var(--spacing-xl) !important;
+}
+
+:where(.modal-footer, .supplier-modal footer, .dialog-card footer) {
+  justify-content: flex-end;
+}
+
+/* Estados vazios, alertas e tooltips. */
+:where(.empty, .empty-state, .supplier-empty, [class*="empty-state"]) {
+  color: var(--color-text-muted) !important;
+  font-size: var(--font-size-sm);
+}
+
+:where(.alert, .notice, .modal-warning) {
+  border-radius: var(--radius-md) !important;
+  box-shadow: none !important;
+}
+
+:where([role="tooltip"], .tooltip, [class*="-tooltip"]) {
+  border-radius: var(--radius-sm) !important;
+  background: #172234 !important;
+  color: #fff !important;
+  font-size: var(--font-size-xs) !important;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .18) !important;
+}
+
+@media (max-width: 760px) {
+  :root {
+    --control-height-md: 42px;
+    --tw-control-h: 42px;
+  }
+
+  :where(.modal-panel, .modal-content, .supplier-modal, dialog) {
+    max-width: calc(100vw - 24px) !important;
+  }
+
+  :where(.modal-header, .modal-footer, .drawer-header, .supplier-modal header, .supplier-modal footer, .dialog-card header, .dialog-card footer),
+  :where(.modal-body, .drawer-body) {
+    padding-inline: var(--spacing-lg) !important;
+  }
+
+  :where(.tabs, .detail-tabs, .pcp-tabs, .tab-list, .tarefas-tabs, .qi-tabs, .settings-tabs, [role="tablist"]) {
+    gap: var(--spacing-lg) !important;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  :where(.tabs, .detail-tabs, .pcp-tabs, .tab-list, .tarefas-tabs, .qi-tabs, .settings-tabs, [role="tablist"])::-webkit-scrollbar {
+    display: none;
+  }
+
+  :where(.btn, .tw-btn, .supplier-button, .primary-button, .secondary-button, .action-button) {
+    min-height: var(--control-height-md) !important;
+  }
+}
+
+/* ========================================================================== 
+ * Navegação global superior — mesma linguagem do Portal do Cliente
+ * ======================================================================= */
+@view-transition { navigation: auto; }
+
+.sidebar.sidebar--top { view-transition-name: tw-system-navigation; }
+body:has(> .sidebar.sidebar--top) > :where(main, .main) { view-transition-name: tw-system-content; }
+
+::view-transition-old(tw-system-navigation),
+::view-transition-new(tw-system-navigation) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(tw-system-content) {
+  animation: tw-content-out 90ms ease-out both;
+}
+::view-transition-new(tw-system-content) {
+  animation: tw-content-in 140ms ease-out both;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0s;
+  mix-blend-mode: normal;
+}
+
+@keyframes tw-content-out { to { opacity: .88; } }
+@keyframes tw-content-in { from { opacity: 0; transform: translateY(3px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(tw-system-content),
+  ::view-transition-new(tw-system-content) { animation: none; }
+}
+
+body:has(> .sidebar.sidebar--top) {
+  margin: 0 !important;
+  padding-top: 76px !important;
+}
+
+body:has(> .sidebar.sidebar--top) > :where(main, .main) {
+  width: 100% !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+}
+
+.sidebar.sidebar--top {
+  inset: 0 0 auto 0 !important;
+  z-index: 1000 !important;
+  width: 100% !important;
+  height: 76px !important;
+  min-height: 76px !important;
+  display: grid !important;
+  grid-template-columns: 205px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 18px !important;
+  padding: 0 clamp(20px, 2.6vw, 46px) !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, .08) !important;
+  border-radius: 0 !important;
+  background: #0b2942 !important;
+  box-shadow: 0 5px 22px rgba(7, 24, 39, .14) !important;
+  transition: none !important;
+}
+
+.sidebar.sidebar--top:hover { width: 100% !important; }
+.sidebar.sidebar--top::after { display: none !important; }
+
+.sidebar.sidebar--top .sidebar-logo {
+  width: auto !important;
+  height: 54px !important;
+  min-height: 54px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.sidebar.sidebar--top .sidebar-logo::before,
+.sidebar.sidebar--top .sidebar-brand-compact { display: none !important; }
+/* (2026-10-05) bandeira do Brasil antes da logo no menu de cima */
+.sidebar.sidebar--top .sidebar-brand-open .sidebar-brand-flag { display: block !important; width: 26px !important; flex: 0 0 auto; box-shadow: 0 2px 6px rgba(0, 0, 0, .25) !important; }
+.sidebar.sidebar--top .sidebar-brand-open {
+  align-items: center !important;
+  gap: 10px !important;
+  position: static !important;
+  inset: auto !important;
+  width: auto !important;
+  height: auto !important;
+  display: flex !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+.sidebar.sidebar--top .sidebar-brand-full {
+  width: 176px !important;
+  max-width: 176px !important;
+  height: auto !important;
+  opacity: 1 !important;
+  filter: brightness(0) invert(1) !important;
+}
+
+.sidebar.sidebar--top .side-nav {
+  min-width: 0 !important;
+  height: 76px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  padding: 0 !important;
+  overflow: visible !important;
+}
+
+.sidebar.sidebar--top :where(.sidebar-group, .nav-item) {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  margin: 0 !important;
+}
+
+.sidebar.sidebar--top :where(.sidebar-category, .side-nav > .nav-item) {
+  width: auto !important;
+  min-width: 0 !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  padding: 0 12px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #fff !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  white-space: nowrap !important;
+}
+
+.sidebar.sidebar--top :where(.sidebar-category, .side-nav > .nav-item) > svg:first-child {
+  display: none !important;
+}
+
+.sidebar.sidebar--top :where(.sidebar-category, .side-nav > .nav-item) span {
+  width: auto !important;
+  display: inline !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+.sidebar.sidebar--top .sidebar-category-arrow {
+  width: 13px !important;
+  height: 13px !important;
+  display: block !important;
+  opacity: .72 !important;
+  transform: rotate(90deg) !important;
+}
+
+.sidebar.sidebar--top :where(.sidebar-category, .side-nav > .nav-item):hover,
+.sidebar.sidebar--top :where(.sidebar-category.active, .side-nav > .nav-item.active),
+.sidebar.sidebar--top .sidebar-group.is-open .sidebar-category {
+  background: rgba(255, 255, 255, .11) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.sidebar.sidebar--top .sidebar-flyout {
+  position: fixed !important;
+  left: var(--sidebar-flyout-left, 12px) !important;
+  top: var(--sidebar-flyout-top, 84px) !important;
+  width: 264px !important;
+  max-height: calc(100vh - 98px) !important;
+  padding: 10px !important;
+  overflow: auto !important;
+  border: 1px solid rgba(255, 255, 255, .1) !important;
+  border-radius: 11px !important;
+  background: #0b2942 !important;
+  box-shadow: 0 18px 48px rgba(7, 24, 39, .22) !important;
+}
+
+.sidebar.sidebar--top .sidebar-flyout-title {
+  display: none !important;
+}
+
+.sidebar.sidebar--top .sidebar-subitem {
+  min-height: 40px !important;
+  padding: 0 10px !important;
+  border-radius: 7px !important;
+  color: #fff !important;
+}
+.sidebar.sidebar--top .sidebar-subitem > :where(svg, i) { display: none !important; }
+.sidebar.sidebar--top .sidebar-subitem span {
+  width: auto !important;
+  display: inline !important;
+  opacity: 1 !important;
+  color: inherit !important;
+}
+.sidebar.sidebar--top .sidebar-subitem:hover { background: rgba(255, 255, 255, .08) !important; color: #fff !important; }
+.sidebar.sidebar--top .sidebar-subitem.active {
+  background: rgba(255, 255, 255, .13) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+/* O menu superior usa somente o cinza translúcido para seleção. */
+.sidebar.sidebar--top :is(.sidebar-category.active, .side-nav > .nav-item.active, .sidebar-subitem.active) {
+  background: rgba(255, 255, 255, .13) !important;
+  color: #fff !important;
+  box-shadow: none !important;
+}
+
+.sidebar.sidebar--top .sidebar-bottom {
+  position: static !important;
+  inset: auto !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 0 0 18px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  border: 0 !important;
+  border-left: 1px solid rgba(255, 255, 255, .12) !important;
+}
+
+.sidebar.sidebar--top .sidebar-user-card {
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 9px !important;
+  display: flex !important;
+  align-items: center !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.sidebar.sidebar--top .sidebar-user-avatar { width: 32px !important; min-width: 32px !important; height: 32px !important; }
+.sidebar.sidebar--top .sidebar-user-meta {
+  width: auto !important;
+  display: flex !important;
+  align-items: baseline !important;
+  gap: 7px !important;
+  opacity: 1 !important;
+  transform: none !important;
+  white-space: nowrap !important;
+}
+.sidebar.sidebar--top .sidebar-user-meta strong { color: #fff !important; white-space: nowrap !important; }
+.sidebar.sidebar--top .sidebar-user-meta span {
+  color: #aebdca !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  letter-spacing: .035em !important;
+  white-space: nowrap !important;
+}
+.sidebar.sidebar--top .sidebar-bottom .logout {
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(248, 113, 113, .28) !important;
+  background: rgba(248, 113, 113, .14) !important;
+  color: #fca5a5 !important;
+  transition: background-color .16s ease, border-color .16s ease, color .16s ease !important;
+}
+.sidebar.sidebar--top .sidebar-bottom .logout:hover,
+.sidebar.sidebar--top .sidebar-bottom .logout:focus-visible {
+  border-color: rgba(248, 113, 113, .46) !important;
+  background: rgba(248, 113, 113, .22) !important;
+  color: #fecaca !important;
+}
+.sidebar.sidebar--top .sidebar-bottom .logout svg { display: block !important; }
+.sidebar.sidebar--top .sidebar-bottom .logout span { display: none !important; }
+
+@media (max-width: 1180px) {
+  .sidebar.sidebar--top { grid-template-columns: 158px minmax(0, 1fr) auto !important; gap: 10px !important; padding-inline: 18px !important; }
+  .sidebar.sidebar--top .sidebar-brand-full { width: 146px !important; }
+  .sidebar.sidebar--top :where(.sidebar-category, .side-nav > .nav-item) { padding-inline: 8px !important; font-size: 11px !important; }
+  .sidebar.sidebar--top .sidebar-user-avatar { display: none !important; }
+  .sidebar.sidebar--top .sidebar-user-meta { width: auto !important; }
+}
+
+@media (max-width: 820px) {
+  body:has(> .sidebar.sidebar--top) { padding-top: 112px !important; }
+  .sidebar.sidebar--top {
+    height: 112px !important;
+    min-height: 112px !important;
+    grid-template-columns: 1fr auto !important;
+    grid-template-rows: 58px 54px !important;
+    padding: 0 12px !important;
+  }
+  .sidebar.sidebar--top .sidebar-logo { grid-column: 1; grid-row: 1; height: 58px !important; }
+  .sidebar.sidebar--top .sidebar-brand-full { width: 145px !important; }
+  .sidebar.sidebar--top .sidebar-bottom { grid-column: 2; grid-row: 1; padding-left: 10px !important; }
+  .sidebar.sidebar--top .sidebar-user-card { display: none !important; }
+  .sidebar.sidebar--top .side-nav {
+    grid-column: 1 / -1; grid-row: 2; width: calc(100vw - 24px) !important; height: 54px !important;
+    justify-content: flex-start !important; overflow-x: auto !important; overflow-y: hidden !important; scrollbar-width: none;
+  }
+  .sidebar.sidebar--top .side-nav::-webkit-scrollbar { display: none; }
+  .sidebar.sidebar--top :where(.sidebar-category, .side-nav > .nav-item) { height: 38px !important; min-height: 38px !important; }
+}
+
+/* Módulos carregados pelo shell contêm somente a área funcional. */
+html.tw-embedded,
+html.tw-embedded body {
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 100% !important;
+}
+html.tw-embedded body > :where(main, .main) {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+}
+html.tw-embedded :where(.sidebar, .mobile-bottom-nav) { display: none !important; }
+
+/* --------------------------------------------------------------------------
+ * Distribuicao inteligente das colunas de tabela
+ * ----------------------------------------------------------------------- */
+:where(
+  .tw-table-scroll,
+  .table-wrap,
+  .table-card,
+  .financial-table-scroll,
+  .supplier-table-card,
+  .ter-table-wrap,
+  .receipt-list-card,
+  .reference-recent-table
+) table {
+  width: 100% !important;
+  table-layout: auto !important;
+}
+
+table :where(th, td) {
+  box-sizing: border-box;
+  min-width: 0;
+  vertical-align: middle;
+}
+
+table th {
+  white-space: nowrap;
+}
+
+table td {
+  line-height: 1.35;
+}
+
+/* Conteudos operacionais curtos nunca devem consumir uma faixa larga. */
+table :where(
+  th.expand-col, td.expand-col,
+  th.photo-column, td.photo-column,
+  th.pv-check-col, td.pv-check-col,
+  th.quote-table-action-head, td.quote-table-action,
+  th.actions-col, td.actions-col,
+  th.action-col, td.action-col,
+  th.status-col, td.status-col,
+  [class*="table-actions"],
+  [class*="action-cell"]
+) {
+  width: 1% !important;
+  min-width: 42px !important;
+  white-space: nowrap !important;
+}
+
+table :where(td, th):has(> .badge:only-child),
+table :where(td, th):has(> .tw-badge:only-child),
+table :where(td, th):has(> .status-pill:only-child),
+table :where(td, th):has(> .status-tag:only-child),
+table :where(td, th):has(> .status-chip:only-child) {
+  width: 1%;
+  white-space: nowrap;
+}
+
+table td:has(> :where(.icon-btn, .btn-icon, .tw-icon-btn)),
+table td:has(> :where(.table-actions, .row-actions)) {
+  width: 1% !important;
+  white-space: nowrap !important;
+}
+
+table td :where(.table-actions, .row-actions) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+/* Central de OP: projeto e cliente flexionam; metadados ficam compactos. */
+.table-card table:has(#ordersTableBody) :where(th, td):nth-child(1) { width: 42px !important; }
+.table-card table:has(#ordersTableBody) :where(th, td):nth-child(2) { width: 76px; white-space: nowrap; }
+.table-card table:has(#ordersTableBody) :where(th, td):nth-child(3) { width: 86px; white-space: nowrap; }
+.table-card table:has(#ordersTableBody) :where(th, td):nth-child(4) { width: 22%; min-width: 150px; }
+.table-card table:has(#ordersTableBody) :where(th, td):nth-child(5) { width: 18%; min-width: 130px; }
+.table-card table:has(#ordersTableBody) :where(th, td):nth-child(6) { width: 110px; }
+.table-card table:has(#ordersTableBody) :where(th, td):nth-child(7) { width: 105px; }
+.table-card table:has(#ordersTableBody) :where(th, td):nth-child(8),
+.table-card table:has(#ordersTableBody) :where(th, td):nth-child(9) { width: 116px; }
+.table-card table:has(#ordersTableBody) :where(th, td):nth-child(10) { width: 96px; }
+.table-card table:has(#ordersTableBody) :where(th, td):nth-child(11) { width: 76px; }
+
+/* Orcamentos, projetos e clientes: a entidade principal recebe o espaco. */
+.budget-table-card table :where(th, td):first-child,
+.project-table-card table :where(th, td):nth-child(2),
+.customers-table-card table :where(th, td):first-child {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.budget-table-card table :where(th, td):nth-child(2),
+.budget-table-card table :where(th, td):nth-child(3),
+.project-table-card table :where(th, td):first-child,
+.customers-table-card table :where(th, td):nth-child(2) {
+  width: auto;
+  min-width: 150px;
+}
+
+.budget-table-card table :where(th, td):nth-last-child(-n+3),
+.project-table-card table :where(th, td):nth-last-child(-n+4),
+.customers-table-card table :where(th, td):nth-last-child(-n+2) {
+  width: 1%;
+  white-space: nowrap;
+}
+
+/* Cadastro de pessoas, setores e maquinas. */
+.employees-table :where(th, td):nth-child(1),
+table:has(#funcionariosTableBody) :where(th, td):nth-child(1) { width: 52px; }
+table:has(#funcionariosTableBody) :where(th, td):nth-child(2) { width: 22%; min-width: 150px; }
+table:has(#funcionariosTableBody) :where(th, td):nth-child(3),
+table:has(#funcionariosTableBody) :where(th, td):nth-child(4) { width: 15%; min-width: 110px; }
+table:has(#funcionariosTableBody) :where(th, td):nth-child(n+5) { width: 1%; white-space: nowrap; }
+
+table:has(#setoresTableBody) :where(th, td):nth-child(1) { width: 18%; min-width: 135px; }
+table:has(#setoresTableBody) :where(th, td):nth-child(3),
+table:has(#setoresTableBody) :where(th, td):nth-child(4) { width: auto; min-width: 150px; }
+table:has(#setoresTableBody) :where(th, td):nth-child(2),
+table:has(#setoresTableBody) :where(th, td):nth-child(n+5) { width: 1%; white-space: nowrap; }
+
+table:has(#maquinasTableBody) :where(th, td):first-child { width: auto; min-width: 180px; }
+table:has(#maquinasTableBody) :where(th, td):nth-child(n+2) { width: 1%; white-space: nowrap; }
+
+/* Compras: material/fornecedor/OPs flexionam e quantidades/status compactam. */
+.pv-table :where(th, td):first-child { width: 1%; white-space: nowrap; }
+.pv-table :where(th, td):nth-child(2) { width: auto; min-width: 180px; }
+.pv-table :where(th, td):nth-child(n+3) { white-space: nowrap; }
+table:has(#needsBody) :where(th, td):nth-child(3) { width: 210px; }
+table:has(#needsBody) :where(th, td):nth-child(4),
+table:has(#needsBody) :where(th, td):nth-child(5) { width: 120px; }
+table:has(#needsBody) :where(th, td):nth-child(6) { width: 135px; }
+.pv-orders-table :where(th, td):nth-child(2),
+.pv-orders-table :where(th, td):last-child { width: auto; min-width: 150px; white-space: normal; }
+.pv-orders-table :where(th, td):nth-child(3),
+.pv-orders-table :where(th, td):nth-child(4),
+.pv-orders-table :where(th, td):nth-child(6),
+.pv-orders-table :where(th, td):nth-child(7),
+.pv-orders-table :where(th, td):nth-child(8) { width: 1%; }
+
+/* Almoxarifado: produto e fornecedor absorvem largura; numeros ficam juntos. */
+.almox-table :where(th, td):first-child { width: 1%; white-space: nowrap; }
+.almox-table :where(th, td):nth-child(2) { width: auto; min-width: 180px; }
+.almox-table :where(th, td):nth-child(n+3) { width: 1%; white-space: nowrap; }
+.receipt-list-table :where(th, td):nth-child(1),
+.receipt-list-table :where(th, td):nth-child(2) { width: auto; min-width: 150px; }
+.receipt-list-table :where(th, td):nth-child(n+3) { width: 1%; white-space: nowrap; }
+.invoice-table :where(th, td):nth-child(1),
+.invoice-table :where(th, td):nth-child(4) { width: auto; min-width: 190px; }
+.invoice-table :where(th, td):not(:nth-child(1)):not(:nth-child(4)) { width: 1%; white-space: nowrap; }
+
+/* Financeiro: descricao/entidade flexionam; datas, valores e estado compactam. */
+.financial-table-scroll table :where(th, td):first-child { width: auto; min-width: 150px; }
+.financial-table-scroll table :where(th, td):nth-child(2) { min-width: 112px; }
+.financial-table-scroll table :where(th, td):nth-child(3) { width: auto; min-width: 130px; }
+.financial-table-scroll table :where(th, td):nth-child(n+4) { width: 1%; white-space: nowrap; }
+
+/* Fornecedores, terceiros, RH e frota. */
+.supplier-table-card table :where(th, td):first-child { width: auto; min-width: 180px; }
+.supplier-table-card table :where(th, td):nth-child(4) { width: 26%; min-width: 170px; }
+.supplier-table-card table :where(th, td):not(:first-child):not(:nth-child(4)) { width: 1%; white-space: nowrap; }
+
+.ter-table :where(th, td):nth-child(2),
+.ter-table :where(th, td):nth-child(3),
+.ter-table :where(th, td):nth-child(4),
+.ter-table :where(th, td):nth-child(5) { width: auto; min-width: 130px; }
+.ter-table :where(th, td):not(:nth-child(2)):not(:nth-child(3)):not(:nth-child(4)):not(:nth-child(5)) { width: 1%; white-space: nowrap; }
+
+.rh-table :where(th, td):first-child,
+.rh-table :where(th, td):nth-child(7) { width: auto; min-width: 160px; }
+.rh-table :where(th, td):not(:first-child):not(:nth-child(7)) { width: 1%; white-space: nowrap; }
+
+table:has(#vehiclesTableBody) :where(th, td):nth-child(2) { width: auto; min-width: 180px; }
+table:has(#vehiclesTableBody) :where(th, td):not(:nth-child(2)) { width: 1%; white-space: nowrap; }
+
+table:has(#catalogTableBody) :where(th, td):first-child { width: 52px !important; }
+table:has(#catalogTableBody) :where(th, td):nth-child(2) { width: 38%; min-width: 190px; }
+table:has(#catalogTableBody) :where(th, td):nth-child(3) { width: 25%; min-width: 160px; }
+table:has(#catalogTableBody) :where(th, td):nth-child(n+4) { width: 1%; white-space: nowrap; }
+
+table:has(#clientsTableBody) :where(th, td):nth-child(3) { width: 132px !important; white-space: nowrap; }
+table:has(#clientsTableBody) :where(th, td):nth-child(4) { width: auto; min-width: 150px; }
+table:has(#clientsTableBody) :where(th, td):nth-child(5) { width: 120px !important; white-space: nowrap; }
+table:has(#clientsTableBody) :where(th, td):nth-child(6) { width: 118px !important; white-space: nowrap; }
+table:has(#clientsTableBody) :where(th, td):nth-child(7) { width: 170px !important; }
+
+/* Tabelas de composicao: observacao/material flexionam; numeros nao. */
+.quote-table-scroll table :where(th, td):nth-child(2),
+.quote-table-scroll table :where(th, td):nth-last-child(2) { width: auto; min-width: 160px; }
+.quote-table-scroll table :where(th, td):not(:nth-child(2)):not(:nth-last-child(2)) { width: 1%; white-space: nowrap; }
+
+/* Textos extensos quebram de forma controlada, sem alargar toda a tabela. */
+table td :where(strong, span, small) {
+  max-width: 100%;
+}
+
+table td .tw-table-primary,
+table td .cell-primary,
+table td .description,
+table td .observacao {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+@media (max-width: 760px) {
+  :where(
+    .tw-table-scroll,
+    .table-wrap,
+    .table-card,
+    .financial-table-scroll,
+    .supplier-table-card,
+    .ter-table-wrap,
+    .receipt-list-card
+  ) {
+    overflow-x: auto !important;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+  }
+
+  :where(
+    .tw-table-scroll,
+    .table-wrap,
+    .table-card,
+    .financial-table-scroll,
+    .supplier-table-card,
+    .ter-table-wrap,
+    .receipt-list-card
+  ) table {
+    width: max-content !important;
+    min-width: 100% !important;
+    max-width: none !important;
+  }
+
+  table :where(th, td) {
+    padding-inline: 10px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+ * Topos de pagina compactos
+ *
+ * Os modulos historicos usam nomes diferentes para o mesmo componente. Esta
+ * camada os trata como uma unica familia sem modificar o HTML ou os fluxos.
+ * ----------------------------------------------------------------------- */
+:where(
+  .page-header,
+  .budget-header,
+  .dashboard-header,
+  .delivery-header,
+  .almox-header,
+  .compras-header,
+  .financial-header,
+  .rh-header,
+  .manut-header,
+  .montagem-page-header,
+  .pcp-head,
+  .ter-head,
+  .log-header,
+  .operator-header,
+  .qi-header,
+  .quote-header,
+  .policy-hero,
+  .models-header,
+  .editor-top,
+  .fp-header,
+  .ops-rh-header,
+  .item-header
+) {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px 16px !important;
+  margin: 0 0 12px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+:where(
+  .page-header,
+  .budget-header,
+  .dashboard-header,
+  .delivery-header,
+  .almox-header,
+  .compras-header,
+  .financial-header,
+  .rh-header,
+  .manut-header,
+  .montagem-page-header,
+  .pcp-head,
+  .ter-head,
+  .log-header,
+  .operator-header,
+  .qi-header,
+  .quote-header,
+  .policy-hero,
+  .models-header,
+  .editor-top,
+  .fp-header,
+  .ops-rh-header,
+  .item-header
+) > :where(div, section, nav) {
+  min-width: 0;
+}
+
+/* O bloco textual ocupa apenas o necessario; a area livre fica para acoes. */
+:where(
+  .page-header,
+  .budget-header,
+  .dashboard-header,
+  .delivery-header,
+  .almox-header,
+  .compras-header,
+  .financial-header,
+  .rh-header,
+  .manut-header,
+  .montagem-page-header,
+  .ter-head,
+  .log-header,
+  .operator-header,
+  .qi-header,
+  .quote-header,
+  .policy-hero,
+  .models-header,
+  .editor-top,
+  .fp-header,
+  .ops-rh-header,
+  .item-header
+) h1 {
+  margin: 0 !important;
+  color: var(--color-text-primary) !important;
+  font-size: clamp(20px, 1.65vw, 26px) !important;
+  line-height: 1.08 !important;
+  font-weight: 750 !important;
+  letter-spacing: -.025em !important;
+}
+
+:where(
+  .page-header,
+  .budget-header,
+  .dashboard-header,
+  .delivery-header,
+  .almox-header,
+  .compras-header,
+  .financial-header,
+  .rh-header,
+  .manut-header,
+  .montagem-page-header,
+  .ter-head,
+  .log-header,
+  .operator-header,
+  .qi-header,
+  .quote-header,
+  .policy-hero,
+  .models-header,
+  .editor-top,
+  .fp-header,
+  .ops-rh-header,
+  .item-header
+) p {
+  overflow: hidden;
+  max-width: 680px;
+  margin: 3px 0 0 !important;
+  color: var(--color-text-muted) !important;
+  font-size: 11px !important;
+  line-height: 1.25 !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:where(.page-breadcrumb, .eyebrow, .header-eyebrow, .section-kicker) {
+  display: block;
+  margin: 0 0 3px !important;
+  color: var(--color-text-muted) !important;
+  font-size: 9px !important;
+  line-height: 1 !important;
+  font-weight: 750 !important;
+  letter-spacing: .075em !important;
+  text-transform: uppercase;
+}
+
+/* Acoes, filtros e tabs compartilham a mesma linha sempre que houver espaco. */
+:where(
+  .header-actions,
+  .head-actions,
+  .quote-header-actions,
+  .budget-header-actions,
+  .tarefas-header-tools,
+  .delivery-header-actions,
+  .financial-header-actions,
+  .rh-header-actions,
+  .log-header-actions,
+  .operator-header-actions,
+  .item-header-actions,
+  .qi-report-actions
+) {
+  min-width: 0;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  margin: 0 !important;
+}
+
+:where(
+  .header-actions,
+  .head-actions,
+  .quote-header-actions,
+  .budget-header-actions,
+  .tarefas-header-tools,
+  .delivery-header-actions,
+  .financial-header-actions,
+  .rh-header-actions,
+  .log-header-actions,
+  .operator-header-actions,
+  .item-header-actions,
+  .qi-report-actions
+) :where(.btn, .tw-btn, button, a) {
+  min-height: 36px !important;
+}
+
+/* PCP possui titulo, tabs e acoes: usa as tres zonas da largura disponivel. */
+.pcp-head {
+  display: grid !important;
+  grid-template-columns: max-content minmax(300px, 1fr) auto !important;
+  align-items: center !important;
+}
+
+.pcp-head .pcp-tabs {
+  min-width: 0;
+  margin: 0 !important;
+  justify-self: start;
+}
+
+.pcp-head .head-actions {
+  flex-wrap: nowrap !important;
+}
+
+/* Tarefas mantem titulo, navegacao, filtro e acoes em uma faixa curta. */
+.page-header:has(.tarefas-heading-nav) {
+  align-items: flex-end !important;
+}
+
+.tarefas-heading-nav {
+  flex: 1 1 auto;
+  display: grid !important;
+  grid-template-columns: minmax(300px, 1fr) auto !important;
+  align-items: end !important;
+  gap: 12px !important;
+}
+
+.tarefas-heading-nav .tarefas-tabs,
+.tarefas-heading-nav .tarefas-filter-bar,
+.tarefas-toolbar {
+  margin: 0 !important;
+}
+
+/* Indicadores deixam de formar uma segunda faixa alta no inicio da pagina. */
+:where(
+  .summary-grid,
+  .budget-summary-grid,
+  .compras-summary-grid,
+  .customers-summary-grid,
+  .rh-summary-grid,
+  .manut-summary-grid,
+  .item-summary-grid,
+  .supplier-summary,
+  .qi-summary-line
+) {
+  gap: 8px !important;
+  margin: 0 0 12px !important;
+}
+
+:where(
+  .summary-grid,
+  .budget-summary-grid,
+  .compras-summary-grid,
+  .customers-summary-grid,
+  .rh-summary-grid,
+  .manut-summary-grid,
+  .item-summary-grid,
+  .supplier-summary,
+  .qi-summary-line
+) > :where(article, div, button) {
+  min-height: 54px !important;
+  height: auto !important;
+  margin: 0 !important;
+  padding: 8px 11px !important;
+  border-color: var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--tw-shadow-sm) !important;
+}
+
+:where(
+  .summary-grid,
+  .budget-summary-grid,
+  .compras-summary-grid,
+  .customers-summary-grid,
+  .rh-summary-grid,
+  .manut-summary-grid,
+  .item-summary-grid,
+  .supplier-summary,
+  .qi-summary-line
+) strong {
+  font-size: 18px !important;
+  line-height: 1 !important;
+}
+
+:where(
+  .summary-grid,
+  .budget-summary-grid,
+  .compras-summary-grid,
+  .customers-summary-grid,
+  .rh-summary-grid,
+  .manut-summary-grid,
+  .item-summary-grid,
+  .supplier-summary,
+  .qi-summary-line
+) :where(span, small) {
+  font-size: 10px !important;
+  line-height: 1.15 !important;
+}
+
+/* Barras de busca/filtro junto ao topo usam menos altura e espaco externo. */
+:where(
+  .filters-card,
+  .table-toolbar,
+  .supplier-toolbar,
+  .ter-toolbar,
+  .compras-toolbar,
+  .budget-filters,
+  .log-toolbar,
+  .almox-toolbar,
+  .rh-toolbar
+) {
+  min-height: 0 !important;
+  gap: 8px !important;
+  margin: 0 0 12px !important;
+  padding: 8px 10px !important;
+  border-radius: var(--radius-md) !important;
+}
+
+@media (max-width: 1180px) {
+  .pcp-head {
+    grid-template-columns: max-content minmax(0, 1fr) !important;
+  }
+
+  .pcp-head .head-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start !important;
+    flex-wrap: wrap !important;
+  }
+
+  .tarefas-heading-nav {
+    grid-template-columns: max-content minmax(0, 1fr) !important;
+  }
+
+  .tarefas-heading-nav .tarefas-filter-bar {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+}
+
+@media (max-width: 760px) {
+  :where(
+    .page-header,
+    .budget-header,
+    .dashboard-header,
+    .delivery-header,
+    .almox-header,
+    .compras-header,
+    .financial-header,
+    .rh-header,
+    .manut-header,
+    .montagem-page-header,
+    .pcp-head,
+    .ter-head,
+    .log-header,
+    .operator-header,
+    .qi-header,
+    .quote-header,
+    .policy-hero,
+    .models-header,
+    .editor-top,
+    .fp-header,
+    .ops-rh-header,
+    .item-header
+  ) {
+    display: flex !important;
+    align-items: stretch !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+  }
+
+  :where(
+    .page-header,
+    .budget-header,
+    .dashboard-header,
+    .delivery-header,
+    .almox-header,
+    .compras-header,
+    .financial-header,
+    .rh-header,
+    .manut-header,
+    .montagem-page-header,
+    .ter-head,
+    .log-header,
+    .operator-header,
+    .qi-header,
+    .quote-header,
+    .policy-hero,
+    .models-header,
+    .editor-top,
+    .fp-header,
+    .ops-rh-header,
+    .item-header
+  ) h1 {
+    font-size: 21px !important;
+  }
+
+  :where(
+    .page-header,
+    .budget-header,
+    .dashboard-header,
+    .delivery-header,
+    .almox-header,
+    .compras-header,
+    .financial-header,
+    .rh-header,
+    .manut-header,
+    .montagem-page-header,
+    .ter-head,
+    .log-header,
+    .operator-header,
+    .qi-header,
+    .quote-header,
+    .policy-hero,
+    .models-header,
+    .editor-top,
+    .fp-header,
+    .ops-rh-header,
+    .item-header
+  ) p {
+    max-width: none;
+    white-space: normal;
+  }
+
+  .tarefas-heading-nav {
+    display: flex !important;
+    align-items: stretch !important;
+    flex-direction: column !important;
+    gap: 7px !important;
+  }
+
+  .tarefas-heading-nav .tarefas-tabs {
+    order: 2;
+  }
+
+  .tarefas-heading-nav .tarefas-filter-bar {
+    order: 3;
+  }
+
+  :where(
+    .header-actions,
+    .head-actions,
+    .quote-header-actions,
+    .budget-header-actions,
+    .tarefas-header-tools,
+    .delivery-header-actions,
+    .financial-header-actions,
+    .rh-header-actions,
+    .log-header-actions,
+    .operator-header-actions,
+    .item-header-actions,
+    .qi-report-actions
+  ) {
+    width: 100%;
+    justify-content: flex-start !important;
+  }
+
+  :where(
+    .summary-grid,
+    .budget-summary-grid,
+    .compras-summary-grid,
+    .customers-summary-grid,
+    .rh-summary-grid,
+    .manut-summary-grid,
+    .item-summary-grid,
+    .supplier-summary,
+    .qi-summary-line
+  ) {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+    margin-bottom: 10px !important;
+  }
+
+  :where(
+    .summary-grid,
+    .budget-summary-grid,
+    .compras-summary-grid,
+    .customers-summary-grid,
+    .rh-summary-grid,
+    .manut-summary-grid,
+    .item-summary-grid,
+    .supplier-summary,
+    .qi-summary-line
+  ) > :where(article, div, button) {
+    min-width: 0 !important;
+    min-height: 50px !important;
+    padding: 7px 9px !important;
+  }
+}

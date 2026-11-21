@@ -4,10 +4,53 @@
   const DEFAULT_THEME = Object.freeze({
     logo_url: "",
     logo_zoom: 1,
-    cor_sidebar: "#290610",
+    sistema_zoom: 100,
+    tema_festivo: "",
+    tema_festivo_inicio: null,
+    tema_festivo_fim: null,
+    cor_sidebar: "#5a5a55",
     cor_destaque: "#7d603d",
     cor_fundo: "#f3f5f6"
   });
+
+  // As cores da empresa continuam sendo a fonte dos documentos e impressões.
+  // A seleção festiva sobrepõe somente os tokens da interface.
+  const FESTIVE_THEMES = Object.freeze({
+    carnaval: Object.freeze({ id: 'carnaval', nome: 'Carnaval', simbolo: '🎭', cor_sidebar: '#46206b', cor_destaque: '#853b95', titulo: 'A alegria fica melhor com você.', mensagem: 'Que não faltem sorrisos, leveza e bons motivos para celebrar. Seu jeito de fazer a diferença dá mais cor à nossa equipe.', assinatura: 'Um Carnaval cheio de alegria e cuidado!', cores: ['#b365d4', '#f4be58', '#4ec6b2'] }),
+    natal: Object.freeze({ id: 'natal', nome: 'Natal', simbolo: '🎄', cor_sidebar: '#173f37', cor_destaque: '#a53741', titulo: 'O melhor presente é ter você aqui.', mensagem: 'Que o carinho aqueça os seus dias e a esperança ilumine o seu caminho. Obrigado por fazer parte da nossa história.', assinatura: 'Com carinho, um Feliz Natal para você e sua família!', cores: ['#38765c', '#c95159', '#e6c681'] }),
+    pascoa: Object.freeze({ id: 'pascoa', nome: 'Páscoa', simbolo: '🐇', cor_sidebar: '#53416a', cor_destaque: '#805293', titulo: 'Que a vida se renove em coisas boas.', mensagem: 'Um novo começo, um abraço apertado e a doçura dos pequenos momentos. Que a sua Páscoa seja cheia de amor, paz e chocolate.', assinatura: 'Você torna os nossos dias mais especiais. Feliz Páscoa!', cores: ['#c3a2d5', '#f0bf9d', '#b4ceae'] }),
+    ano_novo: Object.freeze({ id: 'ano_novo', nome: 'Ano Novo', simbolo: '🥂', cor_sidebar: '#1e2c46', cor_destaque: '#8a652c', titulo: 'Novos sonhos. Conquistas juntos.', mensagem: 'Que o novo ano traga saúde, abraços e oportunidades para realizar seus sonhos. Cada conquista nossa também tem um pedacinho seu.', assinatura: 'Um brinde a você e a tudo de bom que vem pela frente!', cores: ['#d8b46c', '#f0e4c8', '#809fc9'] })
+  });
+
+  function festiveTheme(id) { return Object.prototype.hasOwnProperty.call(FESTIVE_THEMES, id) ? FESTIVE_THEMES[id] : null; }
+  function todayISO(now = new Date()) {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+    const part = type => parts.find(item => item.type === type).value;
+    return `${part('year')}-${part('month')}-${part('day')}`;
+  }
+  function validDate(value) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ''))) return false;
+    const date = new Date(`${value}T12:00:00Z`);
+    return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+  }
+  function activeFestiveTheme(theme, today = todayISO()) {
+    const start = theme?.tema_festivo_inicio, end = theme?.tema_festivo_fim;
+    return validDate(start) && validDate(end) && start <= today && today <= end ? festiveTheme(theme?.tema_festivo) : null;
+  }
+  function systemTheme(rawTheme, { preview = false } = {}) {
+    const theme = normalizeTheme(rawTheme);
+    const festive = preview ? festiveTheme(theme.tema_festivo) : activeFestiveTheme(theme);
+    return festive ? { ...theme, cor_sidebar: festive.cor_sidebar, cor_destaque: festive.cor_destaque } : theme;
+  }
+
+  let periodTimer = null, lastDay = '';
+  function refreshPeriod() {
+    if (window.__COMPANY_THEME && lastDay !== todayISO()) applyTheme(window.__COMPANY_THEME);
+  }
+  if (window.addEventListener) {
+    window.addEventListener('focus', refreshPeriod);
+    document.addEventListener?.('visibilitychange', () => { if (!document.hidden) refreshPeriod(); });
+  }
 
   function isHex(value) {
     return /^#[0-9A-F]{6}$/i.test(String(value || "").trim());
@@ -49,12 +92,49 @@
     return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
   }
 
+  function mixColor(a, b, amount) {
+    const channels = hex => hex.slice(1).match(/../g).map(part => parseInt(part, 16));
+    const first = channels(a), second = channels(b);
+    return '#' + first.map((value, index) => Math.round(value + (second[index] - value) * amount).toString(16).padStart(2, '0')).join('');
+  }
+
+  // Todos os destaques partem da mesma cor efetivamente aplicada ao menu.
+  function portalPalette(menuColor) {
+    const bg = isHex(menuColor) ? menuColor : DEFAULT_THEME.cor_sidebar;
+    let text = contrast(bg, '#ffffff') >= contrast(bg, '#142033') ? '#ffffff' : '#142033';
+    if (contrast(bg, text) < 4.5) text = '#000000';
+    const readableTint = (amount, minimum = 4.5) => {
+      let color = mixColor(bg, text, amount);
+      while (contrast(bg, color) < minimum && amount < 1) { amount = Math.min(1, amount + .02); color = mixColor(bg, text, amount); }
+      return color;
+    };
+    const paper = mixColor(bg, '#ffffff', .94);
+    const muted = readableTint(.82), accent = readableTint(.87);
+    const surfaceTint = amount => {
+      let surface = mixColor(bg, text, amount);
+      while ([text, muted, accent].some(color => contrast(surface, color) < 4.5) && amount > 0) {
+        amount = Math.max(0, amount - .01); surface = mixColor(bg, text, amount);
+      }
+      return surface;
+    };
+    return {
+      bg, text, muted, accent, art: readableTint(.58, 3),
+      glow: surfaceTint(.22), soft: surfaceTint(.09), line: mixColor(bg, text, .28),
+      paper, ink: contrast(paper, bg) >= 4.5 ? bg : '#142033'
+    };
+  }
+
   function normalizeTheme(theme) {
     const logoZoom = Number(theme?.logo_zoom || 1);
     return {
       logo_url: theme?.logo_url || "",
+      tema_festivo: festiveTheme(theme?.tema_festivo) ? theme.tema_festivo : '',
+      tema_festivo_inicio: validDate(theme?.tema_festivo_inicio) ? theme.tema_festivo_inicio : null,
+      tema_festivo_fim: validDate(theme?.tema_festivo_fim) ? theme.tema_festivo_fim : null,
+      sistema_zoom: Number.isFinite(Number(theme?.sistema_zoom)) ? Math.min(125, Math.max(75, Number(theme.sistema_zoom))) : 100,
       logo_zoom: Number.isFinite(logoZoom) ? Math.min(2.2, Math.max(0.5, logoZoom)) : 1,
-      cor_sidebar: isHex(theme?.cor_sidebar) ? theme.cor_sidebar.trim() : DEFAULT_THEME.cor_sidebar,
+      // O bordo era o padrao do antigo menu lateral; o menu superior usa cinza.
+      cor_sidebar: isHex(theme?.cor_sidebar) && theme.cor_sidebar.trim().toLowerCase() !== "#290610" ? theme.cor_sidebar.trim() : DEFAULT_THEME.cor_sidebar,
       cor_destaque: isHex(theme?.cor_destaque) ? theme.cor_destaque.trim() : DEFAULT_THEME.cor_destaque,
       cor_fundo: DEFAULT_THEME.cor_fundo
     };
@@ -76,8 +156,13 @@
   }
 
   function applyTheme(rawTheme) {
-    const theme = normalizeTheme(rawTheme);
+    const baseTheme = normalizeTheme(rawTheme);
+    const theme = systemTheme(baseTheme);
+    lastDay = todayISO();
+    if (baseTheme.tema_festivo && !periodTimer && window.setInterval) periodTimer = window.setInterval(refreshPeriod, 30000);
+    if (!baseTheme.tema_festivo && periodTimer) { window.clearInterval(periodTimer); periodTimer = null; }
     const root = document.documentElement;
+    window.EasyLocSystemZoom?.apply(theme.sistema_zoom);
     const sidebarStrong = shade(theme.cor_sidebar, -0.09);
     const accentStrong = shade(theme.cor_destaque, -0.09);
     const accentSoft = 'rgba(' + hexToRgbString(theme.cor_destaque) + ', 0.08)';
@@ -92,6 +177,7 @@
     root.style.setProperty("--color-primary", theme.cor_destaque);
     root.style.setProperty("--color-bg", theme.cor_fundo);
     root.style.setProperty("--empresa-cor-principal-rgb", hexToRgbString(theme.cor_sidebar));
+    Object.entries(portalPalette(theme.cor_sidebar)).forEach(([name, value]) => root.style.setProperty(`--portal-hero-${name}`, value));
 
     root.style.setProperty("--el-color-primary", theme.cor_destaque);
     root.style.setProperty("--el-color-primary-strong", accentStrong);
@@ -121,11 +207,37 @@
     root.style.setProperty("--cor-texto", "#142033");
     root.style.setProperty("--cor-texto-suave", "#6b7789");
 
+    // @media print também protege impressões que herdam os tokens da tela.
+    if (document.createElement && document.head) {
+      let printStyle = document.getElementById('company-theme-print');
+      if (!printStyle) {
+        printStyle = document.createElement('style');
+        printStyle.id = 'company-theme-print';
+        document.head.appendChild(printStyle);
+      }
+      const accent = baseTheme.cor_destaque;
+      const strong = shade(accent, -0.09);
+      const soft = `rgba(${hexToRgbString(accent)}, 0.08)`;
+      const printTokens = {
+        '--color-sidebar': baseTheme.cor_sidebar, '--empresa-cor-principal-rgb': hexToRgbString(baseTheme.cor_sidebar),
+        '--color-primary': accent, '--el-color-primary': accent, '--el-color-primary-strong': strong,
+        '--el-color-primary-dark': strong, '--el-color-primary-soft': soft, '--el-color-accent': accent,
+        '--el-color-on-accent': contrast(accent, '#FFFFFF') >= 4.5 ? '#FFFFFF' : '#142033',
+        '--el-color-accent-soft': soft, '--el-color-accent-strong': strong, '--el-color-accent-active': shade(accent, -0.16),
+        '--el-button-primary-bg': accent, '--el-button-primary-rgb': hexToRgbString(accent),
+        '--el-button-primary-hover': strong, '--el-button-primary-active': shade(accent, -0.16),
+        '--el-button-primary-soft': soft, '--azul': accent, '--azul-2': shade(baseTheme.cor_sidebar, -0.09), '--laranja': accent
+      };
+      printStyle.textContent = '@media print{ :root{' + Object.entries(printTokens).map(([key,value]) => `${key}:${value}!important`).join(';') + '} }';
+    }
+
     const sidebarLogo = document.getElementById("sidebarLogo");
     if (sidebarLogo) {
-      const nextLogoSrc = theme.logo_url ? withCacheBust(theme.logo_url, logoCacheVersion(rawTheme)) : "logo%20nova%20branca%20-%20sem%20fundo.png";
-      const currentLogoSrc = sidebarLogo.getAttribute("src") || "";
-      if(currentLogoSrc !== nextLogoSrc) sidebarLogo.src = nextLogoSrc;
+      // Nunca a logo Acervo (pedido do usuário, nov/2026): sem logo da empresa, fica a que já estava (ou nenhuma).
+      if (theme.logo_url) {
+        const nextLogoSrc = withCacheBust(theme.logo_url, logoCacheVersion(rawTheme));
+        if ((sidebarLogo.getAttribute("src") || "") !== nextLogoSrc) sidebarLogo.src = nextLogoSrc;
+      }
       // Tamanho da logo do menu e todo em CSS (hoje styles/portal-shell.css,
       // ".sidebar-header img"), igual ao logo do catalogo (.catalog-brand-logo
       // em Modulos/Comercial/Catalogo/catalogo.css): mesmo max-height:49px +
@@ -137,21 +249,23 @@
 
     document.body?.classList.add("company-theme-loaded");
     document.body?.classList.toggle("company-logo-active", Boolean(theme.logo_url));
-    window.__COMPANY_THEME = theme;
+    window.__COMPANY_THEME = baseTheme;
     if (typeof window.dispatchEvent === 'function') {
-      window.dispatchEvent(new CustomEvent('easyloc:themechange', { detail: { ...theme } }));
+      window.dispatchEvent(new CustomEvent('easyloc:themechange', { detail: { ...baseTheme } }));
     }
 
     const empresaId = window.__CONTEXT?.empresa_id || sessionStorage.getItem("empresa_id");
     if (empresaId) {
       try {
-        localStorage.setItem(`easyloc_theme_${empresaId}`, JSON.stringify(theme));
+        const festiveColors = festiveTheme(baseTheme.tema_festivo) || baseTheme;
+        localStorage.setItem("acervo_ultima_empresa", empresaId);
+        localStorage.setItem(`easyloc_theme_${empresaId}`, JSON.stringify({ ...baseTheme, cores_sistema: { cor_sidebar: festiveColors.cor_sidebar, cor_destaque: festiveColors.cor_destaque } }));
       } catch (error) {
         console.warn("[EasyLoc Theme] nao foi possivel salvar cache:", error);
       }
     }
 
-    return theme;
+    return baseTheme;
   }
 
   async function applyForEmpresa(empresaId) {
@@ -167,7 +281,7 @@
     try {
       const { data, error } = await window.supabaseClient
         .from("configuracoes_empresa")
-        .select("logo_url, logo_zoom, cor_sidebar, cor_destaque, cor_fundo")
+        .select("*")
         .eq("empresa_id", empresaId)
         .maybeSingle();
       if (error) {
@@ -197,6 +311,10 @@
   function validateTheme(theme) {
     const normalized = normalizeTheme(theme);
     const errors = [];
+    if (normalized.tema_festivo) {
+      if (!normalized.tema_festivo_inicio || !normalized.tema_festivo_fim) errors.push('Informe as datas de início e fim do tema festivo.');
+      else if (normalized.tema_festivo_fim < normalized.tema_festivo_inicio) errors.push('A data final precisa ser igual ou posterior à data inicial.');
+    }
     return { ok: errors.length === 0, errors, theme: normalized };
   }
 
@@ -207,9 +325,16 @@
         || (role === 'soft' ? '#f4efe8' : DEFAULT_THEME.cor_destaque);
     },
     DEFAULT_THEME,
+    FESTIVE_THEMES,
+    festiveTheme,
+    activeFestiveTheme,
+    todayISO,
+    refreshPeriod,
+    systemTheme,
     isHex,
     hexToRgbString,
     contrast,
+    portalPalette,
     validateTheme,
     applyTheme,
     applyForEmpresa,

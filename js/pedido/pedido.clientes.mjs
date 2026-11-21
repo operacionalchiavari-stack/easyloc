@@ -1,3 +1,4 @@
+import {abrirCadastroDoPedido} from "./pedido.cadastro.mjs?v=20261108";
 import { debounce } from "./pedido.utils.mjs";
 
 export function initAutocompleteClientes({
@@ -18,6 +19,24 @@ export function initAutocompleteClientes({
 
   window.__ocultarAutocompleteClientePedido = ocultarLista;
 
+  const selecionarCliente=cliente=>{
+    clienteInput.value=cliente.nome_razao;
+    if(clienteIdHidden)clienteIdHidden.value=cliente.id;
+    if(telefoneInput)telefoneInput.value=cliente.telefone||'';
+    if(responsavelInput)responsavelInput.value=cliente.nome_razao;
+    clienteInput.dispatchEvent(new CustomEvent('cliente-selecionado',{detail:cliente}));
+    clienteInput.dispatchEvent(new Event('change',{bubbles:true}));
+    ocultarLista();
+  };
+  const novoCliente=termo=>{
+    const botao=document.createElement('button');botao.type='button';botao.className='autocomplete-item autocomplete-novo-cliente';
+    const icone=document.createElement('span');icone.className='cliente-novo-icone';icone.textContent='+';icone.setAttribute('aria-hidden','true');
+    const texto=document.createElement('span');texto.className='cliente-novo-texto';
+    const titulo=document.createElement('strong');titulo.textContent='Cadastrar novo cliente';
+    texto.append(titulo);botao.append(icone,texto);
+    botao.onclick=()=>{ocultarLista();abrirCadastroDoPedido({tipo:'cliente',nome:termo,supabase,aoSelecionar:selecionarCliente});};
+    clienteLista.appendChild(botao);
+  };
   const doBusca = debounce(async () => {
 
     const termo = (clienteInput.value || "").trim();
@@ -50,6 +69,7 @@ export function initAutocompleteClientes({
           🔴 Usuário não cadastrado
         </div>
       `;
+      novoCliente(termo);
       clienteLista.style.display = "block";
       return;
     }
@@ -73,20 +93,12 @@ export function initAutocompleteClientes({
       nome.textContent = cliente.nome_razao;
       item.append(retrato, nome);
 
-      item.addEventListener("click", () => {
-        clienteInput.value = cliente.nome_razao;
-
-        if(clienteIdHidden) clienteIdHidden.value = cliente.id;
-        if(telefoneInput) telefoneInput.value = cliente.telefone || "";
-        if(responsavelInput) responsavelInput.value = cliente.nome_razao;
-        clienteInput.dispatchEvent(new CustomEvent('cliente-selecionado',{detail:cliente}));
-
-        ocultarLista();
-      });
+      item.addEventListener("click", () => selecionarCliente(cliente));
 
       clienteLista.appendChild(item);
     });
 
+    novoCliente(termo);
     clienteLista.style.display = "block";
 
   }, 300);

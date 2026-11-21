@@ -57,7 +57,8 @@
   const form = document.getElementById("formParametros");
   const status = document.getElementById("parametrosStatus");
   const botao = document.getElementById("btnSalvarParametros");
-  let empresaId = null;
+  let empresaId = null, carregado=false;
+  botao.disabled=true;
   // Os cards ficam na aba Logística e operação, fora do <form> (ligados pelo atributo form): procurar por form.elements.
   const statusCampos = () => [...form.elements].filter((c) => c.name === "status" && c.type === "checkbox");
   // Mensagem no card do botão clicado (cada card tem o seu Salvar).
@@ -86,12 +87,13 @@
     empresaId = ctx?.empresa_id || window.__CONTEXT?.empresa_id;
     if(!empresaId){ status.textContent = "Empresa não identificada."; return; }
     const { data, error } = await window.supabaseClient.from("empresa_logistica_regras").select("*").eq("empresa_id", empresaId).maybeSingle();
-    if(error){ status.textContent = "Não foi possível carregar os parâmetros."; console.error(error); }
-    preencher(data);
+    if(error){ status.textContent = 'Não foi possível carregar os parâmetros. Recarregue antes de salvar.'; return; }
+    preencher(data);carregado=true;botao.disabled=false;
   }
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if(!carregado){window.alerta?.('Os parâmetros não foram carregados. Recarregue a página antes de salvar.','Parâmetros','erro');return;}
     document.querySelectorAll("[data-op-status]").forEach((el) => { el.textContent = ""; });
     statusCard = e.submitter?.closest(".pr-card")?.querySelector("[data-op-status]") || null;
     const botaoCard = e.submitter && e.submitter !== botao ? e.submitter : null;
@@ -124,5 +126,5 @@
     avisoStatus("Salvo. Vale para os próximos pedidos salvos.");
   });
 
-  carregar();
+  carregar().catch(e=>{status.textContent=e.message;botao.disabled=true;});
 })();

@@ -21,8 +21,7 @@
 .compras-main .pv-panel .pv-table tr:hover td { background:#f7faff; }
 .compras-main .pv-panel .pv-table td:first-child { white-space:nowrap; }
 .compras-main .pv-panel .pv-orders-table td:nth-child(2) { min-width:180px; max-width:270px; white-space:normal; }
-.compras-main .pv-panel .pv-orders-table td:nth-child(5) { font-weight:600; font-variant-numeric:tabular-nums; color:#14243b; text-align:right; }
-.compras-main .pv-panel .pv-orders-table th:nth-child(5) { text-align:right; }
+.compras-main .pv-panel .pv-orders-table .pv-order-total { font-weight:600; font-variant-numeric:tabular-nums; color:#14243b; text-align:right; }
 .compras-main .pv-panel .pv-orders-table .pv-order-quantity{white-space:nowrap;font-variant-numeric:tabular-nums}
 .compras-main .pv-panel .pv-orders-table td:last-child { min-width:140px; max-width:230px; }
 .compras-main .pv-panel .pv-table .pv-number { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
@@ -112,3 +111,261 @@
 .compras-main .pv-panel .pv-table.pv-orders-table{width:100%;min-width:0;table-layout:fixed}
 .compras-main .pv-panel .pv-table.pv-orders-table :is(th,td){min-width:0;max-width:none;padding-left:10px;padding-right:10px;white-space:normal;overflow-wrap:anywhere}
 .compras-main .pv-panel .pv-table.pv-orders-table .pv-status-pill{max-width:100%;box-sizing:border-box;white-space:normal}
+#purchaseCreditsList .ccr-topo{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin:4px 0 12px}
+#purchaseCreditsList .ccr-topo small{display:block;margin-top:3px;color:var(--tw-muted);font-size:12.5px;max-width:760px}
+#purchaseCreditsList .ccr-table{table-layout:fixed;width:100%}
+#purchaseCreditsList .ccr-table td small{display:block;color:var(--tw-muted);font-size:12px}
+#purchaseCreditsList .ccr-table .num{text-align:right}
+#purchaseCreditsList .ccr-clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal}
+#purchaseCreditsList .ccr-usado{color:var(--tw-muted);font-size:12px}
+#purchaseCreditsList tr.ccr-usos td{padding-top:0;font-size:12px;color:var(--tw-muted)}
+#purchaseCreditsList tr.ccr-usos span{display:block}
+#purchaseCreditsList tr.ccr-ed>td{background:var(--tw-surface-soft)}
+#purchaseCreditsList .ccr-caixa{display:grid;grid-template-columns:minmax(0,3fr) minmax(120px,1fr) minmax(0,2fr);gap:10px 14px;align-items:end;padding:6px 2px}
+#purchaseCreditsList .ccr-caixa label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--tw-muted)}
+#purchaseCreditsList .ccr-caixa select,#purchaseCreditsList .ccr-caixa input{height:38px;border:1px solid var(--tw-line);border-radius:9px;padding:0 10px;font:14px Inter,sans-serif;background:#fff;color:var(--tw-text)}
+#purchaseCreditsList .ccr-caixa label small{font-weight:500}
+#purchaseCreditsList .ccr-dica{grid-column:1/-1;margin:0;font-size:12.5px;color:var(--tw-text)}
+#purchaseCreditsList .ccr-erro{grid-column:1/-1;margin:0;color:var(--tw-danger);font-size:13px;font-weight:600}
+#purchaseCreditsList .ccr-erro:empty{display:none}
+#purchaseCreditsList .ccr-acoes{grid-column:1/-1;display:flex;justify-content:flex-end;gap:8px}
+@media (max-width:900px){#purchaseCreditsList .ccr-caixa{grid-template-columns:1fr}}
+
+/* (16/11/2026) Pedido de compra e divergência em TELA INTEIRA, iguais à Tecnoweld (compras.css de lá) */
+/* (2026-11-04) Propostas recebidas em tela inteira (sem janela por cima) */
+.compras-page .pv-dialog.pv-dialog-full,.pv-dialog.pv-dialog-full{width:100vw!important;max-width:100vw!important;height:100dvh;max-height:100dvh;margin:0;inset:0;border:0;border-radius:0!important;padding:0}
+.pv-dialog-full>.dialog-card{display:flex;flex-direction:column;height:100%;max-height:none;border-radius:0}
+.pv-dialog-full .pv-proposals-scroll{flex:1 1 auto;min-height:0;max-height:none;overflow:auto}
+.pv-dialog-full>.dialog-card>footer{flex:0 0 auto}
+/* prazos do pedido: chegada combinada x prazo informado ao PCP */
+/* compra / financeiro da necessidade */
+/* (2026-11-04) servico terceirizado: roteiro da OP e o que a composicao orcou */
+.pv-order-full #orderDetailBody { flex: 1 1 auto; min-height: 0; overflow: auto; }
+.pv-order-full .pv-order-table-wrap { flex: none; max-height: none; }
+.pv-order-table th:nth-child(1),.pv-order-table td:nth-child(1){width:44px;text-align:center}
+.pv-order-table th:nth-child(2),.pv-order-table td:nth-child(2){width:27%}
+.pv-order-table th:nth-child(3),.pv-order-table td:nth-child(3){width:11%}
+.pv-order-table th:nth-child(4),.pv-order-table td:nth-child(4){width:10%}
+.pv-order-table th:nth-child(5),.pv-order-table td:nth-child(5){width:9%}
+.pv-order-table th:nth-child(6),.pv-order-table td:nth-child(6){width:22%}
+.pv-order-table th:nth-child(7),.pv-order-table td:nth-child(7){width:19%}
+/* (2026-11-04) pedido: dados na linha do numero, tipo, pagamento */
+.pv-order-head { display: flex; align-items: flex-start; gap: 18px; }
+.pv-order-head > div:first-child { flex: 0 0 auto; }
+.pv-order-head-meta { flex: 1 1 auto; min-width: 0; }
+.pv-order-head-meta .pv-order-meta { margin: 0; padding: 0; border: 0; }
+.pv-tipos { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.pv-pay-pill { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 800; white-space: nowrap; }
+.pv-pay-pill.is-pending { background: #fee2e2; color: #b91c1c; animation: pv-pay-blink 1.4s ease-in-out infinite; }
+.pv-pay-pill.is-wait { background: #fff1d6; color: #b45309; }
+.pv-pay-pill.is-ok { background: #dff8ee; color: #047857; }
+@keyframes pv-pay-blink { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .pv-pay-pill.is-pending { animation: none; } }
+.pv-pay-section { display: grid; gap: 10px; margin-top: 14px; padding: 14px; border: 1px solid var(--tw-line); border-radius: var(--tw-radius-sm, 8px); }
+.pv-pay-section > header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.pv-pay-section h3 { margin: 0; font-size: 15px; }
+.pv-pay-section header small, .pv-pay-fin small { color: var(--tw-muted); }
+.pv-pay-nf { display: grid; gap: 6px; padding: 10px; border-radius: 8px; background: var(--tw-surface-soft); font-size: 13px; }
+.pv-pay-nf .btn { justify-self: start; }
+.pv-pay-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px 14px; }
+.pv-pay-form label { display: grid; gap: 4px; font-size: 12px; font-weight: 700; color: var(--tw-muted); }
+.pv-pay-form input, .pv-pay-form select { min-height: 36px; }
+.pv-pay-table input { width: 100%; min-height: 32px; }
+.pv-pay-table td:first-child, .pv-pay-table th:first-child { width: 70px; }
+.pv-pay-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13px; }
+.pv-pay-foot .pv-grow { flex: 1; }
+.pv-pay-fin { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+/* (2026-11-04) Solicitacao de cotacao sem barra vertical: a lista de fornecedores flutua por cima (nao estica a janela) */
+
+/* (2026-11-04) Pedido de compra reorganizado */
+.pv-order-full .pv-order-head { align-items: center; padding-bottom: 14px; }
+.pv-order-full .pv-order-head h2 { font-size: 24px; }
+.pv-od-headtags { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pv-od-headtags small { color: var(--tw-muted); font-size: 12px; }
+.pv-od { display: grid; gap: 16px; padding-top: 4px; }
+.pv-od-summary { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1.3fr; gap: 12px; }
+.pv-od-kpi { display: grid; align-content: start; gap: 3px; padding: 14px 16px; border: 1px solid var(--tw-line); border-radius: 12px; background: var(--tw-surface); min-width: 0; }
+.pv-od-kpi small { color: var(--tw-muted); font-size: 11px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.pv-od-kpi strong { font-size: 16px; color: var(--tw-text); overflow-wrap: anywhere; }
+.pv-od-kpi span { color: var(--tw-muted); font-size: 12px; overflow-wrap: anywhere; }
+.pv-od-kpi.is-main { background: var(--tw-surface-soft); }
+.pv-od-money { font-size: 22px !important; font-variant-numeric: tabular-nums; }
+.pv-od-kpi .pv-company-chip { justify-self: start; max-width: 100%; }
+.pv-od-steps { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px; padding: 12px; border: 1px solid var(--tw-line); border-radius: 12px; background: var(--tw-surface); }
+.pv-od-steps > b { flex: 0 0 100%; font-size: 12px; color: var(--tw-muted); text-transform: uppercase; letter-spacing: .04em; }
+.pv-od-step { display: flex; align-items: center; gap: 8px; flex: 1 1 150px; padding: 8px 10px; border: 1px dashed #f0b4b4; border-radius: 10px; background: #fff7f7; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.pv-od-step[disabled] { cursor: default; }
+.pv-od-step.is-ok { border: 1px solid #b7e4cf; background: #f1fbf6; }
+.pv-od-step strong { display: block; font-size: 12.5px; }
+.pv-od-step small { display: block; color: var(--tw-muted); font-size: 11.5px; }
+.pv-od-dot { display: grid; place-items: center; flex: 0 0 22px; height: 22px; border-radius: 50%; border: 2px solid #e57373; color: #fff; font-size: 12px; font-weight: 900; }
+.pv-od-step.is-ok .pv-od-dot { border-color: var(--tw-green, #009b72); background: var(--tw-green, #009b72); }
+.pv-od-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+.pv-od-main, .pv-od-side { display: grid; gap: 16px; min-width: 0; }
+.pv-od-card, .pv-od-main .pv-pay-section { display: grid; gap: 10px; margin: 0; padding: 16px; border: 1px solid var(--tw-line); border-radius: 12px; background: var(--tw-surface); }
+.pv-od-card > header, .pv-od-main .pv-pay-section > header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.pv-od-card h3, .pv-pay-section h3 { margin: 0; font-size: 15px; }
+.pv-od-card label { display: grid; gap: 4px; font-size: 12px; font-weight: 700; color: var(--tw-muted); }
+.pv-od-card label small { font-weight: 500; }
+.pv-od-card input[type=date] { min-height: 38px; }
+.pv-od-hint { margin: 0; color: var(--tw-muted); font-size: 12px; }
+.pv-od-btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.pv-od-list { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; font-size: 13px; }
+.pv-od-list li { display: flex; justify-content: space-between; gap: 8px; }
+.pv-od-history { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; font-size: 12px; }
+.pv-od-history li { display: grid; gap: 1px; padding-left: 10px; border-left: 2px solid var(--tw-line); }
+.pv-od-history time { color: var(--tw-muted); font-size: 11px; }
+.pv-od-history strong { text-transform: capitalize; }
+.pv-od-history span { color: var(--tw-muted); }
+.pv-od-card .pv-order-table-wrap { border: 0; border-radius: 0; }
+.pv-order-table td small { display: block; color: var(--tw-muted); font-size: 11px; margin-top: 2px; }
+.pv-od-flash { box-shadow: 0 0 0 3px var(--tw-brand-primary, #1A73FF); transition: box-shadow .3s; }
+#orderCancelBtn { color: var(--tw-danger, #e30613); border-color: #f3c0c0; }
+@media (max-width: 1150px) { .pv-od-grid { grid-template-columns: 1fr; } .pv-od-summary { grid-template-columns: 1fr 1fr; } }
+/* (2026-11-04) Voltar no lugar do X; quando o Financeiro pode pagar */
+.pv-back-btn { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.pv-back-btn svg { width: 16px; height: 16px; }
+.pv-pay-when { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0; padding: 0; border: 0; }
+.pv-pay-when legend { padding: 0 0 6px; font-size: 12px; font-weight: 800; color: var(--tw-muted); text-transform: uppercase; letter-spacing: .04em; }
+.pv-pay-when label { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border: 1px solid var(--tw-line); border-radius: 10px; cursor: pointer; }
+.pv-pay-when label:has(input:checked) { border-color: var(--tw-brand-primary, #1A73FF); background: color-mix(in srgb, var(--tw-brand-primary, #1A73FF) 6%, transparent); }
+.pv-pay-when input { margin-top: 3px; }
+.pv-pay-when strong { display: block; font-size: 13px; }
+.pv-pay-when small { display: block; color: var(--tw-muted); font-size: 12px; }
+@media (max-width: 760px) { .pv-pay-when { grid-template-columns: 1fr; } }
+.pv-pay-pill.is-pending { background: transparent; color: #b91c1c; animation: pvCertPulse 1.8s ease-in-out infinite; }
+/* (2026-11-04) cabecalho do pedido: tipo + resumo na mesma linha */
+.pv-od-headline { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.pv-od-headline > .pv-tipos { flex: 0 0 auto; margin: 0; }
+.pv-od-summary-head { flex: 1 1 auto; grid-template-columns: 1.6fr 1fr 1fr 1.3fr; }
+.pv-od-summary-head .pv-od-kpi { padding: 8px 12px; }
+.pv-od-summary-head .pv-od-kpi strong { font-size: 14px; }
+.pv-od-summary-head .pv-od-money { font-size: 18px !important; }
+@media (max-width: 1150px) { .pv-od-headline { flex-wrap: wrap; } .pv-od-summary-head { flex-basis: 100%; grid-template-columns: 1fr 1fr; } }
+.pv-od-items-head { justify-content: flex-end !important; margin: -6px 0 -4px; }
+
+.pv-order-full .pv-order-table th:nth-child(1),.pv-order-full .pv-order-table td:nth-child(1){width:34%;text-align:left}
+.pv-order-full .pv-order-table th:nth-child(2),.pv-order-full .pv-order-table td:nth-child(2){width:14%}
+.pv-order-full .pv-order-table th:nth-child(3),.pv-order-full .pv-order-table td:nth-child(3){width:14%}
+.pv-order-full .pv-order-table th:nth-child(4),.pv-order-full .pv-order-table td:nth-child(4){width:12%}
+.pv-order-full .pv-order-table th:nth-child(5),.pv-order-full .pv-order-table td:nth-child(5){width:26%}
+/* decisões da divergência: radio à esquerda do texto (o tema empilhava como campo) */
+html:root .crd-choice{display:flex!important;flex-direction:row!important;align-items:flex-start!important;gap:10px!important;text-transform:none!important;letter-spacing:0!important}
+html:root .crd-choice input[type=radio]{width:16px!important;height:16px!important;min-height:0!important;flex:0 0 16px;margin:3px 0 0!important}
+/* fundo cinza padrão do sistema nas telas inteiras (pedido e divergência); cartões brancos */
+html:root dialog.pv-dialog-full,html:root dialog.pv-dialog-full>.dialog-card,html:root dialog.pv-dialog-full::backdrop{background:#f3f5f6!important}
+html:root dialog.pv-dialog-full>.dialog-card>header,html:root dialog.pv-dialog-full>.dialog-card>footer{background:#f3f5f6!important}
+html:root dialog.pv-dialog-full :is(.pv-od-card,.pv-pay-section,.pv-od-kpi,.pv-od-steps){background:#fff!important}
+
+#quotationsBody tr.pv-row-clickable{cursor:pointer}
+#quotationsBody tr.pv-row-clickable:hover td{background:#f7f9fb}
+
+/* Listas com oito colunas: fonte normal, informações relacionadas juntas e sem rolagem horizontal. */
+.compras-page .compras-main,.compras-page .pv-panel{min-width:0;max-width:100%}
+.compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table){width:100%;min-width:0;table-layout:fixed}
+.compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table) :is(th,td){min-width:0;max-width:none;white-space:normal;overflow-wrap:anywhere;box-sizing:border-box}
+.compras-page .compras-main .pv-panel .pv-orders-table th:nth-child(1){width:15%}.compras-page .compras-main .pv-panel .pv-orders-table th:nth-child(2){width:10%}.compras-page .compras-main .pv-panel .pv-orders-table th:nth-child(3){width:20%}.compras-page .compras-main .pv-panel .pv-orders-table th:nth-child(4){width:16%}.compras-page .compras-main .pv-panel .pv-orders-table th:nth-child(5){width:9%}.compras-page .compras-main .pv-panel .pv-orders-table th:nth-child(6){width:10%}.compras-page .compras-main .pv-panel .pv-orders-table th:nth-child(7){width:11%}.compras-page .compras-main .pv-panel .pv-orders-table th:nth-child(8){width:9%}
+.compras-page .compras-main .pv-panel .pv-quotations-table th:nth-child(1){width:12%}.compras-page .compras-main .pv-panel .pv-quotations-table th:nth-child(2){width:10%}.compras-page .compras-main .pv-panel .pv-quotations-table th:nth-child(3){width:17%}.compras-page .compras-main .pv-panel .pv-quotations-table th:nth-child(4){width:13%}.compras-page .compras-main .pv-panel .pv-quotations-table th:nth-child(5){width:15%}.compras-page .compras-main .pv-panel .pv-quotations-table th:nth-child(6){width:12%}.compras-page .compras-main .pv-panel .pv-quotations-table th:nth-child(7){width:11%}.compras-page .compras-main .pv-panel .pv-quotations-table th:nth-child(8){width:10%}
+.compras-page .pv-list-item+.pv-list-item{margin-top:12px;padding-top:10px;border-top:1px solid #e9edf2}
+.compras-page .pv-list-nf{max-width:100%;border:1px solid #dce4ef;border-radius:6px;padding:6px 8px;font:500 13px Inter,Arial,sans-serif;cursor:pointer;text-align:left;white-space:normal;overflow-wrap:anywhere;background:#edf6f1;color:#327653}
+.compras-page .pv-list-nf.is-missing{background:#fff5e5;color:#976815;border-color:#eadbc0}
+.compras-page .pv-list-nf:hover{text-decoration:underline}
+.compras-page .pv-list-received{font-variant-numeric:tabular-nums}
+.compras-page .pv-list-documents{margin-top:12px}
+.compras-page .pv-list-suppliers{margin-top:12px;font-size:14px}
+.compras-page .pv-list-suppliers summary{cursor:pointer;color:var(--el-color-primary,#80613b);line-height:1.5}
+.compras-page .pv-list-suppliers .pv-list-item{margin-top:10px}
+.compras-page :is(#ordersBody,#quotationsBody) tr:focus-visible{outline:2px solid var(--el-color-primary,#80613b);outline-offset:-2px}
+.compras-page .pv-list-nf:focus-visible,.compras-page .pv-list-suppliers summary:focus-visible{outline:2px solid var(--el-color-primary,#80613b);outline-offset:2px}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main .pv-panel>.tw-table-scroll:has(>.pv-orders-table,>.pv-quotations-table){overflow:visible;padding:0!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table) :is(th,td){padding:16px 10px!important;font-size:14px!important;vertical-align:top;white-space:normal!important;overflow-wrap:anywhere}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table) thead th{font-size:12px!important;letter-spacing:.025em!important;line-height:1.5!important;white-space:normal!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table) td small{display:block;font-size:12px!important;line-height:1.6;overflow-wrap:anywhere}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table) .pv-status-pill{white-space:normal!important;overflow-wrap:anywhere;max-width:100%;box-sizing:border-box}
+.compras-page .pv-quotations-table .pv-table-progress{width:100%;min-width:0;max-width:100%;font-size:14px}
+.compras-page .pv-quotations-table .pv-table-progress progress{min-width:0;max-width:100%}
+.compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table) .pv-status-pill{max-width:100%;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;font-size:12px!important;margin-top:6px}
+.compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table) .pv-order-total{white-space:normal}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table) .cs-com-foto{align-items:flex-start}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table) .cs-com-foto>:last-child{min-width:0;overflow-wrap:anywhere}
+@media(max-width:1050px){
+ .compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table){display:block}
+ .compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table) thead{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+ .compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table) tbody{display:block}
+ .compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table) tbody tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;padding:20px;border-bottom:1px solid #e3e7ec}
+ .compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table) tbody tr:last-child{border-bottom:0}
+ html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table) tbody td{display:block;width:auto!important;padding:0!important;border:0!important;min-width:0;white-space:normal!important}
+ .compras-page :is(.pv-orders-table,.pv-quotations-table) td::before{content:attr(data-col-label);display:block;margin-bottom:8px;font:500 12px/1.5 Inter,Arial,sans-serif;color:#788491}
+}
+@media(max-width:600px){.compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table) tbody tr{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 16px;padding:16px}}
+@media(max-width:700px){
+ html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main>header.compras-header.page-header{grid-template-columns:minmax(0,1fr)!important;row-gap:14px!important}
+ html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main>header.compras-header.page-header>h1{grid-area:1/1/2/2!important;max-width:100%;position:static!important;transform:none!important}
+ html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main>header.compras-header.page-header>.pv-tabs-tools{grid-area:2/1/3/2!important;width:100%!important;min-width:0!important;max-width:none!important}
+ html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main>header.compras-header.page-header .pv-search-box{min-width:0!important;width:100%!important;box-sizing:border-box}
+ html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main>header.compras-header.page-header>.compras-header-actions{grid-area:3/1/4/2!important}
+ html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main>header.compras-header.page-header>.compras-header-actions:not(:has(button:not([hidden]))){display:none!important}
+}
+
+/* Resumos de at? duas linhas; os detalhes completos ficam no card de consulta. */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table) tbody td{padding:8px 10px!important;vertical-align:middle}
+.pv-cell-preview{position:relative;min-width:0;max-width:100%;height:48px;overflow:hidden;display:flex;flex-direction:column;justify-content:center;gap:2px;line-height:1.4}
+.pv-cell-preview:focus-visible{outline:2px solid #759ee9;outline-offset:-2px;border-radius:4px}
+.pv-cell-preview :is(strong,small,.cs-com-foto-txt){min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap!important}
+.pv-cell-preview .pv-list-item{min-width:0;overflow:hidden}
+.pv-cell-preview .pv-list-item~.pv-list-item,.pv-cell-preview>.pv-list-suppliers,.pv-cell-preview>small~small{display:none!important}
+.pv-cell-preview:has(>.pv-cell-more)>.pv-list-item:first-child{padding-right:30px}
+.pv-cell-more{position:absolute;right:0;bottom:3px;font-size:12px;line-height:20px;padding:0 5px;border-radius:4px;background:#eef2f6;color:#52637a}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main .pv-panel .pv-cell-preview small{margin-top:0;line-height:1.4}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main .pv-panel .pv-cell-preview .cs-com-foto{align-items:center}
+.pv-cell-preview .cs-com-foto-txt{display:block;flex:1 1 0}
+.pv-cell-preview .cs-com-foto-txt>span,.pv-cell-preview .cs-com-foto-txt>strong{display:block;overflow:hidden;text-overflow:ellipsis}
+.pv-cell-preview .pv-list-documents{margin-top:0;min-width:0}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main .pv-panel .pv-cell-preview .pv-status-pill{margin:0;align-self:flex-start;padding:2px 6px;line-height:1.35;overflow:hidden;white-space:nowrap!important;text-overflow:ellipsis}
+.pv-cell-preview .pv-list-nf{display:block;max-width:100%;padding:3px 6px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pv-cell-preview .pv-list-documents>small{display:none!important}
+.pv-cell-preview .pv-table-progress{gap:3px}
+.pv-cell-preview .pv-table-progress span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.pv-quotations-table td:last-child .pv-cell-preview{display:grid;grid-template-columns:minmax(0,1fr) 32px;align-items:center;gap:6px}
+.pv-quotations-table td:last-child .pv-cell-preview>.pv-list-action{white-space:normal!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pv-quotations-table td:last-child .pv-cell-preview>small{display:none!important}
+.pv-quotations-table td:last-child .pv-cell-preview>.pv-list-documents{grid-column:2;grid-row:1}
+.pv-cell-preview .pv-order-people{overflow:hidden;text-overflow:ellipsis;white-space:nowrap!important}
+.pv-cell-card{position:fixed;z-index:2000;box-sizing:border-box;width:min(390px,calc(100vw - 24px));max-height:calc(100vh - 24px);overflow:auto;overscroll-behavior:contain;padding:16px;border:1px solid #dce4ec;border-radius:12px;background:#fff!important;color:#24364e!important;box-shadow:0 12px 36px #152b4626;font:14px/1.5 Inter,Arial,sans-serif;overflow-wrap:anywhere}
+.pv-cell-card[hidden]{display:none!important}
+.pv-cell-card-title{display:block;padding-bottom:8px;margin-bottom:8px;border-bottom:1px solid #e9edf2;font-size:14px}
+.pv-cell-card .pv-list-item+.pv-list-item{padding-top:8px;margin-top:8px;border-top:1px solid #e9edf2}
+.pv-cell-card small{display:block;color:#65748b;font-size:13px;line-height:1.5;margin-top:3px}
+.pv-cell-card .pv-list-documents,.pv-cell-card .pv-list-suppliers{margin-top:8px}
+.pv-cell-card .pv-status-pill{display:inline-block;margin:4px 0}
+.pv-cell-card .cs-com-foto{display:flex;align-items:center;gap:10px;min-width:0}
+.pv-cell-card .cs-com-foto-txt{min-width:0}
+.pv-cell-card .pv-table-progress{min-width:0;max-width:100%}
+@media(max-width:1050px){.compras-page .compras-main .pv-panel :is(.pv-orders-table,.pv-quotations-table) tbody tr{gap:12px;padding:14px}.pv-cell-preview{height:48px}.compras-page :is(.pv-orders-table,.pv-quotations-table) td::before{margin-bottom:4px}}
+
+.pv-orders-table .pv-order-destination .pv-cell-preview>.pv-order-people,
+.pv-orders-table .pv-order-receipt .pv-cell-preview .pv-list-item>small:last-child,
+.pv-quotations-table td:nth-child(7) .pv-cell-preview>small{display:none!important}
+.pv-cell-preview .pv-list-documents .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:30px!important;height:30px!important;min-height:30px!important;padding:4px!important;box-sizing:border-box}
+
+/* Cr?dito: edi??o em modal compacto, aberto pela linha. */
+#purchaseCreditsList tr.ccr-row-open{cursor:pointer}
+#purchaseCreditsList tr.ccr-row-open:hover>td{background:#f7faff}
+#purchaseCreditsList tr.ccr-row-open:focus-visible{outline:2px solid #759ee9;outline-offset:-2px}
+html:root dialog.ccr-use-dialog{box-sizing:border-box;width:min(550px,calc(100vw - 28px));max-width:550px;max-height:calc(100dvh - 32px);padding:0;border:1px solid #dce4ec;border-radius:14px;background:#fff;color:#24364e;box-shadow:0 20px 60px #152b4633;overflow:auto}
+.ccr-use-dialog::backdrop{background:#152b4670}
+.ccr-use-form{padding:22px;font:14px/1.5 Inter,Arial,sans-serif}
+.ccr-use-form header{display:block;padding:0 0 16px;border-bottom:1px solid #e9edf2;margin-bottom:16px}
+.ccr-use-form h3{margin:0 0 6px;font:600 20px/1.3 Inter,Arial,sans-serif}
+.ccr-use-form header p{margin:0;color:#65748b;font-size:14px}
+.ccr-use-form .ccr-caixa{display:grid;grid-template-columns:minmax(0,1fr) 130px;gap:14px}
+.ccr-use-form label{display:flex;flex-direction:column;gap:6px;min-width:0;font-size:14px;font-weight:500}
+.ccr-use-form .ccr-conta,.ccr-use-form .ccr-obs,.ccr-use-form .ccr-dica,.ccr-use-form .ccr-erro,.ccr-use-form .ccr-acoes{grid-column:1/-1}
+.ccr-use-form input,.ccr-use-form select{box-sizing:border-box;width:100%;min-width:0;max-width:100%;height:42px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:7px;background:#fff;color:#24364e;font:14px Inter,Arial,sans-serif}
+.ccr-use-form :is(input,select):focus{outline:2px solid #759ee9;outline-offset:1px}
+.ccr-use-form label small{display:inline;font-size:12px;font-weight:400;color:#65748b}
+.ccr-use-form .ccr-dica{margin:0;color:#65748b;font-size:13px}
+.ccr-use-form .ccr-erro{margin:0;color:#b42318;font-size:14px}
+.ccr-use-form .ccr-erro:empty{display:none}
+.ccr-use-form .ccr-acoes{display:flex;justify-content:flex-end;gap:10px;padding-top:8px}
+.ccr-use-form .ccr-acoes .btn{min-height:40px;padding:8px 16px;font-size:14px}

@@ -2,10 +2,15 @@
 <html data-theme-legacy>
 <head>
 <link rel="stylesheet" href="../../../styles/tokens.css?v=20261019-globais">
-<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
-<script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
-  <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="controlerh"></script>
+<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js?v=20261108-zoom-padrao"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+  <script src="../../../js/core/supabase.js"></script>
+  <!-- nov/2026: Controle RH direto no Supabase (controle-rh-dados.js); nada vai mais para o servidor antigo -->
+  <script src="controle-rh-dados.js?v=20261120-supabase"></script>
+  <script src="../gas-cliente.js?v=20261120-sem-servidor" data-projeto="controlerh" data-sem-motor></script>
   <base target="_top">
 
   <meta charset="UTF-8">

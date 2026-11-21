@@ -1,10 +1,10 @@
-import { getEmpresaAtualId } from "./itens.api.mjs?v=20261103-kit-unificado";
-import "./itens.modal.mjs";
-import { criarHistoricoQuantidades } from "./item-historico.mjs?v=20261103-cores-movimentacoes";
+import { getEmpresaAtualId, valorMoeda } from "./itens.api.mjs?v=20261115-qr-protegido";
+import "./itens.modal.mjs?v=20261115-qr-protegido";
+import { criarHistoricoQuantidades } from "./item-historico.mjs?v=20261115-movimentos3";
 import { criarEditorComponentes } from "./kit-componentes.mjs?v=20261103-unificado";
 import "./itens.foto.mjs?v=20261008-banco";
 import "./itens.3d.mjs?v=20261005-otimizar";
-import { initPatrimonios } from "./itens.patrimonios.mjs?v=20261017-etiquetas";
+import { initPatrimonios } from "./itens.patrimonios.mjs?v=20261115-somente-ver";
 
 const supabase = window.supabaseClient;
 let editorComponentes;
@@ -33,6 +33,13 @@ function money(value){
     currency: "BRL",
   });
 }
+
+/* 15/11/2026: custo, locação e reposição sempre em moeda; ao clicar vira número simples para digitar. */
+const CAMPOS_MOEDA=["itensCusto","itensValorLocacao","itensValorReposicao"];
+function moedaCampo(v){const n=valorMoeda(v);return String(v??"").trim()===""&&!n?"":money(n);}
+function definirMoeda(id,valor){const el=$(id);if(el)el.value=valor==null||valor===""?"":money(valor);}
+document.addEventListener("focusin",e=>{if(!CAMPOS_MOEDA.includes(e.target?.id))return;const el=e.target;const n=valorMoeda(el.value);el.value=el.value.trim()?n.toLocaleString("pt-BR",{minimumFractionDigits:2,maximumFractionDigits:2,useGrouping:false}):"";requestAnimationFrame(()=>el.select?.());});
+document.addEventListener("focusout",e=>{if(!CAMPOS_MOEDA.includes(e.target?.id))return;e.target.value=moedaCampo(e.target.value);});
 
 function text(value, fallback = "-"){
   const clean = String(value ?? "").trim();
@@ -67,7 +74,7 @@ function configurarKit(ativo){
 async function carregarComponentes(){
   if(!state.kit)return;
   editorComponentes=criarEditorComponentes({sb:supabase,empresaId:state.empresaId,kitId:state.itemId,onAlterar:totais=>{
-    for(const [campo,valor] of [['itensCusto',totais.custo],['itensValorLocacao',totais.valor_locacao],['itensValorReposicao',totais.valor_reposicao]])if($(campo))$(campo).value=valor;
+    for(const [campo,valor] of [['itensCusto',totais.custo],['itensValorLocacao',totais.valor_locacao],['itensValorReposicao',totais.valor_reposicao]])definirMoeda(campo,valor);
     atualizarResumo();
   }});
   await editorComponentes.carregar();
@@ -134,20 +141,20 @@ function preencherFormulario(item){
   $("itensCategoria").value = item.categoria || "";
   $("itensSetor").value = item.setor_estoque || "";
   $("itensExibirSite").value = item.exibir_no_site ? "true" : "false";
-  $("itensCusto").value = item.custo || "";
-  $("itensValorLocacao").value = item.valor_locacao || "";
-  $("itensValorReposicao").value = item.valor_reposicao || "";
+  definirMoeda("itensCusto", item.custo);
+  definirMoeda("itensValorLocacao", item.valor_locacao);
+  definirMoeda("itensValorReposicao", item.valor_reposicao);
 
   $("itensReferencia").value = item.referencia || "";
   $("itensMarcaModelo").value = item.marca_modelo || "";
   $("itensSubcategoria").value = item.subcategoria || "";
-  $("itensGrupoSeparacao").value = item.grupo_separacao || "";
+  { const g = $("itensGrupoSeparacao"), v = item.grupo_separacao || "";
+    if(v && ![...g.options].some(o => o.value === v)) g.add(new Option(v + " (fora da lista)", v));
+    g.value = v; }
   $("itensEstilo").value = item.estilo || "";
   $("itensEstoqueTotal").value = item.estoque_total ?? "";
   $("itensFornecedor").value = item.fornecedor_id || "";
-  $("itensDestaqueSite").value = item.destaque_site ? "true" : "false";
   $("itensCapaCategoria").value = item.capa_categoria ? "true" : "false";
-  $("itensOrdemExposicao").value = item.ordem_exposicao_site ?? "";
   $("itensLocarSomenteKit").value = item.locar_somente_kit ? "true" : "false";
   $("itensExclusivo").value = item.exclusivo ? "true" : "false";
 
@@ -190,8 +197,17 @@ function atualizarResumo(){
     .filter(Boolean)
     .join(" x ");
 
-  setText("itemDetailTitle", nome);
-  $("itemDetailTitle")?.setAttribute("title", nome);
+  // 15/11/2026: no topo, o nome numa linha e as medidas "(L) … (A) … (P) …" na linha de baixo
+  { const t = $("itemDetailTitle");
+    if(t){
+      const m = nome.match(/\s*(\(L\)[\s\S]*)$/);
+      const so = m ? nome.slice(0, m.index).trim() : nome;
+      const sig = ["L","A","P"].map((l,i)=>{ const v=[getValor("itensLargura"),getValor("itensAltura"),getValor("itensProfundidade")][i]; return v ? `(${l}) ${v} m` : ""; }).filter(Boolean).join(" ");
+      const med = m ? m[1].trim() : sig;
+      t.replaceChildren(document.createTextNode(so || nome));
+      if(med){ const sp=document.createElement("span"); sp.className="item-detail-medidas"; sp.textContent=med; t.append(sp); }
+      t.setAttribute("title", nome);
+    } }
   setText("itemDetailSummaryName", nome);
   setText("itemDetailCode", codigo);
   setText("itemDetailStatus", status);
@@ -206,9 +222,9 @@ function atualizarResumo(){
   setText("itemResumoCor", text(getValor("itensCor")));
   setText("itemResumoDimensoes", dims ? `${dims} m` : "-");
   setText("itemResumoVolume", getValor("itensVolumeCubico") ? `${getValor("itensVolumeCubico")} m3` : "-");
-  setText("itemResumoCusto", money(getValor("itensCusto").replace(",", ".")));
-  setText("itemResumoLocacao", money(getValor("itensValorLocacao").replace(",", ".")));
-  setText("itemResumoReposicao", money(getValor("itensValorReposicao").replace(",", ".")));
+  setText("itemResumoCusto", money(valorMoeda(getValor("itensCusto"))));
+  setText("itemResumoLocacao", money(valorMoeda(getValor("itensValorLocacao"))));
+  setText("itemResumoReposicao", money(valorMoeda(getValor("itensValorReposicao"))));
 }
 
 async function carregarFornecedoresParaSelect(){
@@ -233,6 +249,21 @@ async function carregarFornecedoresParaSelect(){
   if(valorAtual) select.value = valorAtual;
 }
 
+/* 15/11/2026: grupos de separação vêm do cadastro em Parâmetros > Logística e operação > Triagem e conferência. */
+async function carregarGruposSeparacao(){
+  const select = $("itensGrupoSeparacao");
+  if(!select) return;
+  const { data, error } = await supabase.from("separacao_grupos").select("nome,ativo").eq("empresa_id", state.empresaId).order("ordem").order("nome");
+  if(error){ console.error("Erro ao carregar grupos de separação:", error); return; }
+  const valorAtual = select.value || state.item?.grupo_separacao || "";
+  const esc = v => String(v).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const nomes = (data || []).filter(g => g.ativo).map(g => g.nome);
+  if(valorAtual && !nomes.some(n => n.toLowerCase() === valorAtual.toLowerCase())) nomes.push(valorAtual);
+  select.innerHTML = '<option value="">Selecione</option>' + nomes.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join("")
+    + (nomes.length ? "" : '<option value="" disabled>Cadastre os grupos em Parâmetros &gt; Triagem e conferência</option>');
+  if(valorAtual) select.value = nomes.find(n => n.toLowerCase() === valorAtual.toLowerCase()) || "";
+}
+
 function formatarVigencia(tabela){
   if(!tabela.vigencia_inicio && !tabela.vigencia_fim) return "-";
   // Monta a data a partir das partes (YYYY-MM-DD) em vez de `new Date(d)`,
@@ -247,7 +278,7 @@ async function carregarTabelasPreco(itemId){
   if(!corpo) return;
 
   if(!itemId){
-    corpo.innerHTML = '<tr><td colspan="5">Salve o item para ver os precos por tabela.</td></tr>';
+    corpo.innerHTML = '<tr><td colspan="5">Salve o item para ver os preços por tabela.</td></tr>';
     return;
   }
 
@@ -259,12 +290,12 @@ async function carregarTabelasPreco(itemId){
 
   if(error){
     console.error("Erro ao carregar tabelas de preco do item:", error);
-    corpo.innerHTML = '<tr><td colspan="5">Nao foi possivel carregar os precos.</td></tr>';
+    corpo.innerHTML = '<tr><td colspan="5">Não foi possível carregar os preços.</td></tr>';
     return;
   }
 
   if(!data || !data.length){
-    corpo.innerHTML = '<tr><td colspan="5">Este item ainda nao tem preco em nenhuma tabela.</td></tr>';
+    corpo.innerHTML = '<tr><td colspan="5">Este item ainda não tem preço em nenhuma tabela.</td></tr>';
     return;
   }
 
@@ -282,7 +313,7 @@ async function carregarTabelasPreco(itemId){
 
 async function carregarItem(){
   state.empresaId = await getEmpresaAtualId();
-  await carregarFornecedoresParaSelect();
+  await Promise.all([carregarFornecedoresParaSelect(), carregarGruposSeparacao()]);
 
   if(!state.itemId){
     state.modo = "novo";
@@ -303,7 +334,7 @@ async function carregarItem(){
 
   if(error){
     console.error("Erro ao carregar item:", error);
-    notify("Nao foi possivel carregar este item.", "erro");
+    notify("Não foi possível carregar este item.", "erro");
     voltarParaItens();
     return;
   }
@@ -336,7 +367,34 @@ function abrirAba(tab){
   window.lucide?.createIcons?.();
 }
 
+/* 15/11/2026: "3D com IA" é uma aba: a tela de criação abre aqui dentro (iframe), na área das outras abas. */
+function carregarIa3d(){
+  const host = $("itemIa3dHost");
+  if(!host) return;
+  const itemId = state.itemId || window.itemAtualId;
+  if(!itemId){ host.innerHTML = '<p class="item-ia3d-aviso">Salve o item antes de criar o modelo 3D com IA.</p>'; state.loadedTabs.delete("ia3d"); return; }
+  if(host.querySelector("iframe")) return;
+  const frame = document.createElement("iframe");
+  frame.className = "item-ia3d-frame";
+  frame.title = "Criar modelo 3D com IA";
+  frame.src = `item-modelo-3d.html?id=${encodeURIComponent(itemId)}&embutido=1`;
+  frame.addEventListener("load", () => {
+    try{
+      const doc = frame.contentDocument;
+      const ajustar = () => { frame.style.height = Math.max(640, doc.documentElement.scrollHeight) + "px"; };
+      ajustar(); new ResizeObserver(ajustar).observe(doc.body);
+    }catch(_){}
+  });
+  host.replaceChildren(frame);
+}
+window.addEventListener("message", (e) => {
+  if(e.origin !== window.location.origin || e.data?.origem !== "ia3d") return;
+  if(e.data.tipo === "salvo") window.itens_3d_init?.({ itemId: state.itemId || window.itemAtualId, empresaId: state.empresaId });
+  if(e.data.tipo === "voltar") abrirAba("dados");
+});
+
 async function carregarAbaSobDemanda(tab){
+  if(tab === "ia3d") return carregarIa3d();
   if(tab === "historico") return historicoQuantidades.carregar();
   if(tab === "kits") return carregarKits();
   return Promise.resolve();
@@ -364,7 +422,7 @@ async function carregarKits(){
   }
 
   if(!vinculos?.length){
-    body.innerHTML = `<tr><td colspan="4">Este item ainda nao esta vinculado a kits.</td></tr>`;
+    body.innerHTML = `<tr><td colspan="4">Este item ainda não está vinculado a kits.</td></tr>`;
     return;
   }
 
@@ -395,6 +453,9 @@ async function salvarDetalhes(){
     if(state.kit&&!editorComponentes)throw Error('Aguarde o carregamento dos componentes.');
     const result=await window.itens_salvar?.();if(result===false)return;
     if(state.kit)await editorComponentes.salvar(window.itemAtualId);
+    // aba 3D com IA: o Salvar do topo também grava o modelo gerado/ajustado que ainda não foi salvo
+    const ia3d=document.querySelector("#itemIa3dHost iframe")?.contentWindow;
+    if(ia3d?.ia3dSalvarPendente){ const ok=await ia3d.ia3dSalvarPendente(); if(ok===false) throw Error("O item foi salvo, mas o modelo 3D não. Confira a aba 3D com IA."); }
     atualizarResumo();notify(state.kit?'Kit salvo com sucesso.':'Item salvo com sucesso.',"sucesso");
     if(state.modo==="novo")voltarParaItens();
   }catch(error){notify(error.message,'erro');}
@@ -402,6 +463,7 @@ async function salvarDetalhes(){
 }
 
 function bindEvents(){
+  window.itens_3d_criarComIA = () => abrirAba("ia3d");
   $("btnVoltarItens")?.addEventListener("click", voltarParaItens);
   $("btnSalvarItemDetalhes")?.addEventListener("click", salvarDetalhes);
 
@@ -448,7 +510,7 @@ function bindEvents(){
 export async function initItemDetalhes(){
   bindEvents();
   try{await carregarItem();}
-  catch(error){notify('Nao foi possivel carregar o cadastro: '+error.message,'erro');window.finalizarCarregamentoModulo?.();}
+  catch(error){notify('Não foi possível carregar o cadastro: '+error.message,'erro');window.finalizarCarregamentoModulo?.();}
   initPatrimonios();
   window.lucide?.createIcons?.();
 }

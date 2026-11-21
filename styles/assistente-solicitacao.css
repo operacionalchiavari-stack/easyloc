@@ -10,11 +10,19 @@ dialog.as-dialog::backdrop{background:rgba(20,33,52,.42);backdrop-filter:blur(3p
 .as-dialog .as-fechar{width:34px;height:34px;min-height:0;padding:0;border:0;border-radius:50%;background:transparent;color:#4f4f4f;font-size:24px;line-height:1;cursor:pointer}
 .as-dialog .as-fechar:hover{background:#f1f4f8}
 .as-dialog .as-link{border:0;background:none;padding:4px 2px;min-height:0;color:#123f86;font:500 12.5px Inter,system-ui,sans-serif;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
-.as-msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:10px;background:#f7f9fb}
+.as-dialog>.as-msgs{flex:1 1 0;min-height:0;max-height:none;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:10px;background:#f7f9fb}
+.as-dialog>:is(.as-topo,.as-gravando,.as-campo,.as-rodape){flex-shrink:0}
 .as-msg{max-width:80%;padding:10px 14px;border-radius:16px;line-height:1.5;box-shadow:0 1px 2px rgba(15,23,42,.06)}
 .as-msg p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
 .as-msg.ia{align-self:flex-start;background:#fff;border:1px solid #e8ecf1;border-bottom-left-radius:5px}
-.as-msg.pessoa{align-self:flex-end;background:#123f86;color:#fff;border-bottom-right-radius:5px}
+.as-msg.pessoa{align-self:flex-end;background:#eef0f2;color:#27313c;border:1px solid #dfe3e7;border-bottom-right-radius:5px}
+.as-dialog .as-autor{display:block;margin-bottom:6px;color:#52606d;font-size:12px;font-weight:600}
+.as-dialog .as-data{display:block;margin-top:7px;color:#687580;font-size:11px}
+.as-dialog .as-contexto{flex:none;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 18px;border-bottom:1px solid #eef1f5}
+.as-contexto .so-acoes{display:flex;flex-wrap:wrap;gap:8px;margin:0}
+.as-contexto .so-acoes:empty{display:none}
+.as-contexto button,.as-contexto select{border:1px solid #dce3eb;border-radius:8px;background:#fff;color:#344150;padding:6px 10px;font:12px/1.4 Inter,system-ui,sans-serif;cursor:pointer}
+.as-dialog [hidden]{display:none!important}
 .as-msg.erro{background:#fff6f5;border-color:#f3d2cf;color:#8a2a22}
 .as-msg-ok{background:#eaf7ef!important;border-color:#bfe3cc!important;color:#1f5e37}
 .as-audio{display:block;font-size:11px;opacity:.8;margin-bottom:3px}

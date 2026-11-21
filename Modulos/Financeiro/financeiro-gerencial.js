@@ -141,7 +141,7 @@
       '<label>Ano <select id="grAno">' + [...anos].sort((a, b) => b - a).map((a) => '<option' + (a === G.ano ? " selected" : "") + ">" + a + "</option>").join("") + "</select></label>" +
       '<label>Mês de referência <select id="grMes">' + MESES_LONGOS.map((m, i) => '<option value="' + (i + 1) + '"' + (i + 1 === G.mes ? " selected" : "") + ">" + m.charAt(0).toUpperCase() + m.slice(1) + "</option>").join("") + "</select></label>" +
       '<div class="gr-base" role="group" aria-label="Valores">' + [["lancado", "Lançado (competência)"], ["realizado", "Realizado (recebido e pago)"]].map(([k, t]) => '<button type="button" data-gr-base="' + k + '" class="' + (G.base === k ? "ativa" : "") + '" aria-pressed="' + (G.base === k) + '">' + t + "</button>").join("") + "</div>" +
-      '<span class="fin-esp"></span><button type="button" class="fin-btn claro" id="grImprimir">Imprimir</button><button type="button" class="fin-btn" id="grExcel">Exportar para Excel</button></div>' +
+      '<span class="fin-esp"></span><a class="fin-btn" id="grPainelCfo" href="painel-cfo.html" target="_blank">Painel gerencial ↗</a><button type="button" class="fin-btn claro" id="grImprimir">Imprimir</button><button type="button" class="fin-btn" id="grExcel">Exportar para Excel</button></div>' +
       '<p class="gr-nota">Valores em R$. ' + (G.base === "realizado" ? "Realizado: só o que já foi recebido e pago" : "Lançado: tudo o que foi lançado no mês de competência, recebido ou não") +
       ". Despesas entre parênteses. Clique em qualquer número para ver os lançamentos.</p>" +
       saude(D) + posicao() + pontoEquilibrio(D) + dreMensal(D) + lucroEventos(D) + maioresDespesas(D) + fornecedores(D) + centros(D) +
@@ -603,6 +603,7 @@
     box.querySelector("#grAno").addEventListener("change", (e) => { G.ano = Number(e.target.value); render(C); });
     box.querySelector("#grMes").addEventListener("change", (e) => { G.mes = Number(e.target.value); render(C, true); });
     box.querySelector("#grExcel").addEventListener("click", () => exportarTudo(D));
+    box.querySelector("#grPainelCfo")?.addEventListener("click", (e) => { e.preventDefault(); window.open("painel-cfo.html?empresa=" + encodeURIComponent(C.S.emp), "_blank"); });
     box.querySelector("#grImprimir").addEventListener("click", () => { G.abertos.add("*"); render(C, true).then(() => setTimeout(() => window.print(), 60)); });
     box.addEventListener("click", (e) => {
       const b = e.target.closest("[data-gr-base],[data-gr-abrir],[data-gr-ver],[data-gr-evmes],[data-gr-evordem],[data-gr-ir],[data-gr-plano]"); if (!b) return;

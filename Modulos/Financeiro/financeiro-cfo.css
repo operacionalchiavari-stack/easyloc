@@ -1,0 +1,295 @@
+/* Painel do CFO (2026-11-12): tela escura, texto branco, verde = bom, vermelho = problema.
+   O tema global do financeiro força cores com seletores fortes; por isso tudo aqui começa em html:root #cfoPainel#cfoPainel. */
+html:root #cfoPainel#cfoPainel {
+  --cfo-bg: #000; --cfo-card: #0b0b0c; --cfo-borda: #1f1f22; --cfo-txt: #fff; --cfo-sec: #a1a1aa; --cfo-mudo: #6b6b73;
+  --cfo-verde: #3ccf6e; --cfo-vermelho: #e5484d;
+  --cfo-gaveta: #09090a; --cfo-sup: #101012; --cfo-sup2: #141417; --cfo-tipbg: #161618; --cfo-trilho: #18181b; --cfo-grade: #1c1c20;
+  --cfo-linha: #2a2a2f; --cfo-linha2: #3a3a40; --cfo-eixo0: #4a4a52; --cfo-hover: rgba(255, 255, 255, .04);
+  background: var(--cfo-bg); color: var(--cfo-txt); padding: 22px 28px 28px; margin: 0;
+  font-family: Inter, system-ui, sans-serif; font-variant-numeric: tabular-nums; min-height: 100vh; box-sizing: border-box;
+}
+html:root #cfoPainel#cfoPainel * { box-sizing: border-box; }
+html:root #cfoPainel#cfoPainel .pos { color: var(--cfo-verde); }
+html:root #cfoPainel#cfoPainel .neg { color: var(--cfo-vermelho); }
+html:root #cfoPainel#cfoPainel .cfo-carregando, html:root #cfoPainel#cfoPainel .cfo-vazio { color: var(--cfo-sec); padding: 18px 4px; font-size: 14px; }
+
+/* topo */
+html:root #cfoPainel#cfoPainel .cfo-topo { display: flex; align-items: center; gap: 22px; padding-bottom: 16px; border-bottom: 1px solid var(--cfo-borda); margin-bottom: 18px; flex-wrap: wrap; }
+html:root #cfoPainel#cfoPainel .cfo-tit { display: flex; align-items: center; gap: 12px; margin-right: auto; }
+html:root #cfoPainel#cfoPainel .cfo-tag { font-weight: 700; font-size: 12px; letter-spacing: .12em; border: 1px solid var(--cfo-txt); padding: 5px 8px; border-radius: 6px; }
+html:root #cfoPainel#cfoPainel h2 { margin: 0; font-size: 22px; font-weight: 600; color: var(--cfo-txt); letter-spacing: -.01em; }
+html:root #cfoPainel#cfoPainel .cfo-tit small { color: var(--cfo-sec); font-size: 12px; }
+html:root #cfoPainel#cfoPainel .cfo-relogio { display: flex; flex-direction: column; align-items: flex-end; }
+html:root #cfoPainel#cfoPainel .cfo-relogio strong { font-size: 26px; font-weight: 600; line-height: 1; }
+html:root #cfoPainel#cfoPainel .cfo-relogio span { color: var(--cfo-sec); font-size: 12px; margin-top: 4px; }
+html:root #cfoPainel#cfoPainel .cfo-acoes { display: flex; gap: 8px; }
+html:root #cfoPainel#cfoPainel .cfo-acoes button { background: transparent; color: var(--cfo-txt); border: 1px solid var(--cfo-linha2); border-radius: 8px; padding: 8px 12px; font: 500 13px Inter, sans-serif; cursor: pointer; box-shadow: none; }
+html:root #cfoPainel#cfoPainel .cfo-acoes button:hover { border-color: var(--cfo-txt); background: var(--cfo-sup2); }
+
+/* indicadores */
+html:root #cfoPainel#cfoPainel .cfo-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+html:root #cfoPainel#cfoPainel .cfo-kpi { background: var(--cfo-card); border: 1px solid var(--cfo-borda); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+html:root #cfoPainel#cfoPainel .cfo-kpi-rot { color: var(--cfo-sec); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+html:root #cfoPainel#cfoPainel .cfo-kpi-v { font-size: 28px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; color: var(--cfo-txt); }
+html:root #cfoPainel#cfoPainel .cfo-kpi.neg .cfo-kpi-v { color: var(--cfo-vermelho); }
+html:root #cfoPainel#cfoPainel .cfo-kpi-sub { color: var(--cfo-sec); font-size: 12px; }
+
+/* grade de quadros */
+html:root #cfoPainel#cfoPainel .cfo-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+html:root #cfoPainel#cfoPainel .cfo-card { background: var(--cfo-card); border: 1px solid var(--cfo-borda); border-radius: 12px; padding: 14px 16px; min-width: 0; display: flex; flex-direction: column; }
+html:root #cfoPainel#cfoPainel .cfo-span2 { grid-column: span 2; }
+html:root #cfoPainel#cfoPainel .cfo-card > header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+html:root #cfoPainel#cfoPainel h3 { margin: 0; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--cfo-txt); margin-right: auto; }
+html:root #cfoPainel#cfoPainel .cfo-cont { font-size: 13px; font-weight: 600; color: var(--cfo-txt); border: 1px solid var(--cfo-linha2); border-radius: 999px; padding: 2px 10px; }
+html:root #cfoPainel#cfoPainel .cfo-cont.neg { border-color: var(--cfo-vermelho); }
+html:root #cfoPainel#cfoPainel .cfo-cont.pos { border-color: var(--cfo-verde); }
+html:root #cfoPainel#cfoPainel .cfo-leg { display: flex; gap: 14px; font-size: 12px; color: var(--cfo-sec); flex-wrap: wrap; }
+html:root #cfoPainel#cfoPainel .cfo-leg span { display: inline-flex; align-items: center; gap: 6px; }
+html:root #cfoPainel#cfoPainel .cfo-leg i { display: inline-block; width: 16px; height: 0; border-top: 2px solid var(--cfo-txt); }
+html:root #cfoPainel#cfoPainel .cfo-leg i.l-prev { border-top: 2px dashed var(--cfo-verde); }
+html:root #cfoPainel#cfoPainel .cfo-leg i.l-min { border-top: 2px dotted var(--cfo-vermelho); }
+html:root #cfoPainel#cfoPainel .cfo-leg i.b-ent, html:root #cfoPainel#cfoPainel .cfo-leg i.b-sai { width: 10px; height: 10px; border: 0; border-radius: 2px; background: var(--cfo-verde); }
+html:root #cfoPainel#cfoPainel .cfo-leg i.b-sai { background: repeating-linear-gradient(45deg, #e5484d 0 3px, #7a1d20 3px 5px); }
+html:root #cfoPainel#cfoPainel .cfo-leg-nota { color: var(--cfo-mudo); }
+html:root #cfoPainel#cfoPainel .cfo-rodape { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--cfo-borda); font-size: 12px; color: var(--cfo-sec); }
+html:root #cfoPainel#cfoPainel .cfo-rodape b { font-size: 15px; margin-left: 6px; color: var(--cfo-txt); }
+html:root #cfoPainel#cfoPainel .cfo-rodape b.pos { color: var(--cfo-verde); }
+html:root #cfoPainel#cfoPainel .cfo-rodape b.neg { color: var(--cfo-vermelho); }
+html:root #cfoPainel#cfoPainel .cfo-nota-peq { margin: auto 0 0; padding-top: 8px; font-size: 11px; color: var(--cfo-mudo); }
+
+/* gráficos */
+html:root #cfoPainel#cfoPainel .cfo-chart { position: relative; }
+html:root #cfoPainel#cfoPainel .cfo-chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+html:root #cfoPainel#cfoPainel .cfo-grade { stroke: var(--cfo-grade); stroke-width: 1; }
+html:root #cfoPainel#cfoPainel .cfo-zero { stroke: var(--cfo-eixo0); stroke-width: 1; }
+html:root #cfoPainel#cfoPainel .cfo-eixo { fill: var(--cfo-mudo); font-size: 11px; }
+html:root #cfoPainel#cfoPainel .cfo-rot { fill: var(--cfo-txt); font-size: 11px; font-weight: 600; }
+html:root #cfoPainel#cfoPainel .cfo-rot.neg { fill: var(--cfo-vermelho); }
+html:root #cfoPainel#cfoPainel .cfo-linha { fill: none; stroke: var(--cfo-txt); stroke-width: 2; stroke-linejoin: round; }
+html:root #cfoPainel#cfoPainel .cfo-linha-prev { fill: none; stroke: var(--cfo-verde); stroke-width: 2; stroke-dasharray: 6 4; }
+html:root #cfoPainel#cfoPainel .cfo-min { stroke: var(--cfo-vermelho); stroke-width: 1.5; stroke-dasharray: 2 4; }
+html:root #cfoPainel#cfoPainel .cfo-area-neg { fill: rgba(229, 72, 77, .28); }
+html:root #cfoPainel#cfoPainel .cfo-pt { fill: var(--cfo-txt); stroke: var(--cfo-bg); stroke-width: 2; }
+html:root #cfoPainel#cfoPainel .cfo-pt-neg { fill: var(--cfo-vermelho); stroke: var(--cfo-bg); stroke-width: 2; }
+html:root #cfoPainel#cfoPainel .cfo-cruz { stroke: var(--cfo-mudo); stroke-width: 1; }
+html:root #cfoPainel#cfoPainel .cfo-bar-ent { fill: var(--cfo-verde); }
+html:root #cfoPainel#cfoPainel .cfo-bar-sai { fill: url(#cfoHach); }
+html:root #cfoPainel#cfoPainel .cfo-hit { fill: transparent; }
+html:root #cfoPainel#cfoPainel .cfo-mes:hover .cfo-hit { fill: var(--cfo-hover); }
+html:root #cfoPainel#cfoPainel .cfo-res { font-size: 11px; font-weight: 600; fill: var(--cfo-sec); }
+html:root #cfoPainel#cfoPainel .cfo-res.pos { fill: var(--cfo-verde); }
+html:root #cfoPainel#cfoPainel .cfo-res.neg { fill: var(--cfo-vermelho); }
+html:root #cfoPainel#cfoPainel .cfo-tip { position: absolute; pointer-events: none; background: var(--cfo-tipbg); border: 1px solid var(--cfo-linha2); border-radius: 8px; padding: 8px 10px; font-size: 12px; display: flex; flex-direction: column; gap: 3px; min-width: 170px; z-index: 2; box-shadow: 0 8px 24px rgba(0, 0, 0, .6); }
+html:root #cfoPainel#cfoPainel .cfo-tip[hidden] { display: none; }
+html:root #cfoPainel#cfoPainel .cfo-tip span { display: flex; justify-content: space-between; gap: 14px; color: var(--cfo-sec); }
+html:root #cfoPainel#cfoPainel .cfo-tip em { font-style: normal; font-weight: 600; color: var(--cfo-txt); }
+html:root #cfoPainel#cfoPainel .cfo-tip em.pos { color: var(--cfo-verde); }
+html:root #cfoPainel#cfoPainel .cfo-tip em.neg { color: var(--cfo-vermelho); }
+
+/* alertas */
+html:root #cfoPainel#cfoPainel .cfo-alertas { grid-row: span 2; min-height: 0; }
+html:root #cfoPainel#cfoPainel .cfo-alertas ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; overflow: auto; flex: 1 1 0; min-height: 0; padding-right: 2px; }
+html:root #cfoPainel#cfoPainel .cfo-alertas li { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--cfo-borda); border-left: 3px solid var(--cfo-txt); background: var(--cfo-sup); }
+html:root #cfoPainel#cfoPainel .cfo-alertas li.crit { border-left-color: var(--cfo-vermelho); background: rgba(229, 72, 77, .07); }
+html:root #cfoPainel#cfoPainel .cfo-alertas li[data-cfo-ir] { cursor: pointer; }
+html:root #cfoPainel#cfoPainel .cfo-alertas li[data-cfo-ir]:hover, html:root #cfoPainel#cfoPainel .cfo-alertas li[data-cfo-ir]:focus-visible { border-color: var(--cfo-linha2); outline: none; }
+html:root #cfoPainel#cfoPainel .cfo-alertas li > i { font-style: normal; font-size: 12px; line-height: 20px; color: var(--cfo-txt); }
+html:root #cfoPainel#cfoPainel .cfo-alertas li.crit > i { color: var(--cfo-vermelho); animation: cfoPisca 1.6s ease-in-out infinite; }
+html:root #cfoPainel#cfoPainel .cfo-alertas li div { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+html:root #cfoPainel#cfoPainel .cfo-alertas b { font-size: 14px; font-weight: 600; color: var(--cfo-txt); }
+html:root #cfoPainel#cfoPainel .cfo-alertas small { font-size: 12px; color: var(--cfo-sec); }
+html:root #cfoPainel#cfoPainel .cfo-seta { color: var(--cfo-mudo); font-size: 20px; line-height: 18px; }
+html:root #cfoPainel#cfoPainel .cfo-ok { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; flex: 1; color: var(--cfo-verde); padding: 30px 0; }
+html:root #cfoPainel#cfoPainel .cfo-ok strong { font-size: 40px; }
+@keyframes cfoPisca { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { html:root #cfoPainel#cfoPainel .cfo-alertas li.crit > i { animation: none; } }
+
+/* tabelas e listas */
+html:root #cfoPainel#cfoPainel .cfo-tab { width: 100%; border-collapse: collapse; font-size: 13px; background: transparent; }
+html:root #cfoPainel#cfoPainel .cfo-tab th { text-align: right; color: var(--cfo-mudo); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; padding: 4px 6px; border-bottom: 1px solid var(--cfo-borda); background: transparent; }
+html:root #cfoPainel#cfoPainel .cfo-tab td { text-align: right; padding: 7px 6px; border-bottom: 1px solid var(--cfo-sup2); color: var(--cfo-txt); background: transparent; }
+html:root #cfoPainel#cfoPainel .cfo-tab th:first-child, html:root #cfoPainel#cfoPainel .cfo-tab td:first-child { text-align: left; }
+html:root #cfoPainel#cfoPainel .cfo-tab td.pos { color: var(--cfo-verde); }
+html:root #cfoPainel#cfoPainel .cfo-tab td.neg { color: var(--cfo-vermelho); }
+html:root #cfoPainel#cfoPainel .cfo-tab small { color: var(--cfo-mudo); }
+html:root #cfoPainel#cfoPainel .cfo-aging, html:root #cfoPainel#cfoPainel .cfo-top, html:root #cfoPainel#cfoPainel .cfo-marg { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px; font-size: 13px; }
+html:root #cfoPainel#cfoPainel .cfo-aging li, html:root #cfoPainel#cfoPainel .cfo-top li { display: grid; grid-template-columns: minmax(80px, 1.2fr) 1.4fr auto 44px; gap: 10px; align-items: center; }
+html:root #cfoPainel#cfoPainel .cfo-aging li span:first-child { color: var(--cfo-sec); }
+html:root #cfoPainel#cfoPainel .cfo-aging b, html:root #cfoPainel#cfoPainel .cfo-top b { font-weight: 600; text-align: right; color: var(--cfo-txt); }
+html:root #cfoPainel#cfoPainel .cfo-aging b.neg { color: var(--cfo-vermelho); }
+html:root #cfoPainel#cfoPainel .cfo-aging small, html:root #cfoPainel#cfoPainel .cfo-top small, html:root #cfoPainel#cfoPainel .cfo-marg small { color: var(--cfo-mudo); text-align: right; font-size: 11px; }
+html:root #cfoPainel#cfoPainel .cfo-nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--cfo-txt); }
+html:root #cfoPainel#cfoPainel .cfo-barrinha { height: 6px; background: var(--cfo-trilho); border-radius: 4px; overflow: hidden; }
+html:root #cfoPainel#cfoPainel .cfo-barrinha i { display: block; height: 100%; background: var(--cfo-txt); border-radius: 4px; }
+html:root #cfoPainel#cfoPainel .cfo-barrinha.pos i, html:root #cfoPainel#cfoPainel .cfo-top:not(.neg) .cfo-barrinha i { background: var(--cfo-verde); }
+html:root #cfoPainel#cfoPainel .cfo-barrinha.neg i, html:root #cfoPainel#cfoPainel .cfo-top.neg .cfo-barrinha i { background: var(--cfo-vermelho); }
+html:root #cfoPainel#cfoPainel .cfo-marg li { display: grid; grid-template-columns: minmax(0, 1fr) auto 72px; gap: 10px; align-items: center; cursor: pointer; padding: 2px 0; }
+html:root #cfoPainel#cfoPainel .cfo-marg li > span:nth-child(2) { font-weight: 600; text-align: right; }
+html:root #cfoPainel#cfoPainel .cfo-marg .cfo-nome small { margin-left: 6px; }
+
+
+@media (max-width: 900px) {
+  html:root #cfoPainel#cfoPainel .cfo-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  html:root #cfoPainel#cfoPainel .cfo-grid { grid-template-columns: minmax(0, 1fr); }
+  html:root #cfoPainel#cfoPainel .cfo-span2, html:root #cfoPainel#cfoPainel .cfo-alertas { grid-column: auto; }
+}
+
+/* ---- (2026-11-12) números clicáveis + prova */
+html:root #cfoPainel#cfoPainel button.cfo-kpi { text-align: left; font: inherit; color: inherit; cursor: pointer; }
+html:root #cfoPainel#cfoPainel .cfo-kpi:hover, html:root #cfoPainel#cfoPainel .cfo-kpi:focus-visible { background: var(--cfo-sup2); outline: none; border-color: var(--cfo-linha2); }
+html:root #cfoPainel#cfoPainel .cfo-kpi-ver { font-size: 11px; color: var(--cfo-mudo); }
+html:root #cfoPainel#cfoPainel .cfo-kpi:hover .cfo-kpi-ver { color: var(--cfo-txt); }
+html:root #cfoPainel#cfoPainel [data-prova] { cursor: pointer; }
+html:root #cfoPainel#cfoPainel li[data-prova]:hover, html:root #cfoPainel#cfoPainel tr[data-prova]:hover td { background: var(--cfo-sup2); }
+html:root #cfoPainel#cfoPainel li[data-prova]:focus-visible, html:root #cfoPainel#cfoPainel tr[data-prova]:focus-visible { outline: 1px solid var(--cfo-mudo); }
+html:root #cfoPainel#cfoPainel .cfo-chart[data-chart="proj"] { cursor: pointer; }
+html:root #cfoPainel#cfoPainel .cfo-rodape button { background: transparent; border: 0; padding: 0; font: inherit; color: var(--cfo-sec); cursor: pointer; }
+html:root #cfoPainel#cfoPainel .cfo-rodape button:hover { color: var(--cfo-txt); text-decoration: underline; }
+html:root #cfoPainel#cfoPainel .cfo-tip small { color: var(--cfo-mudo); font-size: 11px; margin-top: 2px; }
+html:root #cfoPainel#cfoPainel .cfo-resumo-al { display: flex; align-items: center; gap: 16px; padding: 8px 16px; border: 1px solid var(--cfo-borda); border-radius: 10px; background: var(--cfo-card); }
+html:root #cfoPainel#cfoPainel .cfo-resumo-al > span { color: var(--cfo-sec); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+html:root #cfoPainel#cfoPainel .cfo-resumo-al div { display: flex; align-items: baseline; gap: 6px; }
+html:root #cfoPainel#cfoPainel .cfo-resumo-al b { font-size: 28px; font-weight: 700; color: var(--cfo-txt); }
+html:root #cfoPainel#cfoPainel .cfo-resumo-al b.neg { color: var(--cfo-vermelho); }
+html:root #cfoPainel#cfoPainel .cfo-resumo-al b.pos { color: var(--cfo-verde); }
+html:root #cfoPainel#cfoPainel .cfo-resumo-al small { color: var(--cfo-sec); font-size: 12px; }
+html:root #cfoPainel#cfoPainel .cfo-falha { color: var(--cfo-vermelho); font-size: 13px; margin: -6px 0 12px; }
+html:root #cfoPainel#cfoPainel .cfo-vazio-grande { text-align: center; padding: 40px 20px; line-height: 1.6; }
+html:root #cfoPainel#cfoPainel .cfo-vazio-grande small { color: var(--cfo-mudo); }
+html:root #cfoPainel#cfoPainel .cfo-transp { margin: 16px 2px 0; font-size: 12px; color: var(--cfo-mudo); }
+
+html:root #cfoPainel#cfoPainel .cfo-prova { position: fixed; inset: 0; z-index: 50; background: rgba(0, 0, 0, .6); display: flex; justify-content: flex-end; }
+html:root #cfoPainel#cfoPainel .cfo-prova[hidden] { display: none; }
+html:root #cfoPainel#cfoPainel .cfo-p-caixa { width: min(880px, 100%); height: 100%; background: var(--cfo-gaveta); border-left: 1px solid var(--cfo-linha); display: flex; flex-direction: column; box-shadow: -20px 0 40px rgba(0, 0, 0, .6); }
+html:root #cfoPainel#cfoPainel .cfo-p-caixa > header { display: flex; align-items: flex-start; gap: 12px; padding: 20px 24px 14px; border-bottom: 1px solid var(--cfo-borda); }
+html:root #cfoPainel#cfoPainel .cfo-p-caixa > header div { flex: 1; }
+html:root #cfoPainel#cfoPainel .cfo-p-caixa > header small { color: var(--cfo-sec); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+html:root #cfoPainel#cfoPainel .cfo-p-caixa > header h3 { font-size: 20px; text-transform: none; letter-spacing: 0; margin: 4px 0 0; }
+html:root #cfoPainel#cfoPainel .cfo-p-caixa > header button { background: transparent; color: var(--cfo-txt); border: 1px solid var(--cfo-linha2); border-radius: 8px; width: 34px; height: 34px; font-size: 20px; cursor: pointer; }
+html:root #cfoPainel#cfoPainel .cfo-p-corpo { overflow: auto; padding: 16px 24px 28px; display: flex; flex-direction: column; gap: 16px; }
+html:root #cfoPainel#cfoPainel .cfo-p-conta, html:root #cfoPainel#cfoPainel .cfo-p-fonte { border: 1px solid var(--cfo-borda); border-radius: 10px; padding: 12px 14px; background: var(--cfo-card); }
+html:root #cfoPainel#cfoPainel .cfo-p-conta > span, html:root #cfoPainel#cfoPainel .cfo-p-fonte > span { color: var(--cfo-sec); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+html:root #cfoPainel#cfoPainel .cfo-p-conta p { margin: 6px 0 0; font-size: 15px; line-height: 1.6; color: var(--cfo-txt); }
+html:root #cfoPainel#cfoPainel .cfo-p-fonte p { margin: 6px 0 0; font-size: 13px; color: var(--cfo-txt); }
+html:root #cfoPainel#cfoPainel .cfo-p-fonte a { color: var(--cfo-verde); }
+html:root #cfoPainel#cfoPainel .cfo-p-tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; border: 1px solid var(--cfo-linha2); border-radius: 4px; padding: 1px 6px; color: var(--cfo-sec); vertical-align: middle; }
+html:root #cfoPainel#cfoPainel .cfo-p-tag.prev { border-color: var(--cfo-verde); color: var(--cfo-verde); border-style: dashed; }
+html:root #cfoPainel#cfoPainel .cfo-p-sec h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--cfo-txt); }
+html:root #cfoPainel#cfoPainel .cfo-p-sec h4 small { margin-left: auto; color: var(--cfo-mudo); font-weight: 400; }
+html:root #cfoPainel#cfoPainel .cfo-p-sec.prev { border-left: 2px dashed var(--cfo-verde); padding-left: 10px; }
+html:root #cfoPainel#cfoPainel .cfo-p-tab { width: 100%; border-collapse: collapse; font-size: 12px; background: transparent; }
+html:root #cfoPainel#cfoPainel .cfo-p-tab th { text-align: left; color: var(--cfo-mudo); font-weight: 500; font-size: 11px; padding: 5px 6px; border-bottom: 1px solid var(--cfo-borda); background: transparent; text-transform: uppercase; letter-spacing: .05em; }
+html:root #cfoPainel#cfoPainel .cfo-p-tab td { padding: 6px; border-bottom: 1px solid var(--cfo-sup2); color: var(--cfo-txt); vertical-align: top; background: transparent; }
+html:root #cfoPainel#cfoPainel .cfo-p-tab td:first-child { white-space: nowrap; color: var(--cfo-sec); }
+html:root #cfoPainel#cfoPainel .cfo-p-tab th:last-child, html:root #cfoPainel#cfoPainel .cfo-p-tab td:last-child { text-align: right; white-space: nowrap; }
+html:root #cfoPainel#cfoPainel .cfo-p-tab td.pos { color: var(--cfo-verde); }
+html:root #cfoPainel#cfoPainel .cfo-p-tab td.neg { color: var(--cfo-vermelho); }
+html:root #cfoPainel#cfoPainel .cfo-p-tab tfoot td { font-weight: 700; border-top: 1px solid var(--cfo-linha2); border-bottom: 0; color: var(--cfo-txt); }
+html:root #cfoPainel#cfoPainel .cfo-p-vazio { color: var(--cfo-mudo); font-size: 13px; margin: 0; }
+
+/* ---- (2026-11-12) ponto de equilíbrio */
+html:root #cfoPainel#cfoPainel .cfo-pe-nums { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+html:root #cfoPainel#cfoPainel .cfo-pe-num { display: flex; flex-direction: column; gap: 4px; text-align: left; background: var(--cfo-sup); border: 1px solid var(--cfo-borda); border-radius: 10px; padding: 10px 12px; font: inherit; color: var(--cfo-txt); cursor: pointer; }
+html:root #cfoPainel#cfoPainel .cfo-pe-num:hover, html:root #cfoPainel#cfoPainel .cfo-pe-num:focus-visible { border-color: var(--cfo-linha2); outline: none; }
+html:root #cfoPainel#cfoPainel .cfo-pe-num > span { color: var(--cfo-sec); font-size: 11px; text-transform: uppercase; letter-spacing: .07em; }
+html:root #cfoPainel#cfoPainel .cfo-pe-num strong { font-size: 22px; font-weight: 600; color: var(--cfo-txt); }
+html:root #cfoPainel#cfoPainel .cfo-pe-num.neg strong { color: var(--cfo-vermelho); }
+html:root #cfoPainel#cfoPainel .cfo-pe-num.pos strong { color: var(--cfo-verde); }
+html:root #cfoPainel#cfoPainel .cfo-pe-num small { color: var(--cfo-sec); font-size: 12px; }
+html:root #cfoPainel#cfoPainel .cfo-pe-barra { position: relative; height: 26px; background: var(--cfo-trilho); border-radius: 6px; overflow: hidden; margin-bottom: 10px; cursor: pointer; }
+html:root #cfoPainel#cfoPainel .cfo-pe-barra i { position: absolute; inset: 0 auto 0 0; background: var(--cfo-vermelho); opacity: .85; }
+html:root #cfoPainel#cfoPainel .cfo-pe-barra i.pos { background: var(--cfo-verde); }
+html:root #cfoPainel#cfoPainel .cfo-pe-barra span { position: relative; display: block; line-height: 26px; padding: 0 10px; font-size: 12px; font-weight: 600; color: #fff; text-shadow: 0 1px 2px #000; }
+html:root #cfoPainel#cfoPainel .cfo-pe-linha { stroke: var(--cfo-txt); stroke-width: 2.5; stroke-linecap: round; }
+html:root #cfoPainel#cfoPainel .cfo-bar-neutra { fill: var(--cfo-linha2); }
+html:root #cfoPainel#cfoPainel .cfo-leg i.l-pe { border-top: 3px solid var(--cfo-txt); }
+html:root #cfoPainel#cfoPainel .cfo-pe-fixas { align-items: center; gap: 8px 14px; }
+html:root #cfoPainel#cfoPainel .cfo-pe-fixas-rot { color: var(--cfo-mudo); text-transform: uppercase; font-size: 11px; letter-spacing: .07em; }
+html:root #cfoPainel#cfoPainel .cfo-pe-fixas button b { font-size: 13px; }
+html:root #cfoPainel#cfoPainel .cfo-pe-fixas button.neg { color: var(--cfo-vermelho); }
+html:root #cfoPainel#cfoPainel .cfo-p-obs { color: var(--cfo-mudo); font-size: 12px; }
+@media (max-width: 900px) { html:root #cfoPainel#cfoPainel .cfo-pe-nums { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ---- (2026-11-12) fundo branco: tecla T alterna (guardado no navegador). Só troca as variáveis. */
+html:root #cfoPainel#cfoPainel.cfo-claro {
+  --cfo-bg: #fff; --cfo-card: #f7f7f8; --cfo-borda: #e4e4e7; --cfo-txt: #0a0a0a; --cfo-sec: #52525b; --cfo-mudo: #71717a;
+  --cfo-verde: #16a34a; --cfo-vermelho: #dc2626;
+  --cfo-gaveta: #fff; --cfo-sup: #f1f1f3; --cfo-sup2: #ececef; --cfo-tipbg: #fff; --cfo-trilho: #e9e9ec; --cfo-grade: #ececef;
+  --cfo-linha: #d4d4d8; --cfo-linha2: #c4c4c8; --cfo-eixo0: #a1a1aa; --cfo-hover: rgba(0, 0, 0, .04);
+}
+html:root #cfoPainel#cfoPainel.cfo-claro .cfo-tip { box-shadow: 0 8px 24px rgba(0, 0, 0, .15); }
+html:root #cfoPainel#cfoPainel.cfo-claro .cfo-prova { background: rgba(0, 0, 0, .25); }
+html:root #cfoPainel#cfoPainel.cfo-claro .cfo-p-caixa { box-shadow: -20px 0 40px rgba(0, 0, 0, .15); }
+html:root #cfoPainel#cfoPainel.cfo-claro .cfo-pe-barra span { color: #0a0a0a; text-shadow: none; }
+html:root #cfoPainel#cfoPainel .cfo-tecla { display: inline-block; border: 1px solid var(--cfo-linha2); border-radius: 4px; padding: 0 5px; font-size: 11px; color: var(--cfo-sec); }
+
+/* ---- (2026-11-12) duas telas que se alternam, cada uma cabendo na altura da janela (sem rolagem vertical) */
+html:root #cfoPainel#cfoPainel { height: 100vh; min-height: 0; display: flex; flex-direction: column; overflow: hidden; padding-top: 18px; padding-bottom: 12px; }
+html:root #cfoPainel#cfoPainel .cfo-topo { padding-bottom: 12px; margin-bottom: 12px; flex: none; }
+html:root #cfoPainel#cfoPainel .cfo-falha { flex: none; }
+html:root #cfoPainel#cfoPainel .cfo-telas { position: relative; flex: 1; min-height: 0; }
+html:root #cfoPainel#cfoPainel .cfo-tela { position: absolute; inset: 0; display: flex; flex-direction: column; gap: 12px; opacity: 0; visibility: hidden; transition: opacity .6s ease, visibility 0s linear .6s; }
+html:root #cfoPainel#cfoPainel .cfo-tela.ativa { opacity: 1; visibility: visible; transition: opacity .6s ease; }
+html:root #cfoPainel#cfoPainel .cfo-tela .cfo-kpis { margin: 0; flex: none; }
+html:root #cfoPainel#cfoPainel .cfo-tela .cfo-grid { flex: 1; min-height: 0; }
+html:root #cfoPainel#cfoPainel .cfo-grid-1 { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: minmax(0, 1fr); }
+html:root #cfoPainel#cfoPainel .cfo-grid-1 .cfo-alertas { grid-row: auto; }
+html:root #cfoPainel#cfoPainel .cfo-grid-2 { grid-template-columns: repeat(12, minmax(0, 1fr)); grid-template-rows: minmax(0, 1.15fr) minmax(0, 1fr); }
+html:root #cfoPainel#cfoPainel .cfo-c-meses { grid-column: span 8; }
+html:root #cfoPainel#cfoPainel .cfo-c-dias { grid-column: span 4; }
+html:root #cfoPainel#cfoPainel .cfo-c-marg, html:root #cfoPainel#cfoPainel .cfo-c-idade, html:root #cfoPainel#cfoPainel .cfo-c-rec, html:root #cfoPainel#cfoPainel .cfo-c-pag { grid-column: span 3; }
+html:root #cfoPainel#cfoPainel .cfo-tela .cfo-card { min-height: 0; overflow: hidden; }
+html:root #cfoPainel#cfoPainel .cfo-tela .cfo-chart { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+html:root #cfoPainel#cfoPainel .cfo-tela .cfo-chart svg { width: 100%; height: 100%; }
+html:root #cfoPainel#cfoPainel .cfo-tela .cfo-alertas ul, html:root #cfoPainel#cfoPainel .cfo-tela .cfo-marg { scrollbar-width: none; }
+html:root #cfoPainel#cfoPainel .cfo-tela .cfo-alertas ul::-webkit-scrollbar { display: none; }
+html:root #cfoPainel#cfoPainel .cfo-tela .cfo-tab td { padding: 5px 6px; }
+html:root #cfoPainel#cfoPainel .cfo-pe .cfo-pe-nums, html:root #cfoPainel#cfoPainel .cfo-pe .cfo-rodape, html:root #cfoPainel#cfoPainel .cfo-pe .cfo-pe-barra { flex: none; }
+/* rodapé com as telas */
+html:root #cfoPainel#cfoPainel .cfo-pe-pag { flex: none; display: flex; align-items: center; gap: 18px; margin-top: 10px; }
+html:root #cfoPainel#cfoPainel .cfo-pe-pag .cfo-transp { margin: 0 0 0 auto; text-align: right; }
+html:root #cfoPainel#cfoPainel .cfo-pontos { display: flex; gap: 10px; }
+html:root #cfoPainel#cfoPainel .cfo-pontos button { display: flex; flex-direction: column; gap: 5px; background: transparent; border: 0; padding: 2px 0; cursor: pointer; font: 500 11px Inter, sans-serif; color: var(--cfo-mudo); text-align: left; box-shadow: none; }
+html:root #cfoPainel#cfoPainel .cfo-pontos button i { display: block; width: 170px; height: 3px; border-radius: 2px; background: var(--cfo-trilho); position: relative; overflow: hidden; }
+html:root #cfoPainel#cfoPainel .cfo-pontos button.ativa { color: var(--cfo-txt); }
+html:root #cfoPainel#cfoPainel .cfo-pontos button.ativa i::after { content: ""; position: absolute; inset: 0; background: var(--cfo-txt); transform-origin: left; animation: cfoTempo var(--cfo-rot, 25s) linear forwards; }
+html:root #cfoPainel#cfoPainel.cfo-pausado .cfo-pontos button.ativa i::after { animation: none; transform: scaleX(1); opacity: .35; }
+@keyframes cfoTempo { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { html:root #cfoPainel#cfoPainel .cfo-tela { transition: none; } }
+/* tela estreita (celular): as duas telas uma embaixo da outra, com rolagem normal */
+@media (max-width: 900px) {
+  html:root #cfoPainel#cfoPainel { height: auto; min-height: 100vh; overflow: visible; }
+  html:root #cfoPainel#cfoPainel .cfo-tela { position: static; opacity: 1; visibility: visible; margin-bottom: 12px; }
+  html:root #cfoPainel#cfoPainel .cfo-grid-1, html:root #cfoPainel#cfoPainel .cfo-grid-2 { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  html:root #cfoPainel#cfoPainel .cfo-grid-2 > * { grid-column: auto; }
+  html:root #cfoPainel#cfoPainel .cfo-pontos { display: none; }
+}
+/* telas baixas (notebook): cards mais compactos para sobrar altura aos gráficos */
+@media (max-height: 860px) and (min-width: 901px) {
+  html:root #cfoPainel#cfoPainel { padding-top: 12px; padding-bottom: 8px; }
+  html:root #cfoPainel#cfoPainel .cfo-topo { padding-bottom: 8px; margin-bottom: 10px; }
+  html:root #cfoPainel#cfoPainel h2 { font-size: 19px; }
+  html:root #cfoPainel#cfoPainel .cfo-relogio strong, html:root #cfoPainel#cfoPainel .cfo-resumo-al b { font-size: 22px; }
+  html:root #cfoPainel#cfoPainel .cfo-tela { gap: 10px; }
+  html:root #cfoPainel#cfoPainel .cfo-kpis { gap: 10px; }
+  html:root #cfoPainel#cfoPainel .cfo-kpi { padding: 9px 14px; gap: 3px; }
+  html:root #cfoPainel#cfoPainel .cfo-kpi-v { font-size: 22px; }
+  html:root #cfoPainel#cfoPainel .cfo-kpi-ver { display: none; }
+  html:root #cfoPainel#cfoPainel .cfo-card { padding: 11px 14px; }
+  html:root #cfoPainel#cfoPainel .cfo-card > header { margin-bottom: 8px; }
+  html:root #cfoPainel#cfoPainel .cfo-pe-nums { gap: 8px; margin-bottom: 8px; }
+  html:root #cfoPainel#cfoPainel .cfo-pe-num { padding: 7px 10px; gap: 2px; }
+  html:root #cfoPainel#cfoPainel .cfo-pe-num strong { font-size: 18px; }
+  html:root #cfoPainel#cfoPainel .cfo-pe-num small { font-size: 11px; }
+  html:root #cfoPainel#cfoPainel .cfo-pe-barra { height: 20px; margin-bottom: 6px; }
+  html:root #cfoPainel#cfoPainel .cfo-pe-barra span { line-height: 20px; }
+  html:root #cfoPainel#cfoPainel .cfo-rodape { margin-top: 6px; padding-top: 7px; }
+  html:root #cfoPainel#cfoPainel .cfo-alertas li { padding: 8px 10px; }
+  html:root #cfoPainel#cfoPainel .cfo-pe-pag { margin-top: 6px; }
+}
+
+/* (2026-11-12) logo da empresa no topo (no lugar do selo "CFO"); plaquinha branca para logo escura aparecer no fundo preto */
+html:root #cfoPainel#cfoPainel .cfo-logo { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 5px 10px; border-radius: 8px; background: #fff; }
+html:root #cfoPainel#cfoPainel .cfo-logo img { max-height: 34px; max-width: 160px; width: auto; height: auto; object-fit: contain; display: block; }
+html:root #cfoPainel#cfoPainel.cfo-claro .cfo-logo { padding: 0; background: transparent; }
+@media (max-height: 860px) and (min-width: 901px) { html:root #cfoPainel#cfoPainel .cfo-logo { height: 38px; } html:root #cfoPainel#cfoPainel .cfo-logo img { max-height: 28px; } }

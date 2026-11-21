@@ -12,7 +12,8 @@
       + '<div class="pr-card-acoes"><span class="pr-card-status" role="status"></span>' + (pode ? '<button type="submit" class="btn primary">Salvar</button>' : '') + '</div></form>';
     host.appendChild(secao);
     const form = secao.querySelector('form'), status = secao.querySelector('[role=status]');
-    const { data } = await sb.from('empresa_logistica_regras').select('divergencia_bloqueia_item').eq('empresa_id', empresa).maybeSingle();
+    const { data, error:erroCarga } = await sb.from('empresa_logistica_regras').select('divergencia_bloqueia_item').eq('empresa_id', empresa).maybeSingle();
+    if(erroCarga){status.textContent='Não foi possível carregar: '+erroCarga.message;form.querySelectorAll('input,button').forEach(el=>el.disabled=true);return;}
     form.elements.bloqueia.checked = data?.divergencia_bloqueia_item !== false;
     form.addEventListener('submit', async e => {
       e.preventDefault(); status.textContent = 'Salvando…';
@@ -36,7 +37,8 @@
       + '<div class="pr-card-acoes"><span class="pr-card-status" role="status"></span>' + (pode ? '<button type="submit" class="btn primary">Salvar</button>' : '') + '</div></form>';
     host.appendChild(secao);
     const form = secao.querySelector('form'), status = secao.querySelector('[role=status]');
-    const { data } = await sb.from('empresa_logistica_regras').select('carregamento_sem_programacao').eq('empresa_id', empresa).maybeSingle();
+    const { data, error:erroCarga } = await sb.from('empresa_logistica_regras').select('carregamento_sem_programacao').eq('empresa_id', empresa).maybeSingle();
+    if(erroCarga){status.textContent='Não foi possível carregar: '+erroCarga.message;form.querySelectorAll('input,button').forEach(el=>el.disabled=true);return;}
     form.elements.livre.checked = data?.carregamento_sem_programacao === true;
     form.addEventListener('submit', async e => {
       e.preventDefault(); status.textContent = 'Salvando…';
@@ -58,7 +60,8 @@
       + '<div class="pr-card-acoes"><span class="pr-card-status" role="status"></span>' + (pode ? '<button type="submit" class="btn primary">Salvar</button>' : '') + '</div></form>';
     host.appendChild(secao);
     const form = secao.querySelector('form'), status = secao.querySelector('[role=status]');
-    const { data } = await sb.from('empresa_logistica_regras').select('app_montador_dias_responsavel,app_montador_dias_supervisor').eq('empresa_id', empresa).maybeSingle();
+    const { data, error:erroCarga } = await sb.from('empresa_logistica_regras').select('app_montador_dias_responsavel,app_montador_dias_supervisor').eq('empresa_id', empresa).maybeSingle();
+    if(erroCarga){status.textContent='Não foi possível carregar: '+erroCarga.message;form.querySelectorAll('input,button').forEach(el=>el.disabled=true);return;}
     form.elements.resp.value = data?.app_montador_dias_responsavel ?? 7;
     form.elements.sup.value = data?.app_montador_dias_supervisor ?? 30;
     form.addEventListener('submit', async e => {

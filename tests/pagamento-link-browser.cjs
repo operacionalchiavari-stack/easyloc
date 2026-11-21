@@ -21,15 +21,15 @@ const mock = `(() => {
         if (a.p_pin !== "123456") return { data: { erro: "Código incorreto.", codigo_errado: true }, error: null };
         return { data: { ok: true, empresa: { nome: "Chiavari", logo_url: null }, pedido: { numero: "12", cliente: "Lis Decor", data_evento: "2026-11-20", data_evento_fim: null }, pagamentos,
           detalhe: { nome: "Lis Decor", numero: "12", status: "aprovado", data_evento: "2026-11-20", data_entrega: "2026-11-19", hora_entrega: "10:00", data_coleta: "2026-11-21", hora_coleta: "08:00",
-            local: "Vale dos Desejos", endereco: "Estrada do Passatempo, 976 - Areal - RJ", valor_total: 4000, valores: { locacao: 3000, frete: 600, montagem: 400, total: 4000 },
-            ambientes: [{ id: "a1", nome: "Lounge", notas: "", renders: [{ url: "/slide2.jpg", jogos: 2 }], itens: [
+            local: "Vale dos Desejos", endereco: "Estrada do Passatempo, 976 - Areal - RJ", valor_total: 4000, valores: { locacao: 3000, frete: 600, montagem: 400, total: 4000 }, ...window.__financeiroTeste,
+            ambientes: [{ id: "a1", nome: "Lounge", notas: "", renders: window.__removerRender ? [] : [{ url: window.__renderAtual || "/slide2.jpg", jogos: 2 }], itens: [
               { item_id: "i1", quantidade: 2, personalizacao_id: "pz", personalizacao_nome: "Forração", personalizacao_valor: 100, personalizacao_escolhas: { Tecido: { codigo: "T12", nome: "Linho" } } },
               { item_id: "i2", quantidade: 3 }] },
               { id: "a2", nome: "Bar", renders: [], itens: [{ item_id: "i3", quantidade: 1 }] }],
             cadastro: [{ id: "i1", descricao_total: "Sofá Orka Estofado Tecido Off White (L) 2.40 m (A) 0.75 m (P) 1.10 m", produto: "Orka", foto_url: "/slide2.jpg", codigo: "SOF1", valor_locacao: 762.3, valor_reposicao: 12000 },
               { id: "i2", produto: "Mesa Lateral", largura: 0.5, altura: 0.6, profundidade: 0.5, valor_locacao: 100, valor_reposicao: 800 },
               { id: "i3", descricao_total: "Bar Bistrol (L) 2 m (A) 1.1 m (P) 0.6 m", produto: "Bar", foto_url: "/slide2.jpg", valor_locacao: 900, valor_reposicao: 5000 }],
-            servicos: [{ nome: "Montagem Extra", quantidade: 1, valor: 250, data: "2026-11-19", hora: "14:00" }], plantas: [{ nome: "Planta", w: 297, h: 210, html: '<div style="width:100%;height:100%;background:#ddd"></div>' }] } }, error: null };
+            servicos: [{ nome: "Montagem Extra", quantidade: 1, valor: 250, data: "2026-11-19", hora: "14:00" }], plantas: window.__removerPlanta ? [] : [{ nome: "Planta", w: 297, h: 210, html: window.__plantaAtual || '<div style="width:100%;height:100%;background:#ddd"></div>' }] } }, error: null };
       }
       if (n === "pagamento_link_obter") return { data: { slug: "abc", pin: a.p_novo_codigo ? "654321" : "123456", ativo: true, pagamentos: 4, contas_sem_gateway: ["Conta Montagem"] }, error: null };
       return { data: null, error: null };
@@ -94,6 +94,47 @@ const mock = `(() => {
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "celular sem rolagem lateral");
   assert.ok(await page.evaluate(() => { const f = document.querySelector(".cpj-order-planta-folha").getBoundingClientRect(); return f.width > 100 && f.right <= innerWidth; }), "planta cabe no celular");
   console.log("ok 1 - pedido completo e, no final, pagamentos neutros, conta sem gateway e pago");
+  await page.evaluate(()=>{
+    window.__renderAtual='/render-novo.jpg';window.__plantaAtual='<div data-planta-atual="nova">Planta com a composição nova</div>';
+    window.dispatchEvent(new Event('focus'));
+  });
+  await page.waitForFunction(()=>document.querySelector('.cpj-order-render-group img')?.getAttribute('src')==='/render-novo.jpg');
+  assert.equal(await page.locator('[data-planta-atual="nova"]').count(),1,'planta e renderização mudam juntas no link já aberto');
+  assert.equal(await page.locator('.pg-item').count(),4,'atualização do documento preserva os pagamentos');
+  await page.evaluate(()=>{window.__removerRender=true;window.__removerPlanta=true;window.dispatchEvent(new Event('focus'));});
+  await page.waitForFunction(()=>!document.querySelector('.cpj-order-render-group img'));
+  assert.equal(await page.locator('.cpj-order-planta').count(),0,'planta removida também desaparece');
+  assert.equal(await page.locator('#pgEntrar').isVisible(),false,'não pede o código de novo');
+  console.log('ok 1b - link aberto atualiza renderização/planta e retira imagens excluídas ao voltar para a aba');
+  await page.evaluate(()=>{
+    window.__financeiroTeste={valores:{locacao:3000,frete:600,frete_bruto:800,montagem:400,montagem_bruto:500,total:4000},
+      pagamento_config:{descontoPedido:300},exibicao_financeiro:{frete_desconto:true,montagem_desconto:true,desconto_mostrar:false,desconto_texto:'Condição especial'}};
+    window.dispatchEvent(new Event('focus'));
+  });
+  await page.waitForFunction(()=>document.querySelector('.cpj-order-financeiro-resumo .is-total dd')?.textContent.includes('3.700,00'));
+  let resumoCliente=await page.locator('.cpj-order-financeiro-resumo').innerText();
+  assert.match(resumoCliente,/Locação\s*R\$\s*2\.700,00/);assert.match(resumoCliente,/Desconto de frete\s*-R\$\s*200,00/);
+  assert.match(resumoCliente,/Desconto de montagem\s*-R\$\s*100,00/);assert.doesNotMatch(resumoCliente,/BV|comissão|Condição especial/,'conversão oculta não revela a origem do benefício');
+  await page.evaluate(()=>{window.__financeiroTeste.exibicao_financeiro.desconto_mostrar=true;window.dispatchEvent(new Event('focus'));});
+  await page.waitForFunction(()=>document.querySelector('.cpj-order-financeiro-resumo')?.textContent.includes('Condição especial'));
+  resumoCliente=await page.locator('.cpj-order-financeiro-resumo').innerText();assert.match(resumoCliente,/Condição especial\s*-R\$\s*300,00/);assert.match(resumoCliente,/Locação\s*R\$\s*3\.000,00/);
+  assert.doesNotMatch(resumoCliente,/BV|comissão/);console.log('ok 1c - link mostra total líquido, descontos de logística e respeita privacidade/texto da conversão');
+  await page.evaluate(()=>{window.__financeiroTeste.pagamento_config.descontoComercial=100.25;window.__financeiroTeste.pagamento_config.descontoComercialArea='frete';window.dispatchEvent(new Event('focus'));});
+  await page.waitForFunction(()=>document.querySelector('.cpj-order-financeiro-resumo .is-total dd')?.textContent.includes('3.599,75'));
+  resumoCliente=await page.locator('.cpj-order-financeiro-resumo').innerText();assert.match(resumoCliente,/Frete\s*R\$\s*800,00\s*Desconto de frete\s*-R\$\s*300,25/);
+  console.log('ok 1d - link identifica a área do desconto comercial e preserva os centavos');
+  await page.evaluate(()=>{Object.assign(window.__financeiroTeste.valores,{locacao_bv:2800,customizacoes:200});window.__financeiroTeste.pagamento_config.descontosAreas={locacao:100.25,frete:50.1,montagem:30.2,customizacao:75.15};window.dispatchEvent(new Event('focus'));});
+  await page.waitForFunction(()=>document.querySelector('.cpj-order-financeiro-resumo .is-total dd')?.textContent.includes('3.444,30'));
+  resumoCliente=await page.locator('.cpj-order-financeiro-resumo').innerText();
+  for(const trecho of [/Locação\s*R\$\s*2\.800,00\s*Desconto\s*-R\$\s*100,25/,/Frete\s*R\$\s*800,00\s*Desconto de frete\s*-R\$\s*250,10/,/Montagem\s*R\$\s*500,00\s*Desconto de montagem\s*-R\$\s*130,20/,/Customizações\s*R\$\s*200,00\s*Desconto em customizações\s*-R\$\s*75,15/])assert.match(resumoCliente,trecho);
+  console.log('ok 1e - link detalha descontos simultâneos por área e soma cada valor uma vez');
+  for(const width of [1280,390]){
+    await page.setViewportSize({width,height:900});
+    const posicoes=await page.locator('.cpj-order-financeiro-resumo dl').evaluate(dl=>({largura:dl.clientWidth,scroll:dl.scrollWidth,linhas:[...dl.children].map(l=>({top:l.offsetTop,bottom:l.offsetTop+l.offsetHeight,display:getComputedStyle(l).display})),dd:[...dl.querySelectorAll('dd')].map(e=>({right:e.getBoundingClientRect().right,limite:dl.getBoundingClientRect().right}))}));
+    assert.ok(posicoes.scroll<=posicoes.largura+1,'resumo sem valores cortados em '+width);
+    assert.ok(posicoes.linhas.every((l,i)=>l.display==='flex'&&(!i||l.top>=posicoes.linhas[i-1].bottom)),'valores em linhas verticais como na impressão em '+width);
+    assert.ok(posicoes.dd.every(d=>d.right<=d.limite+1),'valores cabem no resumo em '+width);
+  }
   if (process.env.SP) {
     await page.evaluate(() => { document.documentElement.style.scrollBehavior = "auto"; scrollTo(0, 0); });
     await page.waitForTimeout(900); await page.screenshot({ path: process.env.SP + "/pd-cel.png", fullPage: true });

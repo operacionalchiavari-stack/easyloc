@@ -1002,10 +1002,9 @@ html:root #centralPedidosPage .ca-col.ca-mais{flex:0 0 auto;padding:10px 8px}
 }
 /* Pedido extra (nov/2026): ligação por dentro da coluna, linha reta do número do principal ao do extra */
 html:root #centralPedidosPage .central-table-wrap{padding-left:0}
-html:root #centralPedidosPage .central-extra-ligacao{position:absolute;z-index:1;pointer-events:none;width:2px;border:0;border-radius:2px;background:linear-gradient(#9fb3d6,#123f86)}
-html:root #centralPedidosPage .central-extra-ligacao::before,html:root #centralPedidosPage .central-extra-ligacao::after{content:"";position:absolute;left:50%;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#fff;border:1.5px solid #123f86;box-sizing:border-box}
-html:root #centralPedidosPage .central-extra-ligacao::before{top:-3px;border-color:#9fb3d6}
-html:root #centralPedidosPage .central-extra-ligacao::after{bottom:-3px}
+html:root #centralPedidosPage .central-extra-ligacao{position:absolute;z-index:1;pointer-events:none;width:1px;border:0;border-radius:1px;background:#aeb7c1}
+html:root #centralPedidosPage .central-extra-ligacao::before,html:root #centralPedidosPage .central-extra-ligacao::after{content:none}
+html:root #centralPedidosPage .central-table .pedido-numero-card{position:relative;z-index:2;font-weight:700}
 /* Primeira coluna mais perto da borda do cartão (nov/2026) */
 html:root #centralPedidosPage #centralListaTabela{padding-left:8px!important;padding-right:8px!important}
 html:root #centralPedidosPage .central-table :is(th,td):first-child{padding-left:10px!important;text-align:left}
@@ -1042,3 +1041,49 @@ html:root #centralPedidosPage .ca-qtd{font-style:normal;font-weight:500;color:#9
 
 /* Nov/2026: nomes das etapas sem corte no meio da palavra */
 html body .central-fluxo li>span:last-child{word-break:normal !important;overflow-wrap:normal !important;hyphens:manual}
+/* 15/11/2026: foto do cliente (catálogo do cliente; sem foto, iniciais) na coluna Cliente */
+.central-record-link.central-cliente-link{display:inline-flex;align-items:center;gap:10px;text-align:left;max-width:100%;min-width:0}
+.central-cliente-foto{position:relative;flex:0 0 34px;width:34px;height:34px;border-radius:50%;overflow:hidden;background:#eaf0fa;color:#123f86;display:grid;place-items:center;font:600 12px Inter,sans-serif;letter-spacing:0;text-transform:uppercase}
+.central-cliente-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.central-cliente-nome{min-width:0;overflow:hidden;text-overflow:ellipsis}
+/* Confirmar datas com o decorador (18/11/2026) */
+.central-confirmar{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:8px 12px;border:1px solid #f1d9a6;border-radius:12px;background:#fff7e6}
+.central-confirmar.is-urgente{border-color:#f3b4b0;background:#fdecec}
+.central-confirmar>div{display:grid;gap:2px;min-width:0}
+.central-confirmar b{font:600 13px Inter,system-ui,sans-serif;color:#1f2020}
+.central-confirmar small{font-size:12px;color:#4f4f4f}
+.central-confirmar .central-confirmar-mudou{color:#b42318}
+.central-confirmar .btn{white-space:nowrap;flex:none}
+.central-confirmar-dialog{border:0;border-radius:16px;padding:0;width:min(560px,94vw);box-shadow:0 20px 60px rgba(15,23,42,.25)}
+.central-confirmar-dialog::backdrop{background:rgba(15,23,42,.45)}
+.central-confirmar-dialog form{padding:22px;display:grid;gap:14px;font-family:Inter,system-ui,sans-serif}
+.central-confirmar-dialog h2{margin:0;font:600 18px Inter,system-ui,sans-serif;color:#1f2020}
+.central-confirmar-dialog p{margin:0;font-size:14px;color:#4f4f4f;line-height:1.5}
+.central-confirmar-dialog dl{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0}
+.central-confirmar-dialog dl div{border:1px solid #e3e7ec;border-radius:12px;padding:10px 12px;background:#f7f9fb}
+.central-confirmar-dialog dt{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#6b6b6b}
+.central-confirmar-dialog dd{margin:2px 0 0;font:600 15px Inter,system-ui,sans-serif;color:#1f2020}
+.central-confirmar-dialog label{display:grid;gap:4px;font-size:12px;color:#4f4f4f}
+.central-confirmar-dialog textarea{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #dfe4ea;border-radius:10px;font:400 14px Inter,system-ui,sans-serif;resize:vertical}
+.central-confirmar-dialog footer{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.central-confirmar-dialog footer span{flex:1}
+.central-confirmar-erro{color:#b42318!important}
+/* Histórico do acompanhamento (19/11/2026): sem barras de rolagem, nome de quem fez o contato e foto maior */
+.ca-historico{width:340px!important;max-height:none!important;overflow:hidden!important}
+.ca-historico .ca-h-topo{align-items:flex-start!important}
+.ca-historico .ca-h-topo>b{white-space:nowrap;flex:0 0 auto}
+.ca-historico .ca-h-quem{gap:8px!important;min-width:0}
+.ca-historico .ca-h-quem>span:last-child,.ca-historico .ca-h-nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ca-historico .ca-h-avatar{flex:0 0 34px!important;width:34px!important;height:34px!important;font-size:12px!important}
+
+/* nov/2026: barra do "% pago" com a cor do quanto já foi pago (vermelho → verde), atraso só no texto */
+html:root:is(#cp-pago#cp-pago#cp-pago,html) .central-finance-indicator .central-finance-fill{background:var(--finance-cor,#c8ccd2)}
+html:root:is(#cp-pago#cp-pago#cp-pago,html) .central-finance-indicator.overdue .central-finance-label{color:var(--el-color-muted)}
+.central-finance-atraso{font-style:normal;color:#b42318;font-weight:500}
+/* nov/2026: "Confirmar datas" discreto (pílula de contorno, sem caixa alta) */
+html:root:is(#cp-conf#cp-conf#cp-conf,html) .central-confirmar-btn{flex:none;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 14px;border:1px solid rgba(31,32,32,.22);border-radius:999px;background:rgba(255,255,255,.85);color:#1f2020;font:500 12.5px Inter,system-ui,sans-serif;letter-spacing:.01em;text-transform:none;cursor:pointer;box-shadow:none;transition:background .2s,border-color .2s,color .2s}
+html:root:is(#cp-conf#cp-conf#cp-conf,html) .central-confirmar-btn svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+html:root:is(#cp-conf#cp-conf#cp-conf,html) .central-confirmar-btn:hover{background:#1f2020;border-color:#1f2020;color:#fff}
+html:root:is(#cp-conf#cp-conf#cp-conf,html) .central-confirmar-btn:focus-visible{outline:2px solid #123f86;outline-offset:2px}
+
+.central-finance-retry{border:1px solid #d6dce3;background:#fff;color:#334155;border-radius:5px;padding:3px 7px;font:inherit;font-size:11px;cursor:pointer}.central-finance-retry:disabled{opacity:.6;cursor:wait}.central-finance-indicator.unavailable .central-finance-label{white-space:normal;color:#64748b}

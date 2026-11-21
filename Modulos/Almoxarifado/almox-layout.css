@@ -1,0 +1,499 @@
+/* Acabamento do módulo no portal: sem o recuo da antiga barra lateral. */
+html body main.main.almoxarifado-page{box-sizing:border-box;width:100%;max-width:1800px;min-width:0;margin:0 auto!important;padding:24px 28px 40px!important;font:400 14px/1.5 Inter,system-ui,Arial,sans-serif;color:var(--el-color-text,var(--tw-text,#242a32))}
+html:has(main.almoxarifado-page),body:has(main.almoxarifado-page),html body main.main.almoxarifado-page{background:var(--tw-bg,#f4f6f8)!important}
+.almoxarifado-page{--tw-font-xs:12px;--tw-font-sm:13px;--tw-font-md:14px;--tw-font-lg:16px;--tw-control-h:40px}
+.almoxarifado-page *{box-sizing:border-box}
+.almoxarifado-page [hidden]{display:none!important}
+.almoxarifado-page :is(button,input,select,textarea){font-family:Inter,system-ui,Arial,sans-serif}
+.almoxarifado-page :is(.almox-tab-panel,.almox-left-column,.almox-stock-layout){min-width:0;max-width:100%}
+.almoxarifado-page .almox-topbar{display:flex;align-items:flex-start;gap:16px;margin:0 0 20px;padding:0 0 10px;border-bottom:0;min-width:0}
+.almoxarifado-page #almoxContent .almox-topbar>.almox-tabs{display:flex;flex:1;align-items:center;flex-wrap:wrap!important;gap:4px 8px!important;margin:0;padding:0!important;border:0;background:transparent;box-shadow:none;overflow:visible!important;min-width:0}
+.almoxarifado-page #almoxContent .almox-topbar>.almox-tabs>button[data-tab]{min-height:42px;padding:10px 8px!important;font-size:14px!important;font-weight:500!important;line-height:1.5;white-space:normal}
+.almoxarifado-page #almoxContent .almox-topbar>.almox-tabs>button.active{font-weight:600!important}
+.almoxarifado-page #almoxContent.has-tab-screen>.almox-topbar{display:flex!important}
+.almoxarifado-page .almox-topbar>.almox-toolbar{flex:none;margin:0!important;padding:0!important}
+.almoxarifado-page .almox-topbar>.almox-tabs>.almox-toolbar{flex:none;margin:0!important;padding:0!important;justify-content:flex-start}
+.almoxarifado-page .almox-topbar .almox-tab-tools:not(:has(input,select,button)){display:none!important}
+.almoxarifado-page .almox-toolbar{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:12px;margin:0 0 20px}
+.almoxarifado-page .almox-toolbar :is(.almox-tab-actions,.almox-compact-actions){display:flex!important;align-items:center;flex-wrap:wrap;gap:8px;margin:0!important;padding:0!important}
+.almoxarifado-page .almox-toolbar .btn{min-height:42px!important;margin:0!important;padding:8px 14px;font-size:14px!important;font-weight:600;line-height:1.4;border-radius:9px;box-shadow:none}
+.almoxarifado-page .almox-toolbar kbd,.almoxarifado-page .almox-toolbar #newMaterialBtn{display:none!important}
+.almoxarifado-page .almox-toolbar .almox-act-ico{display:grid;place-items:center}
+.almoxarifado-page .almox-toolbar .almox-act-ico svg{width:18px;height:18px}
+.almoxarifado-page .almox-toolbar .almox-entry-action{background:#eaf7f1;border:1px solid #b7dfcb;color:#087657}
+.almoxarifado-page .almox-toolbar .almox-exit-action{background:#fff0f1;border:1px solid #f0c8cd;color:#b72f40}
+.almoxarifado-page .almox-toolbar .almox-withdrawal-action{background:#fff7e6;border:1px solid #ead8a9;color:#946a13}
+.almoxarifado-page .almox-material-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 18px;border-bottom:1px solid var(--tw-line,#e3e7ec)}
+.almoxarifado-page .almox-material-toolbar .almox-th-search{flex:1;min-width:0;max-width:560px}
+.almoxarifado-page .almox-material-toolbar .almox-th-search input{width:100%;min-width:0;font-size:14px}
+.almoxarifado-page .almox-material-toolbar #topMaterialRegistrationBtn{min-height:40px;padding:8px 14px;font-size:14px!important;white-space:normal}
+.almoxarifado-page .almox-table-card{border:0;border-radius:0;box-shadow:none;overflow:hidden}
+/* Sem cartão externo; apenas a moldura da tabela, como em Compras. */
+.almoxarifado-page #almoxContent .almox-tab-panel:has(table),
+.almoxarifado-page #almoxContent .almox-tab-panel :is(.tw-card,.acv-card,.gp-card,.reference-form-panel,.count-card,.locations-columns>section):has(table){background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important}
+.almoxarifado-page #almoxContent .almox-tab-panel :is(.tw-card,.acv-card,.gp-card,.reference-form-panel):has(table){padding:0!important}
+.almoxarifado-page #almoxContent .almox-tab-panel :is(.almox-table-wrap,.tw-table-scroll):has(table){padding:0!important;background:#fff!important;border:1px solid #dfe6ef!important;border-radius:6px!important;box-shadow:0 3px 14px #152b4610!important}
+.almoxarifado-page #stockTab .almox-material-toolbar,
+.almoxarifado-page #stockTab .table-footer,
+.almoxarifado-page .almox-history-toolbar,
+.almoxarifado-page .almox-history-footer{background:transparent!important}
+.almoxarifado-page #stockTab .almox-stock-layout{display:block}
+.almoxarifado-page #stockTab .almox-left-column{display:block}
+.almoxarifado-page #stockTab .almox-table{width:100%;min-width:0;table-layout:fixed}
+.almoxarifado-page #stockTab .almox-table :is(th,td){min-width:0;max-width:none;padding:14px 10px;white-space:normal;overflow-wrap:anywhere;line-height:1.5}
+.almoxarifado-page #stockTab .almox-table th{font-size:12px;font-weight:600;color:var(--tw-muted,#69717d);background:#f8fafb;text-transform:none;letter-spacing:0}
+.almoxarifado-page #stockTab .almox-table td{font-size:14px;font-weight:400}
+.almoxarifado-page #stockTab .almox-table th:nth-child(1){width:8%}
+.almoxarifado-page #stockTab .almox-table th:nth-child(2){width:22.5%}
+.almoxarifado-page #stockTab .almox-table th:nth-child(3){width:10%}
+.almoxarifado-page #stockTab .almox-table th:nth-child(4){width:12%}
+.almoxarifado-page #stockTab .almox-table th:nth-child(n+5){width:7.5%}
+.almoxarifado-page #stockTab .almox-table th:nth-child(9){width:10%}
+.almoxarifado-page #stockTab .almox-table :is(th,td):nth-child(n+5){text-align:center}
+.almoxarifado-page #stockTab .almox-th-search{display:flex;align-items:flex-start;flex-direction:column;gap:8px;min-width:0}
+.almoxarifado-page #stockTab .almox-th-search input{width:100%;min-width:0;height:38px;min-height:38px;font-size:14px;font-weight:400}
+.almoxarifado-page #stockTab :is(.stock-summary-value,.stock-pill,.stock-column-action){max-width:100%;min-width:0;font-size:14px;white-space:normal;overflow-wrap:anywhere}
+.almoxarifado-page #stockTab .stock-column-action{padding:0!important;font:600 12px/1.5 Inter,system-ui,Arial,sans-serif!important}
+.almoxarifado-page #stockTab .stock-summary-value strong{font-size:16px;font-weight:600}
+.almoxarifado-page #stockTab .stock-summary-value small{font-size:12px}
+.almoxarifado-page .almox-table-card .table-footer{padding:16px 18px;font-size:14px;font-weight:400;flex-wrap:wrap;gap:12px}
+.almoxarifado-page :is(.almox-table,.acv-table) strong{font-weight:600}
+.almoxarifado-page :is(.almox-table,.acv-table) small{font-size:12px;line-height:1.5}
+.almoxarifado-page .acv-card-head h2{font:600 18px/1.4 Inter,system-ui,Arial,sans-serif}
+.almoxarifado-page .acv-table{width:100%;min-width:0;table-layout:fixed;font-size:14px}
+.almoxarifado-page .acv-table :is(th,td){min-width:0;max-width:none;padding:14px 12px;white-space:normal;overflow-wrap:anywhere}
+.almoxarifado-page .acv-table th{font-size:12px;font-weight:600;text-transform:none;letter-spacing:0}
+html body .almoxarifado-page :is(.almox-table,.acv-table) td{font-size:14px!important}
+html body .almoxarifado-page :is(.almox-table,.acv-table) th{font-size:12px!important}
+.almoxarifado-page #tab-recebimento .btn-sm{font-size:14px;line-height:1.4;white-space:normal}
+.almoxarifado-page :is(.receb-resumo,.receb-topo p,.receb-fluxo){font-size:14px}
+.almoxarifado-page #recebPedidosSection .compras-acoes{white-space:normal}
+.almoxarifado-page #recebPedidosSection .compras-acoes .btn{margin:3px 4px 3px 0}
+
+/* As três colunas seguem o mesmo cartão, cabeçalho e espaçamento da Triagem. */
+.almoxarifado-page #toseparateTab .mp-root{font:400 14px/1.5 Inter,system-ui,Arial,sans-serif;color:var(--tw-text,#242a32)}
+.almoxarifado-page #toseparateTab .mp-topo{display:flex;align-items:center;gap:16px;padding:0 0 18px;margin:0 0 20px}
+html:root:is(#mp1#mp2#mp3,html) .almoxarifado-page #toseparateTab .mp-topo>h2{font:600 22px/1.4 Inter,system-ui,Arial,sans-serif!important;text-transform:none!important;letter-spacing:0!important}
+.almoxarifado-page #toseparateTab .mp-topo>input{min-width:0;max-width:100%;border-radius:10px;padding:10px 12px;font-size:14px}
+.almoxarifado-page #toseparateTab .mp-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.almoxarifado-page #toseparateTab .separacao-lane{min-width:0;min-height:480px;display:grid;grid-template-rows:auto minmax(0,1fr);border:1px solid var(--tw-line,#e3e7ec);border-radius:16px;background:#f8fafc;overflow:hidden}
+.almoxarifado-page #toseparateTab .separacao-lane>header{align-items:center;border-bottom:1px solid var(--tw-line,#e3e7ec);background:#fff}
+.almoxarifado-page #toseparateTab .separacao-lane>header div>span{display:none}
+.almoxarifado-page #toseparateTab .separacao-lane>header>strong{display:grid;place-items:center;min-width:28px;height:28px;border-radius:999px;background:#f1f4f7;font-size:14px!important;font-weight:600}
+.almoxarifado-page #toseparateTab .separacao-lane-list{display:grid;align-content:start;gap:10px;padding:12px;min-width:0}
+.almoxarifado-page #toseparateTab .separacao-order-card{display:grid;gap:3px;padding:10px 12px;border:1px solid var(--tw-line,#e3e7ec);border-radius:14px;background:#fff;box-shadow:0 6px 16px #1f202008;font:400 14px/1.4 Inter,system-ui,Arial,sans-serif;min-height:0;overflow-wrap:anywhere}
+.almoxarifado-page #toseparateTab .separacao-order-card[data-coluna=aguardando]{--card-cor:#c27803;border-color:color-mix(in srgb,#c27803 18%,transparent);background:#fff9ea}
+.almoxarifado-page #toseparateTab .separacao-order-card[data-coluna=andamento]{--card-cor:#2563eb;border-color:color-mix(in srgb,#2563eb 18%,transparent);background:#eff6ff}
+.almoxarifado-page #toseparateTab .separacao-order-card[data-coluna=separado]{--card-cor:#1f8a4c;border-color:color-mix(in srgb,#1f8a4c 18%,transparent);background:#eef9f2}
+.almoxarifado-page #toseparateTab .separacao-order-card:has(.mp-card-avatar){grid-template-columns:56px minmax(0,1fr);column-gap:10px;text-align:left}
+.almoxarifado-page #toseparateTab .separacao-order-card:has(.mp-card-avatar)>:not(.mp-card-avatar){grid-column:2;min-width:0}
+.almoxarifado-page #toseparateTab .mp-card-avatar{grid-column:1;grid-row:1/5;align-self:center;position:relative;width:56px;height:56px;display:grid;place-items:center;overflow:hidden;border-radius:50%;background:#edf1f7;color:#334155;font-size:22px;font-weight:600}
+.almoxarifado-page #toseparateTab .mp-card-avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.almoxarifado-page #toseparateTab .mp-card-top b.separacao-order-number{display:inline-flex;align-items:center;border:1px solid #f1c9c4;border-radius:999px;padding:2px 8px;background:#fbe7e5;color:#a3271d;white-space:nowrap}
+.almoxarifado-page #toseparateTab .mp-card-progresso{margin:2px 0 0;gap:8px}
+.almoxarifado-page #toseparateTab .mp-card-progresso progress{accent-color:var(--card-cor)}
+.almoxarifado-page #toseparateTab .separacao-order-card:hover{box-shadow:0 10px 22px #1f202010;transform:translateY(-1px)}
+.almoxarifado-page #toseparateTab .separacao-order-card>strong{font-size:16px;font-weight:600}
+.almoxarifado-page #toseparateTab .separacao-order-card small{font-size:12px;line-height:1.6}
+.almoxarifado-page #toseparateTab .mp-card-top{flex-wrap:wrap}
+.almoxarifado-page #toseparateTab .mp-card-top b{font-size:14px;font-weight:600}
+.almoxarifado-page #toseparateTab .mp-card-top>span{font-size:12px}
+.almoxarifado-page #toseparateTab .mp-vazio{font-size:14px;font-weight:400;padding:22px 14px;line-height:1.6}
+@media(max-width:1100px){html body main.main.almoxarifado-page{padding:20px!important}.almoxarifado-page #toseparateTab .mp-topo>h2{flex-basis:100%}.almoxarifado-page #toseparateTab .mp-topo>input{flex:1}.almoxarifado-page #stockTab .almox-table :is(th,td){padding:12px 7px}}
+@media(max-width:700px){
+ html body main.main.almoxarifado-page{padding:16px 12px 28px!important}
+ .almoxarifado-page #almoxContent .almox-topbar>.almox-tabs{gap:4px!important}
+ .almoxarifado-page #almoxContent .almox-topbar>.almox-tabs>button[data-tab]{font-size:14px;padding:8px 7px!important}
+ .almoxarifado-page .almox-toolbar{justify-content:flex-start}
+ .almoxarifado-page .almox-toolbar .btn{font-size:14px;padding:8px 10px}
+ .almoxarifado-page #toseparateTab .mp-board{grid-template-columns:1fr}
+ .almoxarifado-page #toseparateTab .separacao-lane{min-height:200px}
+ .almoxarifado-page :is(.almox-table-card .table-footer,.acv-card-head){align-items:flex-start;flex-direction:column}
+ .almoxarifado-page .acv-card-head .tw-field{width:100%;min-width:0}
+ .almoxarifado-page .acv-table :is(th,td){padding:10px 6px}
+ .almoxarifado-page #stockTab .almox-table,.almoxarifado-page #tab-recebimento .acv-table{display:block}
+ .almoxarifado-page #stockTab .almox-table thead{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%)}
+ .almoxarifado-page #stockTab .almox-table thead th{display:none}
+ .almoxarifado-page #stockTab .almox-table thead th:nth-child(2){display:none}
+ .almoxarifado-page #tab-recebimento .acv-table thead{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%)}
+ .almoxarifado-page #stockTab .almox-table tbody,.almoxarifado-page #tab-recebimento .acv-table tbody{display:block}
+ .almoxarifado-page #stockTab .almox-table tbody tr,.almoxarifado-page #tab-recebimento .acv-table tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:16px;border-bottom:1px solid var(--tw-line,#e3e7ec)}
+ .almoxarifado-page #stockTab .almox-table tbody td,.almoxarifado-page #tab-recebimento .acv-table tbody td{display:block;width:auto;min-width:0;padding:0;border:0;text-align:left!important}
+ .almoxarifado-page #stockTab .almox-table tbody td::before,.almoxarifado-page #tab-recebimento .acv-table tbody td::before{content:attr(data-col-label);display:block;margin-bottom:6px;color:var(--tw-muted,#69717d);font-size:12px;font-weight:400}
+ .almoxarifado-page #stockTab .almox-table tbody td[colspan],.almoxarifado-page #tab-recebimento .acv-table tbody td[colspan]{grid-column:1/-1}
+ .almoxarifado-page #stockTab .almox-table tbody td[colspan]::before,.almoxarifado-page #tab-recebimento .acv-table tbody td[colspan]::before{display:none}
+}
+@media(max-width:700px){
+ .almoxarifado-page .almox-topbar{gap:10px}
+ .almoxarifado-page .almox-topbar>.almox-toolbar .almox-compact-actions{flex-direction:column;align-items:stretch}
+ .almoxarifado-page .almox-material-toolbar{padding:14px;flex-wrap:wrap;gap:12px}
+ .almoxarifado-page .almox-material-toolbar .almox-th-search{flex-basis:100%;max-width:none}
+}
+
+/* Acabamento das tabelas compartilhado com os pedidos e cota??es de Compras. */
+html body .almoxarifado-page #almoxContent .almox-tab-panel :is(.almox-table,.acv-table,.gp-table){width:100%;border-collapse:collapse;background:#fff;color:#24364e}
+html body .almoxarifado-page #almoxContent .almox-tab-panel :is(.almox-table,.acv-table,.gp-table) th{background:#f7f9fc!important;color:#65748b!important;font-size:12px!important;font-weight:600!important;letter-spacing:.025em;text-transform:none;border-bottom:1px solid #dfe6ef;line-height:1.5}
+html body .almoxarifado-page #almoxContent .almox-tab-panel :is(.almox-table,.acv-table,.gp-table) td{background:#fff;color:#24364e;font-size:14px!important;line-height:1.5;vertical-align:top;border-bottom:0;border-top:1px solid #edf1f6}
+html body .almoxarifado-page #almoxContent .almox-tab-panel :is(.almox-table,.acv-table,.gp-table) td strong{color:#14243b;font-weight:600}
+html body .almoxarifado-page #almoxContent .almox-tab-panel :is(.almox-table,.acv-table,.gp-table) td small{color:#8290a3;font-size:12px;line-height:1.6}
+html body .almoxarifado-page #almoxContent .almox-tab-panel :is(.almox-table,.acv-table,.gp-table) tbody tr:hover td{background:#f7faff}
+@media(min-width:701px){
+ html body .almoxarifado-page #almoxContent .almox-tab-panel :is(.almox-table,.acv-table,.gp-table) :is(th,td){padding:16px 10px!important;white-space:normal;overflow-wrap:anywhere}
+}
+
+/* Pedidos a receber: pendentes e recebidos na mesma lista. */
+.almoxarifado-page #receivingTab{padding:0!important}
+.almoxarifado-page #purchasesTab{padding:0!important}
+.almoxarifado-page #almoxContent:has(#purchasesTab:not(.hidden))>.almox-topbar{margin-bottom:8px}
+.almoxarifado-page #almoxContent:has(#stockTab:not(.hidden))>.almox-topbar{margin-bottom:8px}
+.almoxarifado-page #almoxContent #stockTab{padding-top:0!important;margin-top:0!important}
+.almoxarifado-page #almoxContent:has(:is(#epiTab,#supplierLinksTab):not(.hidden))>.almox-topbar{margin-bottom:8px}
+.almoxarifado-page #almoxContent :is(#epiTab,#supplierLinksTab){padding-top:0!important;margin-top:0!important}
+.almoxarifado-page #purchasesTab #comprasAviso{margin:0 0 12px!important}
+.almoxarifado-page #almoxContent:has(#receivingTab:not(.hidden) #recebListaView:not([hidden]))>.almox-topbar{margin-bottom:8px}
+.almoxarifado-page .receb-lista-tabs{display:flex;gap:8px;margin:0 0 14px;padding:0;border:0}
+.almoxarifado-page .receb-lista-tabs button{display:flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid #dfe6ef;border-radius:6px;background:#fff;font-size:14px;font-weight:500;color:#65748b;cursor:pointer}
+.almoxarifado-page .receb-lista-tabs button.active{color:#19499d;border-color:#b9cdef;background:#eaf1ff}
+.almoxarifado-page .receb-lista-tabs b{display:grid;place-items:center;min-width:22px;height:22px;border-radius:4px;background:#edf1f6;font-size:12px}
+.almoxarifado-page .receb-fornecedor{display:flex;align-items:flex-start;gap:10px;min-width:0}
+.almoxarifado-page .receb-fornecedor>span:last-child{min-width:0;overflow-wrap:anywhere}
+.almoxarifado-page .receb-fornecedor .cs-foto{position:relative;flex:0 0 36px;width:36px;height:36px;display:grid;place-items:center;border-radius:50%;overflow:hidden;background:#edf1f6;color:#52637b;font-size:13px;font-weight:600}
+.almoxarifado-page .receb-fornecedor .cs-foto img{width:100%;height:100%;object-fit:cover}
+.almoxarifado-page .receb-materiais{display:grid;gap:10px}
+.almoxarifado-page .receb-materiais>span,.almoxarifado-page .receb-materiais details>span{display:block}
+.almoxarifado-page .receb-materiais details>span{margin-top:10px}
+.almoxarifado-page .receb-materiais summary{cursor:pointer;color:#80613b;font-size:14px}
+.almoxarifado-page .receb-muted{color:#8290a3}
+.almoxarifado-page .receb-pedidos-table small{display:block;margin-top:5px}
+.almoxarifado-page #tab-recebimento .receb-pedidos-table{table-layout:fixed;width:100%;min-width:0}
+.almoxarifado-page .receb-pedidos-table :is(th,td){text-align:left;min-width:0;max-width:100%;overflow-wrap:anywhere;white-space:normal}
+.almoxarifado-page .receb-pedidos-table th:nth-child(1){width:19%}
+.almoxarifado-page .receb-pedidos-table th:nth-child(2){width:10%}
+.almoxarifado-page .receb-pedidos-table th:nth-child(3){width:15%}
+.almoxarifado-page .receb-pedidos-table th:nth-child(4){width:20%}
+.almoxarifado-page .receb-pedidos-table th:nth-child(5){width:9%}
+.almoxarifado-page .receb-pedidos-table th:nth-child(6){width:8%}
+.almoxarifado-page .receb-pedidos-table th:nth-child(7){width:9%}
+.almoxarifado-page .receb-pedidos-table th:nth-child(8){width:10%}
+.almoxarifado-page .receb-pedidos-table.is-recebidos th:nth-child(1){width:17%}
+.almoxarifado-page .receb-pedidos-table.is-recebidos th:nth-child(2){width:9%}
+.almoxarifado-page .receb-pedidos-table.is-recebidos th:nth-child(3){width:14%}
+.almoxarifado-page .receb-pedidos-table.is-recebidos th:nth-child(4){width:18%}
+.almoxarifado-page .receb-pedidos-table.is-recebidos th:nth-child(5){width:8%}
+.almoxarifado-page .receb-pedidos-table.is-recebidos th:nth-child(6){width:8%}
+.almoxarifado-page .receb-pedidos-table.is-recebidos th:nth-child(7){width:9%}
+.almoxarifado-page .receb-pedidos-table.is-recebidos th:nth-child(8){width:9%}
+.almoxarifado-page .receb-pedidos-table.is-recebidos th:nth-child(9){width:8%}
+.almoxarifado-page #tab-recebimento .receb-pedidos-table .btn{margin:0 0 6px;max-width:100%;padding:7px 9px;font-size:14px!important;line-height:1.4;white-space:normal;border-radius:6px}
+.almoxarifado-page #tab-recebimento .receb-pedidos-table .badge{max-width:100%;white-space:normal;border-radius:4px;font-size:12px;font-weight:500}
+@media(max-width:1050px){
+ .almoxarifado-page #tab-recebimento .receb-pedidos-table{display:block}
+ .almoxarifado-page #tab-recebimento .receb-pedidos-table thead{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip-path:inset(50%)}
+ .almoxarifado-page #tab-recebimento .receb-pedidos-table tbody{display:block}
+ .almoxarifado-page #tab-recebimento .receb-pedidos-table tbody tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px 16px;padding:18px;border-bottom:1px solid #e3e7ec}
+ html body .almoxarifado-page #almoxContent #tab-recebimento .receb-pedidos-table tbody td{display:block;width:auto!important;min-width:0;padding:0!important;border:0!important;text-align:left!important}
+ .almoxarifado-page #tab-recebimento .receb-pedidos-table tbody td::before{content:attr(data-col-label);display:block;margin-bottom:8px;color:#788491;font-size:12px;font-weight:500}
+ .almoxarifado-page #tab-recebimento .receb-pedidos-table tbody td[colspan]{grid-column:1/-1}
+ .almoxarifado-page #tab-recebimento .receb-pedidos-table tbody td[colspan]::before{display:none}
+}
+@media(max-width:600px){.almoxarifado-page #tab-recebimento .receb-pedidos-table tbody tr{grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 16px;padding:16px}}
+
+.almoxarifado-page .receb-pedidos-table tr:is([data-receb-pedido],[data-receb-abrir]){cursor:pointer}
+.almoxarifado-page .receb-pedidos-table tr:focus-visible{outline:2px solid #2563eb;outline-offset:-2px}
+.almoxarifado-page dialog.receb-escolha{position:fixed;inset:0;margin:auto;width:min(420px,calc(100% - 32px));max-height:90dvh;overflow:auto;padding:24px;border:1px solid #dfe6ef;border-radius:12px;background:#fff;box-shadow:0 16px 60px #14243b30;color:#24364e}
+.almoxarifado-page .receb-escolha::backdrop{background:#14243b66}
+.almoxarifado-page .receb-escolha h2{margin:0!important;padding-right:32px;font:600 20px/1.4 Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important}
+.almoxarifado-page .receb-escolha p{margin:8px 0 20px;font-size:14px;color:#65748b;overflow-wrap:anywhere}
+.almoxarifado-page .receb-escolha button{font:500 14px/1.5 Inter,system-ui,sans-serif;cursor:pointer}
+.almoxarifado-page .receb-escolha-fechar{position:absolute;top:12px;right:12px;width:32px;height:32px;padding:0;border:0;border-radius:6px;background:#f1f4f8;color:#65748b;font-size:22px!important}
+.almoxarifado-page .receb-escolha-opcoes{display:flex;gap:10px;flex-wrap:wrap}
+.almoxarifado-page .receb-escolha-opcoes button{flex:1;min-height:44px;padding:10px 16px;border:1px solid #c8d6ee;border-radius:6px;background:#edf3ff;color:#19499d}
+.almoxarifado-page .receb-escolha-opcoes button:hover{background:#dfeaff}
+
+.almoxarifado-page .receb-comprador{margin-top:0;gap:8px;align-items:center;font-size:14px;line-height:1.5}
+.almoxarifado-page .receb-comprador .cs-foto{flex-basis:28px;width:28px;height:28px;font-size:12px}
+.almoxarifado-page .receb-comprador small{margin-top:0}
+
+.almoxarifado-page .almox-address-select{width:100%;min-width:0;max-width:100%;min-height:38px;padding:6px 22px 6px 8px;font-size:14px!important;background:#fff;border:1px solid #dfe6ef;border-radius:6px;color:#24364e}
+
+.almoxarifado-page .almox-material-toolbar>.almox-tab-actions{display:flex;align-items:stretch;gap:8px;flex:none}
+.almoxarifado-page .almox-material-toolbar #manageAddressesBtn{min-height:40px;padding:8px 14px;font-size:14px!important;white-space:normal}
+@media(max-width:700px){
+ .almoxarifado-page .almox-material-toolbar>.almox-tab-actions{width:100%;min-width:0}
+ .almoxarifado-page .almox-material-toolbar>.almox-tab-actions>.btn{flex:1;min-width:0}
+}
+
+.almoxarifado-page .address-manager-card{width:min(640px,calc(100vw - 32px));max-width:640px;padding:0;overflow:hidden}
+.almoxarifado-page .address-manager-card .almox-modal-head{padding:20px 24px}
+.almoxarifado-page .address-manager-card h2{font:600 20px/1.4 Inter,system-ui,sans-serif!important;text-transform:none!important;letter-spacing:0!important;margin:0!important}
+.almoxarifado-page .address-manager-card #locationsTab{max-height:55dvh;overflow:auto!important;padding:0 24px!important}
+.almoxarifado-page .address-manager-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:14px}
+.almoxarifado-page .address-manager-table :is(th,td){padding:12px 10px;text-align:left;border-bottom:1px solid #e3e7ec;white-space:normal;overflow-wrap:anywhere}
+.almoxarifado-page .address-manager-table th{background:#f7f9fc;color:#65748b;font-size:12px;font-weight:600}
+.almoxarifado-page .address-manager-table td,.almoxarifado-page .address-manager-card .btn{font-size:14px!important}
+.almoxarifado-page .address-manager-table th:nth-child(2){width:45%}
+.almoxarifado-page .address-status{border:0;border-radius:4px;padding:6px 9px;font:500 14px/1.4 Inter,system-ui,sans-serif;cursor:pointer}
+.almoxarifado-page .address-status.is-active{color:#087657;background:#e2f5ec}
+.almoxarifado-page .address-status.is-inactive{color:#65748b;background:#edf1f6}
+
+.almoxarifado-page .history-material-search{display:flex;align-items:center;gap:10px;min-width:0;margin:0;font-size:12px;font-weight:600}
+.almoxarifado-page #movementsTab .history-layout{display:grid;grid-template-columns:260px minmax(0,1fr);gap:20px;align-items:start}
+.almoxarifado-page #movementsTab .history-types-panel{min-width:0;border:1px solid #d8dfe8;border-radius:12px;background:#fff;box-shadow:var(--tw-shadow-sm);overflow:hidden}
+.almoxarifado-page #movementsTab .history-types-panel h3{margin:0;padding:18px 14px;font:600 14px/1.5 Inter,system-ui,sans-serif;border-bottom:1px solid #dfe6ef;background:#f7f9fc}
+.almoxarifado-page #movementsTab .history-types-list{display:block;max-height:72vh;overflow-y:auto}
+.almoxarifado-page #movementsTab .history-type-option{display:flex;align-items:center;gap:10px;width:100%;padding:14px 12px;border:0;border-bottom:1px solid #edf1f6;border-left:3px solid transparent;background:#fff;color:#24364e;text-align:left;font:400 14px/1.5 Inter,system-ui,sans-serif;cursor:pointer}
+.almoxarifado-page #movementsTab .history-type-option small{flex:none;margin-left:auto;padding:2px 7px;border-radius:5px;background:#f0f3f7;font-size:12px;color:#53657b}
+.almoxarifado-page #movementsTab .history-type-option.is-selected{background:#edf3ff;border-left-color:#2563eb;font-weight:600}
+.almoxarifado-page #movementsTab .history-type-option:hover{background:#f7faff}
+.almoxarifado-page #movementsTab .history-type-option:focus-visible{outline:2px solid #2563eb;outline-offset:-3px}
+.almoxarifado-page #movementsTab .almox-history-panel{min-width:0;margin:0}
+.almoxarifado-page #movementsTab .almox-history-footer{flex-wrap:wrap}
+.almoxarifado-page #movementsTab .almox-history-table td .almox-badge{max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.5}
+html body .almoxarifado-page #almoxContent #movementsTab .almox-history-table{width:100%!important;min-width:0!important;table-layout:fixed!important}
+.almoxarifado-page #movementsTab .almox-history-table col.history-date{width:7%}
+.almoxarifado-page #movementsTab .almox-history-table col.history-event{width:12%}
+.almoxarifado-page #movementsTab .almox-history-table col.history-material{width:23%}
+.almoxarifado-page #movementsTab .almox-history-table col.history-quantity{width:9%}
+.almoxarifado-page #movementsTab .almox-history-table col.history-balance{width:10%}
+.almoxarifado-page #movementsTab .almox-history-table col.history-address{width:8%}
+.almoxarifado-page #movementsTab .almox-history-table col.history-reference{width:15%}
+.almoxarifado-page #movementsTab .almox-history-table col.history-owner{width:16%}
+@media(max-width:900px){.almoxarifado-page #movementsTab .history-layout{grid-template-columns:minmax(0,1fr)}.almoxarifado-page #movementsTab .history-types-list{max-height:260px}}
+.almoxarifado-page .history-material-search>span{flex:none}
+html body .almoxarifado-page #almoxContent #supplierLinksTab .gp-table{box-sizing:border-box;width:100%!important;min-width:0!important;max-width:100%;table-layout:fixed}
+.almoxarifado-page #supplierLinksTab .links-layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:20px;align-items:start}
+.almoxarifado-page #supplierLinksTab .links-table-panel{min-width:0}
+.almoxarifado-page #supplierLinksTab .links-suppliers-panel{min-width:0;background:#fff;border:1px solid #dfe6ef;border-radius:6px;overflow:hidden}
+.almoxarifado-page #supplierLinksTab .links-suppliers-heading{padding:16px 12px;background:#f7f9fc;border-bottom:1px solid #dfe6ef;font-size:14px;font-weight:600}
+.almoxarifado-page #supplierLinksTab .links-suppliers-list{max-height:72vh;overflow-y:auto}
+.almoxarifado-page #supplierLinksTab .links-supplier-option{box-sizing:border-box;display:flex;align-items:center;gap:10px;width:100%;padding:14px 12px;border:0;border-bottom:1px solid #edf1f6;border-left:3px solid transparent;background:#fff;text-align:left;color:#24364e;cursor:pointer;font:400 14px/1.5 Inter,system-ui,sans-serif}
+.almoxarifado-page #supplierLinksTab .links-supplier-option:last-child{border-bottom:0}
+.almoxarifado-page #supplierLinksTab .links-supplier-option:hover{background:#f7faff}
+.almoxarifado-page #supplierLinksTab .links-supplier-option.is-selected{border-left-color:#2563eb;background:#edf3ff}
+.almoxarifado-page #supplierLinksTab .links-supplier-option:focus-visible{outline:2px solid #2563eb;outline-offset:-3px}
+.almoxarifado-page #supplierLinksTab .links-supplier-option strong{display:block;font-weight:600;overflow-wrap:anywhere}
+.almoxarifado-page #supplierLinksTab .links-supplier-option small{display:block;margin-top:2px;font-size:12px;color:#65748b;overflow-wrap:anywhere}
+.almoxarifado-page #supplierLinksTab .links-supplier-count{margin-left:auto;flex:none;border-radius:5px;padding:2px 7px;background:#f0f3f7;color:#53657b;font-size:12px}
+.almoxarifado-page #supplierLinksTab .links-all-icon{flex:0 0 36px;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#e4ebf6;font-size:11px;font-weight:600;color:#345780}
+.almoxarifado-page #supplierLinksTab .gp-table th:nth-child(1){width:20%}
+.almoxarifado-page #supplierLinksTab .gp-table th:nth-child(2){width:20%}
+.almoxarifado-page #supplierLinksTab .gp-table th:nth-child(3){width:27%}
+.almoxarifado-page #supplierLinksTab .gp-table th:nth-child(4){width:14%}
+.almoxarifado-page #supplierLinksTab .gp-table th:nth-child(5){width:10%}
+.almoxarifado-page #supplierLinksTab .gp-table th:nth-child(6){width:9%}
+.almoxarifado-page #supplierLinksTab .gp-table :is(th,td){overflow-wrap:anywhere;white-space:normal}
+.almoxarifado-page #supplierLinksTab .links-material-search{display:flex;align-items:center;gap:10px;min-width:0;margin:0}
+.almoxarifado-page #supplierLinksTab .links-material-search>span{flex:none}
+.almoxarifado-page #supplierLinksTab .links-material-search input{flex:1;width:100%;min-width:0;min-height:38px;font-size:14px!important;font-weight:400;letter-spacing:normal;padding:8px 10px}
+.almoxarifado-page #supplierLinksTab .link-inline-material{min-width:0}
+.almoxarifado-page #supplierLinksTab .links-supplier{display:flex;align-items:center;gap:10px;min-width:0}
+.almoxarifado-page #supplierLinksTab .links-supplier-text{min-width:0}
+.almoxarifado-page #supplierLinksTab .cs-foto{flex:0 0 36px;display:grid;place-items:center;width:36px;height:36px;border-radius:50%;overflow:hidden;background:#edf1f6;color:#52637b;font-size:13px;font-weight:600}
+.almoxarifado-page #supplierLinksTab .cs-foto img{display:block;width:100%;height:100%;object-fit:cover}
+.almoxarifado-page #supplierLinksTab :is(.link-inline-actions,.link-inline-conv){flex-wrap:wrap;white-space:normal}
+@media(max-width:1100px){.almoxarifado-page #supplierLinksTab .links-material-search{flex-wrap:wrap}}
+@media(max-width:1100px){.almoxarifado-page #supplierLinksTab .links-layout{grid-template-columns:240px minmax(0,1fr);gap:14px}.almoxarifado-page #supplierLinksTab .links-suppliers-heading{flex-wrap:wrap}}
+@media(max-width:900px){.almoxarifado-page #supplierLinksTab .links-layout{grid-template-columns:minmax(0,1fr)}.almoxarifado-page #supplierLinksTab .links-suppliers-list{max-height:260px}.almoxarifado-page #supplierLinksTab .links-suppliers-heading{flex-wrap:nowrap}}
+@media(max-width:700px){
+ .almoxarifado-page #supplierLinksTab .gp-table,.almoxarifado-page #supplierLinksTab .gp-table :is(thead,thead tr,tbody){display:block}
+ .almoxarifado-page #supplierLinksTab .gp-table thead th:not(:nth-child(3)){display:none}
+ html body .almoxarifado-page #almoxContent #supplierLinksTab .gp-table thead th:nth-child(3){display:block;width:100%;box-sizing:border-box;height:auto!important;min-height:0!important}
+ .almoxarifado-page #supplierLinksTab .links-material-search{flex-wrap:nowrap}
+ .almoxarifado-page #supplierLinksTab .gp-table tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:16px;border-top:1px solid #edf1f6}
+ html body .almoxarifado-page #almoxContent #supplierLinksTab .gp-table tbody td{display:block;min-width:0;height:auto!important;min-height:0!important;padding:0;border:0}
+ .almoxarifado-page #supplierLinksTab .gp-table tbody td[data-col-label]::before{content:attr(data-col-label);display:block;margin-bottom:6px;color:#788491;font-size:12px}
+ .almoxarifado-page #supplierLinksTab .gp-table tbody td[colspan]{grid-column:1/-1}
+}
+.almoxarifado-page .history-material-search input{flex:1;width:100%;min-width:0;max-width:100%;min-height:38px;padding:8px 10px;font-size:14px!important;font-weight:400;letter-spacing:normal}
+.almoxarifado-page .almox-history-table{width:100%;table-layout:fixed}
+.almoxarifado-page .almox-history-table .history-row{cursor:default}
+html body .almoxarifado-page #almoxContent .almox-history-table td.history-qty.is-in{color:#087657}
+html body .almoxarifado-page #almoxContent .almox-history-table td.history-qty.is-out{color:#c53030}
+html body .almoxarifado-page #almoxContent #unifiedHistoryBody .history-day-row{height:32px!important;min-height:0!important}
+html body .almoxarifado-page #almoxContent #unifiedHistoryBody .history-day-row td{box-sizing:border-box;height:32px!important;min-height:0!important;background:#edf0f3!important;color:#596675;padding:6px 12px!important;line-height:18px!important;vertical-align:middle;border-top:1px solid #dfe6ef;border-bottom:1px solid #dfe6ef}
+.almoxarifado-page .almox-history-table col.history-date{width:6%}
+.almoxarifado-page .almox-history-table col.history-event{width:13%}
+.almoxarifado-page .almox-history-table col.history-material{width:28%}
+.almoxarifado-page .almox-history-table col.history-quantity{width:10%}
+.almoxarifado-page .almox-history-table col.history-balance{width:10%}
+.almoxarifado-page .almox-history-table col.history-address{width:8%}
+.almoxarifado-page .almox-history-table col.history-reference{width:13%}
+.almoxarifado-page .almox-history-table col.history-owner{width:12%}
+@media(max-width:700px){
+ .almoxarifado-page .almox-history-table,.almoxarifado-page .almox-history-table :is(thead,thead tr,tbody){display:block}
+ .almoxarifado-page .almox-history-table colgroup,.almoxarifado-page .almox-history-table thead th:not(.history-material-heading){display:none}
+ .almoxarifado-page .almox-history-table thead th.history-material-heading{display:block;width:100%}
+ .almoxarifado-page .almox-history-table tbody tr.history-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:16px;border-bottom:1px solid #e3e7ec}
+ html body .almoxarifado-page #almoxContent .almox-history-table tbody tr.history-row td{display:block;min-width:0;height:auto!important;border:0;padding:0;white-space:normal;overflow-wrap:anywhere}
+ .almoxarifado-page .almox-history-table tbody tr.history-row td::before{content:attr(data-col-label);display:block;margin-bottom:6px;color:#788491;font-size:12px;font-weight:500}
+ .almoxarifado-page .almox-history-table tbody tr:not(.history-row),.almoxarifado-page .almox-history-table tbody tr:not(.history-row) td{display:block}
+}
+
+.almoxarifado-page .count-material-search{display:flex;align-items:center;gap:10px;margin:0;min-width:0;font-size:12px;font-weight:600}
+.almoxarifado-page .count-material-search>span{flex:none}
+.almoxarifado-page .count-material-search input{flex:1;width:100%;min-width:0;max-width:100%;min-height:38px;padding:8px 10px;font-size:14px!important;font-weight:400}
+.almoxarifado-page .count-material-search+.count-scan-feedback{display:block;margin-top:6px;white-space:normal;font-size:12px;font-weight:400}
+.almoxarifado-page .count-material-search+.count-scan-feedback:empty{display:none}
+.almoxarifado-page .count-todo-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.almoxarifado-page .count-todo-foot .btn{font-size:14px!important}
+.almoxarifado-page #countTab .count-cards{grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);align-items:stretch;gap:20px}
+.almoxarifado-page #countTab .count-cards>.is-todo{grid-column:1;grid-row:1}
+.almoxarifado-page #countTab .count-cards>.count-cards-pair{grid-column:2;grid-row:1;grid-template-columns:minmax(0,1fr);min-width:0}
+.almoxarifado-page #countTab .count-cards>.is-history{grid-column:1/-1}
+html body .almoxarifado-page #almoxContent #countTab .count-card{background:#fff!important;border:1px solid #d8dfe8!important;border-radius:12px!important;box-shadow:var(--tw-shadow-sm,0 2px 8px #0f172426)!important;padding:14px}
+html body .almoxarifado-page #almoxContent #countTab .count-card :is(.almox-table-wrap,.count-div-table){border:1px solid #d8dfe8!important;border-radius:10px!important;box-shadow:none!important}
+.almoxarifado-page #countTab .count-card.is-history .count-card-head{padding:0 0 14px;margin-bottom:0;border-bottom:0}
+html body .almoxarifado-page #almoxContent #countTab .count-history-table{width:100%!important;min-width:0!important;table-layout:fixed!important}
+html body .almoxarifado-page #almoxContent #countTab .count-history-table :is(th,td){min-width:0;white-space:normal;overflow-wrap:anywhere;text-align:left!important}
+html body .almoxarifado-page #almoxContent #countTab .count-history-table :is(th,td):nth-child(1){width:7%}
+html body .almoxarifado-page #almoxContent #countTab .count-history-table :is(th,td):nth-child(2){width:18%}
+html body .almoxarifado-page #almoxContent #countTab .count-history-table :is(th,td):nth-child(3){width:20%}
+html body .almoxarifado-page #almoxContent #countTab .count-history-table :is(th,td):nth-child(4){width:13%}
+html body .almoxarifado-page #almoxContent #countTab .count-history-table :is(th,td):nth-child(5){width:7%}
+html body .almoxarifado-page #almoxContent #countTab .count-history-table :is(th,td):nth-child(6){width:14%}
+html body .almoxarifado-page #almoxContent #countTab .count-history-table :is(th,td):nth-child(7){width:12%}
+html body .almoxarifado-page #almoxContent #countTab .count-history-table :is(th,td):nth-child(8){width:9%}
+.almoxarifado-page #countTab .count-history-table .history-owner{align-items:center;gap:10px}
+.almoxarifado-page #countTab .count-history-table .history-avatar{flex-basis:36px;width:36px;height:36px;font-size:12px}
+@media(max-width:700px){
+ .almoxarifado-page #countTab .count-history-table,.almoxarifado-page #countTab .count-history-table tbody{display:block}
+ .almoxarifado-page #countTab .count-history-table thead{display:none}
+ .almoxarifado-page #countTab .count-history-table tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:16px;border-top:1px solid #edf1f6}
+ html body .almoxarifado-page #almoxContent #countTab .count-history-table tbody td{display:block;width:100%!important;height:auto!important;min-width:0;padding:0!important;border:0}
+ .almoxarifado-page #countTab .count-history-table td::before{content:attr(data-col-label);display:block;margin-bottom:6px;font-size:12px;color:#788491}
+}
+.almoxarifado-page #countTab .count-card .count-result-tabs{border-radius:8px 8px 0 0}
+.almoxarifado-page #countTab .count-cards>.count-results{display:flex;flex-direction:column;contain:size;min-height:0;gap:0;border:1px solid #dfe6ef!important;background:#fff;border-radius:6px;box-shadow:0 3px 14px #152b4610}
+.almoxarifado-page #countTab .count-result-tabs{display:flex;width:100%;box-sizing:border-box;margin:0!important;flex:none;align-items:stretch;gap:4px;padding:8px 10px 0;border-bottom:1px solid #dfe6ef;background:#f7f9fc;flex-wrap:wrap}
+.almoxarifado-page #countTab .count-result-tabs button{display:flex;align-items:center;gap:7px;border:0;border-bottom:2px solid transparent;background:transparent;padding:10px 8px;font:500 14px/1.5 Inter,system-ui,sans-serif;font-size:14px!important;color:#65748b;cursor:pointer}
+.almoxarifado-page #countTab .count-result-tabs button[aria-selected=true]{color:#194a91;border-bottom-color:#2563eb}
+.almoxarifado-page #countTab .count-result-tabs button>span{padding:1px 6px;border-radius:5px;background:#e8eef6;font-size:12px;color:#53657b}
+.almoxarifado-page #countTab .count-result-tabs button:focus-visible{outline:2px solid #2563eb;outline-offset:-3px}
+.almoxarifado-page #countTab .count-result-panels{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain}
+.almoxarifado-page #countTab .count-result-panel[hidden]{display:none!important}
+.almoxarifado-page #countTab .count-result-panel{min-width:0}
+.almoxarifado-page #countTab .count-results .count-done-row{grid-template-columns:minmax(0,1.8fr) repeat(3,minmax(80px,.7fr)) minmax(80px,.9fr)}
+html body .almoxarifado-page #almoxContent #countTab .count-single-table{width:100%!important;min-width:0!important;table-layout:fixed!important}
+html body .almoxarifado-page #almoxContent #countTab .count-single-table :is(th,td):nth-child(1){width:42%!important}
+html body .almoxarifado-page #almoxContent #countTab .count-single-table :is(th,td):nth-child(2){width:18%!important}
+html body .almoxarifado-page #almoxContent #countTab .count-single-table :is(th,td):nth-child(3){width:22%!important}
+html body .almoxarifado-page #almoxContent #countTab .count-single-table :is(th,td):nth-child(4){width:18%!important}
+html body .almoxarifado-page #almoxContent #countTab .count-single-table :is(input,select){box-sizing:border-box;min-width:0!important;width:100%!important;max-width:100%;padding:8px;font-size:14px!important}
+.almoxarifado-page #countTab .count-card.is-todo .count-todo-foot{padding:12px 0 0!important;margin-bottom:0}
+@media(max-width:1200px){.almoxarifado-page #countTab .count-cards{grid-template-columns:minmax(0,1fr)}.almoxarifado-page #countTab .count-cards>.count-cards-pair{grid-column:1;grid-row:auto}.almoxarifado-page #countTab .count-cards>.count-results{contain:none}.almoxarifado-page #countTab .count-result-panels{max-height:520px;flex:auto}}
+@media(max-width:1100px){.almoxarifado-page #countTab .count-results .count-done-row{grid-template-columns:minmax(0,1.6fr) repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){
+ .almoxarifado-page #countTab .count-single-table,.almoxarifado-page #countTab .count-single-table :is(thead,thead tr,tbody){display:block}
+ .almoxarifado-page #countTab .count-single-table thead th:not(:first-child){display:none}
+ html body .almoxarifado-page #almoxContent #countTab .count-single-table thead th:first-child{display:block;width:100%!important;height:auto!important;box-sizing:border-box}
+ .almoxarifado-page #countTab .count-single-table .blind-count-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:16px;border-top:1px solid #edf1f6}
+ html body .almoxarifado-page #almoxContent #countTab .count-single-table .blind-count-row td{display:block;width:100%!important;min-width:0;height:auto!important;padding:0!important;border:0}
+ .almoxarifado-page #countTab .count-single-table .blind-count-row td:is(:first-child,:last-child){grid-column:1/-1}
+ .almoxarifado-page #countTab .count-single-table td[data-count-label]::before{content:attr(data-count-label);display:block;margin-bottom:6px;font-size:12px;color:#788491}
+}
+
+/* Mesmas larguras para o cabecalho e cada linha das divergencias. */
+.almoxarifado-page .count-cards-pair{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}
+.almoxarifado-page .count-card.is-diff .count-div-row{grid-template-columns:minmax(0,1.5fr) minmax(60px,.5fr) minmax(60px,.5fr) minmax(70px,.6fr) minmax(0,1.4fr) 164px;gap:12px;min-width:0}
+.almoxarifado-page .count-card.is-diff .count-div-row>*{min-width:0;max-width:100%}
+.almoxarifado-page .count-card.is-diff .count-div-row :is(input,select){width:100%;min-width:0;font-size:14px!important}
+.almoxarifado-page .count-card.is-diff .count-div-row .btn{width:100%;white-space:normal;font-size:14px!important;padding:8px 10px}
+.almoxarifado-page .count-card .count-done-row{grid-template-columns:minmax(0,1.8fr) repeat(3,minmax(80px,.7fr)) minmax(80px,.9fr);gap:14px;min-width:0}
+.almoxarifado-page .count-div-head{font-size:12px;font-weight:600}
+.almoxarifado-page .count-div-material strong{font-size:14px;white-space:normal;overflow-wrap:anywhere}
+.almoxarifado-page .count-div-material small{font-size:12px}
+.almoxarifado-page .count-div-review{overflow:hidden}
+@media(max-width:1500px){.almoxarifado-page .count-cards-pair{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:1100px){
+ .almoxarifado-page .count-card.is-diff .count-div-row,.almoxarifado-page .count-card .count-done-row{grid-template-columns:minmax(0,1.6fr) repeat(3,minmax(0,1fr))}
+ .almoxarifado-page .count-card.is-diff .count-div-row>:nth-child(5),.almoxarifado-page .count-card.is-diff .count-div-row>:nth-child(6){grid-column:1/-1}
+ .almoxarifado-page .count-card .count-done-row>:nth-child(5){grid-column:1/-1}
+}
+
+.almoxarifado-page .almox-material-toolbar :is(#almoxDemoToggle,#almoxDemoReset){font-size:14px!important;white-space:normal;max-width:230px;min-height:40px;padding:8px 12px}
+
+/* A primeira linha da Contagem mantém o espaço mesmo com listas vazias. */
+.almoxarifado-page #countTab .count-cards>:is(.is-todo,.count-results){box-sizing:border-box;height:560px;min-height:560px;max-height:560px}
+.almoxarifado-page #countTab .count-cards>.is-todo{display:flex;flex-direction:column}
+.almoxarifado-page #countTab .is-todo #countBlindListWrap{flex:1;min-height:0;max-height:none;overflow-y:auto}
+.almoxarifado-page #countTab .is-todo>.count-card-empty{flex:1}
+.almoxarifado-page #countTab .is-todo>.count-todo-foot{flex:none;margin-top:auto}
+.almoxarifado-page #countTab .count-results .count-result-panels{flex:1;min-height:0;max-height:none;overflow:auto}
+
+.almoxarifado-page #epiTab .epi-layout{display:grid;grid-template-columns:280px minmax(0,1fr);gap:20px;align-items:start}
+.almoxarifado-page #epiTab :is(.epi-people-panel,.epi-records-panel){min-width:0;border:1px solid #d8dfe8;border-radius:12px;background:#fff;box-shadow:var(--tw-shadow-sm);overflow:hidden}
+.almoxarifado-page #epiTab .epi-people-heading{display:flex;align-items:center;gap:10px;margin:0;padding:16px 12px;background:#f7f9fc;border-bottom:1px solid #dfe6ef;font-size:14px;font-weight:600}
+.almoxarifado-page #epiTab .epi-people-heading input{flex:1;min-width:0;width:100%;font-size:14px!important;padding:8px}
+.almoxarifado-page #epiTab .epi-people-list{max-height:72vh;overflow-y:auto}
+.almoxarifado-page #epiTab .epi-person-option{display:flex;align-items:center;gap:8px;width:100%;padding:14px 12px;border:0;border-bottom:1px solid #edf1f6;border-left:3px solid transparent;background:#fff;color:#24364e;text-align:left;font:400 14px/1.5 Inter,system-ui,sans-serif;cursor:pointer}
+.almoxarifado-page #epiTab .epi-person-option:hover{background:#f7faff}
+.almoxarifado-page #epiTab .epi-person-option.is-selected{background:#edf3ff;border-left-color:#2563eb}
+.almoxarifado-page #epiTab .epi-person-option:focus-visible{outline:2px solid #2563eb;outline-offset:-3px}
+.almoxarifado-page #epiTab .gp-person>div{min-width:0}
+.almoxarifado-page #epiTab .gp-person b{white-space:normal;overflow-wrap:anywhere;font-size:14px}
+.almoxarifado-page #epiTab .gp-avatar{width:36px;height:36px;flex:0 0 36px}
+.almoxarifado-page #epiTab .epi-person-total{flex:none;margin-left:auto;padding:2px 7px;border-radius:5px;background:#f0f3f7;font-size:12px;color:#53657b}
+.almoxarifado-page #epiTab .epi-person-total.has-due{background:#fff0e5;color:#a85416}
+.almoxarifado-page #epiTab .epi-selected-person{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px;border-bottom:1px solid #dfe6ef}
+.almoxarifado-page #epiTab .epi-selected-person .btn{font-size:14px!important}
+.almoxarifado-page #epiTab .epi-records-toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:14px}
+.almoxarifado-page #epiTab .gp-seg{flex-wrap:wrap}
+.almoxarifado-page #epiTab .gp-seg button{font-size:14px!important;white-space:normal}
+.almoxarifado-page #epiTab .epi-records-toolbar>input{flex:1;min-width:180px;font-size:14px!important;padding:8px 10px}
+.almoxarifado-page #epiTab [data-epi-body]{padding:0 14px 14px}
+html body .almoxarifado-page #almoxContent #epiTab .gp-table{width:100%!important;min-width:0!important;table-layout:fixed!important}
+html body .almoxarifado-page #almoxContent #epiTab .gp-table :is(th,td){min-width:0;white-space:normal;overflow-wrap:anywhere}
+.almoxarifado-page #epiTab .gp-table th:nth-child(1){width:26%}
+.almoxarifado-page #epiTab .gp-table th:nth-child(2){width:11%}
+.almoxarifado-page #epiTab .gp-table th:nth-child(3){width:8%}
+.almoxarifado-page #epiTab .gp-table th:nth-child(4){width:16%}
+.almoxarifado-page #epiTab .gp-table th:nth-child(5){width:17%}
+.almoxarifado-page #epiTab .gp-table th:nth-child(6){width:12%}
+.almoxarifado-page #epiTab .gp-table th:nth-child(7){width:10%}
+.almoxarifado-page #epiTab .gp-pill{max-width:100%;white-space:normal}
+.almoxarifado-page #epiTab .gp-actions-cell{flex-wrap:wrap}
+@media(max-width:900px){.almoxarifado-page #epiTab .epi-layout{grid-template-columns:minmax(0,1fr)}.almoxarifado-page #epiTab .epi-people-list{max-height:260px}}
+@media(max-width:700px){
+ .almoxarifado-page #epiTab .epi-selected-person{flex-wrap:wrap}
+ .almoxarifado-page #epiTab .gp-table,.almoxarifado-page #epiTab .gp-table tbody{display:block}
+ .almoxarifado-page #epiTab .gp-table thead{display:none}
+ .almoxarifado-page #epiTab .gp-table tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:16px;border-top:1px solid #edf1f6}
+ html body .almoxarifado-page #almoxContent #epiTab .gp-table tbody td{display:block;width:100%;height:auto!important;min-width:0;padding:0!important;border:0}
+ .almoxarifado-page #epiTab .gp-table td[data-col-label]::before{content:attr(data-col-label);display:block;margin-bottom:6px;font-size:12px;color:#788491}
+ .almoxarifado-page #epiTab .gp-table td[colspan]{grid-column:1/-1}
+}
+
+/* Linhas compactas: detalhes completos no mouse ou no foco, sem reduzir a fonte. */
+.almox-compact-text{display:block;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.5}
+.almox-compact-text:focus-visible{outline:2px solid #2563eb;outline-offset:-2px;border-radius:3px}
+.almox-cell-details{position:fixed;inset:auto;margin:0;padding:14px 16px;border:1px solid #cbd6e3;border-radius:10px;background:#fff;color:#24364e;box-shadow:0 8px 28px #14283f26;font:400 14px/1.6 Inter,system-ui,sans-serif;white-space:pre-line;overflow-wrap:anywhere;max-height:calc(100vh - 24px);overflow:auto;pointer-events:none}
+.almox-cell-details::backdrop{background:transparent;pointer-events:none}
+#almoxCellDetails.almox-cell-details{background:#fff!important;color:#24364e!important;border-color:#cbd6e3!important}
+html body .almoxarifado-page #almoxContent :is(#purchasesTab,#tab-recebimento) .acv-table :is(th,td){padding:10px!important;vertical-align:middle!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body .almoxarifado-page #almoxContent :is(#purchasesTab,#tab-recebimento) .acv-table tbody td{height:56px!important}
+.almoxarifado-page #purchasesTab .acv-table th:nth-child(1){width:4%}
+.almoxarifado-page #purchasesTab .acv-table th:nth-child(2){width:9%}
+.almoxarifado-page #purchasesTab .acv-table th:nth-child(3){width:9%}
+.almoxarifado-page #purchasesTab .acv-table th:nth-child(4){width:23%}
+.almoxarifado-page #purchasesTab .acv-table th:nth-child(n+5):nth-child(-n+7){width:6%}
+.almoxarifado-page #purchasesTab .acv-table th:nth-child(8){width:10%}
+.almoxarifado-page #purchasesTab .acv-table th:nth-child(9){width:18%}
+.almoxarifado-page #purchasesTab .acv-table th:nth-child(10){width:9%}
+html body .almoxarifado-page #almoxContent #purchasesTab .acv-table .btn{height:34px!important;min-height:34px!important;padding:6px 10px!important;font-size:14px!important;line-height:20px;white-space:nowrap}
+.almoxarifado-page #purchasesTab .status-badge{display:block;max-width:100%;padding:4px 8px;line-height:22px;white-space:nowrap;overflow:hidden}
+.almoxarifado-page .receb-fornecedor{align-items:center}
+.almoxarifado-page .receb-fornecedor .almox-compact-text{flex:1}
+.almoxarifado-page #tab-recebimento .receb-pedidos-table td>small{display:none}
+.almoxarifado-page #tab-recebimento .receb-pedidos-table .badge{display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
+@media(max-width:1050px){
+ .almoxarifado-page #purchasesTab .acv-table,.almoxarifado-page #purchasesTab .acv-table tbody{display:block}
+ .almoxarifado-page #purchasesTab .acv-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+ .almoxarifado-page #purchasesTab .acv-table tbody tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 16px;padding:12px;border-bottom:1px solid #e3e7ec}
+ html body .almoxarifado-page #almoxContent :is(#purchasesTab,#tab-recebimento) .acv-table tbody td{display:block;width:auto!important;height:auto!important;padding:0!important;border:0!important;min-width:0}
+ .almoxarifado-page #purchasesTab .acv-table tbody td::before{content:attr(data-col-label);display:block;margin-bottom:4px;color:#788491;font-size:12px}
+ .almoxarifado-page #purchasesTab .acv-table tbody td[colspan]{grid-column:1/-1}
+ .almoxarifado-page #purchasesTab .acv-table tbody td[colspan]::before{display:none}
+ .almoxarifado-page #tab-recebimento .receb-pedidos-table tbody tr{gap:10px 16px;padding:12px}
+ .almoxarifado-page #tab-recebimento .receb-pedidos-table tbody td::before{margin-bottom:4px}
+}
+@media(max-width:600px){.almoxarifado-page #purchasesTab .acv-table tbody tr{grid-template-columns:repeat(2,minmax(0,1fr))}}

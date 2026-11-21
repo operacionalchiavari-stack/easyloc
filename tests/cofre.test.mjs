@@ -14,7 +14,7 @@ const copia = join(mkdtempSync(join(tmpdir(), "cofre-")), "cofre.mts");
 writeFileSync(copia, readFileSync(new URL("../supabase/functions/_shared/cofre.ts", import.meta.url)));
 const { cifrar, decifrar, estaCifrado, fecharCredenciaisZapi, abrirCredenciaisZapi, protegerRh, indice } = await import(pathToFileURL(copia).href);
 process.env.ACERVO_COFRE_CHAVE = process.env.CHAVE_TESTE;
-const cofreVercel = (await import("node:module")).createRequire(import.meta.url)("../api/_gas/cofre.js");
+const cofreVercel = (await import("node:module")).createRequire(import.meta.url)("./helpers/cofre-node.cjs");
 
 test("ida e volta, e o texto não aparece no valor guardado", async () => {
   const v = await cifrar("token-super-secreto", "zapi:e1:client_token");

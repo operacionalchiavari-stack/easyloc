@@ -294,3 +294,156 @@ html:root:is(#bk-c1,#bk-c2,#bk-c3,#bk-c4,html) .cl-tabela th.num,html:root:is(#b
 .bk-cab.bk-cab-caixa{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .bk-cab-caixa .bk-caixa-txt{font-size:14px;color:#4f4f4f}
 .cl-caixa-campos{margin-bottom:6px}
+
+/* nov/2026: Clara CFO (igual à Tecnoweld) — painel de provas e relatórios (paleta categórica validada: azul #2a78d6, laranja #eb6834, aqua #1baf7a) */
+.ch-lado{width:clamp(380px,38vw,620px);overflow-y:auto}
+.clp-topo{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.clp-acoes{display:flex;gap:6px;flex-shrink:0}
+.clp-lista{display:grid;gap:14px}
+.clp-card{border:1px solid #e8ebef;border-radius:12px;padding:14px 14px 10px;background:#fcfcfb}
+.clp-card h4{margin:0 0 4px;font-size:14px;color:#0b1f3a}
+.clp-leitura{margin:0 0 8px;font-size:13px;color:#52514e}
+.clp-nota{display:block;margin-top:6px;font-size:11.5px;color:#6b7789}
+.clp-svg{width:100%;height:auto;display:block}
+.clp-eixo,.clp-rot,.clp-val{font:11px Inter,system-ui,sans-serif;fill:#52514e}
+.clp-val{fill:#0b0b0b;font-weight:600}
+.clp-grade{stroke:#ececea;stroke-width:1}
+.clp-zero{stroke:#8a8a85;stroke-width:1}
+.clp-svg rect:hover,.clp-svg circle:hover{opacity:.8}
+.clp-leg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:#52514e;margin:2px 0 6px}
+.clp-leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.clp-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.clp-kpi{border:1px solid #e8ebef;border-radius:10px;padding:10px 12px;background:#fff}
+.clp-kpi small{display:block;font-size:11px;font-weight:600;color:#6b7789;text-transform:uppercase;letter-spacing:.04em}
+.clp-kpi b{display:block;font-size:18px;color:#0b1f3a;margin-top:2px}
+.clp-kpi span{display:block;font-size:11.5px;color:#6b7789;margin-top:2px}
+.clp-tab{margin-top:8px;font-size:12.5px}
+.clp-tab summary{cursor:pointer;color:#1d4ed8;font-weight:600;font-size:12.5px}
+.clp-tab table{width:100%;border-collapse:collapse;margin-top:6px}
+.clp-tab th,.clp-tab td{padding:5px 6px;border-bottom:1px solid #ececea;text-align:left}
+.clp-tab th{font-size:11px;color:#6b7789;text-transform:uppercase;font-weight:600}
+.clp-tab .num{text-align:right;white-space:nowrap}
+.clp-rels{display:grid;gap:8px;margin:14px 0}
+.clp-rel{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:12px 14px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;cursor:pointer;text-align:left;font:inherit}
+.clp-rel b{font-size:14px;color:#0b1f3a}
+.clp-rel span{font-size:12px;color:#6b7789}
+.clp-rel:hover{border-color:#2a78d6;background:#eff6ff}
+.clp-ver{display:inline-block;margin-top:10px;padding:5px 12px;border:1px solid #93c5fd;border-radius:999px;background:#eff6ff;color:#1d4ed8;font:600 12.5px Inter,sans-serif;cursor:pointer}
+.clp-ver.ativo,.clp-ver:hover{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+/* pré-visualização do relatório A4 (relatorio-a4.js) */
+.fin-rel-prev{position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;background:#0f172acc}
+.fin-rel-prev-barra{display:flex;align-items:center;gap:10px;padding:12px 20px;background:#fff;border-bottom:1px solid #e2e8f0}
+.fin-rel-prev-barra strong{font-size:15px}
+.fin-rel-prev-frame{flex:1;width:100%;border:0;background:#525659}
+.fin-rel-prev-barra .fin-esp{flex:1}
+/* título da coluna da direita no tamanho da Tecnoweld (o tema deixava grande e quebrava em várias linhas) */
+html:root:is(#ch-a,#ch-b,#ch-c,#ch-d,#ch-e,#ch-f,#ch-g,html) .ch-lado h3{font:700 1.35rem/1.2 Inter,system-ui,sans-serif!important;color:#0b1f3a!important;letter-spacing:-.01em}
+
+/* (nov/2026) Cartões de crédito e fechamentos de parceiros — trazido da Tecnoweld (financeiro-clara.css de lá) */
+.cl-filtros [data-cl-filtro],.cl-filtros [data-cc-filtro],.cl-filtros [data-fe-filtro]{height:32px;padding:0 12px;border-radius:999px;border:1px solid #dfe4ea;background:#fff;font:600 12px Inter,sans-serif;color:#4f4f4f;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.cl-filtros [data-cl-filtro] b,.cl-filtros [data-cc-filtro] b,.cl-filtros [data-fe-filtro] b{min-width:20px;height:20px;border-radius:999px;background:#eef0f3;display:inline-grid;place-items:center;font-size:11px;padding:0 5px}
+.cl-filtros [data-cl-filtro].ativa,.cl-filtros [data-cc-filtro].ativa,.cl-filtros [data-fe-filtro].ativa{border-color:#123f86;background:#eaf0fa;color:#123f86}
+.bk-modo-abas{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin-bottom:4px;background:#f1f4f8;border-radius:12px}
+.bk-modo-abas button{height:34px;border:0;border-radius:9px;background:none;font:600 13px Inter,sans-serif;color:#4f4f4f;cursor:pointer}
+.bk-modo-abas button.ativa{background:#fff;color:#123f86;box-shadow:0 1px 4px rgba(15,23,42,.12)}
+.cc-logo{display:inline-grid;place-items:center;font-size:18px}
+.cc-fats{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;max-width:100%}
+.cc-fat{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:118px;padding:9px 12px;border:1px solid #dfe4ea;border-radius:12px;background:#fff;font:13px Inter,sans-serif;color:#1f2020;cursor:pointer}
+.cc-fat.ativa{border-color:#123f86;box-shadow:0 0 0 2px rgba(18,63,134,.18)}
+.cc-fat .fin-status{text-transform:none;font-size:11px}
+.cc-resumo .cc-sub{display:block;margin-top:3px;font-size:12px;color:#6b6b6b}
+.cc-banco{width:100%;height:34px;margin-top:2px;border:1px solid #dfe4ea;border-radius:8px;padding:0 10px;font:600 17px Inter,sans-serif;box-sizing:border-box}
+.cc-ok{color:#047857;font-weight:600}
+.cc-falta{color:#b45309;font-weight:600}
+.cc-sub.cc-ok,.cc-sub.cc-falta{font-weight:600}
+.cc-barra{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 14px}
+.cc-barra .fin-esp{flex:1}
+.cc-decidir{border-color:#f5d08a}
+.cc-acoes{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.cc-mover{height:30px;border:1px solid #dfe4ea;border-radius:8px;font:12px Inter,sans-serif;background:#fff}
+.cc-escolha{display:flex;flex-direction:column;gap:6px;max-height:280px;overflow:auto}
+.cc-form td{background:#f7f9fc}
+.cc-form-grade{grid-template-columns:repeat(4,minmax(0,1fr))}
+.cc-form-grade .inteiro{grid-column:1/-1}
+.cc-form-ajuda{margin:0;font-size:13px;color:#123f86}
+.cc-form-acoes{display:flex;justify-content:flex-end;gap:8px}
+.cc-inativo td{opacity:.55}
+.cl-bate{color:#047857;font-weight:700}
+@media (max-width:900px){.cc-form-grade{grid-template-columns:1fr 1fr}}
+.cc-decidir .fin-tabela td small,.cc-compras .fin-tabela td small{display:block;margin-top:2px;color:#6b6b6b;font-size:12px}
+/* (2026-11-12) Fechamentos de fornecedores (financeiro-fechamentos.js) */
+.fe-em-conf{color:#b45309!important;font-weight:600}
+.fe-ref{display:flex;align-items:flex-end;gap:12px;margin-bottom:12px}
+.fe-ref label{display:flex;flex-direction:column;gap:4px;font:600 12px Inter,sans-serif;color:#5f5f5f}
+.fe-ref input{height:36px;border:1px solid #dfe4ea;border-radius:9px;padding:0 10px;font:600 15px Inter,sans-serif;min-width:220px}
+.fe-ref .fin-esp,.fe-rodape .fin-esp{flex:1}
+.fe-linhas .fin-tabela td small,.fe-unificar small{display:block;margin-top:2px;color:#6b6b6b;font-size:12px}
+.fe-linhas h3 .fin-btn{margin-left:10px;vertical-align:middle}
+.fe-nf-form,.fe-pag-form{grid-template-columns:repeat(3,minmax(0,1fr));align-items:end}
+.fe-nf-acoes{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.fe-addl-form{grid-template-columns:150px 1fr 2fr 140px}
+.fe-parcelas{margin-top:12px;max-width:560px}
+.fe-parcelas input{height:32px;border:1px solid #dfe4ea;border-radius:8px;padding:0 8px;font:13px Inter,sans-serif;width:100%;box-sizing:border-box}
+.fe-rodape{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:12px}
+.fe-rodape small{color:#6b6b6b}
+.fin-fech-tag{display:block;margin-top:4px;font-size:12px;color:#b45309;font-weight:600}
+.fin-fech-ver{margin-top:6px}
+.fin-fech-pagto{display:block;font-size:11px;color:#6b6b6b;margin-top:3px}
+.fin-fech-comp>td{background:#f7f9fc;padding:8px 14px}
+.fin-fech-comp-tab{background:#fff}
+.fin-fech-comp-tab td small{display:block;color:#6b6b6b;font-size:11px}
+@media (max-width:900px){.fe-nf-form,.fe-pag-form,.fe-addl-form{grid-template-columns:1fr}}
+/* (2026-11-12) fechamentos: foto do fornecedor + topo compacto */
+.fe-forn{flex-direction:row;align-items:center;gap:10px}
+.fe-av{flex:0 0 38px;width:38px;height:38px;border-radius:50%;overflow:hidden;display:inline-grid;place-items:center;background:#eaf0fa;color:#123f86;font:700 13px Inter,sans-serif;border:1px solid #dfe4ea}
+.fe-av img{width:100%;height:100%;object-fit:cover}
+.fe-cab{margin-bottom:8px}
+.fe-fats .cc-fat{flex-direction:row;align-items:center;gap:8px;min-width:0;padding:6px 12px;border-radius:999px}
+.fe-fats .cc-fat span:not(.fin-status){color:#6b6b6b}
+.fe-strip{display:flex;flex-wrap:wrap;align-items:center;gap:6px 22px;padding:8px 14px;margin-bottom:12px;background:#fff;border:1px solid #e3e7ec;border-radius:14px}
+.fe-strip .fin-esp{flex:1}
+.fe-stat{display:flex;flex-direction:column;line-height:1.2;min-width:0}
+.fe-stat small{font-size:10.5px;color:#6b6b6b;text-transform:uppercase;letter-spacing:.04em}
+.fe-stat b{font-size:15px;white-space:nowrap}
+.fe-stat span{font-size:11px;color:#6b6b6b}
+.fe-strip-ref input{height:26px;border:1px solid #dfe4ea;border-radius:7px;padding:0 8px;font:600 14px Inter,sans-serif;width:150px;margin-top:1px}
+.fe-drop-mini{cursor:pointer}
+.fe-drop-mini.is-sobre{outline:2px dashed #123f86}
+/* (2026-11-13) conciliação da fatura no formato do extrato */
+.cc-conc-tab td{vertical-align:top}
+.cc-conc-tab td small{display:block;margin-top:2px;color:#6b6b6b;font-size:12px}
+.cc-conc-tab td b{font-weight:600}
+.cc-tag{display:inline-block;margin-bottom:3px;padding:1px 8px;border-radius:999px;font:600 11px Inter,sans-serif}
+.cc-tag.ok{background:#e7f6ee;color:#047857}
+.cc-tag.atencao{background:#fff4e0;color:#b45309}
+.cc-tag.falta{background:#fde8e8;color:#b91c1c}
+.cc-tag.ign{background:#eef1f4;color:#6b7789}
+.cc-tag+b,.cc-tag+small{display:block}
+.cc-conc-tab tr.cc-l-ign td{opacity:.6}
+.cc-dre{display:flex;flex-direction:column;gap:4px;min-width:210px}
+.cc-dre select{height:30px;border:1px solid #dfe4ea;border-radius:8px;padding:0 6px;font:12.5px Inter,sans-serif;background:#fff;max-width:260px}
+.cc-dre select.cc-salvo{border-color:#22a06b;box-shadow:0 0 0 2px rgba(34,160,107,.18)}
+.cc-conc-tab td.cc-acoes{display:table-cell;text-align:right;white-space:nowrap}
+.cc-conc-tab td.cc-acoes>*{display:inline-block;margin:0 0 5px 6px;vertical-align:top}
+/* (2026-11-13) fatura: faixa fina em cima + valor do banco no fim */
+.cc-strip .cc-strip-dica{flex:1;min-width:220px;font-size:12px;color:#6b6b6b}
+.cc-fim{display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px}
+.cc-fim-banco{display:flex;flex-direction:column;gap:4px;font:600 12px Inter,sans-serif;color:#5f5f5f}
+.cc-fim-banco .cc-banco{width:180px}
+.cc-fim-res{display:flex;flex-direction:column;gap:2px;font-size:14px}
+.cc-fim-res small{color:#6b6b6b;font-size:12px}
+.cc-fim .fin-esp{flex:1}
+/* (2026-11-13) filtros da conciliação na faixa de cima da fatura */
+.cc-strip-filtros{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin-left:auto}
+.cc-strip-filtros .cl-filtros{margin:0}
+/* (2026-11-13) faixa de cima da fatura: título + filtros (mesmo visual da conciliação do banco) */
+.cc-strip{padding:10px 16px}
+.cc-strip .cc-strip-filtros{flex:1;margin:0;gap:10px 16px}
+.cc-strip-tit{display:flex;flex-direction:column;line-height:1.25}
+.cc-strip-tit b{font:700 15px Inter,sans-serif;color:#1f2020}
+.cc-strip-tit span{font-size:12px;color:#6b6b6b}
+.cc-strip .fin-esp{flex:1}
+.cc-strip [data-cc-organizar]{display:inline-flex;align-items:center;gap:6px}
+.cc-fim .fe-stat{padding-right:16px;border-right:1px solid #e9ecf0}
+.cc-fim .fe-stat b{font-size:15px}
+.cc-sis-acoes{white-space:nowrap}

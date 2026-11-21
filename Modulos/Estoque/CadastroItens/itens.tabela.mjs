@@ -24,6 +24,13 @@ window.inserirItemNaTabela = function (item) {
   const tipoClasse = item.tipo === "Kit" ? "kit" : item.tipo === "Componente" ? "componente" : "item";
   const tipoBadge = item.tipo ? `<span class="tipo-badge ${tipoClasse}">${item.tipo}</span>` : "-";
 
+  // 15/11/2026: nome na 1ª linha e as medidas "(L) … (A) … (P) …" embaixo (como na Disponibilidade); sem coluna QR.
+  const escItem = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const nomeCompleto = String(item.descricao_total || item.produto || "-");
+  const partesNome = nomeCompleto.match(/^(.*?)\s*(\(L\)[\s\S]*)$/);
+  const nomeSemMedidas = partesNome && partesNome[1] ? partesNome[1] : nomeCompleto;
+  const medidasItem = partesNome && partesNome[1] ? partesNome[2] : "";
+
   tr.innerHTML = `
 
     <!-- FOTO -->
@@ -43,10 +50,13 @@ window.inserirItemNaTabela = function (item) {
 
     <!-- ITEM -->
     <td class="td-item">
-      <div class="item-principal">
-        ${item.descricao_total || item.produto || "-"}
-      </div>
+      <div class="item-principal">${escItem(nomeSemMedidas)}</div>
+      ${medidasItem ? `<div class="item-medidas">${escItem(medidasItem)}</div>` : ""}
     </td>
+
+    <!-- SUBCATEGORIA e ESTILO (15/11/2026) -->
+    <td class="td-subcategoria">${escItem(item.subcategoria || "-")}</td>
+    <td class="td-estilo">${escItem(item.estilo || "-")}</td>
 
     <!-- SETOR -->
     <td class="td-setor">
@@ -58,14 +68,16 @@ window.inserirItemNaTabela = function (item) {
       R$ ${Number(item.valor_locacao || 0).toFixed(2)}
     </td>
 
-    <!-- ESTOQUE -->
-    <td class="td-estoque">
-      —
+    <!-- VALOR DE COMPRA (custo do cadastro, 15/11/2026) -->
+    <td class="td-valor td-custo">
+      ${item.custo == null || item.custo === "" ? "-" : "R$ " + Number(item.custo || 0).toFixed(2)}
     </td>
 
-    <!-- QR -->
-    <td class="td-qr">
-      <button type="button" class="qr-action-btn" title="Ver QR Code">QR</button>
+    <!-- ESTOQUE -->
+    <td class="td-estoque">
+      ${item.tipo === "Kit"
+        ? '<span class="estoque-kit" title="O estoque de um kit vem das peças que o compõem (veja a Disponibilidade de Itens).">pelas peças</span>'
+        : (item.estoque_total == null ? "—" : Number(item.estoque_total).toLocaleString("pt-BR", { maximumFractionDigits: 0 }))}
     </td>
 
     <!-- STATUS -->
@@ -77,37 +89,7 @@ window.inserirItemNaTabela = function (item) {
 
   `;
 
-const qrBtn = tr.querySelector(".qr-action-btn");
-if(qrBtn){
-  qrBtn.onclick = async (event) => {
-    event.stopPropagation();
-
-    if(!item.qr_code){
-      item.qr_code = window.EasyLocQR?.generateValue?.() || crypto.randomUUID();
-
-      try{
-        const { error } = await window.supabaseClient
-          ?.from("itens")
-          .update({ qr_code: item.qr_code })
-          .eq("id", item.id);
-
-        if(error?.code === "42703" || String(error?.message || "").includes("qr_code does not exist")){
-          item.qr_code = "";
-          window.alerta?.("A coluna qr_code ainda precisa ser aplicada no banco para gerar etiquetas.", "QR Code", "aviso");
-          return;
-        }
-      }catch(error){
-        console.warn("Nao foi possivel salvar QR Code do item:", error);
-      }
-    }
-
-    window.EasyLocQR?.openQuickModal?.({
-      qr_code: item.qr_code,
-      codigo: item.codigo,
-      nome: item.descricao_total || item.produto
-    });
-  };
-}
+// A coluna QR saiu da lista (15/11/2026); o QR do item continua na aba "QR Code" da página do item.
 
 /* abrir modal ao clicar */
 
@@ -177,7 +159,7 @@ window.renderTabelaItens = function (itens) {
   if (!tbody) return;
   itensLista = Array.isArray(itens) ? itens : [];
   itensMostrados = 0;
-  tbody.innerHTML = itensLista.length ? "" : '<tr class="itens-vazio"><td colspan="9">Nenhum item encontrado.</td></tr>';
+  tbody.innerHTML = itensLista.length ? "" : '<tr class="itens-vazio"><td colspan="11">Nenhum item encontrado.</td></tr>';
   document.querySelector(".itens-table-card .easyloc-list-pager")?.remove();
   mostrarMaisItens();
   const sentinela = itensSentinela();

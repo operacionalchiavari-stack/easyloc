@@ -1,0 +1,109 @@
+/* Propostas recebidas: mesmos cards e colunas das telas de operação. */
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog{--cot-line:#dce4ec;--cot-text:#24364e;--cot-muted:#6b7d92;--cot-blue:#123f86;--cot-soft:#eaf2ff;background:#f3f5f6!important;color:var(--cot-text)}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog>.dialog-card{background:#f3f5f6!important;min-width:0}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog>.dialog-card>header{display:grid!important;grid-template-columns:minmax(100px,1fr) auto minmax(280px,1fr);align-items:center;gap:20px;padding:16px 22px!important;background:#f3f5f6!important;border-bottom:0!important}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-back-btn{justify-self:start;margin:0!important;min-height:40px;border-radius:9px!important;padding:8px 14px!important}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog>.dialog-card>header>div:nth-child(2){text-align:center}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog #proposalsTitle{font:500 clamp(24px,2.3vw,34px)/1.2 'Cormorant Garamond',Georgia,serif!important;letter-spacing:.035em!important;color:#202b39!important}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .eyebrow{font-size:11px!important;letter-spacing:.13em!important;margin-bottom:5px!important}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog #proposalsMetaBar{display:flex;justify-content:flex-end;gap:18px;margin:0;min-width:0;white-space:normal}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog #proposalsMetaBar>span{display:grid;gap:3px;padding-left:16px;border-left:1px solid var(--cot-line)}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog #proposalsMetaBar small{font:400 12px/1.4 Inter,Arial,sans-serif;color:var(--cot-muted)}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog #proposalsMetaBar b{font:600 15px/1.4 Inter,Arial,sans-serif;color:var(--cot-text)}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposals-scroll{padding:0 22px 22px!important;scrollbar-gutter:stable;min-width:0}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-mode-tabs{display:flex;gap:20px;margin:0 0 20px;padding:0;border-bottom:1px solid var(--cot-line)}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-mode-tab{padding:13px 4px!important;min-height:48px;border:0!important;border-bottom:2px solid transparent!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;font:500 14px/1.4 Inter,Arial,sans-serif!important;color:var(--cot-muted)!important}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-mode-tab.active{color:var(--el-color-primary,#467f68)!important;border-bottom-color:var(--el-color-primary,#467f68)!important;font-weight:600!important}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-quotation-workspace{display:grid;grid-template-columns:280px minmax(0,1fr);gap:20px;align-items:start;min-width:0}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-quotation-editor{display:grid;gap:18px;min-width:0}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-quotation-card{min-width:0;border:1px solid var(--cot-line);border-radius:15px;background:#fff;box-shadow:0 2px 9px #1930411a;overflow:hidden}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-quotation-section-head{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:68px;padding:16px 20px;margin:0;border-bottom:1px solid #e7edf3;background:#fff}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-quotation-section-head h3{margin:0;font:600 16px/1.4 Inter,Arial,sans-serif;color:var(--cot-text);letter-spacing:0;text-transform:none}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-quotation-section-head p{margin:4px 0 0;font:400 14px/1.4 Inter,Arial,sans-serif;color:var(--cot-muted);overflow-wrap:anywhere}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-quotation-eyebrow{display:block;font:600 11px/1.4 Inter,Arial,sans-serif;letter-spacing:.13em;color:var(--cot-muted);margin-bottom:5px}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-quotation-suppliers .pv-quotation-section-head h3{font:500 26px/1.2 'Cormorant Garamond',Georgia,serif}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-quotation-count{display:inline-grid;place-items:center;flex:0 0 auto;min-width:30px;height:30px;padding:0 7px;box-sizing:border-box;border-radius:50%;background:#f1f4f8;color:var(--cot-text);font:600 14px Inter,Arial,sans-serif}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog #proposalsSupplierTabs{display:grid!important;gap:10px!important;padding:12px!important;margin:0!important}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-supplier-tab{display:block;width:100%;min-width:0;box-sizing:border-box;padding:12px!important;text-align:left;border:1px solid #dce4ec!important;border-radius:11px!important;background:#fff!important;box-shadow:0 1px 4px #1930410d!important;white-space:normal!important}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-supplier-tab:hover{border-color:#9db9dc!important;background:#f6f9fd!important}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-supplier-tab.active{border:1px solid #89aee1!important;background:var(--cot-soft)!important;box-shadow:inset 3px 0 var(--cot-blue),0 2px 5px #123f8612!important}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-supplier-tab .cs-com-foto{display:flex;width:100%;gap:10px;max-width:100%}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-supplier-tab .cs-com-foto-txt{flex:1;min-width:0}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-supplier-tab strong{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:normal!important;color:var(--cot-text)!important;font:600 14px/1.4 Inter,Arial,sans-serif!important}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-supplier-tab small{display:block;font:400 12px/1.4 Inter,Arial,sans-serif!important;margin-top:4px;color:var(--cot-muted)!important;white-space:normal!important}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-supplier-tab small::before{display:none}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-supplier-tab.is-answered small{color:#2f7a4b!important}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-quotation-responses{padding:12px 18px;border-top:1px solid #e7edf3;color:var(--cot-muted);font:400 13px/1.4 Inter,Arial,sans-serif}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-ai-bar{margin:0;gap:8px}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-ai-bar .btn{font-size:13px!important;min-height:36px;padding:8px 12px!important;border-radius:8px!important;white-space:normal}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-general-row{grid-template-columns:repeat(4,minmax(0,1fr));padding:18px 20px 20px;gap:16px;margin:0}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog label{min-width:0;font:500 14px/1.4 Inter,Arial,sans-serif!important;color:var(--cot-text);letter-spacing:0;text-transform:none}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog :is(input:not([type=checkbox]):not([type=radio]),textarea){min-width:0;max-width:100%;box-sizing:border-box;background:#fff;border:1px solid #d3ddea!important;border-radius:8px!important;padding:10px 12px!important;color:var(--cot-text);font:400 14px/1.4 Inter,Arial,sans-serif!important;box-shadow:none!important}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog input:not([type=checkbox]):not([type=radio]){height:42px!important;min-height:42px}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog :is(input,textarea):focus-visible{outline:2px solid #87afe1;outline-offset:1px}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .note-money-input{position:relative;display:flex;align-items:center;margin:0;min-width:0}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .note-money-input>span{position:absolute;left:12px;z-index:1;font:400 14px Inter,Arial,sans-serif;color:var(--cot-muted)}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog #proposalFrete{width:100%;padding-left:38px!important}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog #proposalOriginalLink:not(.hidden){display:inline-flex;margin:14px 20px 0;font-size:14px}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog :is(.pv-ai-status,.pv-ai-unmatched-list):not(:empty){margin:14px 20px}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog #proposalsItemsList{border:0!important;border-radius:0!important;box-shadow:none!important;margin:0;padding:0;gap:0;background:#fff!important}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-item-row{grid-template-columns:minmax(0,1fr) 112px 140px 130px;gap:16px;padding:16px 20px;border:0;border-bottom:1px solid #e7edf3;border-radius:0;box-shadow:none;background:#fff;min-width:0}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-item-row:last-child{border-bottom:0}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-item-info strong{font:600 14px/1.5 Inter,Arial,sans-serif;overflow-wrap:anywhere}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-item-info small{font:400 13px/1.5 Inter,Arial,sans-serif;color:var(--cot-muted);margin-top:4px}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-item-deadline-link{font:400 13px/1.5 Inter,Arial,sans-serif;padding:0!important;margin-top:5px;color:var(--cot-blue)!important;background:transparent!important;border:0!important;min-height:0;border-radius:0!important;text-align:left;white-space:normal}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-item-checkbox{display:flex;flex-direction:row;align-items:center;gap:7px;font-size:13px}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog input:is([type=checkbox],[type=radio]){width:17px;height:17px;flex:0 0 17px;accent-color:var(--cot-blue)}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog :is(.pv-item-valor-unitario-field,.pv-proposal-item-total)>small{font:500 12px/1.4 Inter,Arial,sans-serif!important;color:var(--cot-muted);letter-spacing:0;text-transform:none;display:block;margin-bottom:5px}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-item-total strong{font-size:16px;color:var(--cot-text)}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-quotation-notes{padding:18px 20px}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog textarea{width:100%;min-height:72px;resize:vertical}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog>.dialog-card>footer{background:#fff!important;padding:12px 22px!important;gap:10px!important;flex-wrap:wrap;box-shadow:0 -2px 10px #19304108}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog footer>.btn{min-height:40px;border-radius:8px!important;padding:9px 15px!important;font-size:14px!important;white-space:normal}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-footer-status{gap:18px;flex-wrap:wrap;min-width:0;font-size:14px}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-footer-total strong{font-size:20px;color:var(--cot-text)}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-footer-secondary strong{font-size:14px}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-footer-secondary{font-size:13px;border:0;padding:0}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-compare-item{border:1px solid var(--cot-line);border-radius:14px;background:#fff;box-shadow:0 2px 9px #1930411a;overflow:hidden;margin-bottom:18px;min-width:0}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-compare-item>header{padding:16px 20px;background:#fff;border-bottom:1px solid #e7edf3;font-size:15px}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-compare-item>header small{display:block;font-size:13px;margin-top:4px;color:var(--cot-muted)}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-list{padding:12px;gap:10px;min-width:0}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-row{grid-template-columns:20px minmax(170px,1.5fr) repeat(3,minmax(70px,.7fr)) repeat(2,minmax(100px,1fr));padding:14px;gap:14px;border:1px solid var(--cot-line);border-radius:10px;min-width:0}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-cell{min-width:0;font-size:14px;overflow-wrap:anywhere}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-cell small{font-size:12px;margin-bottom:4px}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-fornecedor{min-width:0}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-fornecedor strong{font-size:14px;overflow-wrap:anywhere;white-space:normal}
+html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-badge{border-radius:5px;font-size:11px;text-transform:none;letter-spacing:0}
+@media(max-width:1200px){
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-quotation-workspace{grid-template-columns:250px minmax(0,1fr);gap:16px}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-general-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-item-row{grid-template-columns:minmax(0,1fr) 95px 110px 105px;gap:10px}
+}
+@media(max-width:900px){
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog>.dialog-card>header{grid-template-columns:auto minmax(0,1fr);gap:12px;padding:14px 16px!important}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog>.dialog-card>header>div:nth-child(2){text-align:left}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog #proposalsMetaBar{grid-column:1/-1;justify-content:flex-start;gap:20px}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog #proposalsMetaBar>span:first-child{border:0;padding-left:0}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-quotation-workspace{grid-template-columns:minmax(0,1fr)}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog #proposalsSupplierTabs{grid-template-columns:repeat(2,minmax(0,1fr))}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-quotation-responses{padding:10px 16px}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposals-scroll{padding:0 16px 16px!important}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-row{grid-template-columns:20px repeat(3,minmax(0,1fr));gap:12px}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-fornecedor{grid-column:2/-1}
+}
+@media(max-width:600px){
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-quotation-section-head{padding:14px;flex-wrap:wrap;gap:10px}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog #proposalsSupplierTabs{grid-template-columns:minmax(0,1fr)}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-general-row{grid-template-columns:minmax(0,1fr);padding:16px;gap:14px}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-item-row{grid-template-columns:repeat(2,minmax(0,1fr));padding:16px;gap:14px}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-item-info{grid-column:1/-1}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-item-checkbox{grid-column:1/-1}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-quotation-notes{padding:16px}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog>.dialog-card>footer{padding:12px 16px!important}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-footer-status{flex-basis:100%;gap:8px 14px;margin:0 0 4px}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog footer>.btn{flex:1 1 auto;padding:8px 10px!important;font-size:13px!important}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-footer-total strong{font-size:17px}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-proposal-footer-secondary strong{font-size:13px}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-mode-tabs{gap:18px;margin-bottom:16px}
+ html:root:is(#cot#cot#cot#cot#cot,html) #proposalsDialog .pv-mode-tab{font-size:13px!important;text-transform:none!important}
+}

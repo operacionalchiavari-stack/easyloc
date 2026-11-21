@@ -1276,3 +1276,7 @@ html:root:is(#cadastro-locais, html) body .el-page > .header-list > .header-acti
 
 /* opção marcada num cadastro que não existe mais em Parâmetros > Comercial */
 .tag.fora-da-lista{border-style:dashed!important}
+/* Particularidades do local (18/11/2026) */
+#locais-modal .local-particularidades{display:grid;gap:6px;margin-top:14px}
+#locais-modal .local-particularidades textarea{min-height:76px;height:auto;resize:vertical;padding:10px 12px;line-height:1.45}
+#locais-modal .local-particularidades small{font-size:12px;color:#6b6b6b}

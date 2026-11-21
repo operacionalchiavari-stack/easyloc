@@ -153,6 +153,17 @@
     $("tzListaItens").addEventListener("keydown", (e) => { const tr = e.target.closest("[data-item]"); if (tr && e.key === "Enter") abrirItem(tr.dataset.item); });
     $("tzDialogRodape").addEventListener("click", (e) => { const b = e.target.closest("[data-bt]"); if (b) S.botoes[Number(b.dataset.bt)]?.acao(); });
     $("tzDialog").addEventListener("click", (e) => { if (e.target.closest("[data-fechar]")) fechar(); });
+    // Abas (20/11/2026): Empresas e itens | Relatórios (sublocacoes-relatorios.js). ?aba=relatorios abre direto.
+    document.querySelectorAll("[data-tz-aba]").forEach((b) => b.addEventListener("click", () => trocarAba(b.dataset.tzAba)));
+    if (new URLSearchParams(location.search).get("aba") === "relatorios") trocarAba("relatorios");
+  }
+  function trocarAba(aba) {
+    const rel = aba === "relatorios";
+    document.querySelectorAll("[data-tz-aba]").forEach((b) => { const on = b.dataset.tzAba === aba; b.classList.toggle("active", on); b.setAttribute("aria-selected", String(on)); });
+    $("tzRelatorios").hidden = !rel;
+    document.querySelector(".tz-layout").hidden = rel;
+    $("tzPage").classList.toggle("tz-em-relatorios", rel);
+    if (rel) window.SublocacoesRelatorios?.abrir();
   }
 
   async function iniciar() {

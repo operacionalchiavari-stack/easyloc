@@ -15,6 +15,10 @@ const mock = `(() => {
       { id: "p2", empresa_id: "e1", numero_pedido: "11", cliente_id: "c1", cliente_nome: "Lis Decor", tipo_evento: "Festa", data_evento: "${dia(20)}", valor_total: 3000, status_comercial: "cancelado", local_id: "l2", local_nome: "Sítio", criado_em: A + "-02-02T10:00:00Z", atualizado_em: H, cancelamento: canc("Concorrência mais barata", "", "${dia(-2)}", "Carol") },
       { id: "p3", empresa_id: "e1", numero_pedido: "12", cliente_id: "c2", cliente_nome: "Ana Eventos", equipe_nome: "Equipe Rosa", tipo_evento: "Formatura", data_evento: "${dia(10)}", valor_total: 2000, status_comercial: "cancelado", local_id: "l1", local_nome: "Villa Bisutti", criado_em: A + "-02-03T10:00:00Z", atualizado_em: H, cancelamento: canc("Evento remarcado", "Mudou para 2027", "${dia(-1)}", "Jonatan") },
       { id: "p4", empresa_id: "e1", numero_pedido: "13", cliente_id: "c1", cliente_nome: "Lis Decor", tipo_evento: "Casamento", data_evento: "${dia(5)}", valor_total: 9000, status_comercial: "aprovado", local_id: "l1", local_nome: "Villa Bisutti", criado_em: A + "-02-04T10:00:00Z", atualizado_em: H, cancelamento: null }],
+    funcionarios_acesso: [{ id: "u9", empresa_id: "e1", nome: "Carol" }],
+    clientes_empresas: [{ id: "c1", empresa_id: "e1", nome_razao: "Lis Decor", catalogo_logo_url: "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" }],
+    comercial_followups: [{ empresa_id: "e1", alvo_id: "p1", criado_em: "${dia(-20)}T13:00:00Z", criado_por: "u9", criado_por_nome: "Carol", motivo: "Achou o valor alto", observacao: "Vai pensar", proximo: "${dia(-15)}" }, { empresa_id: "e1", alvo_id: "p1", criado_em: "${dia(-10)}T13:00:00Z", criado_por: "u9", criado_por_nome: "Carol", motivo: "Sem resposta do cliente", observacao: "", proximo: "${dia(-5)}" }],
+    comercial_followup_encerrados: [],
     locais_empresas: [
       { id: "l1", empresa_id: "e1", endereco: "Estr. Teresópolis, 1000 - Itaipava, Petrópolis - RJ, 25730-000, Brasil", distancia_galpao_km: 12 },
       { id: "l2", empresa_id: "e1", endereco: "Rua das Flores, 50 - Centro, Teresópolis - RJ, 25953-000, Brasil", distancia_galpao_km: 64 }]
@@ -33,7 +37,7 @@ const mock = `(() => {
       then(ok, erro){ return Promise.resolve({ data: unico ? (linhas[0] || null) : linhas, error: null }).then(ok, erro); } };
     return q;
   }
-  const respostas = { funcionario_contexto: () => ({ ativo: true, administrador_legado: true }), comercial_contas_receber: () => receber };
+  const respostas = { funcionario_contexto: () => ({ ativo: true, administrador_legado: true }), comercial_contas_receber: () => receber, comercial_historico: (x) => x.p_pedido === "p1" ? [{ quando: "${dia(-30)}T12:00:00Z", autor: "Carol", tipo: "pedido", descricao: "Criou o pedido" }, { quando: "${dia(-3)}T12:00:00Z", autor: "Carol", tipo: "status", descricao: "Mudou a situação: Orçamento → Cancelado" }] : [] };
   const cliente = {
     auth: { getSession: async () => ({ data: { session: { access_token: "t", user: { id: "u1" } } } }), getUser: async () => ({ data: { user: { id: "u1" } } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe(){} } } }) },
     from: consulta, functions: { invoke: async () => ({ data: null, error: null }) },
@@ -71,17 +75,39 @@ const mock = `(() => {
   assert.match(blocos["Por cidade"], /Itaipava/);
   assert.match(blocos["Por equipe"], /Equipe Rosa2/, "Lis e Ana na mesma equipe somam 2 cancelados");
   assert.match(blocos["Por equipe"], /Sem equipe1/);
-  // clicar num motivo filtra a lista
+  // clicar num motivo abre a gaveta com os pedidos daquele motivo
   await page.click('tr[data-filtro="motivo"][data-valor="Evento remarcado"]');
-  await page.waitForSelector(".cr-filtro-ativo");
-  const lista = await page.evaluate(() => [...document.querySelectorAll("#cLista tbody tr")].map((tr) => tr.textContent.replace(/\s+/g, " ")));
+  await page.waitForSelector("#ccGaveta.aberta .cc-gav-tab tbody tr");
+  const lista = await page.evaluate(() => [...document.querySelectorAll("#ccGaveta .cc-gav-tab tbody tr")].map((tr) => tr.textContent.replace(/\s+/g, " ")));
   assert.equal(lista.length, 1); assert.match(lista[0], /12/); assert.match(lista[0], /Mudou para 2027/); assert.match(lista[0], /Jonatan/);
-  await page.click("[data-tirar-foco]");
-  await page.selectOption("#cDecorador", "Ana Eventos");
-  await page.waitForFunction(() => /Pedidos cancelados1/.test(document.getElementById("cConteudo").textContent));
-  const [dl] = await Promise.all([page.waitForEvent("download"), page.click("#cExcel")]);
-  assert.match(dl.suggestedFilename(), /Cancelamentos\.xlsx$/);
-  console.log("ok 1 - cancelamentos: resumo, por motivo, decorador (taxa), cidade, distância, filtro e Excel");
+  assert.match(await page.textContent("#ccGaveta .cc-gav-grupo"), /Evento remarcado.*1 pedido/);
+  await page.click("#ccGaveta [data-historico]"); await page.waitForSelector("#ccGaveta [data-voltar-grupo]");
+  await page.click("#ccGaveta [data-voltar-grupo]"); await page.waitForSelector("#ccGaveta .cc-gav-tab");
+  await page.keyboard.press("Escape"); await page.waitForFunction(() => !document.getElementById("ccGaveta").classList.contains("aberta"));
+  await page.click('tr[data-filtro="todos"] >> nth=0'); await page.waitForSelector("#ccGaveta.aberta .cc-gav-tab");
+  assert.equal(await page.locator("#ccGaveta .cc-gav-tab tbody tr").count(), 3, "linha do resumo abre todos");
+  await page.keyboard.press("Escape"); await page.waitForFunction(() => !document.getElementById("ccGaveta").classList.contains("aberta"));
+  assert.equal(await page.locator("#cDecorador,#cMotivo,#cExcel").count(), 0, "sem filtros de decorador/motivo nem Excel");
+  const topo = await page.evaluate(() => { const h = document.querySelector(".cc-topo h2").getBoundingClientRect(), f = document.querySelector(".cc-filtros").getBoundingClientRect(); return Math.abs(h.top - f.top) < 40 && f.left > h.left; });
+  assert.ok(topo, "De/Até/Limpar na linha do título");
+  assert.equal(await page.locator(".cc-quadro .cc-graf").count(), 7, "um gráfico ao lado de cada quadro");
+  assert.equal(await page.locator(".cc-quadro .cc-rosca svg circle").count() >= 2, true, "rosca dos motivos");
+  await page.click('[data-aba="visao"]'); assert.equal(await page.locator("#cLista").isVisible(), false, "lista na outra aba");
+  const lado = await page.evaluate(() => { const q = document.querySelector(".cc-quadro"); const a = q.querySelector(".cc-dados").getBoundingClientRect(), b = q.querySelector(".cc-graf").getBoundingClientRect(); return Math.abs(a.top - b.top) < 5 && b.left > a.left; });
+  assert.ok(lado, "tabela à esquerda e gráfico à direita");
+  await page.fill("#cDe", ""); await page.dispatchEvent("#cDe", "change");
+  await page.click('[data-aba="lista"]'); assert.equal(await page.locator(".cc-quadro").first().isVisible(), false, "quadros na outra aba");
+  const linhaLis = page.locator("#cLista tbody tr", { hasText: "Casamento" });
+  assert.equal(await linhaLis.locator(".cc-foto img").count(), 1, "foto do decorador");
+  assert.match(await linhaLis.locator("td").nth(8).textContent(), /Carol/); assert.equal(await linhaLis.locator("td").nth(8).locator(".cc-foto").count(), 1, "foto (ou iniciais) de quem registrou");
+  await linhaLis.locator("[data-historico]").click();
+  await page.waitForSelector("#ccGaveta.aberta .cc-ev");
+  assert.equal(await page.locator("#ccGaveta .cc-ev").count(), 4, "histórico + 2 contatos");
+  assert.equal(await page.locator("#ccGaveta .cc-ev-contato").count(), 2);
+  assert.match(await page.locator("#ccGaveta .cc-gav-total").textContent(), /4 registro.*2 contato/);
+  assert.match(await page.locator("#ccGaveta .cc-ev").first().textContent(), /Cancelado/, "mais recente em cima");
+  await page.keyboard.press("Escape"); await page.waitForFunction(() => !document.getElementById("ccGaveta").classList.contains("aberta"));
+  console.log("ok 1 - cancelamentos: resumo, por motivo, decorador (taxa), cidade, distância, filtro, gráficos ao lado e filtros na linha do título");
 
   // Contas a receber saiu da Central (voltou a ter tela própria em Comercial > Contas a receber): coberto por tests/comercial-contas-receber-browser.cjs
   if (process.env.SP) {

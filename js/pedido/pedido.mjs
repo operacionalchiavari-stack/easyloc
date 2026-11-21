@@ -1,19 +1,22 @@
-import { iniciarLogisticaManual, restaurarLogisticaManual, validarObservacoesLogisticaManual } from './pedido.logistica-manual.mjs?v=20261031-ajuste-compacto';
-import {instalarProtecaoSaida} from './pedido.saida.mjs?v=20261102-proteger';
+import { iniciarLogisticaManual, restaurarLogisticaManual, validarObservacoesLogisticaManual } from './pedido.logistica-manual.mjs?v=20261118-descontos';
+import {instalarProtecaoSaida} from './pedido.saida.mjs?v=20261108-sair-sem-salvar';
 console.log("✅ pedido.mjs carregado");
 
 import { getEls, bindDiasSemana } from "./pedido.utils.mjs";
-import { initAutocompleteClientes } from "./pedido.clientes.mjs?v=20261107-lista-sublocacao";
+import { initAutocompleteClientes } from "./pedido.clientes.mjs?v=20261118-cadastrar-cliente";
 import { initEquipePedido } from "./pedido.equipe.mjs?v=20261031-bv";
-import { initBvPedido } from "./pedido.bv.mjs?v=20261031-3colunas3";
-import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261107-tags-pedido";
-import { initItens } from "./pedido.itens.mjs?v=20261107-lista-sublocacao";
-import { initFrete } from "./pedido.frete.mjs?v=20261107-teste-usuario";
+import { initClientesFinais } from "./pedido.clientes-finais.mjs?v=20261118-rg-ie";
+import { initBvPedido } from "./pedido.bv.mjs?v=20261118-varios";
+import {iniciarExibicaoFinanceira,aplicarExibicaoFinanceira} from './pedido.exibicao-financeiro.mjs?v=20261118-fixo';
+import {linhasDescontoComercial} from './pedido.desconto-area.mjs?v=20261118-resumo-areas';
+import { initAutocompleteLocaisEKm } from "./pedido.locais-km.mjs?v=20261118-varios";
+import { initItens } from "./pedido.itens.mjs?v=20261118-motivos-areas";
+import { initFrete } from "./pedido.frete.mjs?v=20261118-descontos";
 import { initServicos } from "./pedido.servicos.mjs";
-import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261107-lista-sublocacao";
+import { carregarLogoEmpresa, imprimirPedido, abrirModalAvisoFrete } from "./pedido.misc.mjs?v=20261108-identidade-global";
 import { dadosNovoExtra, prepararPedidoExtra } from "./pedido.extra.mjs?v=20261105-extra-botao";
-import { initPagamento } from "./pedido.pagamento.mjs?v=20261107-teste-usuario";
-import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs?v=20261107-teste-usuario";
+import { initPagamento } from "./pedido.pagamento.mjs?v=20261118-fixo";
+import { initContratoPedido, destroyContratoPedido } from "./pedido.contratos.mjs?v=20261118-rg-ie";
 
 /* =====================================================
    ESTADO VINDO DA URL (documento proprio / navegacao real)
@@ -163,6 +166,8 @@ export async function initPedido(){
   ===================================================== */
 initItens({ supabase, els });
 initEquipePedido({ supabase });
+initClientesFinais();
+iniciarExibicaoFinanceira();
 initBvPedido({ supabase });
 
 /* =====================================================
@@ -536,9 +541,9 @@ async function setupPedidoWorkspace({ supabase }){
 
     // Numeração própria do sistema, começando do 1 (out/2026): o maior número já usado + 1.
     // O cronograma separa estes pedidos dos antigos de mesmo número pelo código interno.
-    // Pedidos de teste (observacoes.teste_cronograma / teste_ia) têm número de 4 dígitos e não entram na conta.
+    // Pedidos de teste (observacoes.teste_cronograma / teste_ia / demo_lote) têm número de 4 dígitos e não entram na conta.
     const usados = new Set((data || []).map((row) => String(row.numero_pedido || "").trim()));
-    const ehTeste = (row) => { const o = row && row.observacoes; return !!(o && typeof o === "object" && (o.teste_cronograma || o.teste_ia)); };
+    const ehTeste = (row) => { const o = row && row.observacoes; return !!(o && typeof o === "object" && (o.teste_cronograma || o.teste_ia || o.demo_lote)); };
     const reais = (data || []).filter((row) => !ehTeste(row)).map((row) => String(row.numero_pedido || "").trim());
     let proximo = Math.max(0, ...reais.map((n) => /^\d+$/.test(n) ? Number(n) : 0)) + 1;
     while(usados.has(String(proximo)) || usados.has(String(proximo).padStart(3, "0"))) proximo += 1;
@@ -589,14 +594,21 @@ async function setupPedidoWorkspace({ supabase }){
   window.__pedidoFinanceiroResumo = () => {
     const valor = (id) => moedaParaNumero(textById(id));
     const resumo = [
-      ["Valor de locação", valor("resumoLocacaoBruto")],
-      ["Desconto", -Math.abs(valor("resumoLocacaoDesconto"))],
+      ["Valor de locação", Number(window.__PEDIDO_VALORES?.locacao_bv??valor("resumoLocacaoBruto"))],
+      ["Desconto", -Math.abs(Number(window.__PEDIDO_VALORES?.locacao_desconto)||0)],
       ["Customizações", valor("resumoCustomizacoes")],
+      ["Itens sublocados", valor("resumoTerceirizados")],
       ["Serviços adicionais", valor("resumoServicos")],
-      ["Frete", valor("resumoFreteBruto")],
-      ["Montagem", valor("resumoMontagemBruto")]
+      ["Frete", Number(window.__PEDIDO_VALORES?.frete ?? valor("resumoFreteBruto"))],
+      ["Montagem", Number(window.__PEDIDO_VALORES?.montagem ?? valor("resumoMontagemBruto"))]
     ].map(([rotulo, v]) => ({ rotulo, valor: v }));
-    return { resumo, total: Number(window.__TOTAL_PEDIDO) || valor("resumoTotalGeral"), parcelas: coletarParcelasFinanceiras() };
+    resumo.push(...linhasDescontoComercial(window.__pedidoColetarPagamentoConfig?.()));
+    for(const [rotulo,id] of [['BV aplicado','resumoAbatimentoBV'],['Crédito aplicado','resumoAbatimentoCredito']]){
+      const abatimento=valor(id);if(abatimento)resumo.push({rotulo,valor:abatimento});
+    }
+    const bvConvertido=Number(window.__pedidoBVDesconto?.())||0;
+    if(bvConvertido)resumo.push({rotulo:'Desconto especial',valor:-bvConvertido,tipo:'bv_convertido'});
+    return aplicarExibicaoFinanceira({resumo,total:valor('resumoTotalGeral'),parcelas:coletarParcelasFinanceiras()},window.__PEDIDO_VALORES,{...window.__pedidoColetarExibicaoFinanceira?.(),tem_fixo:!!window.__pedidoColetarPagamentoConfig?.()?.descontoFixo});
   };
 
   const coletarLogisticaSnapshot = () => ({
@@ -833,6 +845,11 @@ async function setupPedidoWorkspace({ supabase }){
       return;
     }
 
+    if(!rascunho && pedido.reducao_liberada_em && !['visualizar','imprimir'].includes(window.__PEDIDO_MODO_ABERTURA)){
+      const assumido=await supabase.rpc('pedido_assumir_revisao',{p_pedido:pedido.id});
+      if(assumido.error){avisar(assumido.error.message,'Editar pedido','erro');return;}
+      pedido=assumido.data;
+    }
     const observacoesPedido = pedido.observacoes && typeof pedido.observacoes === "object"
       ? pedido.observacoes
       : {};
@@ -887,7 +904,7 @@ async function setupPedidoWorkspace({ supabase }){
     if(pedido.local_id){
       const { data: localSalvo } = await supabase
         .from("locais_empresas")
-        .select("id,nome_razao,endereco,numero_endereco,ponto_referencia,latitude,longitude,distancia_galpao_km,distancia_galpao_texto,google_place_id,tags")
+        .select("id,nome_razao,endereco,numero_endereco,ponto_referencia,particularidades,latitude,longitude,distancia_galpao_km,distancia_galpao_texto,google_place_id,tags")
         .eq("empresa_id", window.__CONTEXT.empresa_id)
         .eq("id", pedido.local_id)
         .maybeSingle();
@@ -913,6 +930,7 @@ async function setupPedidoWorkspace({ supabase }){
     aplicarStatusVisual(pedido.status_comercial || "orcamento");
     if(document.getElementById("preReservaAte")) document.getElementById("preReservaAte").value = pedido.pre_reserva_ate || "";
     if(window.__pedidoAplicarPagamentoConfig){
+      window.__pedidoAplicarExibicaoFinanceira?.(observacoesPedido.exibicao_financeiro);
       window.__pedidoAplicarPagamentoConfig(
         observacoesPedido.pagamento_config || {},
         parcelasFinanceiras
@@ -1015,7 +1033,8 @@ async function setupPedidoWorkspace({ supabase }){
       data_entrega: dataEntrega,
       data_coleta: dataColeta,
       data_hora: dataEvento ? `${dataEvento}T12:00:00` : null,
-      valor_total: valorTotal,
+      // O banco recebe a base do pedido; os abatimentos são gravados separadamente na configuração.
+      valor_total: Number.isFinite(window.__TOTAL_PEDIDO) ? window.__TOTAL_PEDIDO : valorTotal,
       status_comercial: statusComercial,
       pre_reserva_ate: preReservaAte || null,
       // pedido extra: o banco numera ("1/2") e copia cliente, local, evento e coleta do principal
@@ -1025,6 +1044,8 @@ async function setupPedidoWorkspace({ supabase }){
         projeto_comercial: window.__pedidoProjetoComercial || observacoesAtuais.projeto_comercial || null,
         // equipe do Cadastro de Clientes que a pessoa representa neste pedido (pedido.equipe.mjs)
         ...(window.__pedidoEquipe ? window.__pedidoEquipe() : {}),
+        // clientes finais (quem contrata; o contrato sai no nome deles) — pedido.clientes-finais.mjs
+        clientes_finais: window.__pedidoClientesFinais ? window.__pedidoClientesFinais() : (observacoesAtuais.clientes_finais || []),
         // BV dividido / negociado neste pedido (pedido.bv.mjs); undefined = a tela não carregou, mantém o gravado
         bv: window.__pedidoBV?.() === undefined ? (observacoesAtuais.bv ?? null) : window.__pedidoBV(),
         observacoes_entrega: document.getElementById('observacoesEntrega')?.value.trim() || '',
@@ -1033,6 +1054,7 @@ async function setupPedidoWorkspace({ supabase }){
         financeiro: document.getElementById("pagamentoObservacaoFinanceira")?.value || "",
         parcelas_financeiras: coletarParcelasFinanceiras(),
         pagamento_config: window.__pedidoColetarPagamentoConfig?.() || null,
+        exibicao_financeiro: window.__pedidoColetarExibicaoFinanceira?.() || observacoesAtuais.exibicao_financeiro || null,
         itens_operacionais: coletarObservacoesItensOperacionais(),
         itens_comerciais: coletarItensParaReserva(),
         logistica_snapshot: coletarLogisticaSnapshot(),
@@ -1186,6 +1208,13 @@ async function setupPedidoWorkspace({ supabase }){
       avisar(erroDados, "Dados do pedido", "aviso");
       return;
     }
+    const erroClientesFinais = window.__pedidoValidarClientesFinais?.({ exigir: ["aprovado", "finalizado", "enviado"].includes(statusComercialAtual()) });
+    if(erroClientesFinais){
+      if(typeof window.__pedidoIrPara === "function") await window.__pedidoIrPara("dados");
+      window.__pedidoValidarClientesFinais?.({ exigir: ["aprovado", "finalizado", "enviado"].includes(statusComercialAtual()) });
+      avisar(erroClientesFinais, "Dados do pedido", "aviso");
+      return;
+    }
     const erroEquipe = window.__pedidoValidarEquipe?.();
     if(erroEquipe){
       if(typeof window.__pedidoIrPara === "function") await window.__pedidoIrPara("dados");
@@ -1299,6 +1328,7 @@ async function setupPedidoWorkspace({ supabase }){
     };
 
     window.__PEDIDO_DADOS_ATUAL.revisao = result.data?.revisao ?? 0;
+    await window.__pedidoAtualizarSaldoCliente?.();
     window.__PEDIDO_DADOS_ATUAL.reducao_liberada_em = null;
     aplicarBloqueioComercialSeparacao(window.__PEDIDO_DADOS_ATUAL);
     const cronograma = await sincronizarCronogramaDoPedido(pedidoId);
@@ -1525,7 +1555,7 @@ async function setupPedidoWorkspace({ supabase }){
     let localCadastro = null;
     if(evento.local_id){
       const { data } = await supabase.from("locais_empresas")
-        .select("id,nome_razao,endereco,numero_endereco,ponto_referencia,latitude,longitude,distancia_galpao_km,distancia_galpao_texto,google_place_id,tags")
+        .select("id,nome_razao,endereco,numero_endereco,ponto_referencia,particularidades,latitude,longitude,distancia_galpao_km,distancia_galpao_texto,google_place_id,tags")
         .eq("empresa_id", empresaId).eq("id", evento.local_id).maybeSingle();
       localCadastro = data || null;
     }

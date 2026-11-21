@@ -3,15 +3,15 @@
  'use strict';
  const perguntas=[
  [1,'Sofás exigem personalização de estofamento?'],[2,'Cadeiras ou puffs exigem personalização de estofamento?'],[3,'Bares exigem personalização de forração?'],[4,'A quantidade de peças para estofamento ultrapassa o limite?'],
- [5,'Cliente possui reclamação operacional registrada?'],[6,'Cliente já possui pedido confirmado anterior?'],[7,'Tipo de evento exige operação especial?'],[8,'É o primeiro pedido confirmado do cliente?'],[9,'Carregamento entre segunda e quarta?'],[10,'A personalização exige mais de um setor?'],
+ [5,'Cliente possui reclamação operacional registrada?'],[6,'Cliente já possui pedido confirmado anterior?'],[7,'Tipo de evento exige operação especial?'],[9,'Carregamento entre segunda e quarta?'],[10,'A personalização exige mais de um setor?'],
  [11,'Cadeiras ou poltronas exigem pintura?'],[12,'Bares ou mesas exigem pintura?'],[13,'Aparadores ou estantes exigem pintura?'],[14,'A quantidade de peças para pintura ultrapassa o limite?'],
- [15,'O transporte exige baldeação?'],[16,'O transporte das peças exige escada?'],[17,'O transporte manual excede a distância de referência?'],[18,'A quantidade de caminhões na entrega ultrapassa o limite?'],
+ [15,'O transporte exige baldeação?'],[16,'O transporte das peças exige escada?'],[18,'A quantidade de caminhões na entrega ultrapassa o limite?'],
  [19,'A quantidade de peças físicas ultrapassa o limite da triagem?'],[20,'Há peças frágeis?'],[21,'Há personalização ou peças sob medida?'],[22,'A confirmação ocorreu com antecedência menor que a referência?'],
- [23,'Há peças de manuseio volumoso?'],[24,'Há peças frágeis na carga?'],[25,'Mais de uma viagem de entrega prevista?'],[26,'Carregamento fora do expediente?']
+ [23,'Há peças de manuseio volumoso?'],[24,'Há peças frágeis na carga?'],[26,'Carregamento fora do expediente?']
  ].map(([id,titulo])=>({id,titulo}));
- const setores=[{id:'personalizacao',nome:'Estofados',perguntas:[1,2,3,4],campo:'score'},{id:'pintura',nome:'Pintura',perguntas:[11,12,13,14],campo:'scorePintura'},{id:'montagem',nome:'Montagem',perguntas:[15,16,17,18],campo:'scoreMontagem'},{id:'triagem',nome:'Triagem',perguntas:[19,20,21,22],campo:'scoreTriagem'},{id:'carregamento',nome:'Carregamento',perguntas:[23,24,25,26],campo:'scoreCarregamento'}];
- const gerais=[5,6,7,8,9,10];
- function padrao(){const pesos={};for(const q of perguntas)pesos[q.id]=q.id>=5&&q.id<=10?({5:{sim:7,nao:2},6:{sim:4,nao:5},7:{sim:4,nao:1},8:{sim:3,nao:1},9:{sim:5,nao:2},10:{sim:7,nao:2}})[q.id]:[{sim:18,nao:6},{sim:14,nao:5},{sim:14,nao:5},{sim:24,nao:8}][setores.find(s=>s.perguntas.includes(q.id)).perguntas.indexOf(q.id)];return {versao:1,pesos,limite_personalizados:4,limite_pecas:50,limite_caminhoes:2,distancia_manual_m:50,antecedencia_horas:48,inicio_expediente:'08:00',fim_expediente:'18:00',dias_expediente:[1,2,3,4,5],tipos_especiais:['Feira','Mídia'],grupos_volumosos:['sofa','bar','painel']};}
+ const setores=[{id:'personalizacao',nome:'Estofados',perguntas:[1,2,3,4],campo:'score'},{id:'pintura',nome:'Pintura',perguntas:[11,12,13,14],campo:'scorePintura'},{id:'montagem',nome:'Montagem',perguntas:[15,16,18],campo:'scoreMontagem'},{id:'triagem',nome:'Triagem',perguntas:[19,20,21,22],campo:'scoreTriagem'},{id:'carregamento',nome:'Carregamento',perguntas:[23,24,26],campo:'scoreCarregamento'}];
+ const gerais=[5,6,7,9,10]; // nov/2026: a 8 (primeiro pedido) saiu, era o contrário da 6
+ function padrao(){const pesos={};/* pesos das 26 posições originais (igual ao banco); as removidas (8, 17, 25) ficam sem uso */for(let id=1;id<=26;id++)pesos[id]=id>=5&&id<=10?({5:{sim:7,nao:2},6:{sim:4,nao:5},7:{sim:4,nao:1},8:{sim:3,nao:1},9:{sim:5,nao:2},10:{sim:7,nao:2}})[id]:[{sim:18,nao:6},{sim:14,nao:5},{sim:14,nao:5},{sim:24,nao:8}][id-[1,11,15,19,23].filter(b=>b<=id).pop()];return {versao:1,pesos,limite_personalizados:4,limite_pecas:50,limite_caminhoes:2,distancia_manual_m:50,antecedencia_horas:48,inicio_expediente:'08:00',fim_expediente:'18:00',dias_expediente:[1,2,3,4,5],tipos_especiais:['Feira','Mídia'],grupos_volumosos:['sofa','bar','painel']};}
  const norm=v=>String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
  const bool=v=>typeof v==='boolean'?v:null;
  function grupo(it){if(it.complexidade?.grupo)return it.complexidade.grupo;for(const raw of [it.produto_base,it.categoria,it.familia]){const t=norm(raw);if(/sofa/.test(t))return 'sofa';if(/cadeira|poltrona|puff|pufe/.test(t))return 'cadeira_puff';if(/aparador|estante|armario/.test(t))return 'aparador_estante';if(/\bbar(es)?\b/.test(t))return 'bar';if(/mesa/.test(t))return 'mesa';if(/painel/.test(t))return 'painel';}return null;}
@@ -22,53 +22,49 @@
   const itens=c.itens||[],servicos=c.servicos||[],local=c.local||{},cliente=c.cliente||{},ex=c.excecoes||{};
   let tagsLocal=local.tags||{};if(typeof tagsLocal==='string'){try{tagsLocal=JSON.parse(tagsLocal);}catch(_){tagsLocal={};}}
   const observacoes=tagsLocal?.observacoes;const tags=(Array.isArray(observacoes)?observacoes:typeof observacoes==='string'?[observacoes]:[]).map(norm);
-  function condLocal(campo,positivas,negativas){const v=bool(local.complexidade?.[campo]);if(v!==null)return v;if(positivas.some(s=>tags.includes(norm(s))))return true;if(negativas.some(s=>tags.includes(norm(s))))return false;return null;}
+  function condLocal(campo,positivas,negativas){const v=bool(local.complexidade?.[campo]);if(v!==null)return v;if(positivas.some(s=>tags.includes(norm(s))))return true;if(negativas.some(s=>tags.includes(norm(s))))return false;return c.local?false:null;} // nov/2026: sem a etiqueta no local = Não
   put(15,condLocal('baldeacao',['Necessita Baldeação'],['Não necessita baldeação']),'Cadastro do local','Baldeação no trajeto das peças');
   put(16,condLocal('escada',['Tem escadas'],['Sem escadas']),'Cadastro do local','Escada utilizada no transporte; a exceção do pedido prevalece');
-  const dist=local.complexidade?.distancia_manual_m;
-  let longe=dist!==undefined&&dist!==null&&dist!==''?Number(dist)>cfg.distancia_manual_m:null;
-  if(longe===null&&tags.some(t=>['caminhao para perto','caminhao para em frente'].includes(t)))longe=false;
-  put(17,longe,'Cadastro do local',dist!=null?'Transporte manual: '+dist+' m; referência: '+cfg.distancia_manual_m+' m':'Informe a distância de transporte no local');
-  put(18,c.caminhoes>0?c.caminhoes>cfg.limite_caminhoes:null,'Cronograma','Caminhões distintos nas etapas de entrega: '+(c.caminhoes||'a planejar')+'; limite: '+cfg.limite_caminhoes);
+  put(18,Number(c.caminhoes||0)>cfg.limite_caminhoes,'Escala do Painel Logístico',c.caminhoes>0?'Caminhões distintos no carregamento: '+c.caminhoes+'; limite: '+cfg.limite_caminhoes:'Ainda sem caminhão escalado; limite: '+cfg.limite_caminhoes);
   const reclamacao=cliente.reclamacao_historico;
   put(5,reclamacao?bool(reclamacao.valor):bool(cliente.complexidade?.reclamacao),reclamacao?.fonte||'Cadastro do cliente',reclamacao?.detalhe||'Registro explícito de reclamação operacional; exigência não significa reclamação');
   const anteriores=c.pedidos_anteriores;
   put(6,Number.isInteger(anteriores)?anteriores>0:null,'Histórico do cliente','Pedidos confirmados anteriores: '+(anteriores??'cliente não vinculado'));
-  put(8,Number.isInteger(anteriores)?anteriores===0:null,'Histórico do cliente','Considera pedidos aprovados, enviados ou finalizados anteriores a este pedido');
   put(7,c.tipo_evento?cfg.tipos_especiais.map(norm).includes(norm(c.tipo_evento)):null,'Tipo de evento',c.tipo_evento||'Preencha o tipo de evento no pedido');
-  const carga=c.carregamento;
+  // Sem etapa no cronograma (orçamento, pré-reserva): o carregamento é estimado pela data e horário de entrega do pedido (nov/2026).
+  const cargaCron=c.carregamento?.data?c.carregamento:null,carga=cargaCron||(c.data_entrega?{data:String(c.data_entrega).slice(0,10),hora:c.hora_entrega||null}:null);
   const dia=carga?.data?new Date(carga.data.slice(0,10)+'T12:00:00Z').getUTCDay():null;
-  put(9,dia!==null?[1,2,3].includes(dia):null,'Cronograma',carga?.data||'Planeje o carregamento');
-  put(26,dia!==null&&carga?.hora?(!cfg.dias_expediente.includes(dia)||carga.hora.slice(0,5)<cfg.inicio_expediente||carga.hora.slice(0,5)>=cfg.fim_expediente):null,'Cronograma',carga?carga.data+' '+(carga.hora||'sem horário'):'Planeje data e horário do carregamento');
+  put(9,dia!==null?[1,2,3].includes(dia):null,cargaCron?'Cronograma':'Entrega do pedido',carga?.data?(cargaCron?carga.data:'Ainda sem cronograma; data de entrega '+carga.data):'Preencha a data de entrega do pedido');
+  put(26,dia!==null&&carga?.hora?(!cfg.dias_expediente.includes(dia)||carga.hora.slice(0,5)<cfg.inicio_expediente||carga.hora.slice(0,5)>=cfg.fim_expediente):null,cargaCron?'Cronograma':'Entrega do pedido',carga?carga.data+' '+(carga.hora||'sem horário'):'Preencha a data e o horário de entrega do pedido');
   const previstos=new Set();let indefinidos=false;
   const serv=servicos.map(s=>{const fonte=Array.isArray(s.etapas)?s.etapas:[];const revisao=fonte.some(e=>e?.revisao===true);let etapas=revisao?[]:fonte.map(e=>norm(e?.setor||e)).filter(e=>['pintura','forracao','personalizacao'].includes(e));if(!etapas.length&&!revisao){const t=norm(s.tipo);if(t==='pintura')etapas=['pintura'];if(['forracao','tecido','costura','estofado','estofados'].includes(t))etapas=['forracao'];}if(!etapas.length)indefinidos=true;etapas.forEach(e=>previstos.add(e));return {...s,etapas};});
   put(10,previstos.size>1?true:indefinidos?null:false,'Personalizações do pedido','Setores previstos: '+([...previstos].join(', ')||'nenhuma personalização'));
   const itemPorId=new Map(itens.map(i=>[i.item_id,i]));
   function trabalho(setor,ids,grupos){
    const lista=serv.filter(s=>s.etapas.includes(setor));
-   ids.slice(0,3).forEach((id,i)=>{const candidatos=lista.map(s=>{const g=grupo(s.item||itemPorId.get(s.item_id)||{});return g===null?null:grupos[i].includes(g);});put(id,indefinidos&&!candidatos.includes(true)?null:anyTri(candidatos),'Personalizações do pedido','Considera serviço solicitado; uma peça pronta na cor desejada não gera pintura');});
+   ids.slice(0,3).forEach((id,i)=>{const candidatos=lista.map(s=>{const g=grupo(s.item||itemPorId.get(s.item_id)||{});return g===null?false:grupos[i].includes(g); /* nov/2026: móvel de outro tipo não é sofá/cadeira/bar */});put(id,indefinidos&&!candidatos.includes(true)?null:anyTri(candidatos),'Personalizações do pedido','Considera serviço solicitado; uma peça pronta na cor desejada não gera pintura');});
    const qtd=lista.reduce((n,s)=>n+Number(s.quantidade||0),0);
-   put(ids[3],indefinidos?null:qtd>cfg.limite_personalizados,'Personalizações do pedido',qtd+' peças com serviço de '+setor+'; referência: '+cfg.limite_personalizados);
+   put(ids[3],indefinidos?null:qtd>cfg.limite_personalizados,'Personalizações do pedido',qtd+' peças com serviço de '+({forracao:'forração',pintura:'pintura'}[setor]||setor)+'; referência: '+cfg.limite_personalizados);
    return lista.length>0?true:indefinidos?null:false;
   }
   const est=trabalho('forracao',[1,2,3,4],[['sofa'],['cadeira_puff'],['bar']]);
   const pin=trabalho('pintura',[11,12,13,14],[['cadeira_puff'],['bar','mesa'],['aparador_estante']]);
   const pecas=c.pecas||[];
   const qtdFisica=pecas.reduce((n,i)=>n+Number(i.quantidade||0),0);
-  put(19,pecas.length?qtdFisica>cfg.limite_pecas:null,'Itens e componentes dos kits',qtdFisica+' peças físicas; limite: '+cfg.limite_pecas+'. Sem duplicar kit e componentes');
-  const fragil=pecas.length?anyTri(pecas.map(i=>{const b=bool(i.complexidade?.fragil);return b!==null?b:/vidro|espelho|laca/.test(norm(i.material))?true:null;})):null;
-  put(20,fragil,'Cadastro dos itens','A falta de classificação de fragilidade permanece pendente');put(24,fragil,'Cadastro dos itens','Mesma classificação utilizada pela Triagem');
-  const sob=itens.length?anyTri(itens.map(i=>bool(i.complexidade?.sob_medida))):null;
-  put(21,servicos.length?true:sob,'Itens e personalizações','Serviço solicitado ou peça explicitamente classificada como sob medida');
-  const volume=itens.length?anyTri(itens.map(i=>{const v=bool(i.complexidade?.volumoso);return v!==null?v:cfg.grupos_volumosos.includes(grupo(i))?true:null;})):null;
-  put(23,volume,'Cadastro dos itens','Classificação de manuseio volumoso, com grupos de referência configuráveis');
-  const montagem=c.montagem?.data&&c.montagem?.hora?Date.parse(c.montagem.data.slice(0,10)+'T'+c.montagem.hora.slice(0,8)+'-03:00'):NaN;
-  const confirmado=ex.confirmado_em||c.confirmado_em;
+  put(19,qtdFisica>cfg.limite_pecas,'Itens e componentes dos kits',qtdFisica+' peças físicas; limite: '+cfg.limite_pecas+'. Sem duplicar kit e componentes');
+  const fragil=pecas.some(i=>{const b=bool(i.complexidade?.fragil);return b!==null?b:/vidro|espelho|laca/.test(norm(i.material));}); // nov/2026: pelo material
+  put(20,fragil,'Material dos itens','Vidro, espelho ou laca (ou item marcado como frágil)');put(24,fragil,'Material dos itens','Mesma regra da Triagem: vidro, espelho ou laca');
+  put(21,servicos.length>0,'Personalizações do pedido',servicos.length?servicos.length+' item(ns) com personalização':'Nenhuma personalização no pedido');
+  const volume=itens.some(i=>{const v=bool(i.complexidade?.volumoso);return v!==null?v:cfg.grupos_volumosos.includes(grupo(i));}); // nov/2026: pelo grupo do móvel
+  put(23,volume,'Grupo dos itens','Grupos de manuseio volumoso: '+cfg.grupos_volumosos.join(', '));
+  const refMontagem=c.montagem?.data?c.montagem:(c.data_entrega?{data:String(c.data_entrega).slice(0,10),hora:c.hora_entrega||'08:00'}:null);
+  const montagem=refMontagem?.data?Date.parse(refMontagem.data.slice(0,10)+'T'+String(refMontagem.hora||'08:00').slice(0,5)+':00-03:00'):NaN;
+  const confirmado=ex.confirmado_em||c.confirmado_em||c.reservado_em;
   const dt=Date.parse(confirmado);
-  put(22,Number.isFinite(montagem)&&Number.isFinite(dt)?(montagem-dt)<cfg.antecedencia_horas*3600000:null,ex.confirmado_em?'Confirmação autorizada no pedido':'Registro do primeiro pagamento',confirmado?'Confirmação: '+confirmado+'; referência: '+cfg.antecedencia_horas+'h até a montagem':'Registre a entrada ou a confirmação autorizada da pré-reserva');
-  put(25,Number.isInteger(ex.viagens)&&ex.viagens>0?ex.viagens>1:null,'Planejamento de viagens','Número de viagens de entrega: '+(ex.viagens??'não informado'));
+  put(22,Number.isFinite(montagem)&&Number.isFinite(dt)?(montagem-dt)<cfg.antecedencia_horas*3600000:confirmado?null:false,ex.confirmado_em?'Confirmação autorizada no pedido':c.confirmado_em?'Primeiro pagamento':c.reservado_em?'Dia em que virou Reservado':'Situação do pedido',confirmado?'Confirmação: '+confirmado+'; referência: '+cfg.antecedencia_horas+'h até a montagem':'Pedido ainda não confirmado');
   for(const q of perguntas){const e=ex.respostas?.[q.id];if(typeof e?.valor==='boolean'&&e.motivo){r[q.id]={valor:e.valor,fonte:'Exceção do pedido',detalhe:e.motivo,por:e.por,em:e.em};}}
-  const aplica={personalizacao:est,pintura:pin,montagem:typeof ex.montagem_aplica==='boolean'?ex.montagem_aplica:c.montagem?true:null,triagem:itens.length>0?true:null,carregamento:carga?true:null};
+  // Nov/2026: nenhum setor fica "a confirmar": triagem e carregamento sempre participam; montagem quando há etapa ou valor de montagem.
+  const aplica={personalizacao:est,pintura:pin,montagem:typeof ex.montagem_aplica==='boolean'?ex.montagem_aplica:(c.montagem||Number(c.valor_montagem)>0)?true:false,triagem:true,carregamento:true};
   const resultado={};
   for(const s of setores){const ids=[...gerais,...s.perguntas],baseGeral=aplica[s.id]===false;
    // A ausência de serviço mantém os fatores gerais e os pesos "Não" do setor.
@@ -111,9 +107,9 @@
   return [legado[0]||[],...unificados.filter(p=>!p.vinculo_ambiguo).map(p=>{
    if(p.linha)return p.linha;
    const l=Array(50).fill('');Object.assign(l,{0:p.id,1:p.data,2:p.numero,3:p.cliente,4:p.local,5:p.valorLocacao,6:p.valorMontagem,7:p.valorFrete});
-   [1,2,3,4,5,6,7,8,9,10].forEach((id,i)=>l[8+i]=p['r'+id]===null?'':p['r'+id]?'Sim':'Não');
+   [1,2,3,4,5,6,7,8,9,10].forEach((id,i)=>l[8+i]=p['r'+id]==null?'':p['r'+id]?'Sim':'Não');
    for(const [s,col,ini] of [['personalizacao',18,1],['pintura',25,11],['montagem',32,15],['triagem',39,19],['carregamento',46,23]]){
-    if(s!=='personalizacao')for(let i=0;i<4;i++)l[col-4+i]=p['r'+(ini+i)]===null?'':p['r'+(ini+i)]?'Sim':'Não';
+    if(s!=='personalizacao')for(let i=0;i<4;i++)l[col-4+i]=p['r'+(ini+i)]==null?'':p['r'+(ini+i)]?'Sim':'Não';
     l[col]=p.complexidade.setores[s].score;
     const chave=s==='personalizacao'?'':s[0].toUpperCase()+s.slice(1);
     l[col+1]=p['comissao'+chave]||0;l[col+2]=p['valorComissao'+chave]||0;
@@ -130,7 +126,7 @@
    const texto=s.intervalo?(s.intervalo.minimo===s.intervalo.maximo?percentual(s.intervalo.minimo):percentual(s.intervalo.minimo)+' – '+percentual(s.intervalo.maximo)):'Pendente';
    return {texto,legenda:'Parcial · '+(s.aplica===null?'setor a confirmar':pendencias),detalhe:base+'Faixa possível de dificuldade com os dados atuais. '+pendencias+'.'+(s.aplica===null?' Confirme se este setor participa do pedido.':'')+' O percentual final será definido após completar as informações.'};
   }
-  return {texto:percentual(s.score),legenda:s.status==='manual_preservado'?'Avaliação anterior':s.base_geral?'Dificuldade mínima':'',detalhe:s.status==='manual_preservado'?'Percentual da avaliação manual preservada enquanto as fontes automáticas estão incompletas.':base+'Dificuldade calculada com todas as respostas necessárias preenchidas.'};
+  return {texto:percentual(s.score),legenda:s.status==='manual_preservado'?'Avaliação anterior':s.base_geral?'Dificuldade mínima':'',detalhe:s.status==='manual_preservado'?'Percentual da avaliação manual preservada enquanto as fontes automáticas estão incompletas.':base+'Dificuldade calculada automaticamente com os dados do sistema.'};
  }
  return {padrao,perguntas,setores,gerais,avaliar,paraPainel,grupo,mesclar,linhas,apresentarScore};
 });

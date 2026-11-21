@@ -90,7 +90,7 @@ const mockSupabase = `
   const ordem = await page.evaluate(() => [...document.querySelectorAll('.entrada-data-card h4')].map((h) => h.textContent.trim()));
   assert.deepEqual(ordem, ['Evento', 'Entrega', 'Coleta']);
   assert.equal(await page.locator('#dataEntrega').isDisabled(), true); assert.equal(await page.locator('#dataColeta').isDisabled(), true);
-  if(process.env.FOTO){await page.fill('#dataEvento','2026-11-20');await page.locator('#dataEvento').dispatchEvent('change');await page.locator('.entrada-agenda').screenshot({path:process.env.FOTO});const h=await page.evaluate(()=>[...document.querySelectorAll('.entrada-data-card')].map(c=>Math.round(c.getBoundingClientRect().height)));console.log('alturas',h);await page.fill('#dataEvento','');await page.locator('#dataEvento').dispatchEvent('change');}
+  if(process.env.FOTO){await page.fill('#dataEvento','2026-11-20');await page.locator('#dataEvento').dispatchEvent('change');await page.locator('.entrada-agenda').screenshot({path:process.env.FOTO});await page.locator('.entrada-identidade').screenshot({path:process.env.FOTO.replace('.png','-id.png')});const h=await page.evaluate(()=>[...document.querySelectorAll('.entrada-data-card')].map(c=>Math.round(c.getBoundingClientRect().height)));console.log('alturas',h);await page.fill('#dataEvento','');await page.locator('#dataEvento').dispatchEvent('change');}
   console.log('ok 1 - evento primeiro, entrega e coleta travadas até preencher o evento');
   let perguntas = [];
   const responder = (r) => page.evaluate((r) => { window.__resp = r; window.confirmarGlobal = async (t) => { (window.__perg ||= []).push(t); return window.__resp; }; }, r);

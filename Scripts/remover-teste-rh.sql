@@ -21,6 +21,7 @@ begin
   delete from rh_beneficios where id in (select (jsonb_array_elements_text(m->'rh_beneficios'))::uuid);
   delete from rh_treinamentos where id in (select (jsonb_array_elements_text(m->'rh_treinamentos'))::uuid);
   delete from rh_exames_cadastro where id in (select (jsonb_array_elements_text(m->'rh_exames_cadastro'))::uuid);
+  delete from controle_rh_ocorrencias where codigo_antigo like 'TESTE-RH-%'; -- nov/2026: as ocorrências vieram da planilha para esta tabela
   delete from gs_linhas where planilha_id = '1Jk1ScSsqmdYo70AiD96A5HRmfnVe2zdyljPn5f9EAZo' and aba = 'OcorrenciasRH' and valores->>0 like 'TESTE-RH-%';
   update gs_abas set versao = versao + 1, atualizado_em = now() where planilha_id = '1Jk1ScSsqmdYo70AiD96A5HRmfnVe2zdyljPn5f9EAZo' and nome = 'OcorrenciasRH';
   delete from sistema_demo_lotes where id = 'TESTE-RH-20261103';

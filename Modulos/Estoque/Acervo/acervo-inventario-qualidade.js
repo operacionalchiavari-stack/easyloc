@@ -23,7 +23,10 @@
   host.querySelectorAll('[data-item]').forEach(row=>{
    const c=atual.itens.find(c=>c.item_id===row.dataset.item),form=row.querySelector('form');if(!form)return;
    row.querySelectorAll('[data-quantidade]').forEach(input=>input.oninput=()=>{rascunhos[chave(c)]??={};rascunhos[chave(c)][input.dataset.quantidade]=input.value;});
-   form.onsubmit=e=>{e.preventDefault();if(!aberto||!form.reportValidity())return;const quantidades={};row.querySelectorAll('[data-quantidade]').forEach(input=>quantidades[input.dataset.quantidade]=Number(input.value));salvar(row.querySelector('[data-contar]'),{p_item:c.item_id,p_versao:c.versao,p_quantidades:quantidades,p_rodada:rodada});};
+   form.onsubmit=e=>{e.preventDefault();if(!aberto||!form.reportValidity())return;const quantidades={};row.querySelectorAll('[data-quantidade]').forEach(input=>quantidades[input.dataset.quantidade]=Number(input.value));(async()=>{let setor=null;
+    // 16/11/2026: peças em revisão na segunda contagem vão direto para o setor de manutenção (igual à Triagem)
+    if(rodada===2&&Number(quantidades.revisao)>0){if(!window.EasyLocAvariaSetor)return;setor=await window.EasyLocAvariaSetor.escolher({sb:window.supabaseClient,empresa:window.__CONTEXT?.empresa_id||sessionStorage.getItem('empresa_id'),item:c.nome,descricao:quantidades.revisao+' peça(s) para revisão',titulo:'Para qual setor vão as '+quantidades.revisao+' peça(s) em revisão?'});if(!setor)return;}
+    salvar(row.querySelector('[data-contar]'),{p_item:c.item_id,p_versao:c.versao,p_quantidades:quantidades,p_rodada:rodada,...(setor?{p_setor:setor}:{})});})();};
   });
   host.querySelector('#acAprovar')?.addEventListener('click',e=>aprovar(e.target));
  }};

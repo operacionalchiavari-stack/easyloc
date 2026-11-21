@@ -37,6 +37,19 @@ async function banco() {
 const livre = async (db, ini, fim, pedido = null) => Object.fromEntries((await db.query(
   `select item_id, livre from operacao_livre_calc($1,$2,$3,$4)`, [EMP, ini, fim, pedido])).rows.map((r) => [r.item_id, Number(r.livre)]));
 
+test('componentes mostram reservas reais sem confundir manutenção nem o próprio pedido',async()=>{
+  const db=await banco();
+  try{
+    await db.exec('create function acervo_itens_bloqueados(uuid) returns setof uuid language sql as $$select null::uuid where false$$;');
+    await db.exec(fs.readFileSync('supabase/migrations/20261117000200_pedido_componentes_reservados.sql','utf8'));
+    await db.query('update itens set estoque_manutencao=1 where id=$1',[PE]);
+    const mapa=async p=>(await db.query("select pedido_catalogo_estoque('2026-11-01',$1,$2,'2026-10-31','2026-11-02') d",[EMP,p])).rows[0].d;
+    assert.deepEqual((await mapa(null))[PE],[8,1,null,6]);
+    assert.deepEqual((await mapa(P1))[PE],[8,7,null,0]);
+    await assert.rejects(db.query("select pedido_catalogo_estoque('2026-11-01',$1)",[OUTRA]),/permissão/);
+  }finally{await db.close();}
+});
+
 test('o pedido aberto não conta contra si mesmo', async () => {
   const db = await banco();
   try {

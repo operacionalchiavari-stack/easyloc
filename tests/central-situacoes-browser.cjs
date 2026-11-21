@@ -89,7 +89,7 @@ const mockSupabase = `
   assert.strictEqual(await page.locator(".central-skeleton").count(), 0, "esqueleto some depois de carregar");
   const numeros = () => page.$$eval("#centralPedidosTbody [data-pedido-id]", (l) => l.map((t) => t.dataset.pedidoId));
   const botoes = await page.$$eval("[data-situacao]", (l) => l.map((b) => ({ s: b.dataset.situacao, t: b.querySelector("b").textContent, n: b.querySelector(".central-situacao-conta")?.textContent || null, small: b.querySelector("small")?.textContent || "", anim: b.querySelector(".central-situacao-conta") && getComputedStyle(b.querySelector(".central-situacao-conta")).animationName, cor: b.querySelector(".central-situacao-conta") && getComputedStyle(b.querySelector(".central-situacao-conta")).backgroundColor })));
-  assert.deepStrictEqual(botoes.map((b) => [b.t, b.n]), [["Todos", null], ["Reservado", null], ["Pré-reserva", "3"], ["Orçamento", "2"], ["Catálogo", "1"], ["Finalizados", null]]);
+  assert.deepStrictEqual(botoes.map((b) => [b.t, b.n]), [["Todos", null], ["Reservado", null], ["Pré-reserva", "3"], ["Orçamento", "2"], ["Catálogo", "1"], ["Confirmar datas", null], ["Finalizados", null]]);
   assert.ok(botoes.filter((b) => b.n).every((b) => b.cor === "rgb(230, 0, 18)" && b.anim === "central-situacao-pulsa"), "bolinha vermelha piscando");
   assert.strictEqual(await page.getAttribute("[data-situacao=\"\"]", "aria-pressed"), "true", "Todos começa ativo");
   assert.strictEqual(botoes[2].small, "1 vencida · 1 vencendo");
@@ -161,7 +161,7 @@ const mockSupabase = `
   assert.match(hist, /Orçamento enviado.*1º contato.*Reunião para decidir.*Próximo contato/s, "linha do tempo com envio, contatos e próximo");
   assert.equal(await page.$eval('.ca-historico', (e) => getComputedStyle(e).backgroundColor), "rgb(255, 255, 255)");
   assert.equal(await page.textContent('.ca-historico .ca-h-avatar'), "AS", "iniciais de quem fez o contato");
-  assert.ok(await page.$eval('.ca-historico .ca-h-topo', (t) => { const b = t.querySelector('b').getBoundingClientRect(), f = t.querySelector('.ca-h-avatar').getBoundingClientRect(); return Math.abs((b.top + b.height / 2) - (f.top + f.height / 2)) < 4 && f.left > b.right; }), 'foto na mesma linha de 1º contato');
+  assert.ok(await page.$eval('.ca-historico .ca-h-topo', (t) => { const b = t.querySelector('b').getBoundingClientRect(), f = t.querySelector('.ca-h-avatar').getBoundingClientRect(); return Math.abs(b.top - f.top) < 4 && f.left > b.right; }), 'foto na mesma linha de 1º contato');
   assert.match(await page.getAttribute('.ca-historico .ca-h-avatar img', 'src'), /u1\.jpg/, "foto do avatar de quem fez o contato");
   if (process.env.SHOT_AC) await page.screenshot({ path: process.env.SHOT_AC.replace(".png", "-historico.png") });
   await page.mouse.move(5, 5);

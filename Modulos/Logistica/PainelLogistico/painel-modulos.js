@@ -3,6 +3,22 @@
   const abas = [...document.querySelectorAll('#plTopoUnificado [data-modulo]')];
   const iniciados = new Set();
   const permitidos = new Set();
+  // A mesma origem de tempo mantém os indicadores em fase, mesmo com carregamentos separados.
+  const navegacao=document.getElementById('plModuloAbas');
+  if(navegacao){
+    let pendente=false;
+    const sincronizar=()=>{
+      if(pendente)return;pendente=true;
+      requestAnimationFrame(()=>{
+        pendente=false;
+        navegacao.querySelectorAll('.pl-alerta-aba').forEach(indicador=>{
+          (indicador.getAnimations?.({subtree:true})||[]).forEach(animacao=>{if(animacao.animationName==='pl-alerta-aba-anel')animacao.ready.then(()=>{if(animacao.playState!=='idle')animacao.startTime=0;}).catch(()=>{});});
+        });
+      });
+    };
+    new MutationObserver(sincronizar).observe(navegacao,{subtree:true,childList:true,attributes:true,attributeFilter:['hidden']});
+    sincronizar();
+  }
   let atual = null;
   async function selecionar(nome) {
     if (!permitidos.has(nome)) return;
@@ -10,7 +26,8 @@
     if (operacao && !window.EntregasColetas.podeSelecionarOperacao(nome)) return;
     atual = nome;
     if (['equipe','entrega','coleta'].includes(nome)) window.PainelLogisticoDias.definirModulo(nome);
-    document.getElementById('plAbasDias').hidden = ['cronograma','parametros'].includes(nome);
+    document.getElementById('plAbasDias').hidden = true;
+    document.getElementById('plIrHoje').hidden=nome!=='equipe';
     abas.forEach(aba => {
       const selecionada = aba.dataset.modulo === nome;
       aba.setAttribute('aria-selected', String(selecionada));
@@ -18,7 +35,7 @@
     });
     document.getElementById('plModuloEquipe').hidden = nome !== 'equipe';
     document.getElementById('plModuloEntregas').hidden = !operacao;
-    document.getElementById('plModuloCronograma').hidden = nome !== 'cronograma';
+    document.getElementById('plModuloFreteiros').hidden = nome !== 'freteiros';
     document.getElementById('plModuloParametros').hidden = nome !== 'parametros';
     if (operacao) {
       document.getElementById('plModuloEntregas').setAttribute('aria-labelledby', nome === 'entrega' ? 'plTabEntrega' : 'plTabColeta');
@@ -29,7 +46,7 @@
     url.searchParams.set('aba', nome);
     if (nome !== 'equipe') url.searchParams.delete('dia');
     history.replaceState(null, '', url);
-    const grupo = nome === 'parametros' ? 'parametros' : nome === 'cronograma' ? 'cronograma' : nome === 'equipe' ? 'equipe' : 'operacoes';
+    const grupo = nome === 'parametros' ? 'parametros' : nome === 'freteiros' ? 'freteiros' : nome === 'equipe' ? 'equipe' : 'operacoes';
     if (iniciados.has(grupo)) return;
     iniciados.add(grupo);
     try {
@@ -37,35 +54,13 @@
         const ctx=await window.aguardarContexto();
         await window.carregarParametrosEscala(document.getElementById('plModuloParametros'),ctx.empresa_id,{mostrarAutomatica:false,mostrarUber:true});
       }
-      else if (nome === 'cronograma') {
-        const quadro = document.getElementById('plCronogramaFrame');
-        quadro.addEventListener('load', () => {
-          try {
-            const doc = quadro.contentDocument;
-            const estilo = doc.createElement('style');
-            estilo.textContent = 'html,body{height:auto!important;min-height:0!important}html{overflow-y:hidden!important}body{overflow-y:visible!important}html:root body .app,html:root body .app-cron{height:auto!important;min-height:0!important;max-height:none!important}html:root body .board-wrap{height:auto!important;min-height:0!important;max-height:none!important;overflow-x:auto!important;overflow-y:hidden!important}html body .topbar>.title-wrap,html body .topbar button[onclick="abrirAgendaNova()"]{display:none!important}html body .topbar{grid-template-columns:minmax(0,1fr) auto!important;grid-template-areas:"semana acoes"!important}';
-            doc.head.appendChild(estilo);
-            quadro.setAttribute('scrolling','no');
-            let pendente=false;
-            const ajustarAltura=()=>{
-              if(pendente || document.getElementById('plModuloCronograma').hidden)return;
-              pendente=true;
-              requestAnimationFrame(()=>{
-                pendente=false;
-                const margens=quadro.contentWindow.getComputedStyle(doc.body);
-                const altura=Math.ceil(doc.body.getBoundingClientRect().height+(parseFloat(margens.marginTop)||0)+(parseFloat(margens.marginBottom)||0));
-                if(altura>0 && Math.abs(quadro.getBoundingClientRect().height-altura)>1)quadro.style.height=altura+'px';
-              });
-            };
-            const observador=new ResizeObserver(ajustarAltura);
-            observador.observe(doc.body);
-            const visibilidade=new MutationObserver(ajustarAltura);
-            visibilidade.observe(document.getElementById('plModuloCronograma'),{attributes:true,attributeFilter:['hidden']});
-            quadro.contentWindow.addEventListener('resize',ajustarAltura);
-            doc.addEventListener('load',ajustarAltura,true);
-            ajustarAltura();
-          } catch (_) { /* O cronograma mantém o próprio cabeçalho caso a origem mude. */ }
-        }, {once: true});
+      else if (nome === 'freteiros') {
+        // 15/11/2026: aprovação dos cadastros do App do Freteiro (antes ficava escondida no Cadastro de Fornecedores)
+        const quadro = document.getElementById('plFreteirosFrame');
+        window.addEventListener('message', e => {
+          if (e.origin !== location.origin || e.source !== quadro.contentWindow) return;
+          if (e.data?.tipo === 'fretes-cadastros-altura') quadro.style.height = Math.max(200, Number(e.data.altura) || 200) + 'px';
+        });
         quadro.src = quadro.dataset.src;
       }
       else if (nome === 'equipe') await window.PainelLogisticoEquipe.iniciar();
@@ -80,7 +75,7 @@
   async function iniciar() {
     const permissoes = window.EasyLocPermissions;
     if (permissoes) await permissoes.load();
-    const chaves = {equipe: 'logistica.planejamento.visualizar', entrega: 'logistica.expedicao.visualizar', coleta: 'logistica.expedicao.visualizar', cronograma: 'logistica.cronograma.visualizar', parametros: 'logistica.planejamento.visualizar'};
+    const chaves = {equipe: 'logistica.planejamento.visualizar', entrega: 'logistica.expedicao.visualizar', coleta: 'logistica.expedicao.visualizar', freteiros: 'logistica.planejamento.visualizar', parametros: 'logistica.planejamento.visualizar'};
     abas.forEach(aba => {
       const nome = aba.dataset.modulo;
       const pode = !permissoes || permissoes.hasPermission(chaves[nome]);

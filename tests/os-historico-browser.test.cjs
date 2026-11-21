@@ -14,7 +14,7 @@ test('historico de manutencao: mesmas colunas, fotos do cadastro, origem e sem t
   await page.locator('#tabelaConcluidas .os-item-foto').waitFor();
   assert.deepEqual(await page.locator('.os-concluidas-tabela th').allTextContents(),['Envio','Foto','Item','O.S','Qtd','Fluxo','Origem','Detalhes','Conclusão']);
   assert.equal(await page.locator('#modalConcluidas .modal-topo').count(),0);assert.equal(await page.locator('#contadorConcluidas').isVisible(),false);
-  assert.match(await page.locator('#tabelaConcluidas').innerText(),/Montagem/);assert.match(await page.locator('#tabelaConcluidas').innerText(),/Pedido #2401/);
+  assert.equal(await page.locator('#tabelaConcluidas .os-col-origem').innerText(),'Pedido 2401');assert.match(await page.locator('#tabelaConcluidas').innerText(),/Pedido 2401/);
   assert.equal(await page.locator('#tabelaConcluidas .os-solicitante-foto img').count(),1);assert.match(await page.locator('#tabelaConcluidas .os-item-medidas').innerText(),/0.5 m/);
   assert.match(await page.locator('#tabelaConcluidas').innerText(),/Estrutura reparada/);assert.deepEqual(erros,[]);
   await page.screenshot({path:'.tmp/os-concluidas-tabela.png',fullPage:true});

@@ -8,15 +8,26 @@
  */
 (function () {
   try {
-    const empresaId = sessionStorage.getItem("empresa_id") || "default";
+    const empresaId = sessionStorage.getItem("empresa_id") || localStorage.getItem("acervo_ultima_empresa") || "default";
     const cachedTheme = localStorage.getItem("easyloc_theme_" + empresaId);
     if (!cachedTheme) return;
 
     const theme = JSON.parse(cachedTheme);
+    window.EasyLocSystemZoom?.apply(theme.sistema_zoom);
     const hex = value => /^#[0-9a-f]{6}$/i.test(String(value || '').trim());
-    theme.cor_sidebar = hex(theme.cor_sidebar) ? theme.cor_sidebar.trim() : '#290610';
+    theme.cor_sidebar = hex(theme.cor_sidebar) && theme.cor_sidebar.trim().toLowerCase() !== '#290610' ? theme.cor_sidebar.trim() : '#5a5a55';
     theme.cor_destaque = hex(theme.cor_destaque) ? theme.cor_destaque.trim() : '#7d603d';
     theme.cor_fundo = '#f3f5f6';
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+    const part = type => parts.find(item => item.type === type).value;
+    const today = `${part('year')}-${part('month')}-${part('day')}`;
+    const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(String(value || '')) && !Number.isNaN(Date.parse(value + 'T12:00:00Z')) && new Date(value + 'T12:00:00Z').toISOString().slice(0,10) === value;
+    if (['carnaval', 'natal', 'pascoa', 'ano_novo'].includes(theme.tema_festivo)
+      && validDate(theme.tema_festivo_inicio) && validDate(theme.tema_festivo_fim)
+      && theme.tema_festivo_inicio <= today && today <= theme.tema_festivo_fim) {
+      if (hex(theme.cores_sistema?.cor_sidebar)) theme.cor_sidebar = theme.cores_sistema.cor_sidebar;
+      if (hex(theme.cores_sistema?.cor_destaque)) theme.cor_destaque = theme.cores_sistema.cor_destaque;
+    }
     const escurecer = (color,amount) => '#' + color.slice(1).match(/../g).map(part=>Math.max(0,parseInt(part,16)-amount).toString(16).padStart(2,'0')).join('');
     const root = document.documentElement;
     const hexToRgbString = (hex) => {

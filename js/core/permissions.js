@@ -172,8 +172,10 @@
     [/Chiavari\/Portal/i, 'rh.colaboradores.visualizar'], // Mural do Portal (editar o mural) — fica no RH
     [/CadastroFuncionarios/i, 'rh.funcionarios.visualizar'],
     [/CadastroClientes/i, 'comercial.clientes.visualizar'],
+    [/ClientesFinais/i, 'comercial.clientes.visualizar'],
     [/CadastroLocais/i, 'comercial.locais.visualizar'],
     [/CreditosIA/i, 'comercial.creditos.visualizar'],
+    [/Comercial\/PersonalizacoesIA/i, 'comercial.pedidos.visualizar'],
     [/Catalogo/i, 'comercial.catalogo.visualizar'],
     [/Comercial\/Historico/i, 'comercial.pedidos.visualizar'], // Histórico do comercial (out/2026)
     [/Comercial\/Produtividade/i, 'comercial.pedidos.visualizar'],
@@ -217,7 +219,11 @@
     if (/\/Modulos\/RH\/IdeiaPremiada\/ideia-premiada\.html$/i.test(path)) return true;
     // Fluxo do sistema (Gestão): só leitura, aberto para toda a equipe (nov/2026).
     if (/\/Modulos\/Gestao\/Fluxograma\/fluxograma\.html$/i.test(path)) return true;
+    // Reuniões (nov/2026): toda a equipe; cada reunião só aparece para quem pode vê-la (reuniao_pode_ver no banco).
+    if (/\/Modulos\/Gestao\/Reunioes\/reunioes\.html$/i.test(path)) return true;
     if (cache.legacyAdmin) return true;
+    // O.S e O.P (nov/2026): a tela junta Ordens de produção e de serviço; entra quem vê qualquer uma das duas.
+    if (/\/Modulos\/Producao\/ordens-painel\.html$/i.test(path)) return cache.permissions.get('producao.ordens.visualizar') === true || cache.permissions.get('estoque.almoxarifado.visualizar') === true;
     const match = routes.find(([pattern]) => pattern.test(path));
     if (/\/Modulos\/Logistica\/(PainelLogistico|EntregasColetas)\//i.test(path)) return hasPermission('logistica.planejamento.visualizar') || hasPermission('logistica.expedicao.visualizar') || hasPermission('logistica.cronograma.visualizar');
     return match ? hasPermission(match[1]) : /\/(dashboard|usuario)\.html$/i.test(path);

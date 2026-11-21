@@ -22,3 +22,11 @@ dialog::backdrop{background:rgba(31,32,32,.45)}
 .compras-header .btn{flex-shrink:0;white-space:nowrap}
 @media(max-width:760px){.compras-main > .compras-header{grid-template-columns:minmax(0,1fr) auto;gap:12px}.compras-header h1{grid-column:1/-1;grid-row:1}.compras-header .pv-tabs-tools{width:auto}.compras-header .pv-search-box{min-width:0;flex:1 1 220px}}
 @media(max-width:760px){.compras-main{padding:14px}.pv-tabs-tools{width:100%;flex-wrap:wrap}.pv-search-box{min-width:0;flex:1}}
+/* 15/11/2026: vínculo de tecido/tinta da cartela ao Almoxarifado */
+.pv-cartela-dialog .pv-cartela-dica{margin:4px 0 12px;font-size:12.5px;color:#6b6b6b;line-height:1.45}
+.pv-cartela-dialog .pv-cartela-modo{display:flex;flex-direction:column;gap:6px;margin:0 0 12px;font-size:13px}
+.pv-cartela-dialog .pv-cartela-modo label{display:flex;align-items:center;gap:8px;cursor:pointer}
+.pv-cartela-dialog .pv-cartela-novo{display:flex;flex-direction:column;gap:10px}
+.pv-cartela-dialog .pv-cartela-novo label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500;color:#5b6470}
+.pv-cartela-dialog .pv-cartela-linha{display:grid;grid-template-columns:90px 1fr 110px;gap:10px}
+.pv-cartela-dialog input:not([type=radio]){height:38px;padding:0 10px;border:1px solid #d8dee6;border-radius:8px;font-size:14px}

@@ -18,6 +18,8 @@
   const params = new URLSearchParams(location.search);
   const etapa = ETAPAS[params.get("etapa")] ? params.get("etapa") : "carregamento";
   const cfg = ETAPAS[etapa];
+  const porCaminhao = etapa === "carregamento" || etapa === "descarregamento";
+  const campoVeiculos = etapa === "descarregamento" ? "descarga_por_veiculo" : "carga_por_veiculo";
   const $ = (id) => document.getElementById(id);
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const s = { sb: null, empresa: null, usuario: null, nome: "", pedido: null, itens: [], etiquetas: [], patLidos: new Set(), nomes: new Map(), ocupado: false, base: [], revelado: false, recontou: false };
@@ -130,6 +132,12 @@
     return i?.item_nome || "Item";
   }
 
+  function nomeComMedidasHtml(nome) {
+    const texto = String(nome || "");
+    const inicio = texto.search(/\([LAP]\)\s*\d/i);
+    return inicio < 0 ? esc(texto) : esc(texto.slice(0, inicio).trim()) + '<span class="cf-item-medidas">' + esc(texto.slice(inicio).trim()) + '</span>';
+  }
+
   function anexarCapasQuantidade(lista,caixa,editavel){
     if(!s.capas)return;
     const cab=caixa.querySelector('.cf-qtd-cabeca');
@@ -160,12 +168,15 @@
     $("cfRodape").classList.remove("is-completo"); $("cfRodape").classList.add("is-cega");
     const grupos = new Map();
     lidas.forEach((e) => { const k = e.separacao_item_id + "|" + e.item_id; if (!grupos.has(k)) grupos.set(k, []); grupos.get(k).push(e); });
-    $("cfItens").innerHTML = [...grupos.values()].map((lista) => '<article class="cf-item"><div class="cf-item-linha">' + fotoEtqHtml(lista[0]) + '<div class="cf-item-meio"><div class="cf-item-topo"><strong>' + esc(nomeItem(lista[0])) +
-      '</strong><span>' + lista.length + '</span></div><div class="cf-etiquetas">' + lista.map((e) => '<span class="cf-etq is-ok">' + esc(e.codigo) + "</span>").join("") + "</div></div>" + capaDoGrupo(lista[0]) + "</div></article>").join("")
+    $("cfItens").innerHTML = [...grupos.values()].map((lista) => '<article class="cf-item"><div class="cf-item-linha">' + fotoEtqHtml(lista[0]) + '<div class="cf-item-meio"><div class="cf-item-topo"><strong>' + nomeComMedidasHtml(nomeItem(lista[0])) +
+      '</strong><span>' + lista.length + '</span></div><div class="cf-etiquetas">' + lista.map((e) => '<span class="cf-etq is-ok">' + esc(e.codigo) + "</span>").join("") + "</div></div>" + capaDoGrupo(lista[0]) + (porCaminhao?identificacaoCarga(lista[0].separacao_item_id+'|'+lista[0].item_id):'') + "</div></article>").join("")
       || '<p class="cf-vazio">Bipe cada peça que ' + voltaOuChegou() + '. O sistema compara com o que saiu quando você concluir.</p>';
   }
 
   function pintar() {
+    const topoVolumes = document.querySelector(".cf-lista-topo");
+    const progresso = $("cfPercent").closest(".cf-progresso");
+    if (topoVolumes && progresso.parentElement !== topoVolumes) topoVolumes.insertBefore(progresso, topoVolumes.querySelector(".cf-so-faltando"));
     pintarCapasBipe();
     if (escondido()) { pintarCego(); return; }
     $("cfPercent").hidden = false; $("cfBarra").parentElement.hidden = false; $("cfSoFaltando").parentElement.hidden = false;
@@ -185,9 +196,9 @@
     $("cfItens").innerHTML = [...grupos.entries()].map(([, lista]) => {
       const ok = lista.filter((e) => e[cfg.campo]).length;
       if (soFaltando && ok === lista.length) return "";
-      return '<article class="cf-item' + (ok === lista.length ? " is-ok" : "") + '"><div class="cf-item-linha">' + fotoEtqHtml(lista[0]) + '<div class="cf-item-meio"><div class="cf-item-topo"><strong>' + esc(nomeItem(lista[0])) +
+      return '<article class="cf-item' + (ok === lista.length ? " is-ok" : "") + '"><div class="cf-item-linha">' + fotoEtqHtml(lista[0]) + '<div class="cf-item-meio"><div class="cf-item-topo"><strong>' + nomeComMedidasHtml(nomeItem(lista[0])) +
         '</strong><span>' + ok + " / " + lista.length + '</span></div><div class="cf-etiquetas">' +
-        lista.map((e) => '<span class="cf-etq' + (e[cfg.campo] ? " is-ok" : "") + '" title="' + esc(e.codigo) + '">' + esc(e.codigo) + "</span>").join("") + "</div></div>" + capaDoGrupo(lista[0]) + "</div></article>";
+        lista.map((e) => '<span class="cf-etq' + (e[cfg.campo] ? " is-ok" : "") + '" title="' + esc(e.codigo) + '">' + esc(e.codigo) + "</span>").join("") + "</div></div>" + capaDoGrupo(lista[0]) + (porCaminhao?identificacaoCarga(lista[0].separacao_item_id+'|'+lista[0].item_id):'') + "</div></article>";
     }).join("") || '<p class="cf-vazio">Nada faltando.</p>';
   }
 
@@ -246,6 +257,11 @@
 
   async function concluir() {
     if(pendenciasRede().length){ avisar("Envie as leituras pendentes antes de concluir."); return; }
+    if(porCaminhao){
+      const quantidades={};for(const e of s.etiquetas){const k=e.separacao_item_id+'|'+e.item_id;if(e[cfg.campo])quantidades[k]=(quantidades[k]||0)+1;}
+      for(const p of s.cargaBase?.itens||[])quantidades[p.chave]=Math.max(0,(quantidades[p.chave]||0)-carregadoNaChave(p.chave));
+      return registrarLoteCarga(quantidades);
+    }
     const conferir = etapa !== "carregamento" ? s.base : s.etiquetas;
     const faltando = conferir.filter((e) => !e[cfg.campo]);
     if (etapaVolta && faltando.length && !s.recontou) {
@@ -297,11 +313,34 @@
 
   // Conferência concluída não pode ser refeita: o pedido já passou para a etapa seguinte e o servidor recusa
   // (era o "Concluída · conferir de novo", que mostrava "Confirme a coleta…"). Trava leitura e botão.
-  function travarConcluida(feito) {
+  let avisoConclusao = null;
+  document.addEventListener("click", (ev) => {
+    if (!avisoConclusao || !ev.target.closest?.(".cf-lista, .cf-leitor") || ev.target.closest?.("button, a, [role=button], .el-alert, .el-alert-confirm")) return;
+    avisar(avisoConclusao, "Confer\u00eancia conclu\u00edda", "sucesso");
+  });
+  async function travarConcluida(feito) {
     leitor?.desligar();
     ["cfConcluir", "cfBtnCamera", "cfEntrada"].forEach((id) => { if ($(id)) $(id).disabled = true; });
     if ($("cfConcluir")) $("cfConcluir").textContent = "Conferência concluída";
-    if (feito?.concluido_em) mostrarAviso("Conferência concluída em " + new Date(feito.concluido_em).toLocaleString("pt-BR") + (feito.por ? " por " + feito.por : "") + " (" + feito.lidas + " de " + feito.total + "). O pedido já seguiu para a próxima etapa.");
+    if (feito?.concluido_em) {
+      let responsavel = feito.por || "";
+      if (responsavel.includes("@")) {
+        responsavel = "";
+        const id = feito.usuario_id || feito.por_id;
+        if (id) {
+          try {
+            const { data } = await s.sb.from("usuarios").select("nome").eq("id", id).maybeSingle();
+            responsavel = data?.nome || "";
+          } catch (_) {}
+          if (!responsavel && String(id) === String(s.usuario) && !s.nome.includes("@")) responsavel = s.nome;
+        }
+        responsavel ||= "Usu\u00e1rio";
+      }
+      const mensagem = "Conferência concluída em " + new Date(feito.concluido_em).toLocaleString("pt-BR") + (responsavel ? " por " + responsavel : "") + " (" + feito.lidas + " de " + feito.total + "). O pedido já seguiu para a próxima etapa.";
+      $("cfAviso").hidden = true;
+      $("cfAviso").textContent = "";
+      avisoConclusao = mensagem;
+    }
   }
 
   async function carregarOcorrencias(){
@@ -357,9 +396,9 @@
     const caixa = $("cfCaminhoes"); if (!caixa) return;
     const carregados = s.pedido.operacao?.carregamento?.caminhoes || s.pedido.operacao?.carregamento_caminhoes;
     let lista = [], rotulo = "Caminhões programados";
-    if (etapa !== "carregamento" && Array.isArray(carregados) && carregados.length) { lista = carregados; rotulo = "Carregado em"; }
+    if (etapa === "retorno" && Array.isArray(carregados) && carregados.length) { lista = carregados; rotulo = "Carregado em"; }
     else {
-      const { data } = await s.sb.rpc("operacao_caminhoes_programados", { p_pedidos: [s.pedido.id] });
+      const { data } = await s.sb.rpc(etapa === "descarregamento" ? "operacao_caminhoes_volta_programados" : "operacao_caminhoes_programados", { p_pedidos: [s.pedido.id] });
       lista = data || []; s.programados = lista;
     }
     caixa.hidden = false;
@@ -370,26 +409,98 @@
       const chip = document.createElement("span"); chip.className = "cf-caminhao";
       if (/^https?:\/\//i.test(c.foto_url || "")) { const img = document.createElement("img"); img.src = c.foto_url; img.alt = ""; img.onerror = () => img.remove(); chip.append(img); }
       const t = document.createElement("strong"); t.textContent = c.codigo || c.placa || "Caminhão"; chip.append(t);
-      const d = [c.placa && !/^SEM PLACA/i.test(c.placa) ? c.placa : "", c.modelo].filter(Boolean).join(" · ");
+      const d = c.placa && !/^SEM PLACA/i.test(c.placa) && c.placa !== t.textContent ? c.placa : "";
       if (d) { const sm = document.createElement("small"); sm.textContent = d; chip.append(sm); }
       caixa.append(chip);
     });
   }
+  const cargasAtuais=()=>s.cargaBase?.veiculos||s.pedido?.operacao?.[campoVeiculos]||[];
+  const carregadoNaChave=chave=>cargasAtuais().reduce((t,c)=>t+Number(c.itens?.find(i=>i.chave===chave)?.quantidade||0),0);
+  function identificacaoCarga(chave){
+    const cargas=cargasAtuais();
+    return '<div class="cf-carga-coluna" style="--cf-caminhoes:'+Math.max(1,cargas.length)+'" aria-label="Caminhões carregados">'+(cargas.length?cargas.map(c=>{
+      const cam=s.frotaCarga?.find(f=>String(f.id)===String(c.caminhao_id))||c,q=Number(c.itens?.find(i=>i.chave===chave)?.quantidade||0),placa=cam.placa||c.placa||c.codigo||'—',url=cam.foto_url||c.foto_url||'';
+      const imagem=/^https?:\/\//i.test(url)?'<img src="'+esc(url)+'" alt="Foto do caminhão '+esc(c.codigo||placa)+'" loading="lazy" onerror="this.remove()">':'';
+      const titulo='<small class="cf-carga-coluna-titulo">'+esc(c.codigo||cam.codigo||placa)+'</small>';
+      if(!q)return '<div class="cf-carga-veiculo" data-coluna-caminhao="'+esc(c.caminhao_id)+'">'+titulo+'<span class="cf-carga-vazia">—</span></div>';
+      return '<div class="cf-carga-veiculo" data-coluna-caminhao="'+esc(c.caminhao_id)+'">'+titulo+'<div class="cf-carga-item" data-caminhao-codigo="'+esc(c.codigo||cam.codigo||'')+'" title="Caminhão '+esc(c.codigo||cam.codigo||'')+' · '+esc(q)+' unidade(s)"><span class="cf-carga-foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 5h11v12H3zM14 9h4l3 4v4h-7"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>'+imagem+'</span><b class="cf-carga-placa">'+esc(placa)+'</b><small>'+esc(q)+' unidade(s)</small></div></div>';
+    }).join(''):'<span class="cf-carga-vazia">—</span>')+'</div>';
+  }
+  function colunaCaminhaoQuantidade(lista,caixa){
+    if(!porCaminhao)return;const tabela=caixa.querySelector('.cf-qtd-tabela');if(!tabela)return;tabela.classList.add('com-caminhoes');
+    const cab=tabela.querySelector('.cf-qtd-cabeca'),th=document.createElement('span');th.className='cf-carga-cabeca';th.style.setProperty('--cf-caminhoes',Math.max(1,cargasAtuais().length));th.innerHTML=cargasAtuais().length?cargasAtuais().map(c=>'<span>'+esc(c.codigo||c.placa)+'</span>').join(''):'Caminhão';cab.insertBefore(th,cab.querySelector('.cp-coluna')?.nextSibling||cab.children[4]||null);
+    tabela.querySelectorAll('.cf-qtd-linha:not(.cf-qtd-cabeca)').forEach((linha,i)=>{const p=lista[i];if(!p)return;const tmp=document.createElement('div');tmp.innerHTML=identificacaoCarga(p.chave);linha.insertBefore(tmp.firstElementChild,linha.querySelector('.cp-cell')?.nextSibling||linha.children[4]||null);});
+  }
+
+  async function carregarCarga(){
+    const {data,error}=await s.sb.rpc(etapa==='descarregamento'?'operacao_descarga_veiculo_base':'operacao_carga_veiculo_base',{p_pedido:s.pedido.id});
+    if(error)throw Error(error.message);if(!data||!Array.isArray(data.itens)||!data.token)throw Error('Não foi possível carregar a distribuição dos caminhões.');s.cargaBase=data;
+    const ids=(data.veiculos||[]).map(c=>c.caminhao_id);
+    if(ids.length){const {data:cam}=await s.sb.from('caminhoes').select('id,codigo,placa,modelo,foto_url').eq('empresa_id',s.empresa).in('id',ids);s.frotaCarga=cam||s.frotaCarga||[];}
+    s.pedido.operacao={...s.pedido.operacao,[campoVeiculos]:data.veiculos};
+  }
+  function atualizarBotoesCarga(){
+    if(!porCaminhao||s.pedido?.operacao?.[etapa]?.concluido_em)return;
+    const texto='Concluir '+(cargasAtuais().length+1)+'º caminhão';for(const id of ['cfQtdConfirmar','cfConcluir'])if($(id))$(id).textContent=texto;
+    const rodape=$('cfQtdConfirmar')?.parentElement||$('cfConcluir')?.parentElement;if(!rodape)return;
+    let botao=rodape.querySelector('[data-finalizar-pendencias]');
+    if(cargasAtuais().length&&!botao){botao=document.createElement('button');botao.type='button';botao.className='btn secondary';botao.dataset.finalizarPendencias='';botao.textContent='Finalizar com pendências';botao.onclick=()=>finalizarPendenciasCarga();rodape.append(botao);}
+  }
+  async function registrarLoteCarga(quantidades,observacoes={},finalizar=false,pendencia=null){
+    if(s.salvandoCarga)return;s.salvandoCarga=true;
+    const botoes=[$('cfQtdConfirmar'),$('cfConcluir'),...document.querySelectorAll('[data-finalizar-pendencias]')].filter(Boolean);
+    try{
+      if(!s.cargaBase)await carregarCarga();
+      const itens=s.cargaBase.itens.map(p=>({chave:p.chave,quantidade:Number(quantidades?.[p.chave]||0)}));
+      if(!finalizar){
+        for(const i of itens){const p=s.cargaBase.itens.find(p=>p.chave===i.chave),saldo=Number(p.esperado)-carregadoNaChave(i.chave);if(!Number.isInteger(i.quantidade)||i.quantidade<0||(etapa==='carregamento'&&i.quantidade>saldo))throw Error('Revise a quantidade de '+p.nome+'. Restam '+saldo+' unidade(s).');}
+        if(!itens.some(i=>i.quantidade>0))throw Error('Informe os itens '+(etapa==='descarregamento'?'descarregados':'carregados')+' neste caminh\u00e3o. Os demais podem ficar em branco.');
+      }
+      const cam=finalizar?null:await escolherCaminhoes();if(!finalizar&&!cam)return;
+      botoes.forEach(b=>b.disabled=true);
+      const completo=finalizar||s.cargaBase.itens.every(p=>carregadoNaChave(p.chave)+Number(quantidades?.[p.chave]||0)>=Number(p.esperado));
+      await s.capas?.salvar(completo);
+      const {data,error}=await s.sb.rpc(etapa==='descarregamento'?'operacao_descarregamento_lote':'operacao_carregamento_lote',{p_pedido:s.pedido.id,p_caminhao:cam?.id||null,p_itens:finalizar?null:itens,p_token:s.cargaBase.token,p_observacoes:observacoes,p_finalizar:finalizar,p_pendencia:pendencia});
+      if(error)throw Error(error.message);
+      s.cargaBase=data.base;s.pedido.operacao=data.operacao;
+      if(data.registro){leitor?.desligar();$('cfLiberarTriagem')?.remove();document.querySelectorAll('[data-finalizar-pendencias]').forEach(b=>b.remove());}
+      if($('cfQtd')&&!$('cfQtd').hidden)await mostrarSemEtiquetas();else{pintar();atualizarBotoesCarga();if(data.registro)travarConcluida(data.registro);}
+      await mostrarCaminhoes();
+      avisar(data.registro?(data.registro.pendencia?'Carregamento concluído com pendências.'+avisoPendencia(data.registro):(etapa==='descarregamento'?'Descarregamento conclu\u00eddo. O pedido segue para a triagem da volta.':'Carregamento conclu\u00eddo. O pedido est\u00e1 aguardando entrega.')):'Caminhão '+(cam.codigo||cam.placa)+' concluído. Continue com os itens restantes no próximo caminhão.',cfg.rotulo,'sucesso');
+    }catch(e){avisar(e.message,cfg.rotulo,'erro');}finally{s.salvandoCarga=false;botoes.forEach(b=>{if(b.isConnected&&!s.pedido?.operacao?.[etapa]?.concluido_em)b.disabled=false;});}
+  }
+  async function finalizarPendenciasCarga(){
+    const faltas=(s.cargaBase?.itens||[]).filter(p=>Number(p.esperado)>carregadoNaChave(p.chave)).map(p=>({...p,item_id:p.item_id,nome:p.nome,faltam:Number(p.esperado)-carregadoNaChave(p.chave)}));
+    if(!faltas.length)return;if(etapa==='descarregamento'){if(await confirmarConclusao(faltas,escondido()))await registrarLoteCarga(null,{},true);return;}const pendencia=await confirmarPendencias(faltas);if(pendencia)await registrarLoteCarga(null,{},true,pendencia);
+  }
   function escolherCaminhoes() {
-    if (etapa !== "carregamento") return Promise.resolve(true);
+    if (!porCaminhao) return Promise.resolve(true);
     return new Promise(async (resolve) => {
       const { data: frota, error } = await s.sb.rpc("operacao_frota", { p_empresa: s.empresa });
       if (error) { avisar(error.message, cfg.rotulo, "erro"); resolve(false); return; }
+      s.frotaCarga=frota||[];
       const programados = new Set((s.programados || []).map((c) => String(c.caminhao_id || c.id)));
-      for(const c of s.pedido.operacao?.carga_por_veiculo||[])programados.add(String(c.caminhao_id));
+      for(const c of s.pedido.operacao?.[campoVeiculos]||[])programados.add(String(c.caminhao_id));
       const lista = (frota || []).slice().sort((a, b) => (programados.has(String(b.id)) - programados.has(String(a.id))));
+      const usados=new Set(cargasAtuais().map(c=>String(c.caminhao_id)));
+      const disponiveis=lista.filter(c=>!usados.has(String(c.id)));
+      const preselecionado=disponiveis.find(c=>programados.has(String(c.id)))||(disponiveis.length===1?disponiveis[0]:null);
       const dlg = document.createElement("dialog"); dlg.className = "cf-escolha-caminhao";
-      dlg.innerHTML = '<h3>Em qual caminhão o pedido foi carregado?</h3><p class="cf-escolha-dica">Ao concluir, o carregamento fica registrado e o pedido segue para a entrega.</p><div class="cf-escolha-lista"></div><div class="cf-escolha-acoes"><button type="button" class="btn secondary" data-v>Voltar</button><button type="button" class="btn primary" data-ok>Concluir carregamento</button></div>';
+      dlg.innerHTML = '<div class="cf-escolha-topo"><h3>'+ (etapa==='descarregamento'?'De qual caminh\u00e3o os itens foram descarregados?':'Em qual caminh\u00e3o o pedido foi carregado?') +'</h3><input type="search" class="cf-escolha-pesquisa" placeholder="Código, placa ou modelo..." aria-label="Pesquisar caminhão" autocomplete="off"></div><div class="cf-escolha-lista"></div><p class="cf-escolha-vazio" role="status" hidden>Nenhum caminhão encontrado.</p><div class="cf-escolha-acoes"><button type="button" class="btn secondary" data-v>Voltar</button><button type="button" class="btn primary" data-ok>Concluir carregamento</button></div>';
+
+      dlg.querySelector('[data-ok]').textContent='Concluir '+(cargasAtuais().length+1)+'º caminhão';
       const box = dlg.querySelector(".cf-escolha-lista");
+      const normalizar=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+      dlg.querySelector('.cf-escolha-pesquisa').addEventListener('input',e=>{
+        const termos=normalizar(e.target.value).trim().split(/\s+/).filter(Boolean);let visiveis=0;
+        box.querySelectorAll('.cf-escolha-item').forEach(item=>{item.hidden=!termos.every(t=>item.dataset.busca.includes(t));if(!item.hidden)visiveis++;});
+        dlg.querySelector('.cf-escolha-vazio').hidden=visiveis>0||!lista.length;
+      });
       if (!lista.length) box.innerHTML = "<p>Nenhum caminhão cadastrado em Logística > Caminhões.</p>";
       lista.forEach((c) => {
         const l = document.createElement("label"); l.className = "cf-escolha-item" + (programados.has(String(c.id)) ? " is-programado" : "");
-        const cb = document.createElement("input"); cb.type = "checkbox"; cb.value = c.id; cb.checked = programados.has(String(c.id));
+        l.dataset.busca=normalizar([c.codigo,c.placa,c.modelo].filter(Boolean).join(" "));
+        const cb = document.createElement("input"); cb.type = "radio"; cb.name="caminhaoCarga"; cb.value = c.id; cb.disabled=usados.has(String(c.id)); cb.checked=String(preselecionado?.id)===String(c.id);
         const t = document.createElement("span"); t.textContent = nomeCaminhao(c);
         const foto = document.createElement('span'); foto.className = 'cf-escolha-foto';
         foto.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 5h11v12H3zM14 9h4l3 4v4h-7"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>';
@@ -404,7 +515,7 @@
         const modelo=document.createElement('span');modelo.className='cf-escolha-modelo';modelo.textContent=c.modelo||'';
         t.replaceChildren(codigo,placa,modelo);cb.setAttribute('aria-label',nomeCaminhao(c));
         l.append(cb, foto, t);
-        if (programados.has(String(c.id))) { const tag = document.createElement("small"); tag.textContent = "Programado"; l.append(tag); }
+        if (programados.has(String(c.id))||usados.has(String(c.id))) { const tag = document.createElement("small"); tag.textContent = usados.has(String(c.id))?(etapa==="descarregamento"?"Descarregado":"Carregado"):"Programado"; l.append(tag); }
         box.append(l);
       });
       document.body.append(dlg);
@@ -412,13 +523,9 @@
       dlg.addEventListener("cancel", (e) => { e.preventDefault(); fim(false); });
       dlg.querySelector("[data-v]").onclick = () => fim(false);
       dlg.querySelector("[data-ok]").onclick = async () => {
-        const ids = [...box.querySelectorAll("input:checked")].map((i) => i.value);
-        if (!ids.length) { avisar("Selecione o caminhão em que o pedido foi carregado.", cfg.rotulo, "aviso"); return; }
-        const b = dlg.querySelector("[data-ok]"); b.disabled = true;
-        const { data: gravado, error: e2 } = await s.sb.rpc("operacao_registrar_caminhoes", { p_pedido: s.pedido.id, p_caminhoes: ids });
-        if (e2) { b.disabled = false; avisar(e2.message, cfg.rotulo, "erro"); return; }
-        s.pedido.operacao = { ...(s.pedido.operacao || {}), carregamento_caminhoes: gravado };
-        fim(true);
+        const escolhido=box.querySelector('input[type=radio]:checked:not(:disabled)');
+        if(!escolhido){avisar('Selecione um único caminhão para este carregamento.',cfg.rotulo,'aviso');return;}
+        fim(lista.find(c=>String(c.id)===escolhido.value));
       };
       dlg.showModal();
     });
@@ -492,6 +599,7 @@
     const {data:assumido,error:erroInicio}=await s.sb.rpc('operacao_iniciar_conferencia',{p_pedido:pedidoId,p_etapa:etapa});
     if(erroInicio){mostrarAviso(erroInicio.message);return;}
     s.pedido = assumido?.id?assumido:pedido; s.itens = itens || []; s.etiquetas = etiquetas || [];
+    if(porCaminhao){try{await carregarCarga();}catch(e){mostrarAviso(e.message);return;}}
     // Nov/2026: foto do item em cada linha da conferência por QR.
     s.fotoEtq = new Map();
     try { const idsF = [...new Set(s.etiquetas.map((e) => e.item_id).filter(Boolean))]; for (let i = 0; i < idsF.length; i += 200) { const { data: fs } = await s.sb.from("itens").select("id,foto_url").in("id", idsF.slice(i, i + 200)); (fs || []).forEach((c) => s.fotoEtq.set(String(c.id), c.foto_url || "")); } } catch (e) { console.warn(e); }
@@ -538,7 +646,7 @@
     window.EasyLocLeitor.teclado($("cfEntrada"), aoLer);
     $("cfSoFaltando").addEventListener("change", pintar);
     $("cfConcluir").addEventListener("click", () => concluir().catch(console.error));
-    pintar();
+    pintar();atualizarBotoesCarga();
     if (feito?.concluido_em) { travarConcluida(feito); if (cega) $("cfAviso").hidden = true; }
     if(etapa === "retorno" && feito?.concluido_em) await carregarOcorrencias();
     if(etapaVolta && feito?.concluido_em) await carregarDivergencias();
@@ -590,7 +698,7 @@
      Esperado: carregamento = pedido; descarregamento e volta = o que o carregamento conferiu. A volta é às cegas. */
   async function mostrarSemEtiquetas() {
     const verbo = { carregamento: "Carregado", descarregamento: "Descarregado", retorno: "Voltou" }[etapa];
-    const { data: pecas, error } = await s.sb.rpc("operacao_conferencia_pecas", { p_pedido: s.pedido.id, p_grupo: !!s.grupo });
+    const { data: pecas, error } = await s.sb.rpc("operacao_conferencia_pecas", { p_pedido: s.pedido.id, p_grupo: etapa==='carregamento'?false:!!s.grupo });
     if (error) { console.error(error); mostrarAviso("Não foi possível carregar os itens do pedido."); return; }
     if (!(pecas || []).length) { mostrarAviso("Este pedido não tem itens para conferir."); return; }
     const base = etapa !== "carregamento" ? s.pedido.operacao?.carregamento?.itens : null;
@@ -604,7 +712,7 @@
       return etq.length ? etq.filter((t) => t.lida_carregamento_em).length : p.esperado;
     };
     const lista = pecas.map((p) => {
-      if (s.grupo) return { ...p, esperado: Number(esperadoGrupo(p)) || 0 };
+      if (s.grupo&&etapa!=='carregamento') return { ...p, esperado: Number(esperadoGrupo(p)) || 0 };
       if(etapa==='retorno'&&!base){const etiquetas=s.etiquetas.filter(t=>String(t.separacao_item_id)+'|'+String(t.item_id)===p.chave);if(etiquetas.length)return {...p,esperado:etiquetas.filter(t=>t.lida_carregamento_em).length};}
       const anterior = Array.isArray(base) ? base.find((x) => x.chave === p.chave) : null;
       return { ...p, esperado: Number(anterior ? anterior.conferido : base ? 0 : p.esperado) || 0 };
@@ -617,7 +725,7 @@
     }
     const caixa = $("cfQtd");
     // Componente de Kit: embaixo do nome, o Kit de que ele faz parte (igual à Triagem).
-    const nomeComKit = (p) => esc(p.nome) + (s.grupo && p.pedido_numero ? '<small class="cf-qtd-kit cf-qtd-pedido">Pedido ' + esc(p.pedido_numero) + "</small>" : "") + (p.kit_nome ? '<small class="cf-qtd-kit">Parte do kit: ' + esc(String(p.kit_nome).replace(/\s+/g, " ").trim()) + (Number(p.por_kit) ? " (" + esc(p.por_kit) + " por kit)" : "") + "</small>" : "");
+    const nomeComKit = (p) => nomeComMedidasHtml(p.nome) + (porCaminhao&&!escondido()?(cargasAtuais().length&&!s.pedido.operacao?.[etapa]?.concluido_em&&p.esperado>carregadoNaChave(p.chave)?'<small class="cf-carga-saldo">Restam '+esc(p.esperado-carregadoNaChave(p.chave))+' unidade(s)</small>':''):'') + (s.grupo && p.pedido_numero ? '<small class="cf-qtd-kit cf-qtd-pedido">Pedido ' + esc(p.pedido_numero) + "</small>" : "") + (p.kit_nome ? '<small class="cf-qtd-kit">Parte do kit: ' + esc(String(p.kit_nome).replace(/\s+/g, " ").trim()) + (Number(p.por_kit) ? " (" + esc(p.por_kit) + " por kit)" : "") + "</small>" : "");
     const foto = (p) => fotos.get(String(p.item_id)) ? '<img src="' + esc(fotos.get(String(p.item_id))) + '" alt="" loading="lazy">' : '<span class="cf-qtd-sem-foto"></span>';
     const atualizarProgresso = (total, conferido) => {
       const pct = total ? Math.min(100, Math.round((conferido / total) * 100)) : 0;
@@ -655,7 +763,7 @@
           return '<div class="cf-qtd-linha' + (falta ? " is-div-falta" : sobra ? " is-div-sobra" : r.conferido != null && Number(r.conferido) === Number(r.esperado ?? p.esperado) ? " is-ok" : "") + '">' + foto(p) + '<strong>' + nomeComKit(p) + '</strong><span>' + esc(r.esperado ?? p.esperado) +
             '</span><span class="cf-qtd-valor">' + esc(r.conferido ?? "-") + (primeira(r) ? '<small class="cf-qtd-primeira">1ª contagem: ' + esc(primeira(r)) + "</small>" : "") + (falta ? ' <small>faltam ' + esc(Number(r.esperado) - Number(r.conferido)) + "</small>" : sobra ? ' <small>' + esc(Number(r.conferido) - Number(r.esperado)) + " a mais</small>" : "") + '</span><em class="cf-qtd-obs-texto">' + esc(r.obs || "—") + "</em>" + (comResolver ? (() => { const o = divPorChave.get(p.chave); if (o) s.divNaTabela.add(String(o.id)); return celulaResolver(o, dv.motivos); })() : "") + "</div>";
         }).join("") + "</div>" + (comResolver ? RODAPE_SEGUNDA : "");
-      anexarCapasQuantidade(lista,caixa,false);
+      anexarCapasQuantidade(lista,caixa,false);colunaCaminhaoQuantidade(lista,caixa);
       if(etapa==='retorno')await window.RetornoColunas.montar({caixa,lista,sb:s.sb,empresa:s.empresa,pedido:s.pedido,feito});
       atualizarRodapeSegunda();
       mostrarBotaoImprimir(() => imprimirLista(lista, foto, porChave));
@@ -670,27 +778,27 @@
     atualizarProgresso(cega ? 0 : totalEsperado, 0);
     if (cega) { $("cfPercent").hidden = true; $("cfBarra").parentElement.hidden = true; $("cfContagem").textContent = "Conferência às cegas"; }
     caixa.hidden = false;
-    caixa.innerHTML = '<div class="cf-qtd-tabela"><div class="cf-qtd-linha cf-qtd-cabeca"><span></span><span>Item</span><span>' + (cega ? "" : etapa === "carregamento" ? "Pedido" : "Esperado") + '</span><span>' + verbo + '</span><span>Observação</span></div>' +
+    caixa.innerHTML = '<div class="cf-qtd-tabela"><div class="cf-qtd-linha cf-qtd-cabeca"><span></span><span>Item</span><span>' + (cega ? "" : etapa === "carregamento" ? "Pedido" : "Esperado") + '</span><span>' + (porCaminhao?'Neste caminhão':verbo) + '</span><span>Observação</span></div>' +
       lista.map((p, i) => '<div class="cf-qtd-linha">' + foto(p) + '<strong>' + nomeComKit(p) + '</strong><span>' + (cega ? "" : esc(p.esperado)) + '</span>' +
-        '<input type="number" class="el-input cf-qtd-input" min="0" step="1" inputmode="numeric" data-chave="' + esc(p.chave) + '" data-i="' + i + '" aria-label="' + esc(verbo + ": " + p.nome) + '">' +
+        '<input type="number" class="el-input cf-qtd-input" min="0" step="1" inputmode="numeric" '+(porCaminhao?(etapa==='carregamento'?'max="'+Math.max(0,p.esperado-carregadoNaChave(p.chave))+'" ':'')+'placeholder="'+(etapa==='carregamento'&&p.esperado===carregadoNaChave(p.chave)?'Conclu\u00eddo':'0')+'" '+(etapa==='carregamento'&&p.esperado===carregadoNaChave(p.chave)?'disabled':''):'')+' data-chave="' + esc(p.chave) + '" data-i="' + i + '" aria-label="' + esc(verbo + ": " + p.nome) + '">' +
         '<input type="text" class="el-input cf-qtd-obs" maxlength="500" placeholder="Opcional" data-chave="' + esc(p.chave) + '" aria-label="' + esc("Observação: " + p.nome) + '"></div>').join("") +
       '</div><footer class="cf-qtd-rodape"><span id="cfQtdResumo"></span><button type="button" class="btn primary" id="cfQtdConfirmar">Confirmar ' + esc(cfg.rotulo.toLowerCase()) + "</button></footer>";
 
-    anexarCapasQuantidade(lista,caixa,true);
+    anexarCapasQuantidade(lista,caixa,true);colunaCaminhaoQuantidade(lista,caixa);
     if(etapa==='retorno')await window.RetornoColunas.montar({caixa,lista,sb:s.sb,empresa:s.empresa,pedido:s.pedido});
     const inputs = [...caixa.querySelectorAll(".cf-qtd-input")];
     const somar = () => {
-      let conferido = 0, preenchidos = 0;
+      let conferido = porCaminhao?lista.reduce((t,p)=>t+carregadoNaChave(p.chave),0):0, preenchidos = 0;
       inputs.forEach((inp) => {
         const p = lista[Number(inp.dataset.i)], v = inp.value === "" ? null : Number(inp.value);
-        if (v != null) { preenchidos += 1; conferido += Math.min(v, p.esperado); }
+        if (v != null) { preenchidos += 1; conferido += Math.min(v,porCaminhao?Math.max(0,p.esperado-carregadoNaChave(p.chave)):p.esperado); }
         inp.closest(".cf-qtd-linha").classList.toggle("is-falta", !cega && v != null && v < p.esperado);
         // Verde só com a quantidade exata; a mais também é conferência errada (amarelo, out/2026).
         inp.closest(".cf-qtd-linha").classList.toggle("is-a-mais", !cega && v != null && v > p.esperado);
-        inp.closest(".cf-qtd-linha").classList.toggle("is-ok", !cega && v != null && v === p.esperado);
+        inp.closest(".cf-qtd-linha").classList.toggle("is-ok", !cega && (porCaminhao?carregadoNaChave(p.chave)+(v||0)===p.esperado:v!=null&&v===p.esperado));
       });
       if (!cega) atualizarProgresso(totalEsperado, conferido);
-      $("cfQtdResumo").textContent = preenchidos + " de " + inputs.length + " itens preenchidos";
+      $("cfQtdResumo").textContent = porCaminhao?lista.reduce((t,p)=>t+carregadoNaChave(p.chave),0)+(escondido()?' pe\u00e7as conferidas':' de '+totalEsperado+' pe\u00e7as '+(etapa==='descarregamento'?'descarregadas':'carregadas'))+(preenchidos?' \u00b7 '+preenchidos+' item(ns) neste caminh\u00e3o':''):preenchidos + " de " + inputs.length + " itens preenchidos";
     };
     inputs.forEach((inp, i) => {
       inp.addEventListener("input", somar);
@@ -699,6 +807,11 @@
     mostrarBotaoImprimir(() => imprimirLista(lista, foto, null));
     $("cfQtdConfirmar").addEventListener("click", async (ev) => {
       const botao=ev.currentTarget;
+      if(porCaminhao){
+        const q={},obs={};inputs.forEach(inp=>q[inp.dataset.chave]=inp.value===''?0:Number(inp.value));
+        caixa.querySelectorAll('.cf-qtd-obs').forEach(inp=>{if(inp.value.trim())obs[inp.dataset.chave]=inp.value.trim();});
+        await registrarLoteCarga(q,obs);return;
+      }
       const vazio = inputs.find((inp) => inp.value === "" || Number(inp.value) < 0 || !Number.isInteger(Number(inp.value)));
       if (vazio) { avisar("Informe a quantidade de todos os itens (número inteiro; 0 se nada " + (etapa === "retorno" ? "voltou" : "foi " + verbo.toLowerCase()) + ").", cfg.rotulo); vazio.focus(); return; }
       const quantidades = {};
@@ -763,8 +876,8 @@
       const div = [n ? n + " item(ns) faltando" : "", mais ? mais + " item(ns) a mais" : "",divCapas?divCapas+' modelo(s) com diferença de capas':''].filter(Boolean).join(" e ");
       avisar(div ? "Conferência concluída com divergência: " + div + "." + avisoPendencia(registro) : "Conferência concluída: tudo " + cfg.verbo + ".", cfg.rotulo, div ? "aviso" : "sucesso");
     });
-    somar();
-    inputs[0]?.focus();
+    somar();atualizarBotoesCarga();
+    inputs.find(i=>!i.disabled)?.focus();
   }
 
   // Segunda contagem (out/2026): lista os itens que não bateram, com foto, nome (e o kit) e o que foi contado na 1ª vez.

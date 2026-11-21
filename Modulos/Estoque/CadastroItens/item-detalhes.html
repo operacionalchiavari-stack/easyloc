@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Detalhes do Item</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
-  <link rel="stylesheet" href="item-detalhes.css?v=20261103-cores-movimentacoes">
+  <link rel="stylesheet" href="item-detalhes.css?v=20261115-respiro">
 </head>
 <body>
 <div class="item-detail-page el-page" data-module-root>
@@ -81,7 +82,7 @@
           <button type="button" title="Girar automaticamente" aria-label="Girar automaticamente" id="item3DRotateBtn" onclick="itens_3d_toggleRotate()">
             <i data-lucide="rotate-3d"></i>
           </button>
-          <button type="button" title="Resetar camera" aria-label="Resetar camera" onclick="itens_3d_resetCamera()">
+          <button type="button" title="Reiniciar câmera" aria-label="Reiniciar câmera" onclick="itens_3d_resetCamera()">
             <i data-lucide="scan"></i>
           </button>
           <button type="button" title="Tela cheia" aria-label="Tela cheia" onclick="itens_3d_fullscreen()">
@@ -91,11 +92,6 @@
             <i data-lucide="trash-2"></i>
           </button>
         </div>
-
-        <button type="button" class="item-3d-ai-cta" onclick="itens_3d_criarComIA()">
-          <i data-lucide="sparkles"></i>
-          Criar com IA
-        </button>
 
         <span class="item-hidden-summary" id="item3DFormato">GLB</span>
         <span class="item-hidden-summary" id="item3DTamanho">-</span>
@@ -111,7 +107,7 @@
       <nav class="item-detail-tabs" aria-label="Abas do item">
         <button type="button" class="item-tab active" data-item-tab="dados">
           <i data-lucide="layout-list"></i>
-          Dados Gerais
+          Dados gerais
         </button>
         <button type="button" class="item-tab" data-item-tab="componentes" hidden><i data-lucide="layers"></i>Componentes</button>
         <button type="button" class="item-tab" data-item-tab="galeria">
@@ -124,11 +120,15 @@
         </button>
         <button type="button" class="item-tab" data-item-tab="historico">
           <i data-lucide="history"></i>
-          Historico
+          Histórico
         </button>
         <button type="button" class="item-tab" data-item-tab="qrcode">
           <i data-lucide="qr-code"></i>
           QR Code
+        </button>
+        <button type="button" class="item-tab" data-item-tab="ia3d">
+          <i data-lucide="sparkles"></i>
+          3D com IA
         </button>
       </nav>
 
@@ -155,22 +155,22 @@
 
           <div class="item-form-grid">
             <article class="item-card">
-              <h3>Informacoes principais</h3>
+              <h3>Informações principais</h3>
               <div class="item-fields-grid info-grid">
                 <label class="el-field">
                   <span>Produto</span>
                   <input class="el-input" id="itensProdutoBase" placeholder="Ex.: Bar">
                 </label>
                 <label class="el-field">
-                  <span>Especificacao (nome do item) *</span>
+                  <span>Especificação (nome do item) *</span>
                   <input class="el-input" id="itensProduto">
                 </label>
                 <label class="el-field">
-                  <span>Codigo *</span>
+                  <span>Código *</span>
                   <input class="el-input" id="itensCodigo" readonly>
                 </label>
                 <label class="el-field">
-                  <span>Codigo do cliente (Referencia)</span>
+                  <span>Código do cliente (Referência)</span>
                   <input class="el-input" id="itensReferencia" placeholder="Ex.: APA001">
                 </label>
                 <label class="el-field">
@@ -186,14 +186,14 @@
                   <input class="el-input" id="itensMarcaModelo">
                 </label>
                 <label class="el-field span-4">
-                  <span>Descricao complementar</span>
+                  <span>Descrição complementar</span>
                   <input class="el-input" id="itensDescricaoComplementar">
                 </label>
               </div>
             </article>
 
             <article class="item-card">
-              <h3>Classificacao</h3>
+              <h3>Classificação</h3>
               <div class="item-fields-grid info-grid">
                 <label class="el-field">
                   <span>Categoria *</span>
@@ -204,16 +204,16 @@
                   <input class="el-input" id="itensSubcategoria">
                 </label>
                 <label class="el-field">
-                  <span>Familia</span>
+                  <span>Família</span>
                   <input class="el-input" id="itensFamilia">
                 </label>
                 <label class="el-field">
-                  <span>Grupo de separacao</span>
-                  <input class="el-input" id="itensGrupoSeparacao" placeholder="Ex.: Aparadores">
+                  <span>Grupo de separação</span>
+                  <select class="el-select" id="itensGrupoSeparacao"><option value="">Selecione</option></select>
                 </label>
                 <label class="el-field">
                   <span>Estilo</span>
-                  <input class="el-input" id="itensEstilo" placeholder="Ex.: Classico">
+                  <input class="el-input" id="itensEstilo" placeholder="Ex.: Clássico">
                 </label>
                 <label class="el-field">
                   <span>Setor de estoque</span>
@@ -231,10 +231,10 @@
             </article>
 
             <article class="item-card">
-              <h3>Dimensoes e Cubagem</h3>
+              <h3>Dimensões e cubagem</h3>
               <div class="item-fields-grid dims-grid">
                 <label class="el-field">
-                  <span>Largura ou Diametro (m)</span>
+                  <span>Largura ou diâmetro (m)</span>
                   <input class="el-input" id="itensLargura" oninput="itens_calcularVolume()">
                 </label>
                 <label class="el-field">
@@ -246,14 +246,14 @@
                   <input class="el-input" id="itensProfundidade" oninput="itens_calcularVolume()">
                 </label>
                 <label class="el-field">
-                  <span>Volume cubico (m3)</span>
+                  <span>Volume cúbico (m³)</span>
                   <input class="el-input" id="itensVolumeCubico" placeholder="Auto" readonly tabindex="-1">
                 </label>
               </div>
             </article>
 
             <article class="item-card">
-              <h3>Informacoes comerciais</h3>
+              <h3>Informações comerciais</h3>
               <div class="item-fields-grid values-grid">
                 <label class="el-field">
                   <span>Fornecedor</span>
@@ -262,64 +262,56 @@
                   </select>
                 </label>
                 <label class="el-field">
-                  <span>Custo / Valor de Compra (R$)</span>
-                  <input class="el-input" id="itensCusto" placeholder="0,00">
+                  <span>Custo / valor de compra</span>
+                  <input class="el-input item-moeda" id="itensCusto" inputmode="decimal" placeholder="R$ 0,00">
                 </label>
                 <label class="el-field">
-                  <span>Valor de locacao (R$)</span>
-                  <input class="el-input" id="itensValorLocacao" placeholder="0,00">
+                  <span>Valor de locação</span>
+                  <input class="el-input item-moeda" id="itensValorLocacao" inputmode="decimal" placeholder="R$ 0,00">
                 </label>
                 <label class="el-field">
-                  <span>Valor de reposicao (R$)</span>
-                  <input class="el-input" id="itensValorReposicao" placeholder="0,00">
+                  <span>Valor de reposição</span>
+                  <input class="el-input item-moeda" id="itensValorReposicao" inputmode="decimal" placeholder="R$ 0,00">
                 </label>
+                <!-- 15/11/2026: a quantidade não é digitada aqui. Entra pela importação (implantação) e depois por Compras;
+                     correções pelo inventário da Gestão do acervo (o banco recusa alteração feita pela tela). -->
                 <label class="el-field">
                   <span>Quantidade em estoque</span>
-                  <input class="el-input" id="itensEstoqueTotal" type="number" min="0" step="1" inputmode="numeric" placeholder="0">
+                  <input class="el-input item-estoque-somente-leitura" id="itensEstoqueTotal" type="number" readonly tabindex="-1" placeholder="0" aria-describedby="itensEstoqueAjuda">
+                  <small class="item-estoque-ajuda" id="itensEstoqueAjuda">Entra por Compras (recebimento). Correções pelo inventário da Gestão do acervo.</small>
                 </label>
               </div>
             </article>
 
             <article class="item-card">
-              <h3>Exibicao no site</h3>
+              <h3>Exibição no site</h3>
               <div class="item-fields-grid info-grid">
                 <label class="el-field">
                   <span>Exibir no site *</span>
                   <select class="el-select" id="itensExibirSite">
                     <option value="">Selecione</option>
                     <option value="true">Sim</option>
-                    <option value="false">Nao</option>
-                  </select>
-                </label>
-                <label class="el-field">
-                  <span>Destaque no site</span>
-                  <select class="el-select" id="itensDestaqueSite">
-                    <option value="false">Nao</option>
-                    <option value="true">Sim</option>
+                    <option value="false">Não</option>
                   </select>
                 </label>
                 <label class="el-field">
                   <span>Capa da categoria</span>
                   <select class="el-select" id="itensCapaCategoria">
-                    <option value="false">Nao</option>
+                    <option value="false">Não</option>
                     <option value="true">Sim</option>
                   </select>
                 </label>
                 <label class="el-field">
-                  <span>Ordem de Exposicao no Site</span>
-                  <input class="el-input" id="itensOrdemExposicao" placeholder="Sem ordem definida">
-                </label>
-                <label class="el-field">
                   <span>Locar somente no kit</span>
                   <select class="el-select" id="itensLocarSomenteKit">
-                    <option value="false">Nao</option>
+                    <option value="false">Não</option>
                     <option value="true">Sim</option>
                   </select>
                 </label>
                 <label class="el-field">
                   <span>Exclusivo</span>
                   <select class="el-select" id="itensExclusivo">
-                    <option value="false">Nao</option>
+                    <option value="false">Não</option>
                     <option value="true">Sim</option>
                   </select>
                 </label>
@@ -327,20 +319,20 @@
             </article>
 
             <article class="item-card">
-              <h3>Tabelas de preco</h3>
+              <h3>Tabelas de preço</h3>
               <div class="item-table-wrap">
                 <table class="item-detail-table">
                   <thead>
                     <tr>
                       <th>Tabela</th>
                       <th>Ano</th>
-                      <th>Vigencia</th>
+                      <th>Vigência</th>
                       <th>Status</th>
-                      <th>Valor de locacao</th>
+                      <th>Valor de locação</th>
                     </tr>
                   </thead>
                   <tbody id="itensTabelasPrecoBody">
-                    <tr><td colspan="5">Salve o item para ver os precos por tabela.</td></tr>
+                    <tr><td colspan="5">Salve o item para ver os preços por tabela.</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -354,7 +346,7 @@
             <div class="item-card-header-inline">
               <div>
                 <h3>Fotos de detalhe</h3>
-                <p>Use estas imagens para mostrar angulos ou acabamentos do item.</p>
+                <p>Use estas imagens para mostrar ângulos ou acabamentos do item.</p>
               </div>
             </div>
 
@@ -483,8 +475,8 @@
                   <tr>
                     <th>Item</th>
                     <th>Quantidade</th>
-                    <th>Locacao</th>
-                    <th>Reposicao</th>
+                    <th>Locação</th>
+                    <th>Reposição</th>
                   </tr>
                 </thead>
                 <tbody id="itemDetalheKitsBody">
@@ -497,11 +489,17 @@
 
         <section class="item-tab-panel" data-item-panel="historico">
           <article class="item-card">
-            <div class="item-componentes-cab"><h3>Hist&#243;rico de movimenta&#231;&#245;es</h3><button type="button" class="btn btn-secondary" id="itemHistoricoAtualizar">Atualizar</button></div>
+            <div class="item-componentes-cab"><h3>Histórico de movimentações</h3><button type="button" class="btn btn-secondary" id="itemHistoricoAtualizar">Atualizar</button></div>
             <div id="itemHistoricoResumo" class="item-historico-resumo"></div>
             <div id="itemHistoricoAviso" role="status"></div>
-            <div class="item-table-wrap"><table class="item-detail-table item-historico-tabela"><thead><tr><th>Data e hora</th><th>Movimenta&#231;&#227;o</th><th>Quantidade</th><th>Pedido / origem</th><th>Respons&#225;vel</th></tr></thead><tbody id="itemHistoricoLinhas"></tbody></table></div>
+            <div class="item-table-wrap"><table class="item-detail-table item-historico-tabela"><thead><tr><th>Data</th><th>Movimentação</th><th>Quantidade</th><th>Pedido / origem</th><th>Responsável</th></tr></thead><tbody id="itemHistoricoLinhas"></tbody></table></div>
             <button type="button" class="btn btn-secondary item-historico-mais" id="itemHistoricoMais" hidden>Carregar mais</button>
+          </article>
+        </section>
+
+        <section class="item-tab-panel" data-item-panel="ia3d">
+          <article class="item-card item-ia3d-card">
+            <div id="itemIa3dHost"><p class="item-ia3d-aviso">Abrindo...</p></div>
           </article>
         </section>
 
@@ -509,22 +507,23 @@
           <article class="item-card item-qr-card">
             <div class="qr-auto-card" id="itensQrAutoCard">
               <strong>QR Code</strong>
-              <span>Sera gerado automaticamente ao salvar.</span>
+              <span>Será gerado automaticamente ao salvar o item.</span>
             </div>
 
             <div class="qr-identificacao hidden" id="itensQrIdentificacao">
               <div>
-                <span class="qr-section-label">Identificacao</span>
+                <span class="qr-section-label">Identificação</span>
                 <strong>QR CODE</strong>
               </div>
 
               <div class="qr-identificacao-body">
                 <div class="qr-render" id="itensQrRender"></div>
                 <div class="qr-meta">
-                  <span>ID:</span>
+                  <span>Código do item</span>
                   <code id="itensQrCodigo"></code>
+                  <small class="qr-protegido">Gerado pelo sistema. Não pode ser alterado.</small>
                   <div class="qr-actions">
-                    <button type="button" class="btn secondary" onclick="itens_copiarQrCode()">Copiar Codigo</button>
+                    <button type="button" class="btn secondary" onclick="itens_copiarQrCode()">Copiar código</button>
                     <button type="button" class="btn primary" onclick="itens_baixarQrCode()">Baixar QR PNG</button>
                   </div>
                 </div>
@@ -540,15 +539,15 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
-<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/qrCode.js"></script>
 <script src="../../../js/core/etiquetas.js?v=20261017-etiquetas"></script>
-<script src="../../../js/ui/complexidade-cadastros.js?v=20261107-teste-usuario"></script>
-<script src="../../../js/ui/capas-cadastro.js?v=20261101-material-tipo"></script>
-<script type="module" src="item-detalhes.mjs?v=20261103-cores-movimentacoes"></script>
+<script src="../../../js/ui/complexidade-cadastros.js?v=20261115-item-cards"></script>
+<script src="../../../js/ui/capas-cadastro.js?v=20261115-custo"></script>
+<script type="module" src="item-detalhes.mjs?v=20261115-ia3d-salvar"></script>
 <script>lucide.createIcons();</script>
-<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
 </body>
 </html>

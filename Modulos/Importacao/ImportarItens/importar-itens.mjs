@@ -5,7 +5,7 @@ import {
   detectarLinhaCabecalho, detectarColunasDePreco, mapearColunas,
   validarLinha, construirPayloadItem, casarFornecedor,
   criarCanonicalizador, normalizeDisplay,
-} from "./importar-itens-core.mjs";
+} from "./importar-itens-core.mjs?v=20261115-qt";
 
 const supabase = window.supabaseClient;
 
@@ -19,6 +19,7 @@ function formatoDoCampo(campo) {
   if (campo.tipo === "kit") return 'ITEM / COMPONENTE / KIT + linhas "quantidade|referencia" (vazio = Item)';
   if (campo.tipo === "numero" || campo.tipo === "numero-nao-negativo") return "número (ex.: 1.200,50 ou 1200.5)";
   if (campo.tipo === "inteiro") return "número inteiro (vazio = sem ordem)";
+  if (campo.tipo === "inteiro-nao-negativo") return "quantidade em estoque: número inteiro a partir de 0 (implantação; depois a quantidade entra por Compras)";
   if (campo.tipo === "booleano") return "Sim/Não, S/N, 1/0, Verdadeiro/Falso, True/False, X";
   return "texto livre";
 }
@@ -474,6 +475,11 @@ async function confirmarImportacao() {
     // ---- Passe 1: itens e componentes (tudo que NÃO é Kit) ----
     const CHUNK = 150;
     const referenciaParaId = new Map(state.itensExistentesPorReferencia);
+    // Quantidade em estoque (coluna Qt): item novo já nasce com ela; item que já existe só recebe se a opção
+    // "Atualizar a quantidade dos itens já cadastrados" estiver marcada (implantação). Depois disso, quem muda a
+    // quantidade é Compras — o banco recusa alteração direta (gatilho itens_estoque_protegido).
+    const atualizarQtExistentes = Boolean($("chkAtualizarQt")?.checked);
+    const quantidadesExistentes = [];
 
     for (let i = 0; i < linhasNaoKit.length; i += CHUNK) {
       const lote = linhasNaoKit.slice(i, i + CHUNK);
@@ -484,8 +490,10 @@ async function confirmarImportacao() {
         if (idExistente) {
           ({ error: erro } = await supabase.from("itens").update(payload).eq("id", idExistente));
           if (!erro) referenciaParaId.set(linha.valores.referencia, idExistente);
+          if (!erro && atualizarQtExistentes && linha.valores.estoque_total != null) quantidadesExistentes.push({ id: idExistente, quantidade: linha.valores.estoque_total });
         } else {
-          const { data, error: erroInsert } = await supabase.from("itens").insert(payload).select("id").single();
+          const inserir = linha.valores.estoque_total != null ? { ...payload, estoque_total: linha.valores.estoque_total } : payload;
+          const { data, error: erroInsert } = await supabase.from("itens").insert(inserir).select("id").single();
           erro = erroInsert;
           if (!erro) referenciaParaId.set(linha.valores.referencia, data.id);
         }
@@ -499,6 +507,13 @@ async function confirmarImportacao() {
         }
         atualizarProgresso();
       }
+    }
+
+    // ---- Quantidade em estoque dos itens que já existiam (só com a opção marcada) ----
+    for (let i = 0; i < quantidadesExistentes.length; i += 200) {
+      const lote = quantidadesExistentes.slice(i, i + 200);
+      const { error } = await supabase.rpc("itens_estoque_implantacao", { p_empresa: state.empresaId, p_itens: lote });
+      if (error) erros.push(`Quantidade em estoque (itens já cadastrados): ${error.message}`);
     }
 
     // ---- Persistir preços das linhas não-kit — em LOTE, não um upsert por

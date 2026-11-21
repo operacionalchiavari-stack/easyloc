@@ -1,6 +1,6 @@
 // Teste de integração opt-in (RUN_COFRE_LIVE=1) do cofre do RH, contra o banco e a Edge Function rh-protegido reais.
 // Cria empresa, dois usuários e um funcionário temporários e apaga tudo no fim. Precisa da chave do cofre em
-// ACERVO_COFRE_CHAVE (ou no arquivo de cópia) para conferir que o servidor da Vercel (api/_gas/cofre.js) abre o mesmo dado.
+// ACERVO_COFRE_CHAVE (ou no arquivo de cópia) para conferir que o cópia em Node (tests/helpers/cofre-node.cjs) abre o mesmo dado.
 require('dotenv').config({ quiet: true });
 const fs = require('node:fs');
 const { createClient } = require('@supabase/supabase-js');
@@ -9,7 +9,7 @@ const crypto = require('node:crypto');
 if (!process.env.ACERVO_COFRE_CHAVE) {
   try { process.env.ACERVO_COFRE_CHAVE = fs.readFileSync('C:/Users/jonat/acervo-cofre-chave.txt', 'utf8').match(/ACERVO_COFRE_CHAVE=(\S+)/)[1]; } catch (_) {}
 }
-const cofreVercel = require('../api/_gas/cofre.js');
+const cofreVercel = require('./helpers/cofre-node.cjs');
 
 async function main() {
   if (process.env.RUN_COFRE_LIVE !== '1') throw new Error('Defina RUN_COFRE_LIVE=1 para executar o teste de integração');

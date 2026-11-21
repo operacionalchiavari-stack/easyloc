@@ -41,7 +41,8 @@ const {chromium}=require('playwright'),fs=require('fs'),assert=require('assert/s
   window.supabaseClient={auth:{getSession:async()=>({data:{session:{access_token:'t'}}})},rpc:async()=>({data:null}),
    storage:{from:b=>({upload:async(path,f,o)=>{window.__subido={b,path,type:o.contentType};return {error:null};},getPublicUrl:path=>({data:{publicUrl:'http://localhost:9925/'+path}})})},
    from:t=>{const q={_t:t,select:()=>q,eq:()=>q,in:()=>q,upsert:async(row)=>{window.__gravado=row;return {error:null};},then:ok=>Promise.resolve({data:window.__gravado?[{aviso_id:window.__gravado.aviso_id,url:window.__gravado.url,tipo:window.__gravado.tipo,nome:window.__gravado.nome}]:[]}).then(ok)};return q;}};
-  window.fetch=async(url,o)=>{if(o&&o.method==='POST'){const d=JSON.parse(o.body).dados;window.__avisosServidor.push({id:'AVI_novo1234',titulo:d.titulo,texto:d.texto,publicadoEm:'2026-11-05'});return {ok:true,json:async()=>({ok:true})};}return {ok:true,json:async()=>({ok:true,resultado:{avisos:window.__avisosServidor.slice()}})};};
+  // Edge Function central-metas simulada (nov/2026: o mural saiu da Vercel): { fn, args } -> { resultado }
+  window.fetch=async(url,o)=>{const b=o&&o.body?JSON.parse(o.body):{};if(b.fn==='muralPublicarAviso'){const d=b.args[0];window.__avisosServidor.push({id:'AVI_novo1234',titulo:d.titulo,texto:d.texto,publicadoEm:'2026-11-05'});return {ok:true,json:async()=>({resultado:{ok:true}})};}return {ok:true,json:async()=>({resultado:{avisos:window.__avisosServidor.slice()}})};};
  });
  await page.evaluate(a=>portalMural.m({avisos:a}),[{id:'AVI_antigo1',titulo:'Antigo',texto:'x',publicadoEm:'2026-11-01'}]);
  await page.evaluate(()=>{delete window.abrirAvisoPortal;});

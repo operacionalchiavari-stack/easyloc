@@ -477,3 +477,20 @@ test("construirPayloadItem: monta payload com todos os campos novos", () => {
   assert.equal(payload.produto_base, "Aparador");
   assert.equal(payload.descricao_total, "Aparador Aparador Clássico P Madeira Castanho Médio (L) 0.84 m (A) 0.78 m (P) 0.42 m", "PRODUTO (produto_base) deve vir sempre antes da ESPECIFICACAO no nome gerado");
 });
+
+// 15/11/2026: coluna Qt = quantidade em estoque da implantação
+test("validarLinha: Qt vira estoque_total (inteiro a partir de 0); vazio fica sem quantidade", () => {
+  const ok = validarLinha(linhaCompleta({ "Qt": "12" }), INDICES, COLUNAS_PRECO_TESTE, canonicalizadoresTeste());
+  assert.equal(ok.ok, true); assert.equal(ok.valores.estoque_total, 12);
+  const zero = validarLinha(linhaCompleta({ "Qt": 0 }), INDICES, COLUNAS_PRECO_TESTE, canonicalizadoresTeste());
+  assert.equal(zero.valores.estoque_total, 0);
+  const vazio = validarLinha(linhaCompleta({ "Qt": "" }), INDICES, COLUNAS_PRECO_TESTE, canonicalizadoresTeste());
+  assert.equal(vazio.valores.estoque_total, null);
+  for (const ruim of ["2,5", "-3", "abc"]) {
+    const r = validarLinha(linhaCompleta({ "Qt": ruim }), INDICES, COLUNAS_PRECO_TESTE, canonicalizadoresTeste());
+    assert.equal(r.ok, true, "Qt inválida não bloqueia a linha");
+    assert.equal(r.valores.estoque_total, null);
+    assert.ok(r.pendencias.some((p) => /"Qt"/.test(p)), "avisa a Qt inválida: " + ruim);
+  }
+  assert.ok(!("estoque_total" in construirPayloadItem(ok.valores, "e", "APA001", null)), "o payload comum não leva a quantidade (vai só na criação ou pela função de implantação)");
+});

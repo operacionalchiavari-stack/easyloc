@@ -59,7 +59,7 @@ await page.locator('.etapa').first().click();
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(errors,[]);
    await page.screenshot({path:path.join(os.tmpdir(),`montador-chegada-${width}.png`),fullPage:true});
    const inicio=await page.evaluate(()=>JSON.parse(localStorage.getItem('fixtureApontamento')).inicio);await page.reload();await page.waitForSelector('.etapa');await page.locator('.etapa').first().click();await page.waitForSelector('#etapaFotoEquipe:not([hidden])');assert.equal(await page.evaluate(()=>estado.apontamento.inicio),inicio);
-   assert.equal(await page.locator('.encerrar-evento').count(),0);await page.close();
+   assert.equal(await page.locator('.encerrar-evento').isVisible(),false,'encerramento só após foto e conferência completas');await page.close();
   }
   console.log('App: início, cronômetro sem encerramento manual, foto, avarias e restauração validados em celular/desktop.');
  }finally{await browser.close();server.close();}

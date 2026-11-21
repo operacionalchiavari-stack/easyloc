@@ -127,7 +127,7 @@ const mockSupabase = `
   await page.locator('[data-modo="dia"]').click();
   assert.equal(await page.locator('#dataColeta').getAttribute('min'),'2026-11-20');
   await page.evaluate(()=>{window.confirmarGlobal=async()=>false;});
-  assert.equal(await page.evaluate(()=>window.appBeforeLeave()),false);
+  assert.equal(await page.evaluate(()=>window.appBeforeLeave()),true);
   await page.locator('#dataColeta').fill('2026-11-21');
 
   assert.strictEqual(tela.local, "Villa Teste");
@@ -136,6 +136,7 @@ const mockSupabase = `
   assert.deepStrictEqual(tela.projeto, ["Lounge", "Bar"], "ambientes vão para o catálogo do pedido");
 
 
+  await page.evaluate(()=>{document.getElementById('localIdHidden').value='local-fixture';});
   await page.locator('.ct-depois button[data-etapa="lista"]').click();
   const cf=page.frameLocator('iframe.pedido-catalogo-real');
   await cf.locator('.pa-geral [data-pa-item]').first().waitFor({timeout:20000});

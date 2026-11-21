@@ -74,9 +74,9 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
 
  await page.locator('[data-gateway-tile="projetos"]').click();
  await page.locator('#catalogProjetos:not(.hidden)').waitFor();
- assert.equal(await page.locator('#catalogPageLabel').textContent(),'Projetos');
+ assert.equal(await page.locator('#catalogPageLabel').textContent(),'Pedidos');
  await page.locator('.cpj-empty-big').waitFor();
- assert.match(await page.locator('.cpj-empty-big').textContent(),/Nenhum projeto ainda/);
+ assert.match(await page.locator('.cpj-empty-big').textContent(),/Nenhum pedido ainda/);
 
  // Criar: data e local são obrigatórios (nome dos noivos é opcional)
  await page.locator('[data-cpj="novo"]').first().click();
@@ -113,8 +113,12 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  assert.deepEqual(criar.params.p_ambientes,['Cerimônia','Bar','Bistrô da varanda']);
  assert.equal(await page.locator('.cpj-work-title h2').textContent(),'Ana & Bruno');
  assert.match(await page.locator('.cpj-work-title p').textContent(),/10 de maio de 2027.*Sítio Vale Verde/);
- assert.deepEqual(await page.locator('.cpj-amb-tab:not(.cpj-amb-new):not([data-cpj-worktab="plantas"]):not([data-cpj-worktab="historico"]) span').allTextContents(),['Cerimônia','Bar','Bistrô da varanda']);
- assert.equal((await page.locator('.cpj-amb-tab.is-active').textContent()).trim(),'Geral','Entrar no projeto abre a aba Geral (o 1º ambiente continua sendo o ativo pro ＋ do catálogo)');
+ // Nov/2026: a tela do projeto é a mesma da "Ambientes e lista" do pedido — sem coluna de abas, ambientes vazios na Lista Completa
+ assert.deepEqual(await page.locator('.pa-geral .pa-ambiente-titulo h3').allTextContents(),['Cerimônia','Bar','Bistrô da varanda']);
+ assert.equal(await page.locator('[data-cpj-nav]').isVisible(),false,'Sem a coluna de abas');
+ assert.equal(await page.locator('.cpj-geral-botoes [data-cpj-worktab="plantas"]').count(),1,'Plantas na linha do título');
+ assert.equal(await page.locator('.cpj-geral-botoes [data-cpj-worktab="historico"]').count(),1,'Histórico na linha do título');
+ await page.screenshot({path:path.join(os.tmpdir(),'cpj-lista-projeto.png')});
  assert.equal(await page.locator('#catalogProjetoDock').isVisible(),false,'Dock não aparece dentro do próprio módulo');
  // Foto dos noivos: subiu depois de o projeto existir (a política do Storage exige isso), no caminho empresa/projeto/casal
  await page.locator('.cpj-avatar.has-photo img').waitFor();
@@ -209,7 +213,7 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  await page.waitForFunction(()=>window.mockdb.projetos[0].status==='pedido_enviado');
  const pag=await page.evaluate(()=>window.mockdb.projetos[0].dados.pagamento);assert.equal(pag.id,'cond-2');assert.match(pag.resumo,/50% de entrada/);
  const enviado=await page.evaluate(()=>window.mockdb.projetos[0]);assert.ok(enviado.pedido_snapshot.total_itens>0);assert.equal(enviado.pedido_observacao,'Montagem pela manha');
- await page.reload();await page.locator('[data-gateway-tile="projetos"]').click();await page.locator('.cpj-card').waitFor();assert.match(await page.locator('.cpj-card').innerText(),/Ana & Bruno/);assert.deepEqual(errors,[]);await page.close();
+ await page.reload();await page.locator('[data-gateway-tile="projetos"]').click();await page.locator('.cpj-ped-linha').waitFor();assert.match(await page.locator('.cpj-ped-linha').innerText(),/Ana & Bruno/);assert.deepEqual(errors,[]);await page.close();
 }
 
 // ===== Cenário 2: equipe — enxerga projetos de todos, filtra pedidos, muda status; sem renderização órfã =====
@@ -223,15 +227,15 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  await page.goto(base+'catalogo.html');
  await page.locator('.catalog-gateway').waitFor();
  await page.locator('[data-gateway-tile="projetos"]').click();
- await page.locator('.cpj-card').first().waitFor();
- assert.equal(await page.locator('.cpj-card').count(),2,'Equipe vê os projetos de todos');
+ await page.locator('.cpj-ped-linha').first().waitFor();
+ assert.equal(await page.locator('.cpj-ped-linha').count(),2,'Equipe vê os projetos de todos');
  assert.equal((await calls(page,'projeto_listar'))[0].params.p_empresa_id,'company','Equipe usa a empresa (sem token)');
  assert.equal('p_token' in (await calls(page,'projeto_listar'))[0].params,false);
- assert.deepEqual(await page.locator('.cpj-card-owner').allTextContents(),['Criado pela equipe','Decorador: Kelly Decor'],'Equipe vê quem criou cada projeto (ordenado por data do evento)');
+ assert.deepEqual(await page.locator('.cpj-ped-dono').allTextContents(),['Equipe','Kelly Decor'],'Equipe vê quem criou cada projeto (ordenado por data do evento)');
  await page.locator('[data-cpj-filter="pedidos"]').click();
- assert.equal(await page.locator('.cpj-card').count(),1,'Filtro "Pedidos recebidos" mostra só quem enviou pedido');
+ assert.equal(await page.locator('.cpj-ped-linha').count(),1,'Filtro "Pedidos recebidos" mostra só quem enviou pedido');
  // "Ver pedido": aberto pelo status na linha do projeto na lista, sem precisar entrar no espaço de trabalho.
- await page.locator('.cpj-card .cpj-status').click();
+ await page.locator('.cpj-ped-linha .cpj-status').click();
  const verPedido=page.locator('dialog.cpj-modal.cpj-order-preview[open]');
  await verPedido.waitFor();
  assert.match(await verPedido.locator('.cpj-banner-obs').textContent(),/Montagem na véspera/);
@@ -243,7 +247,7 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  assert.deepEqual(st,{p_empresa_id:'company',p_id:'p-dec',p_status:'em_analise'});
  await verPedido.locator('[data-cpj-cancel]').click();
  await verPedido.waitFor({state:'detached'});
- assert.match(await page.locator('.cpj-card .cpj-status').textContent(),/Em análise/,'A lista já reflete o novo status, sem precisar recarregar');
+ assert.match(await page.locator('.cpj-ped-linha .cpj-status').textContent(),/Em análise/,'A lista já reflete o novo status, sem precisar recarregar');
  // O dock continua fora do Portal (no modo "dentro do sistema" a logo fica escondida — clique por JS)
  await page.evaluate(()=>document.querySelector('.catalog-brand').click());
  await page.locator('.catalog-gateway').waitFor();
@@ -267,8 +271,8 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  await page.goto(base+'catalogo.html');
  await page.locator('.catalog-gateway').waitFor();
  await page.locator('[data-gateway-tile="projetos"]').click();
- await page.locator('.cpj-card').first().waitFor();
- await page.locator('.cpj-card').click();
+ await page.locator('.cpj-ped-linha').first().waitFor();
+ await page.locator('.cpj-ped-linha').click();
  await page.locator('.cpj-work').waitFor();
 
  // A aba "Plantas" fica ao lado dos ambientes, sempre por último, com contador próprio (nº de plantas, não de áreas)
@@ -590,7 +594,7 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  await page.goto(base+'catalogo.html');
  await page.locator('.catalog-gateway').waitFor();
  await page.locator('[data-gateway-tile="projetos"]').click();
- await page.locator('.cpj-card').click();
+ await page.locator('.cpj-ped-linha').click();
  await page.locator('.cpj-work').waitFor();
  await page.locator('[data-cpj-worktab="plantas"]').click();
  await page.locator('.cpj-plantas-grid').waitFor();
@@ -649,7 +653,7 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  await page.goto(base+'catalogo.html');
  await page.locator('.catalog-gateway').waitFor();
  await page.locator('[data-gateway-tile="projetos"]').click();
- await page.locator('.cpj-card').click();
+ await page.locator('.cpj-ped-linha').click();
  await page.locator('.cpj-work').waitFor();
  await page.locator('[data-cpj-worktab="plantas"]').click();
  await page.locator('.cpj-plantas-grid').waitFor();
@@ -895,7 +899,7 @@ const textosPequenos=(page)=>page.evaluate(()=>{const out=[];document.querySelec
  await page.goto(base+'catalogo.html');
  await page.locator('.catalog-gateway').waitFor();
  await page.locator('[data-gateway-tile="projetos"]').click();
- await page.locator('.cpj-card').click();
+ await page.locator('.cpj-ped-linha').click();
  await page.locator('.cpj-work').waitFor();
  await page.locator('[data-cpj-worktab="plantas"]').click();
  await page.locator('[data-cpj-planta-nova-input]').setInputFiles({name:'planta.png',mimeType:'image/png',buffer:PNG_1X1});

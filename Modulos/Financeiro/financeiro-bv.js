@@ -42,7 +42,6 @@
       '<div class="fin-bv-filtros fin-conta-filtros">' +
       '<label>De<input type="date" data-bv-inicio value="' + esc(inicio) + '"></label><label>Até<input type="date" data-bv-fim value="' + esc(fim) + '"></label>' +
       '<label>Situação<select data-bv-situacao>' + [['','Todas'],['aberto','Com saldo a pagar'],['pago','Quitados'],['cancelado','Cancelados'],['sem_registro','Sem BV registrado']].map(([v,t]) => '<option value="' + v + '"' + (situacao === v ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></label>' +
-      '<button type="button" class="fin-btn claro" data-bv-atualizar>Atualizar</button>' +
       (podePagar ? '<button type="button" class="fin-btn" data-cliente-credito>Registrar crédito</button>' : '') +
       '<button type="button" class="fin-bv-ajuda" aria-label="Sobre o saldo e o extrato" title="O saldo soma o BV e os demais créditos, descontando os pagamentos e devoluções. O período filtra pela data de cada lançamento. O saldo principal considera todos os movimentos.">ⓘ</button></div></section>' +
       window.renderizarTabelaExtratoDecorador({movimentos,saldoAnterior,inicio,cliente,podePagar,brl,esc,dataBr});
@@ -85,19 +84,11 @@
     };
     root.querySelector('[data-bv-inicio]').onchange = alterarData;
     root.querySelector('[data-bv-fim]').onchange = alterarData;
-    root.querySelector('[data-bv-atualizar]').onclick = () => ctx.recarregar();
     root.querySelector('[data-cliente-credito]')?.addEventListener('click',()=>ctx.registrarCredito(cliente,dados.clientes));
-    // Layout compacto (out/2026): De/Até/Situação na mesma linha da busca do decorador, e Atualizar / Registrar crédito /
-    // ajuda na linha das partes da aba ("Conta dos decoradores · Gestão de créditos"). Os eventos já estão ligados acima,
-    // então mover os elementos não perde nada.
+    // Layout compacto: De/Até/Situação e Registrar crédito (+ ajuda) na mesma linha da busca do decorador (nov/2026:
+    // sem o botão Atualizar). Os eventos já estão ligados acima, então mover os elementos não perde nada.
     const caixaBusca=root.querySelector('.fin-conta-busca'), filtros=root.querySelector('.fin-conta-filtros');
-    if(caixaBusca && filtros){ const linha=document.createElement('div'); linha.className='fin-conta-linha'; caixaBusca.before(linha); linha.append(caixaBusca, filtros); }
-    const subAbas=document.getElementById('finSubAbas');
-    if(subAbas && !subAbas.hidden){
-      let acoes=subAbas.querySelector('.fin-subabas-acoes');
-      if(!acoes){ acoes=document.createElement('div'); acoes.className='fin-subabas-acoes'; subAbas.append(acoes); }
-      acoes.replaceChildren(...['[data-bv-atualizar]','[data-cliente-credito]','.fin-bv-ajuda'].map(sel=>root.querySelector(sel)).filter(Boolean));
-    }
+    if(caixaBusca && filtros){ const linha=document.createElement('div'); linha.className='fin-conta-linha'; caixaBusca.before(linha); linha.append(caixaBusca, filtros, ...['[data-cliente-credito]','.fin-bv-ajuda'].map(sel=>root.querySelector(sel)).filter(Boolean)); }
     root.querySelector('[data-extrato-exportar]').onclick = () => csv([['Data','Descricao','Decorador','Observacao','Credito','Debito','Saldo'],['','Saldo anterior','','',0,0,saldoAnterior],...movimentos.map(l=>[l.data,l.descricao,l.cliente,l.obs,l.credito,l.debito,l.saldo])],'conta-decorador-extrato.csv');
     } catch (erro) {
       if (vez === sequencia && S.aba === 'bv') {

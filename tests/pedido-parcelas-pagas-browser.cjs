@@ -108,6 +108,10 @@ const mockSupabase = `
   assert.ok(!l[2].venc && l[2].valor && l[2].remover && l[2].cobranca, "aberta depois da paga continua livre: " + JSON.stringify(l[2]));
   console.log("ok 1 - paga e paga em parte sinalizadas e travadas; a aberta continua livre");
 
+  const antesAtualizar=await page.evaluate(()=>({total:window.__TOTAL_PEDIDO,valores:structuredClone(window.__PEDIDO_VALORES),parcelas:window.__pedidoFinanceiroResumo().parcelas.filter(p=>p.componente==='locacao').map(p=>p.valor)}));
+  await page.evaluate(()=>{window.__PEDIDO_VALORES={locacao:950,frete:0,montagem:0};window.__TOTAL_PEDIDO=950;window.atualizarPagamento();});
+  assert.deepEqual(await page.evaluate(()=>window.__pedidoFinanceiroResumo().parcelas.filter(p=>p.componente==='locacao').map(p=>p.valor)),[500,300,150]);
+  await page.evaluate(antes=>{window.__TOTAL_PEDIDO=antes.total;window.__PEDIDO_VALORES=antes.valores;window.atualizarPagamento();},antesAtualizar);
   // plano automático e limpar não apagam a divisão com parcela paga; a divisão sem recebimento continua sendo refeita
   await page.evaluate(() => { const e = document.getElementById("pagamentoParcelas"); if (e) { e.value = "6"; e.dispatchEvent(new Event("input", { bubbles: true })); } });
   await page.waitForTimeout(200);
@@ -119,6 +123,46 @@ const mockSupabase = `
   await page.evaluate(() => document.getElementById("btnLimparProgramacao").click());
   l = await linhas("locacao"); assert.equal(l.filter((x) => x.travada).length, 2, "limpar mantém as pagas");
   console.log("ok 2 - plano automático e limpar respeitam as parcelas pagas");
+  await page.evaluate(()=>{
+    for(const [id,valor] of Object.entries({clienteInput:'Cliente teste',localInput:'Local teste',localIdHidden:'local-teste',dataEvento:'2026-11-20',dataEntrega:'2026-11-19',dataColeta:'2026-11-21',horaEntrega:'09:00',horaColeta:'10:00'}))document.getElementById(id).value=valor;
+    return window.__pedidoIrPara('financeiro');
+  });
+  await page.locator('.pedido-etapa-financeiro').waitFor({state:'visible'});
+  assert.equal(await page.locator('.pedido-financeiro-resumo>.resumo-card').count(),1);
+  assert.equal(await page.locator('.pedido-financeiro-resumo>.finance-card').count(),1,'direita contém somente o resumo');
+  assert.equal(await page.locator('.pedido-financeiro-principal #cardMontagemPedido').count(),1);
+  assert.equal(await page.locator('.pedido-financeiro-principal #cardLogisticaPedido').count(),1);
+  const ordem=await page.evaluate(()=>{const m=document.querySelector('#cardMontagemPedido').getBoundingClientRect(),f=document.querySelector('#cardLogisticaPedido').getBoundingClientRect(),p=document.querySelector('.pagamento-card').getBoundingClientRect(),r=document.querySelector('.pedido-financeiro-resumo').getBoundingClientRect();return {montagemPrimeiro:m.left<f.left&&Math.abs(m.top-f.top)<2,parcelasAbaixo:p.top>=Math.max(m.bottom,f.bottom),resumoDireita:r.left>p.right};});
+  assert.ok(ordem.montagemPrimeiro&&ordem.parcelasAbaixo&&ordem.resumoDireita,JSON.stringify(ordem));
+  assert.equal(await page.locator('.pedido-financeiro-detalhes').evaluate(el=>getComputedStyle(el).position),'static','os controles da esquerda não acompanham a rolagem');
+  assert.ok(await page.locator('.pedido-financeiro-resumo').evaluate(el=>el.getBoundingClientRect().width>=360),'resumo mais largo');
+  await page.evaluate(()=>{
+    let bv=document.querySelector('.pedido-bv-card');
+    if(!bv){bv=document.createElement('section');bv.className='finance-card pedido-bv-card';document.querySelector('.pedido-financeiro-resumo').append(bv);}
+    bv.hidden=false;bv.innerHTML='<h2>BV do decorador</h2><p style="padding:20px">BV deste pedido: 0% · R$ 0,00</p>';
+  });
+  await page.waitForFunction(()=>document.querySelector('.pedido-bv-card')?.parentElement.classList.contains('pedido-financeiro-detalhes'));
+  await page.evaluate(()=>{const espaco=document.createElement('div');espaco.style.height='1600px';espaco.dataset.testeRolagem='';document.querySelector('.pedido-financeiro-principal').append(espaco);});
+  for(const y of [400,800]){
+    await page.evaluate(y=>window.scrollTo({top:y,behavior:'instant'}),y);
+    const pos=await page.evaluate(()=>({resumo:document.querySelector('.pedido-financeiro-resumo').getBoundingClientRect().top,cabecalho:document.querySelector('.comercial-trilha').getBoundingClientRect().bottom,detalhes:document.querySelector('.pedido-financeiro-detalhes').getBoundingClientRect().bottom,parcelas:document.querySelector('.pagamento-card').getBoundingClientRect().top}));
+    assert.ok(Math.abs(pos.resumo-pos.cabecalho-16)<3,'resumo acompanha a rolagem abaixo do cabeçalho: '+JSON.stringify(pos));
+    assert.ok(pos.parcelas>=pos.detalhes,'montagem, frete e BV não cobrem as parcelas durante a rolagem: '+JSON.stringify(pos));
+    if(y===400)await page.screenshot({path:'.tmp/pedido-resumo-rolagem-sem-sobreposicao.png'});
+  }
+  await page.evaluate(()=>{document.querySelector('[data-teste-rolagem]').remove();window.scrollTo({top:0,behavior:'instant'});});
+  await page.screenshot({path:'.tmp/pedido-resumo-lateral.png'});
+  console.log('ok 3 - montagem/frete e parcelas à esquerda; só resumo à direita, acompanhando a rolagem');
+  const financeiroAgrupado=await page.evaluate(()=>{
+    window.__TOTAL_PEDIDO=1200;window.__PEDIDO_VALORES={locacao:1000,locacao_bv:800,customizacoes:200,subtotal:1000,frete:120,frete_bruto:200,montagem:80,montagem_bruto:100,total:1200};
+    for(const [id,valor] of Object.entries({resumoCustomizacoes:'R$ 200,00',resumoTerceirizados:'R$ 0,00',resumoServicos:'R$ 0,00'}))document.getElementById(id).textContent=valor;
+    window.__pedidoAplicarPagamentoConfig({descontosAreas:{locacao:100.25,customizacao:25.5,frete:10.1,montagem:5.2},descontoBV:0,abatidoBV:0,creditoCliente:0});
+    window.__pedidoAplicarExibicaoFinanceira({frete_desconto:true,montagem_desconto:true});
+    return window.__pedidoFinanceiroResumo();
+  });
+  assert.deepEqual(financeiroAgrupado.resumo.filter(l=>l.valor).map(l=>[l.rotulo,l.valor]),[['Valor de locação',800],['Desconto',-100.25],['Customizações',200],['Desconto em customizações',-25.5],['Frete',200],['Desconto de frete',-90.1],['Montagem',100],['Desconto de montagem',-25.2]]);
+  assert.equal(financeiroAgrupado.total,1058.95);assert.equal(Math.round(financeiroAgrupado.resumo.reduce((s,l)=>s+l.valor,0)*100)/100,1058.95);
+  console.log('ok 4 - prévia/PDF usam descontos agrupados por área, sem duplicar o desconto da tela');
   if(process.env.SP){await page.evaluate(()=>{document.querySelectorAll("[data-etapa],.pedido-shell,.pagamento-card").forEach(()=>{});window.__pedidoIrPara?.("financeiro")});await page.waitForTimeout(900);await page.evaluate(()=>document.querySelector("#cronogramaParcelas")?.scrollIntoView({block:"center"}));await page.waitForTimeout(300);await page.screenshot({path:process.env.SP+"/parc.png"});}
   assert.deepEqual(erros, []);
   await browser.close();

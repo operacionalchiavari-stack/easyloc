@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Cadastro de Fornecedores</title>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
-  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js"></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
-  <link rel="stylesheet" href="fornecedores.css?v=20261105-foto">
+  <link rel="stylesheet" href="fornecedores.css?v=20261115-sem-titulos">
 </head>
 <body>
 <div class="container-fornecedores el-page">
@@ -18,7 +19,9 @@
   <header class="page-header">
     <h1>Fornecedores Cadastrados</h1>
 
-    <div class="el-stat-row" id="fornecedoresStats">
+    <input class="el-input forn-busca-topo" type="search" id="filtroTexto" placeholder="Pesquisar fornecedor..." autocomplete="off" data-lpignore="true" data-1p-ignore="true">
+
+    <div class="el-stat-row" id="fornecedoresStats" hidden>
       <article class="el-stat-card blue">
         <span aria-hidden="true"><i data-lucide="factory"></i></span>
         <div><small>Total de fornecedores</small><strong id="fornecedoresStatTotal">0</strong><em>Cadastrados</em></div>
@@ -39,15 +42,13 @@
 
     <div class="header-actions">
       <button class="btn primary" type="button" id="btnNovoFornecedor">
-        + Adicionar Fornecedor
+        Adicionar fornecedor
       </button>
     </div>
   </header>
 
-  <!-- FILTROS -->
-  <div class="filters">
-    <input class="el-input" type="search" id="filtroTexto" placeholder="Pesquisar fornecedor..." autocomplete="off" data-lpignore="true" data-1p-ignore="true">
-
+  <!-- FILTROS (15/11/2026: só a pesquisa, na linha do título; os outros nunca funcionaram e saíram) -->
+  <div class="filters" hidden>
     <select class="el-select" id="filtroStatus">
       <option value="">Todos os status</option>
       <option value="ativo">Ativo</option>
@@ -84,7 +85,6 @@
           <th>TIPO</th>
           <th>CATEGORIA</th>
           <th>STATUS</th>
-          <th>AÇÕES</th>
         </tr>
       </thead>
       <tbody id="tabelaFornecedores"></tbody>
@@ -112,9 +112,20 @@
 
       <!-- DADOS PRINCIPAIS -->
       <div class="form-section">
-        <h3>Dados do fornecedor</h3>
 
         <div class="form-grid">
+
+          <!-- Foto (logo) do fornecedor, no mesmo formato do cadastro de cliente (nov/2026): quadro grande no começo,
+               clicar escolhe a foto. Obrigatória em "Locação de móveis". -->
+          <div class="field el-field forn-foto-field" style="grid-column:span 2;grid-row:span 3;">
+            <label>Foto / logo <span id="fFotoObrig" hidden>*</span></label>
+            <label class="forn-foto-avatar" title="Selecionar foto">
+              <span class="forn-foto" id="fFotoPrev"></span>
+              <span class="forn-foto-edit" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg></span>
+              <input type="file" accept="image/*" id="fFoto" hidden>
+            </label>
+            <button type="button" class="forn-foto-remover" id="fFotoRemover" hidden>Remover foto</button>
+          </div>
 
           <div class="field el-field" style="grid-column:span 4;">
             <label>Nome / Razão Social *</label>
@@ -155,17 +166,7 @@
             </select>
           </div>
 
-          <!-- Foto (logo) do fornecedor; obrigatória em "Locação de móveis" (nov/2026) -->
-          <div class="field el-field forn-foto-campo" style="grid-column:span 5;">
-            <label>Foto / logo <span id="fFotoObrig" hidden>*</span></label>
-            <div class="forn-foto-linha">
-              <span class="forn-foto" id="fFotoPrev"></span>
-              <label class="btn secondary forn-foto-btn">Escolher foto<input type="file" accept="image/*" id="fFoto" hidden></label>
-              <button type="button" class="btn secondary forn-foto-btn" id="fFotoRemover" hidden>Remover</button>
-            </div>
-          </div>
-
-          <div class="field el-field" style="grid-column:span 3;">
+          <div class="field el-field" style="grid-column:span 4;">
             <label>Status</label>
             <select class="el-select" id="fStatus">
               <option value="ativo">Ativo</option>
@@ -173,12 +174,40 @@
             </select>
           </div>
 
+          <!-- Fechamento de parceiro (nov/2026): o que ele cobra no período espera o fechamento em Financeiro → Fechamentos de parceiros.
+               Mensal (dia do mês) ou semanal (dia da semana). -->
+          <div class="field el-field" style="grid-column:span 2;">
+            <label>Cobrança</label>
+            <label class="forn-check"><input type="checkbox" id="fFechamento"> Cobra por fechamento</label>
+          </div>
+          <div class="field el-field" style="grid-column:span 2;">
+            <label>Fechamento</label>
+            <select class="el-select" id="fFechPeriodo"><option value="mensal">Mensal</option><option value="semanal">Semanal</option></select>
+          </div>
+          <div class="field el-field" style="grid-column:span 2;" id="fFechDiaMesCampo">
+            <label>Dia do fechamento</label>
+            <input class="el-input" type="number" min="1" max="31" id="fFechDia" placeholder="Ex.: 30">
+          </div>
+          <div class="field el-field" style="grid-column:span 2;" id="fFechDiaSemanaCampo" hidden>
+            <label>Dia da semana</label>
+            <select class="el-select" id="fFechDiaSemana"><option value="">—</option><option value="1">Segunda</option><option value="2">Terça</option><option value="3">Quarta</option><option value="4">Quinta</option><option value="5">Sexta</option><option value="6">Sábado</option><option value="7">Domingo</option></select>
+          </div>
+          <div class="field el-field" style="grid-column:span 2;">
+            <label>Forma de pagamento</label>
+            <select class="el-select" id="fFormaPadrao">
+              <option value="">—</option><option value="boleto">Boleto</option><option value="pix">PIX</option><option value="transferencia">Transferência</option><option value="dinheiro">Dinheiro</option>
+            </select>
+          </div>
+          <div class="field el-field" style="grid-column:span 2;">
+            <label>Condição de pagamento</label>
+            <input class="el-input" id="fCondPadrao" placeholder="Ex.: 30/60, 28 dias, à vista">
+          </div>
+
         </div>
       </div>
 
       <!-- ENDEREÇO -->
       <div class="form-section">
-        <h3>Endereço</h3>
 
         <div class="form-grid">
           <div class="field el-field" style="grid-column: 1 / -1;">
@@ -200,7 +229,6 @@
 
       <!-- CONTATO -->
       <div class="form-section">
-        <h3>Contato</h3>
 
         <div class="form-grid">
           <div class="field el-field" style="grid-column:span 3;">
@@ -222,7 +250,6 @@
 
       <!-- INFORMAÇÕES ADICIONAIS -->
       <div class="form-section">
-        <h3>Informações adicionais</h3>
 
         <div class="tag-section">
 
@@ -266,7 +293,6 @@
 
       <!-- ACESSO DA TRANSPORTADORA (out/2026) -->
       <div class="form-section" id="fPortalSecao">
-        <h3>Acesso ao Cadastro de Fretes</h3>
         <p class="f-portal-dica">Para transportadoras: com login e senha, ela entra no Cadastro de Fretes e informa o valor das viagens dos caminhões dela. Ligue o caminhão a este fornecedor em Logística &gt; Caminhões.</p>
         <div class="form-grid">
           <div class="form-group el-field" style="grid-column:span 4">
@@ -292,15 +318,14 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="../../../js/core/supabase.js"></script>
 <script src="../../../js/core/alerta.js"></script>
-<script src="../../../js/core/companyTheme.js?v=20260913m"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
 <script src="../../../js/core/listPager.js?v=20261026-rolagem"></script>
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="../../../js/core/google.config.js"></script>
 <script src="../../../js/core/google.js"></script>
-<script src="fornecedores.js?v=20261105-foto"></script>
-<script src="fornecedores-app.js?v=20261103"></script>
+<script src="fornecedores.js?v=20261115-sem-acoes"></script>
 <script>lucide.createIcons();</script>
-<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
 </body>
 </html>

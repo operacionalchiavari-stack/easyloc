@@ -1,0 +1,33 @@
+.pia-page{max-width:1500px;margin:auto;padding:28px 32px;color:var(--text-primary,#262626)}
+.pia-header,.pia-toolbar,.pia-preview header,.pia-preview footer{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.pia-header{padding:0 0 22px;margin-bottom:22px;border-bottom:1px solid #ded8cc}
+html:root body .pia-page .pia-header h2{margin:0!important;font-family:var(--ch-serif,"Cormorant Garamond",Georgia,serif)!important;font-size:clamp(23px,2vw,30px)!important;font-weight:500!important;letter-spacing:.12em!important;text-transform:uppercase;white-space:nowrap;line-height:1.15}
+.pia-button{border:1px solid #d9d4ca;border-radius:8px;padding:10px 16px;background:#fff;color:inherit;font:inherit;cursor:pointer}
+.pia-button:hover{background:#f7f5f1}.pia-button:disabled{opacity:.6;cursor:wait}
+.pia-toolbar{justify-content:flex-end;align-items:flex-end;margin:0;gap:16px;min-width:0}
+.pia-toolbar label{display:grid;gap:6px;font-size:12px;color:#6c6962;min-width:0}.pia-search{width:clamp(180px,22vw,320px)}
+.pia-toolbar .pia-button{min-height:42px;flex-shrink:0}
+.pia-toolbar input,.pia-toolbar select{min-height:42px;border:1px solid #d9d4ca;border-radius:8px;background:#fff;padding:9px 12px;font:inherit;font-size:14px;color:#292724;width:100%}
+.pia-breadcrumb{display:flex;align-items:center;gap:9px;flex-wrap:wrap;min-height:36px;font-size:14px;margin-bottom:20px}
+.pia-breadcrumb button{border:0;background:none;font:inherit;color:inherit;padding:5px 0;cursor:pointer}.pia-breadcrumb button:hover{text-decoration:underline}.pia-breadcrumb span{color:#918a7b}
+.pia-breadcrumb strong{font-weight:600}.pia-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:24px;align-items:start}
+.pia-card{border:1px solid #e6e1d7;border-radius:12px;overflow:hidden;background:#fff;color:inherit;text-align:left;font:inherit;padding:0;cursor:pointer;transition:box-shadow .15s,transform .15s}
+.pia-card:hover{box-shadow:0 6px 20px #30281912;transform:translateY(-2px)}.pia-card:focus-visible,.pia-button:focus-visible{outline:3px solid #9c8053;outline-offset:3px}
+.pia-card-visual{height:180px;display:flex;align-items:center;justify-content:center;background:#faf9f6}
+.pia-folder{border:0!important;border-radius:0;background:transparent!important;box-shadow:none!important;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;overflow:visible}
+.pia-folder .pia-card-visual{height:auto;width:160px;max-width:100%;aspect-ratio:5/4;background:transparent!important}
+.pia-folder svg{width:86%;height:86%;overflow:visible}
+.pia-folder-tab,.pia-folder-back{fill:#9b815c}.pia-folder-front{fill:#d0c2ae;transition:fill .2s}
+.pia-folder:hover .pia-folder-front,.pia-folder:focus-visible .pia-folder-front{fill:#bba586}
+.pia-folder-peek{transform-box:fill-box;transform-origin:center;transform:rotate(-11deg);transition:transform .3s cubic-bezier(.22,1,.36,1)}
+.pia-folder:hover .pia-folder-peek,.pia-folder:focus-visible .pia-folder-peek{transform:rotate(-3deg) translateY(-8px)}
+.pia-folder-peek-frame{stroke:#fff;stroke-width:3;filter:drop-shadow(0 4px 6px #251e1952)}
+.pia-folder .pia-card-copy{padding:0 8px;gap:5px;text-align:center}
+.pia-folder .pia-card-copy strong{font-family:var(--ch-serif,"Cormorant Garamond",Georgia,serif);font-size:18px;font-weight:600;letter-spacing:.02em;text-transform:uppercase}
+.pia-card-visual img{width:100%;height:100%;object-fit:contain;background:#fff}.pia-card-copy{display:grid;gap:7px;padding:16px}.pia-card-copy strong{font-size:15px;line-height:1.4;overflow-wrap:anywhere}.pia-card-copy small{color:#777167;font-size:12px;line-height:1.4}
+.pia-status{color:#777167;font-size:14px}.pia-status[hidden]{display:none}
+.pia-preview{padding:0;border:1px solid #e5ded2;border-radius:14px;width:min(1000px,94vw);max-height:92vh;overflow:auto;color:#292724;background:#fff}
+.pia-preview::backdrop{background:#171612b3}.pia-preview header,.pia-preview footer{padding:18px 22px}.pia-preview header{align-items:flex-start;border-bottom:1px solid #eee8de}.pia-preview h3{font-size:19px;margin:0 0 6px}.pia-preview p{margin:0;color:#787269;font-size:13px}
+.pia-close{border:0;background:none;font-size:28px;cursor:pointer;color:inherit;line-height:1}.pia-preview>img{display:block;width:100%;height:min(60vh,650px);object-fit:contain;background:#fff}.pia-preview footer{border-top:1px solid #eee8de;font-size:13px;color:#787269}
+@media(max-width:1000px){.pia-header{flex-wrap:wrap;gap:20px}.pia-toolbar{width:100%;justify-content:flex-start}.pia-search{flex:1;width:auto}}
+@media(max-width:650px){.pia-page{padding:22px 16px}.pia-header{align-items:flex-start;gap:18px}.pia-toolbar{flex-wrap:wrap;gap:12px}.pia-toolbar .pia-search{flex-basis:100%;min-width:100%}.pia-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 12px}.pia-card-visual{height:140px}.pia-card-copy{padding:12px}.pia-preview header,.pia-preview footer{padding:16px}.pia-preview footer{align-items:flex-start;flex-direction:column}}

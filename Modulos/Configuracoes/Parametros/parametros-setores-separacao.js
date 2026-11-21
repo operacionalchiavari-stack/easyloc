@@ -17,7 +17,7 @@
       sb.rpc('separacao_setores_lista', { p_empresa: empresa }),
       sb.rpc('separacao_modos_funcionarios', { p_empresa: empresa })
     ]);
-    if(e1 || e2 || e3){ status.textContent = 'Não foi possível carregar os setores: ' + (e1 || e2 || e3).message; return; }
+    if(e1 || e2 || e3){ form.querySelectorAll('input,button').forEach(el=>el.disabled=true); status.textContent = 'Não foi possível carregar os setores: ' + (e1 || e2 || e3).message; return; }
     const lista = Array.isArray(setores) ? setores : [], gente = Array.isArray(pessoas) ? pessoas : [];
     const usuarios = config?.usuarios || {};
     form.elements.ativo.checked = config?.ativo === true;

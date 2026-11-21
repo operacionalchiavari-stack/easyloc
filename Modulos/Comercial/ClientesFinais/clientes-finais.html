@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acervo - Clientes finais</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
+  <link rel="stylesheet" href="clientes-finais.css?v=20261118">
+</head>
+<body>
+<div class="container el-page cfi-page" id="cfiPage">
+  <div class="header-list cfi-topo">
+    <h2>Clientes finais</h2>
+    <input type="search" id="cfiBusca" class="el-input" placeholder="Nome, CPF/CNPJ, telefone, decorador ou pedido" aria-label="Pesquisar clientes finais">
+  </div>
+  <main class="cfi-layout">
+    <section class="cfi-lista-card" aria-label="Clientes finais cadastrados">
+      <div class="cfi-lista-topo"><span id="cfiConta">Carregando…</span></div>
+      <div id="cfiLista" class="cfi-lista" role="list"></div>
+    </section>
+    <section class="cfi-detalhe" id="cfiDetalhe" aria-live="polite"></section>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
+<script src="../../../js/core/permissions.js?v=20261118-clientes-finais"></script>
+<script src="clientes-finais.js?v=20261118"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
+</body>
+</html>

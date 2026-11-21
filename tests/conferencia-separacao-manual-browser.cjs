@@ -16,8 +16,10 @@ const mock = `(() => {
     itens: [{ id: "i1", empresa_id: "e1", produto: "Cadeira Tiffany" }, { id: "i2", empresa_id: "e1", produto: "Mesa Goa" }],
     itens_patrimonios: [{ empresa_id: "e1", item_id: "i1", codigo_patrimonio: "CAD-001" }],
     separacoes_leituras: [],
+    caminhoes:sessionStorage.getItem('multi-carga')?[{id:'c1',codigo:'G',placa:'ABC1D23',modelo:'Bau grande',foto_url:'http://acervo.teste/logo%20nova%20-%20com%20fundo%20branco.png'},{id:'c2',codigo:'M2',placa:'XYZ9K87',modelo:'Bau medio'},{id:'c3',codigo:'P3',placa:'PQR1A23',modelo:'Bau pequeno'}]:undefined,
     caminhoesProgramados: { p1: ["c2"] }
   };
+  if(sessionStorage.getItem('multi-carga')&&sessionStorage.getItem('carga-teste'))banco.separacoes_pedidos[0].operacao=JSON.parse(sessionStorage.getItem('carga-teste'));
   function consulta(t){
     let linhas = (banco[t] || []).slice(), unico = false, acao = null, dados = null;
     const q = {
@@ -38,7 +40,7 @@ const mock = `(() => {
   const cliente = {
     auth: { getSession: async () => ({ data: { session: { access_token: "t", user: { id: "u1" } } } }), getUser: async () => ({ data: { user: { id: "u1" } } }), onAuthStateChange: () => ({ data: { subscription: { unsubscribe(){} } } }) },
     from: consulta,
-    rpc: (n, args) => n === "operacao_conferencia_pecas" ? Promise.resolve({ data: [{ chave: "s1|i1", linha: "s1", item_id: "i1", nome: "Cadeira Tiffany", esperado: 2 }, { chave: "s2|i2", linha: "s2", item_id: "i2", nome: "Mesa Goa", esperado: 1 }], error: null }) : rpcOperacao(banco, n, args)
+    rpc: (n, args) => n === "operacao_conferencia_pecas" ? Promise.resolve({ data: [{ chave: "s1|i1", linha: "s1", item_id: "i1", nome: "Cadeira Tiffany", esperado: 2 }, { chave: "s2|i2", linha: "s2", item_id: "i2", nome: "Mesa Goa", esperado: 1 }], error: null }) : rpcOperacao(banco, n, args).then(r=>{if(sessionStorage.getItem('multi-carga')&&n==='operacao_carregamento_lote'&&!r.error)sessionStorage.setItem('carga-teste',JSON.stringify(r.data.operacao));return r;})
   };
   window.supabase = { createClient: () => cliente };
   window.__CONTEXT = { empresa_id: "e1", usuario_id: "u1", usuario_nome: "Igor" };
@@ -97,6 +99,9 @@ const mock = `(() => {
   assert.equal(await p2.locator('dialog.cf-escolha-caminhao .cf-escolha-foto').count(),2);
   const circulos=await p2.locator('.cf-escolha-foto').evaluateAll(els=>els.map(el=>({w:el.getBoundingClientRect().width,h:el.getBoundingClientRect().height,r:getComputedStyle(el).borderRadius})));
   assert.ok(circulos.every(c=>c.w===c.h&&c.r==='50%'),'fotos circulares');
+  assert.ok(circulos.every(c=>c.w<=80),'fotos menores');assert.ok((await p2.locator('dialog.cf-escolha-caminhao').boundingBox()).width>800,'modal ampliado');
+  const pesquisa=p2.locator('.cf-escolha-pesquisa');await pesquisa.fill('inexistente');assert.equal(await p2.locator('.cf-escolha-item:visible').count(),0);assert.ok(await p2.locator('.cf-escolha-vazio').isVisible());
+  const nomeBusca=await p2.locator('.cf-escolha-item').first().locator('.cf-escolha-nome strong').innerText();await pesquisa.fill(nomeBusca);assert.ok(await p2.locator('.cf-escolha-item:visible').count()>0);assert.ok(await p2.locator('input[value=c2]').isChecked());await pesquisa.fill('');
   const posicoes=await p2.locator('.cf-escolha-item').evaluateAll(els=>els.map(el=>el.getBoundingClientRect().top));assert.equal(posicoes[0],posicoes[1],'caminhoes lado a lado');
   await p2.locator('.cf-escolha-item').first().hover();await p2.waitForTimeout(280);
   assert.notEqual(await p2.locator('.cf-escolha-foto').first().evaluate(el=>getComputedStyle(el).transform),'none','zoom ao passar o mouse');
@@ -106,9 +111,9 @@ const mock = `(() => {
   await p2.setViewportSize({width:1280,height:900});
 
 
-  const marcados = await p2.evaluate(() => [...document.querySelectorAll("dialog.cf-escolha-caminhao input")].map((i) => i.value + ":" + i.checked));
+  const marcados = await p2.evaluate(() => [...document.querySelectorAll("dialog.cf-escolha-caminhao input[type=radio]")].map((i) => i.value + ":" + i.checked));
   assert.deepStrictEqual(marcados, ["c2:true", "c1:false"], "programado primeiro e já marcado: " + marcados);
-  await p2.uncheck("dialog.cf-escolha-caminhao input[value=c2]");
+  await p2.locator("dialog.cf-escolha-caminhao input[value=c2]").evaluate(i=>i.checked=false);
   await p2.click("dialog.cf-escolha-caminhao [data-ok]");
   await p2.waitForTimeout(300);
   assert.ok(await p2.isVisible("dialog.cf-escolha-caminhao[open]"), "sem caminhão marcado não conclui");
@@ -116,9 +121,20 @@ const mock = `(() => {
   await p2.click("dialog.cf-escolha-caminhao [data-ok]");
   if (await p2.locator("dialog.cf-confirmacao[open]").isVisible({ timeout: 1500 }).catch(() => false)) await p2.click("dialog.cf-confirmacao [type=submit]");
   await p2.waitForFunction(() => window.__gravados.some((g) => g.t === "separacoes_pedidos" && g.p?.operacao?.carregamento?.concluido_em));
-  const reg = await p2.evaluate(() => window.__gravados.find((g) => g.t === "separacoes_pedidos" && g.p?.operacao?.carregamento).p.operacao.carregamento.caminhoes.map((c) => c.codigo));
+  const reg = await p2.evaluate(() => window.__gravados.find((g) => g.t === "separacoes_pedidos" && g.p?.operacao?.carregamento?.concluido_em).p.operacao.carregamento.caminhoes.map((c) => c.codigo));
   assert.deepStrictEqual(reg, ["G"], "registro do carregamento leva o caminhão escolhido");
   console.log("ok 4 - no fim do carregamento escolhe o caminhão (obrigatório) e ele fica no registro");
+  await page.evaluate(()=>sessionStorage.setItem('multi-carga','1'));
+  await page.reload();await page.locator('.cf-qtd-input').first().waitFor();
+  await page.locator('.cf-qtd-input[data-chave="s1|i1"]').fill('1');await page.locator('.cf-qtd-obs[data-chave="s1|i1"]').fill('Primeiro lote conferido');
+  await page.click('#cfQtdConfirmar');await page.locator('.cf-escolha-caminhao[open]').waitFor();await page.check('.cf-escolha-caminhao input[value=c1]');assert.equal(await page.locator('.cf-escolha-caminhao input[type=radio]:checked').count(),1);await page.click('.cf-escolha-caminhao [data-ok]');
+  await page.waitForFunction(()=>window.__cargasTeste?.carga_por_veiculo?.length===1);assert.ok(!await page.evaluate(()=>window.__cargasTeste.carregamento?.concluido_em));assert.equal(await page.locator('.cf-carga-placa').first().innerText(),'ABC1D23');assert.equal(await page.locator('.cf-carga-coluna img').count(),1);const imagem=await page.locator('.cf-carga-foto').first().boundingBox(),placa=await page.locator('.cf-carga-placa').first().boundingBox();assert.ok(placa.y>=imagem.y+imagem.height,'placa embaixo da foto');assert.equal(await page.locator('.cf-qtd-cabeca .cf-carga-cabeca').innerText(),'G');assert.match(await page.locator('#cfQtdConfirmar').innerText(),/2.*caminh/i);
+  await page.reload();await page.locator('.cf-carga-item').first().waitFor();assert.equal(await page.locator('.cf-qtd-input[data-chave="s1|i1"]').getAttribute('max'),'1');
+  await page.locator('.cf-qtd-input[data-chave="s2|i2"]').fill('1');await page.click('#cfQtdConfirmar');await page.locator('.cf-escolha-caminhao[open]').waitFor();assert.ok(await page.locator('.cf-escolha-caminhao input[value=c1]').isDisabled());await page.check('.cf-escolha-caminhao input[value=c2]');await page.click('.cf-escolha-caminhao [data-ok]');
+  await page.waitForFunction(()=>window.__cargasTeste?.carga_por_veiculo?.length===2);assert.ok(!await page.evaluate(()=>window.__cargasTeste.carregamento?.concluido_em));assert.ok(await page.locator('.cf-qtd-input[data-chave="s2|i2"]').isDisabled());
+  await page.locator('.cf-qtd-input[data-chave="s1|i1"]').fill('1');await page.click('#cfQtdConfirmar');await page.locator('.cf-escolha-caminhao[open]').waitFor();assert.ok(await page.locator('.cf-escolha-caminhao input[value=c2]').isDisabled());await page.check('.cf-escolha-caminhao input[value=c3]');await page.click('.cf-escolha-caminhao [data-ok]');
+  await page.waitForFunction(()=>!!window.__cargasTeste?.carregamento?.concluido_em);const cargas=await page.evaluate(()=>window.__cargasTeste);assert.equal(cargas.carga_por_veiculo.length,3);assert.equal(cargas.carregamento.itens.find(i=>i.chave==='s1|i1').conferido,2);assert.equal(cargas.carregamento.itens.find(i=>i.chave==='s1|i1').obs,'Primeiro lote conferido');assert.equal(await page.locator('.cf-carga-item').count(),3);const colunas=await page.locator('.cf-qtd-linha:not(.cf-qtd-cabeca)').evaluateAll(rs=>rs.map(r=>[...r.querySelectorAll('[data-coluna-caminhao]')].map(c=>({x:c.getBoundingClientRect().x,y:c.getBoundingClientRect().y}))));assert.equal(colunas[0].length,3);assert.equal(colunas[1].length,3);for(let i=0;i<3;i++)assert.ok(Math.abs(colunas[0][i].x-colunas[1][i].x)<2);assert.ok(colunas[0].every(c=>Math.abs(c.y-colunas[0][0].y)<2));assert.ok(await page.locator('.cf-carga-foto').first().evaluate(e=>e.getBoundingClientRect().width<=44));
+  console.log('ok 5 - tres cargas sequenciais, uma escolha por vez, saldo, identificacao por caminhao, retomada e conclusao somente no ultimo');
   assert.ok(erros.length === 0, erros.join(" | "));
   await browser.close();
   console.log("todos os testes passaram");

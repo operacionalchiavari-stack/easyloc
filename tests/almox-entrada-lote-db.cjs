@@ -1,0 +1,51 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),{PGlite}=require('@electric-sql/pglite');
+(async()=>{
+ const db=new PGlite(),company='10000000-0000-0000-0000-000000000001',other='10000000-0000-0000-0000-000000000002',material='20000000-0000-0000-0000-000000000001',os='30000000-0000-0000-0000-000000000001',maintenance='30000000-0000-0000-0000-000000000002',foreign='30000000-0000-0000-0000-000000000003';
+ try{
+  await db.exec(`create role anon;create role authenticated;
+   create table warehouse_materials(id uuid primary key,empresa_id uuid,nome text,quantidade_disponivel numeric,status text,estoque_minimo numeric,valor_unitario numeric,unidade text);
+   create table warehouse_operations(id uuid primary key default gen_random_uuid(),empresa_id uuid,operation_type text,destination_type text,requester_id uuid,separated_by uuid,authorized_by uuid,sector_id uuid,note text,idempotency_key text,unique(empresa_id,idempotency_key));
+   create table warehouse_movements(id uuid default gen_random_uuid(),empresa_id uuid,material_id uuid,operation_id uuid,tipo text,quantidade numeric,unidade text,setor_id uuid,solicitante_id uuid,responsavel_id uuid,op_numero text,origem text,documento text,observacao text,estoque_anterior numeric,estoque_atual numeric,valor_unitario numeric,valor_total numeric,responsavel_nome text,solicitante_nome text,setor_nome text);
+   create table itens(id uuid,empresa_id uuid,produto text);
+   create table acervo_os(id uuid,empresa_id uuid,numero bigint,status text,item_id uuid);
+   create table manutencao_predial_solicitacoes(id uuid,empresa_id uuid,numero bigint,status text,titulo text,local text);
+   create function almox_empresa() returns uuid language sql as $$select '${company}'::uuid$$;
+   create function almox_funcionario() returns uuid language sql as $$select '${company}'::uuid$$;
+   create function almox_tw_pode(text) returns boolean language sql as $$select true$$;
+   create function almox_nome_func(uuid) returns text language sql as $$select 'Pessoa'::text$$;
+   create function warehouse_blocked_qty(uuid,uuid) returns numeric language sql as $$select 0::numeric$$;
+   create function almox_pedido_existe(uuid,text) returns boolean language sql as $$select $1='${company}'::uuid and $2='1820'$$;
+   create function identify_employee_by_warehouse_pin(text) returns jsonb language sql as $$select case when $1='1234' then jsonb_build_object('employee_id','${company}','sector_id','${company}','employee_name','Pessoa','sector_name','Estoque') end$$;
+   insert into warehouse_materials values('${material}','${company}','Material',100,'disponivel',0,10,'UN');
+   insert into itens values('${material}','${company}','Cadeira Imperial');
+   insert into acervo_os values('${os}','${company}',12,'aberta','${material}'),('${foreign}','${other}',13,'aberta','${material}');
+   insert into manutencao_predial_solicitacoes values('${maintenance}','${company}',14,'execucao','Reparo interno','Estoque');`);
+
+  await db.exec(`alter table warehouse_materials add column localizacao text default 'A-01';
+    alter table warehouse_movements add column localizacao text,add column fornecedor text;
+    create table almox_funcionarios(id uuid,setor_id uuid);create table almox_setores(id uuid,nome text);`);
+  const original=fs.readFileSync('supabase/migrations/20261116100100_almoxarifado_tecnoweld_funcoes.sql','utf8');
+  const start=original.indexOf('create or replace function public.register_warehouse_manual_movement('),end=original.indexOf('end $$;',start)+7;
+  await db.exec(original.slice(start,end));
+  await db.exec(fs.readFileSync('supabase/migrations/20261116102100_almox_entrada_lote.sql','utf8'));
+  const second='20000000-0000-0000-0000-000000000002';
+  await db.query("insert into warehouse_materials(id,empresa_id,nome,quantidade_disponivel,status,estoque_minimo,valor_unitario,unidade) values($1,$2,'Outro',10,'disponivel',0,5,'UN')",[second,company]);
+  const run=(key,items,op=null)=>db.query('select register_warehouse_entry_batch($1::jsonb,$2,$3,$4,$5) data',[JSON.stringify(items),'Estoque inicial',op,'Teste',key]);
+  const items=[{material_id:material,quantity:2,unit_value:20},{material_id:second,quantity:3,unit_value:null}];
+  await run('lote',items);
+  const stock=async()=> (await db.query('select id,quantidade_disponivel::text qty,valor_unitario::text cost,localizacao from warehouse_materials order by id')).rows;
+  let rows=await stock();assert.equal(Number(rows[0].qty),102);assert.equal(Number(rows[1].qty),13);assert.equal(Number(rows[0].cost),20);assert.equal(rows[0].localizacao,'A-01');
+  assert.equal((await run('lote',items)).rows[0].data.duplicate,true);assert.deepEqual(await stock(),rows);
+  await assert.rejects(run('lote',[{...items[0],quantity:8}]),/outros dados/);
+  await assert.rejects(run('rollback',[items[0],{material_id:foreign,quantity:1}]),/Material/);assert.deepEqual(await stock(),rows);
+  await assert.rejects(run('quantity',[items[0],{...items[1],quantity:0}]),/Quantidade/);assert.deepEqual(await stock(),rows);
+  await assert.rejects(run('cost',[{...items[0],unit_value:-1}]),/Valor/);
+  await assert.rejects(run('order',items,'999'),/Pedido/);
+  await run('zero',[{...items[0],quantity:1,unit_value:0}]);
+  assert.equal(Number((await stock())[0].cost),0);
+  const movements=(await db.query('select valor_total::text total,localizacao from warehouse_movements')).rows;
+  assert.deepEqual(movements.map(m=>Number(m.total)),[40,15,0]);assert.ok(movements.every(m=>m.localizacao==='A-01'));
+  assert.equal((await db.query('select count(*)::int count from warehouse_entry_batches')).rows[0].count,2);
+  console.log('OK: entrada atomica, dois materiais, custo atual/zero/novo, endereco preservado, idempotencia e rollback no PostgreSQL.');
+ }finally{await db.close();}
+})().catch(e=>{console.error(e);process.exit(1)});

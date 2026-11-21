@@ -3,7 +3,7 @@
    Modulos/Financeiro/pagar.html, vê os pagamentos (nome neutro "Pagamento 1, 2…") e gera o PIX de cada um,
    que cai sozinho na conta certa (gateway de cada conta do Financeiro). Ver CLAUDE.md "Link de pagamento".
    window.EasyLocLinkPagamento:
-     abrir({ empresaId, pedidoId, numero, cliente, telefone })  janela da equipe (copiar, WhatsApp, QR, código novo)
+     abrir({ empresaId, pedidoId, numero, cliente, telefone, preparar? })  abre a janela antes de sincronizar o pedido
      paraDocumento({ empresaId, pedidoId })                      { url, urlCurta, pin, qr } para o QR do pedido/PDF
      url(slug, pin?)                                            endereço da página pública
      qrDataUrl(texto)                                           QR em imagem (data URL) */
@@ -94,26 +94,29 @@
     if (botao) { const o = botao.textContent; botao.textContent = "Copiado ✓"; setTimeout(() => (botao.textContent = o), 1500); }
   }
 
-  async function abrir({ empresaId, pedidoId, numero, cliente, telefone } = {}) {
+  async function abrir({ empresaId, pedidoId, numero, cliente, telefone, preparar } = {}) {
     if (!empresaId || !pedidoId) { window.alerta?.("Salve o pedido antes de gerar o link de pagamento.", "Link de pagamento", "aviso"); return; }
     estilos();
     const dlg = document.createElement("dialog");
     dlg.className = "elp-dialog";
-    dlg.innerHTML = '<div class="elp-topo"><h2>Link do pedido' + (numero ? " · Pedido " + esc(numero) : "") + '</h2><button type="button" class="elp-x" data-elp-fechar aria-label="Fechar">×</button></div><div class="elp-corpo"><p>Carregando…</p></div>';
+    dlg.innerHTML = '<div class="elp-topo"><h2>Link do pedido' + (numero ? " · Pedido " + esc(numero) : "") + '</h2><button type="button" class="elp-x" data-elp-fechar aria-label="Fechar">×</button></div><div class="elp-corpo"><p role="status">' + (preparar?'Atualizando pedido e imagens…':'Carregando…') + '</p></div>';
     document.body.appendChild(dlg);
     dlg.addEventListener("close", () => dlg.remove());
     dlg.addEventListener("click", (e) => { if (e.target.closest("[data-elp-fechar]") || e.target === dlg) dlg.close(); });
     dlg.showModal();
 
+    let versaoPintura=0;
     const pintar = async (l) => {
+      if(!l?.slug)throw Error('O link do pedido não foi retornado. Tente novamente.');
+      if(!dlg.isConnected)return;
+      const versao=++versaoPintura;
       const link = url(l.slug), comCodigo = url(l.slug, l.pin);
-      const qr = await qrDataUrl(comCodigo).catch(() => "");
       const semGateway = (l.contas_sem_gateway || []).filter(Boolean);
       const msg = "Olá" + (cliente ? ", " + cliente : "") + "! Segue o link do seu pedido" + (numero ? " " + numero : "") +
         ":\n" + link + "\nCódigo de acesso: " + l.pin + "\n\nNele você confere o pedido completo e, no final, faz os pagamentos pelo PIX.";
       const fone = String(telefone || "").replace(/\D/g, "");
       dlg.querySelector(".elp-corpo").outerHTML =
-        '<div class="elp-corpo"><div class="elp-qr">' + (qr ? '<img src="' + qr + '" alt="QR Code do link de pagamento">' : "") + "<small>O cliente aponta a câmera e já entra (o código vai junto no QR).</small></div>" +
+        '<div class="elp-corpo"><div class="elp-qr"><p data-elp-qr-status role="status">Preparando QR Code…</p><small>O cliente aponta a câmera e já entra (o código vai junto no QR).</small></div>' +
         '<div class="elp-info">' +
           (!l.pagamentos ? '<div class="elp-aviso">O cliente já pode ver o pedido por este link. Os pagamentos aparecem quando o pedido fica <b>Reservado</b> com a programação de pagamento preenchida.</div>' : "") +
           (semGateway.length ? '<div class="elp-aviso">Sem gateway conectado: <b>' + semGateway.map(esc).join(", ") + "</b>. Os pagamentos dessas contas aparecem para o cliente como \"Fale com a nossa equipe\". Conecte em Financeiro › Gateways.</div>" : "") +
@@ -136,9 +139,28 @@
         e.currentTarget.disabled = true;
         try { await pintar(await obter(empresaId, pedidoId, true)); } catch (err) { window.alerta?.(err.message, "Link de pagamento", "erro"); }
       };
+      // O link e o código ficam disponíveis mesmo se a biblioteca do QR estiver lenta.
+      qrDataUrl(comCodigo).then(qr=>{
+        if(!dlg.isConnected || versao!==versaoPintura)return;
+        const status=dlg.querySelector('[data-elp-qr-status]');
+        if(!qr){if(status)status.textContent='QR indisponível. Use o link do pedido.';return;}
+        const img=document.createElement('img');img.src=qr;img.alt='QR Code do link de pagamento';status?.replaceWith(img);
+      }).catch(()=>{if(dlg.isConnected && versao===versaoPintura){const status=dlg.querySelector('[data-elp-qr-status]');if(status)status.textContent='QR indisponível. Use o link do pedido.';}});
     };
-    try { await pintar(await obter(empresaId, pedidoId)); }
-    catch (e) { dlg.querySelector(".elp-corpo").innerHTML = "<p>Não foi possível gerar o link: " + esc(e.message || e) + "</p>"; }
+    const carregar=async()=>{
+      const corpo=dlg.querySelector('.elp-corpo');
+      if(!corpo || !dlg.isConnected)return;
+      corpo.innerHTML='<p role="status">'+(preparar?'Atualizando pedido e imagens…':'Carregando…')+'</p>';
+      try{
+        await preparar?.();
+        if(dlg.isConnected)await pintar(await obter(empresaId,pedidoId));
+      }catch(e){
+        if(!dlg.isConnected)return;
+        dlg.querySelector('.elp-corpo').innerHTML='<div class="elp-erro" role="alert"><p>Não foi possível atualizar o link: '+esc(e.message || e)+'</p><button type="button" class="elp-btn" data-elp-tentar>Tentar novamente</button></div>';
+        dlg.querySelector('[data-elp-tentar]').onclick=carregar;
+      }
+    };
+    await carregar();
   }
 
   window.EasyLocLinkPagamento = { abrir, paraDocumento, url, qrDataUrl };

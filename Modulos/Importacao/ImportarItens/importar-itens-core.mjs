@@ -31,6 +31,8 @@ export const CAMPOS_ITEM = [
   { header: "PROFUNDIDADE", key: "profundidade", required: true, tipo: "numero-nao-negativo" },
   { header: "Fornecedor", key: "fornecedor_nome", required: false, tipo: "texto" },
   { header: "Valor de Compra", key: "custo", required: false, tipo: "numero" },
+  // 15/11/2026: quantidade em estoque da implantação. Depois disso a quantidade entra por Compras.
+  { header: "Qt", key: "estoque_total", required: false, tipo: "inteiro-nao-negativo" },
   { header: "Valor de Reposição (+100%)", key: "valor_reposicao", required: false, tipo: "numero" },
   { header: "Ordem de Exposição no Site", key: "ordem_exposicao_site", required: false, tipo: "inteiro" },
   { header: "EXIBIR NO SITE (S/N)", key: "exibir_no_site", required: false, tipo: "booleano", default: false },
@@ -45,7 +47,6 @@ export const CAMPOS_ITEM = [
 // correspondente no sistema hoje — ignoradas de propósito, não por
 // descuido. Ver seção 4 do relatório final / CLAUDE.md.
 export const COLUNAS_IGNORADAS = [
-  { header: "Qt", motivo: "quantidade em estoque não tem campo de importação hoje (estoque_total existe na tabela mas não é gerenciado por nenhuma tela de cadastro — fora do escopo desta importação, evita popular um campo que nenhuma tela exibe/mantém)." },
   { header: "Valor Total", motivo: "coluna auxiliar da própria planilha (Valor de Compra × Qt), não corresponde a nenhum campo do sistema." },
   { header: "LINHA (CATEGORIA) NOVA", motivo: "classificação duplicada/legada — a planilha já tem uma coluna \"CATEGORIA\" explícita, usada como fonte oficial." },
   { header: "GRUPO (CHAR 30) FAMÍLIAS SITE", motivo: "classificação duplicada/legada — a planilha já tem \"FAMÍLIA\" explícita, usada como fonte oficial." },
@@ -364,6 +365,20 @@ export function validarLinha(linhaArray, indices, colunasPreco, canonicalizadore
     if (!Number.isFinite(num) || num < 0) { erros.push(`"${campo}" inválido: "${texto}".`); return; }
     valores[campo] = num;
   });
+
+  // ---- Quantidade em estoque (Qt): inteiro >= 0; vazio = não informada (fica como está / sem quantidade) ----
+  const qtBruta = String(valorDe("estoque_total") ?? "").trim();
+  if (!qtBruta) {
+    valores.estoque_total = null;
+  } else {
+    const qt = parseNumeroBR(qtBruta);
+    if (!Number.isFinite(qt) || !Number.isInteger(qt) || qt < 0) {
+      pendencias.push(`"Qt" não é um número inteiro a partir de 0: "${qtBruta}" — a quantidade em estoque não será gravada.`);
+      valores.estoque_total = null;
+    } else {
+      valores.estoque_total = qt;
+    }
+  }
 
   // ---- Ordem de exposição (inteiro, vazio = null, não 0) ----
   const ordemBruta = String(valorDe("ordem_exposicao_site") ?? "").trim();

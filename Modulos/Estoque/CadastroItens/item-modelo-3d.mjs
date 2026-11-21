@@ -420,8 +420,8 @@ function clearSceneModel(){
 function resizeRenderer(){
   if(!state.renderer || !state.camera || !dom.ai3dViewer) return;
   const rect = dom.ai3dViewer.getBoundingClientRect();
-  const width = Math.max(360, Math.floor(rect.width));
-  const height = Math.max(320, Math.floor(rect.height));
+  const width = Math.max(240, Math.floor(rect.width));
+  const height = Math.max(200, Math.floor(rect.height));
   state.camera.aspect = width / height;
   state.camera.updateProjectionMatrix();
   state.renderer.setSize(width, height, false);
@@ -507,7 +507,7 @@ function fitCameraToObject(object){
   const center = box.getCenter(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z, 0.8);
   const fov = state.camera.fov * (Math.PI / 180);
-  const distance = Math.abs(maxDim / Math.sin(fov / 2)) * 0.85;
+  const distance = Math.abs(maxDim / Math.sin(fov / 2)) * 0.58; // 15/11/2026: mais perto (o móvel enche a área)
 
   state.controls.target.copy(center);
   state.camera.position.set(center.x + distance * 0.62, center.y + distance * 0.42, center.z + distance * 0.78);
@@ -683,6 +683,7 @@ async function carregarGLB(url){
     if(dom.ai3dAdjustBtn) dom.ai3dAdjustBtn.disabled = false;
     if(dom.ai3dSaveBtn) dom.ai3dSaveBtn.disabled = false;
     if(dom.ai3dSaveTop) dom.ai3dSaveTop.disabled = false;
+    state.saved = false;
   }catch(error){
     console.error("Erro ao carregar GLB existente:", error);
     notify("Nao foi possivel carregar o GLB existente deste item.", "erro");
@@ -796,6 +797,7 @@ async function gerarModelo3D(){
     if(dom.ai3dAdjustBtn) dom.ai3dAdjustBtn.disabled = false;
     if(dom.ai3dSaveBtn) dom.ai3dSaveBtn.disabled = false;
     if(dom.ai3dSaveTop) dom.ai3dSaveTop.disabled = false;
+    state.saved = false;
   }catch(error){
     console.error("Erro ao gerar modelo 3D:", error);
     notify("Nao foi possivel gerar o modelo 3D.", "erro");
@@ -806,6 +808,8 @@ async function gerarModelo3D(){
 }
 
 function ajustarEscalaModelo(){
+  state.saved = false;
+  setStep("medidas","done");
   if(!state.model){
     notify("Gere o modelo antes de ajustar as medidas.", "erro");
     return;
@@ -912,6 +916,7 @@ async function salvarModeloCorrigido(){
     setStage("salvar");
     setCreationStatus("salvo", "done");
     notify("Modelo 3D salvo no item.", "sucesso");
+    if(EMBUTIDO) avisarItem("salvo");
     return true;
   }catch(error){
     console.error("Erro ao salvar modelo 3D:", error);
@@ -991,10 +996,23 @@ async function carregarModeloExistente(){
     setPreparedPreview(state.imageUrl || "");
     setStep("fundo", "done");
     await carregarGLB(data.url);
+    state.saved = true; // modelo que já estava salvo: o Salvar do item não regrava
+    setStep("gerar","done");
   }
 }
 
+// 15/11/2026: dentro da aba "3D com IA" do item (iframe com ?embutido=1) não navega: avisa a página do item.
+const EMBUTIDO = new URLSearchParams(window.location.search).get("embutido") === "1" && window.parent !== window;
+function avisarItem(tipo){ try{ window.parent.postMessage({ origem: "ia3d", tipo, itemId: state.itemId }, window.location.origin); }catch(_){} }
+
+// O Salvar do topo da página do item chama isto: grava o modelo só se houver um gerado/ajustado ainda não salvo.
+window.ia3dSalvarPendente = async () => {
+  if(!state.model || state.saved) return null;
+  return salvarModeloCorrigido();
+};
+
 function voltarParaItem(){
+  if(EMBUTIDO){ avisarItem("voltar"); return; }
   const itemId = state.itemId || window.__ITEM_3D_AI_ID || window.itemAtualId || window.__ITEM_DETALHE_ID || null;
   window.__ITEM_DETALHE_ID = itemId;
   window.__ITEM_DETALHE_MODO = itemId ? "editar" : "novo";

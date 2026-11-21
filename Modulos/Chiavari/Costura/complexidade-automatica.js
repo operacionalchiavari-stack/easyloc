@@ -11,37 +11,51 @@
  }
  const dlg=document.createElement('dialog');dlg.className='cx-auto-dialog';document.body.append(dlg);
  function localData(valor){if(!valor)return '';const d=new Date(valor);if(!Number.isFinite(d.getTime()))return '';return new Intl.DateTimeFormat('sv-SE',{timeZone:'America/Sao_Paulo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(d).replace(' ','T');}
+ // Nov/2026 (pedido do usuário): a janela é só de consulta. Sem planejamento, exceções, filtro nem salvar.
  function abrir(p){
+  // Nov/2026: tela própria com as provas (complexidade-tela.js). A janela abaixo fica só de reserva.
+  if(window.CXTela)return window.CXTela.abrir(p);
   versaoTela++;
-  aberto=p;const fechado=p.complexidade.congelado,pl=p.planejamento||{};
-  const pendente=id=>Object.values(p.complexidade.setores).some(s=>s.pendentes.includes(id));
-  dlg.innerHTML='<form method="dialog" class="cx-auto-topo"><div><small>COMPLEXIDADE AUTOMÁTICA</small><h2>Pedido '+esc(p.numero)+'</h2><p>'+esc(p.cliente)+' · '+esc(p.local)+'</p></div><button class="cx-auto-fechar" aria-label="Fechar análise">×</button></form>'+
-   (p.vinculo_ambiguo?'<p class="cx-auto-aviso">Há números de pedido repetidos. Confira o vínculo: esta avaliação não participa do cálculo de bônus enquanto houver ambiguidade.</p>':'')+
-   '<p class="cx-auto-ajuda">'+(fechado?'Avaliação encerrada em '+esc(new Date(p.complexidade.congelado_em).toLocaleString('pt-BR'))+'. Os dados e parâmetros utilizados estão preservados.':'As respostas são preenchidas pelos cadastros e planejamento. Você só precisa tratar as pendências ou registrar uma exceção deste pedido.')+'</p>'+
-   (Object.values(p.complexidade.setores).some(s=>s.status==='manual_preservado')?'<p class="cx-auto-aviso">Os percentuais identificados como anteriores conservam a avaliação manual até que as fontes necessárias estejam completas.</p>':'')+
+  aberto=p;const fechado=p.complexidade.congelado;
+  dlg.innerHTML='<div class="cx-auto-topo"><div><small>COMPLEXIDADE AUTOMÁTICA</small><div class="cx-auto-linha"><h2>Pedido '+esc(p.numero)+'</h2><span class="cx-auto-cli">'+(typeof fotoClienteCX==='function'?fotoClienteCX(p.cliente):'')+'<span><b>'+esc(p.cliente)+'</b><small>'+esc(p.local)+'</small></span></span></div></div><button type="button" class="cx-auto-fechar" aria-label="Fechar análise">×</button></div>'+
+   (fechado?'<p class="cx-auto-ajuda">Avaliação encerrada em '+esc(new Date(p.complexidade.congelado_em).toLocaleString('pt-BR'))+'. Os dados e parâmetros utilizados estão preservados.</p>':'')+
    '<div class="cx-auto-scores">'+CXRegras.setores.map(s=>{const v=CXRegras.apresentarScore(p.complexidade.setores[s.id]);return '<div title="'+esc(v.detalhe)+'"><small>'+esc(s.nome)+'</small><strong>'+esc(v.texto)+'</strong><small class="cx-score-legenda">'+esc(v.legenda)+'</small></div>';}).join('')+'</div>'+
-   '<form id="cxAutoForm"><fieldset '+(fechado?'disabled':'')+'><legend>Planejamento do pedido</legend><div class="cx-auto-planejamento"><label>Viagens previstas na entrega<input name="viagens" type="number" min="1" max="100" placeholder="A planejar" value="'+esc(pl.viagens??'')+'"></label><label>Confirmação autorizada da pré-reserva<input name="confirmado" type="datetime-local" value="'+esc(localData(pl.confirmado_em))+'"><small>Preencha quando houver autorização sem entrada paga. O pagamento registrado é utilizado automaticamente.</small></label><label>Há serviço de montagem?<select name="montagem"><option value="">Usar cronograma</option><option value="true">Sim</option><option value="false">Não</option></select></label></div></fieldset>'+
-   '<label class="cx-auto-filtro"><input id="cxMostrarTodas" type="checkbox"'+(fechado?' checked':'')+'>Exibir também as respostas já preenchidas</label><p id="cxSemPendencias" class="cx-auto-ajuda" hidden>As respostas já estão preenchidas. Use a opção acima para consultar as fontes ou registrar uma exceção.</p>'+
-   '<div class="cx-auto-perguntas">'+CXRegras.perguntas.map(q=>{const r=p.complexidade.respostas[q.id],e=pl.respostas?.[q.id];return '<article data-cx-pendente="'+(pendente(q.id)||!!e)+'"><div><b>'+esc(q.titulo)+'</b><span class="cx-auto-valor '+(r.valor===null?'pendente':'')+'">'+(r.valor===null?'Pendente':r.valor?'Sim':'Não')+'</span><small>'+esc(r.fonte)+' · '+esc(r.detalhe)+'</small></div><label>Exceção neste pedido<select data-cx-resposta="'+q.id+'"'+(fechado?' disabled':'')+'><option value="">Usar automático</option><option value="true"'+(e?.valor===true?' selected':'')+'>Sim</option><option value="false"'+(e?.valor===false?' selected':'')+'>Não</option></select></label></article>';}).join('')+'</div>'+
-   (fechado?'':'<label class="cx-auto-motivo">Motivo do ajuste<textarea name="motivo" minlength="5" maxlength="1000" required placeholder="Explique a confirmação, o planejamento ou a exceção deste evento"></textarea></label><button class="cx-auto-salvar" type="submit">Salvar ajustes do pedido</button>')+'<p id="cxAutoStatus" role="status"></p></form>'+
-   (p.manual_original?'<details><summary>Avaliação manual anterior preservada</summary><p>O registro original continua guardado. O pedido em aberto utiliza as informações atuais.</p><ul>'+CXRegras.setores.map(s=>'<li>'+esc(s.nome)+': '+esc(p.manual_original[s.campo]??'Pendente')+'%</li>').join('')+'</ul></details>':'');
-  dlg.querySelector('[name=montagem]').value=typeof pl.montagem_aplica==='boolean'?String(pl.montagem_aplica):'';
-  const filtrar=()=>{const todas=dlg.querySelector('#cxMostrarTodas').checked;dlg.querySelectorAll('[data-cx-pendente]').forEach(el=>el.hidden=!todas&&el.dataset.cxPendente!=='true');dlg.querySelector('#cxSemPendencias').hidden=todas||!!dlg.querySelector('[data-cx-pendente="true"]');};
-  dlg.querySelector('#cxMostrarTodas').addEventListener('change',filtrar);filtrar();
-  dlg.querySelector('#cxAutoForm').addEventListener('submit',salvar);if(!dlg.open)dlg.showModal();
+   '<div class="cx-auto-perguntas cx-auto-consulta">'+CXRegras.perguntas.map(q=>{const r=p.complexidade.respostas[q.id]||{valor:null,fonte:'',detalhe:''};return '<article><div><b>'+esc(q.titulo)+'</b><span class="cx-auto-valor '+(r.valor===null?'pendente':r.valor?'sim':'nao')+'">'+(r.valor===null?'Sem dado':r.valor?'Sim':'Não')+'</span><small>'+esc(r.fonte)+(r.detalhe?' · '+esc(r.detalhe):'')+'</small></div></article>';}).join('')+'</div>';
+  dlg.querySelector('.cx-auto-fechar').addEventListener('click',()=>dlg.close());
+  if(!dlg.open)dlg.showModal();
  }
- async function salvar(ev){
-  ev.preventDefault();const p=aberto,versao=versaoTela;if(p.complexidade.congelado)return;
-  const form=ev.currentTarget,status=dlg.querySelector('#cxAutoStatus'),btn=form.querySelector('button[type=submit]');btn.disabled=true;status.textContent='Salvando ajustes…';
+ // Nov/2026: o servidor (Vercel) ainda pode estar com uma regra antiga. A tela refaz a conta dos pedidos
+ // automáticos com js/shared/complexidade.js, lendo os mesmos dados do banco (complexidade_contextos_tela).
+ async function recalcular(lista){
+  if(!Array.isArray(lista)||!lista.some(p=>p&&p.automatico&&!p.contexto))return lista; // já veio do banco com a regra atual
   try{
-   const dados={respostas:{},viagens:form.elements.viagens.value?Number(form.elements.viagens.value):null,confirmado_em:form.elements.confirmado.value?form.elements.confirmado.value+':00-03:00':null,montagem_aplica:form.elements.montagem.value===''?null:form.elements.montagem.value==='true'};
-   form.querySelectorAll('[data-cx-resposta]').forEach(el=>{if(el.value!=='')dados.respostas[el.dataset.cxResposta]=el.value==='true';});
-   const {error}=await supabaseClient.rpc('complexidade_salvar_excecoes',{p_empresa:p.empresa_id||await empresaAtual(),p_pedido:p.id,p_dados:dados,p_motivo:form.elements.motivo.value.trim()});if(error)throw error;
-   const atualizados=await chamada('listarPedidos');pedidos=atualizados;render();if(!dlg.open||versao!==versaoTela)return;const novo=atualizados.find(o=>o.id===p.id);if(novo)abrir(novo);else dlg.close();
-   dlg.querySelector('#cxAutoStatus').textContent='Ajustes salvos. Respostas e percentuais recalculados.';
-  }catch(e){status.textContent='Não foi possível salvar: '+e.message;}finally{btn.disabled=false;}
+   const {data,error}=await supabaseClient.rpc('complexidade_contextos_tela',{p_empresa:await empresaAtual()});if(error)throw error;
+   const ctx=new Map((data||[]).map(c=>[String(c.id),c]));
+   return lista.map(p=>{
+    const c=p&&p.automatico&&ctx.get(String(p.id));if(!c)return p;
+    const n=CXRegras.paraPainel(c),novo={...p,complexidade:n.complexidade,contexto:c};
+    for(const q of CXRegras.perguntas)novo['r'+q.id]=n['r'+q.id];
+    for(const [s,suf] of [['personalizacao',''],['pintura','Pintura'],['montagem','Montagem'],['triagem','Triagem'],['carregamento','Carregamento']]){
+     const campo=CXRegras.setores.find(x=>x.id===s).campo,score=n.complexidade.setores[s].score;novo[campo]=score;
+     const taxa=Number(p['comissao'+suf]||0),valor=Number(s==='montagem'?p.valorMontagem:p.valorLocacao)||0;
+     novo['valorComissao'+suf]=score===null?null:Math.round(valor*score/100*taxa*100)/100;
+    }
+    return novo;
+   });
+  }catch(e){console.warn('Complexidade: usando o cálculo do servidor.',e.message||e);return lista;}
  }
- window.CXAutomatico={abrir,score(p,setor){return CXRegras.apresentarScore(p.complexidade?.setores[setor]).texto;}};
+ // Toda leitura de listarPedidos (da página ou desta janela) passa pelo recálculo antes de chegar na tela.
+ if(window.google&&google.script&&google.script.run){
+  const runOriginal=google.script.run;
+  const envolver=(ok,falha)=>new Proxy({},{get(_,nome){
+   if(nome==='withSuccessHandler')return f=>envolver(f,falha);
+   if(nome==='withFailureHandler')return f=>envolver(ok,f);
+   if(typeof nome!=='string'||nome==='then')return undefined;
+   return (...args)=>{let r=runOriginal;if(ok)r=r.withSuccessHandler(nome==='listarPedidos'?res=>recalcular(res).then(ok):ok);if(falha)r=r.withFailureHandler(falha);return r[nome](...args);};
+  }});
+  google.script.run=envolver(null,null);
+ }
+ window.CXAutomatico={abrir,recalcular,score(p,setor){return CXRegras.apresentarScore(p.complexidade?.setores[setor]).texto;}};
  const original=window.abrirPedidoPorId;
  window.abrirPedidoPorId=function(id){const p=pedidos.find(p=>p.id===decodeURIComponent(id));if(p?.automatico)return abrir(p);return original(id);};
  setInterval(async()=>{if(document.visibilityState!=='visible'||dlg.open)return;try{pedidos=await chamada('listarPedidos');render();}catch(_){/* Mantém a última leitura, sem apagar dados durante perda de conexão. */}},60000);

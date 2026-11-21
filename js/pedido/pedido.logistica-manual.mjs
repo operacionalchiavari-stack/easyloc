@@ -23,7 +23,7 @@ export function aplicarLogisticaManual(tipo, valor, render) {
       controle = document.createElement('div');
       controle.className = 'logistica-manual';
       // no Frete fica abaixo da linha do título (onde estão Volume e Distância)
-      (card.querySelector('.frete-topo') || card.querySelector('h2'))?.after(controle);
+      (card.querySelector('.frete-topo,.montagem-topo') || card.querySelector('h2'))?.after(controle);
     }
     controle.replaceChildren();
     // Linha única e compacta; o valor e a observação do ajuste abrem num painel flutuante,

@@ -12,7 +12,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
 // Supabase simulado: from(tabela) devolve um construtor encadeável que só tem "then" (igual ao real).
 const mockSupabase = `
 (() => {
-  const banco = {};
+  const banco = { separacoes_pedidos: [{ id: 'p1', cliente_id: 'k1', cliente_nome: 'Lis Baêtas', local_nome: 'Villa Bisutti' }, { id: 'p2', cliente_id: null, cliente_nome: 'Kelly Khawam', local_nome: 'Casa das Flores' }], projetos: [{ id: 'c1', cliente_id: 'k1', local_evento: 'Espaço Jardim' }], clientes_empresas: [{ id: 'k1', nome_razao: 'Lis Baêtas', catalogo_logo_url: 'https://fixture/lis.png' }] };
   const agora = Date.now();
   const H = (min, extra) => Object.assign({ id: "h" + min, quando: new Date(agora - min * 60000).toISOString(), inicio: new Date(agora - min * 60000).toISOString(), autor_tipo: "equipe" }, extra);
   const LINHAS = [
@@ -60,6 +60,7 @@ const mockSupabase = `
   await page.addInitScript(() => { sessionStorage.setItem("login_ok", "1"); sessionStorage.setItem("empresa_id", "e1"); sessionStorage.setItem("usuario_nome", "Teste"); });
   await page.route("**/*", (rota) => {
     const url = rota.request().url();
+    if (url.startsWith("https://fixture/")) return rota.fulfill({ contentType: "image/png", body: PNG });
     if (url.includes("supabase-js")) return rota.fulfill({ contentType: "text/javascript", body: mockSupabase });
     if (url.startsWith(BASE)) {
       const arquivo = path.join(raiz, decodeURIComponent(new URL(url).pathname));
@@ -71,11 +72,9 @@ const mockSupabase = `
   });
   await page.goto(BASE + "Modulos/Comercial/Historico/historico.html");
   await page.waitForSelector(".hc-item", { timeout: 15000 });
-  await page.waitForFunction(() => document.getElementById("hcKpiHoje").textContent !== "—");
-  assert.strictEqual(await page.textContent("#hcKpiHoje"), "3");
-  assert.strictEqual(await page.textContent("#hcKpiSemana"), "4");
-  assert.strictEqual(await page.textContent("#hcKpiPedidos"), "3");
-  assert.strictEqual(await page.textContent("#hcKpiPessoas"), "3", "sem contar o Sistema");
+  // 16/11/2026: os cartões de resumo saíram da tela
+  assert.strictEqual(await page.locator(".hc-kpi").count(), 0);
+  await page.waitForFunction(() => document.querySelectorAll("#hcAutor option").length > 1);
   const dias = (await page.locator(".hc-dia h4").allTextContents()).map((t) => t.replace(/\d+$/, "").trim());
   assert.deepStrictEqual(dias, ["Hoje", "Ontem"]);
   const primeira = await page.locator(".hc-item").first().innerText();
@@ -85,14 +84,15 @@ const mockSupabase = `
   assert.ok(autores.includes("Carol") && autores.includes("Sistema"));
   const peds = await page.$$eval(".hc-ped strong", (l) => l.map((x) => x.textContent));
   assert.deepStrictEqual(peds, ["Todos os pedidos", "Pedido 2178", "Pedido 2190", "Projeto Elis e Bruno"]);
+  await page.waitForFunction(() => document.querySelectorAll(".hc-ped-local").length === 3);
+  assert.deepStrictEqual(await page.$$eval(".hc-ped-local", (l) => l.map((x) => x.textContent)), ["Villa Bisutti", "Casa das Flores", "Espaço Jardim"]);
+  assert.strictEqual(await page.locator('.hc-ped[data-hc-ped="p:p1"] .hc-ped-foto img').count(), 1, "foto da cliente");
+  assert.strictEqual(await page.$eval(".hc-ped-num", (e) => getComputedStyle(e).color), "rgb(196, 48, 43)", "número em vermelho");
   console.log("ok 1 - resumo, linha do tempo por dia (tipo, pedido, descrição, quem), pessoas e pedidos à esquerda");
 
-  await page.selectOption("#hcTipo", "financeiro");
-  await page.waitForFunction(() => document.querySelectorAll(".hc-item").length === 1);
-  assert.strictEqual(await page.evaluate(() => window.__rpcHist.at(-1).p_tipo), "financeiro", "filtro vai pro servidor");
-  await page.selectOption("#hcTipo", "");
-  await page.waitForFunction(() => document.querySelectorAll(".hc-item").length === 4);
-  console.log("ok 2 - filtro por tipo");
+  // 16/11/2026: filtros Tipo, Quem, Limpar e Exportar saíram da tela (ficam escondidos)
+  assert.ok(!(await page.isVisible("#hcTipo")) && !(await page.isVisible("#hcAutor")) && !(await page.isVisible("#hcExportar")));
+  console.log("ok 2 - só pesquisa e período na linha do título");
 
   await page.click('.hc-ped[data-hc-ped="p:p1"]');
   await page.waitForFunction(() => document.querySelectorAll(".hc-item").length === 2);
@@ -103,10 +103,7 @@ const mockSupabase = `
   await page.waitForFunction(() => document.querySelectorAll(".hc-item").length === 4);
   console.log("ok 3 - escolher um pedido mostra só o histórico dele, com resumo e Abrir pedido");
 
-  const [download] = await Promise.all([page.waitForEvent("download"), page.click("#hcExportar")]);
-  const csv = fs.readFileSync(await download.path(), "utf8");
-  assert.match(csv, /"Data";.*"Alteração";.*"Quem"/); assert.match(csv, /12 → 15/);
-  console.log("ok 4 - exportar CSV");
+
   if (process.env.FOTO) await page.screenshot({ path: process.env.FOTO, fullPage: true });
   await page.setViewportSize({ width: 390, height: 800 });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= 391), "celular sem rolagem lateral");

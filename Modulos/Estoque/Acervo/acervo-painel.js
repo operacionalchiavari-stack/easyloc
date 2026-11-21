@@ -5,6 +5,7 @@
  }
  window.AcervoPainel={render({host,s,esc,nomes,abrir,abrirPedido}){
   host._acLayoutCleanup?.();
+  if(!s.dados){host.innerHTML='<div class="ac-vazio" role="status">Carregando o painel…</div>';return;}
   const d=s.dados,ordens=d.ordens||[],eventos=[...(d.eventos||[])].sort((a,b)=>String(a.inicio).localeCompare(String(b.inicio)));
   const foto=(url,nome)=>url&&/^https?:/.test(url)?'<img src="'+esc(url)+'" alt="'+esc(nome)+'" loading="lazy">':'<span class="ac-sem-foto" aria-hidden="true">◇</span>';
   let linhas=d.retornos.filter(r=>!['liberado','baixado'].includes(r.estado)).map(r=>{const os=ordens.find(o=>o.id===r.os_id);return {id:r.id,retorno:r.id,item_id:r.item_id,codigo:r.codigo,nome:r.nome,foto_url:r.foto_url,quantidade:r.quantidade,os_id:r.os_id,numero:r.os_numero,pedido:r.numero_pedido,setor:r.os_id?(os?.setor||'Manutenção'):'Aguardando encaminhamento',prazo:os?.prazo,detalhes:r.motivo,evidencias:r.evidencias||[],situacao:nomes[r.estado]};});

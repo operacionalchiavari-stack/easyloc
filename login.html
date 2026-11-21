@@ -12,7 +12,8 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2.118.0"></script>
 <script src="js/core/supabase.js"></script>
 <script src="js/core/doisFatores.js?v=20261023-2fa"></script>
-<script src="js/core/entrar.js?v=20261107-teste-usuario"></script>
+<script src="js/core/entrar.js?v=20261120-marca"></script>
+<script src="js/core/abertura.js?v=20261120-voo-certo4"></script>
 <script src="js/core/versaoCelular.js?v=20261106-app" data-ir-para-app></script>
 
 <style>
@@ -169,6 +170,8 @@ async function login(ev){
     return;
   }
   // Celular (nov/2026): o mesmo login abre o app (app.html), a não ser que a pessoa tenha escolhido a versão completa.
+  const vaiProApp = window.EasyLocCelular && window.EasyLocCelular.usarApp();
+  if(!vaiProApp){ try{ await window.AcervoAbertura?.doLogin(); }catch(e){} }
   location.href = window.EasyLocCelular && window.EasyLocCelular.usarApp() ? "app.html" : "dashboard.html";
 }
 function resetButton(){

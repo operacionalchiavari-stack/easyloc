@@ -68,3 +68,7 @@ body.ta-app .busca-linha{position:sticky;top:0;z-index:15;align-items:center;gap
 body.ta-app .busca input{min-height:46px;font-size:15px}
 body.ta-app.ta-na-fila .titulo-fila{display:none}
 
+/* 16/11/2026: setor de manutenção da peça danificada (volta) */
+.dano-setor{display:block;width:100%;margin-top:8px;background:#fff;border:1px dashed #c4302b;color:#c4302b;border-radius:10px;padding:10px;font:inherit;font-size:14px;font-weight:600}
+.dano-setor.escolhido{border:1px solid #123f86;color:#123f86;background:#eaf0fa}
+.dano-setor[hidden]{display:none}

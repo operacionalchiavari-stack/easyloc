@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reuniões</title>
+<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js"></script>
+<link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
+<link rel="stylesheet" href="reunioes.css?v=20261114-sem-convite-passado">
+</head>
+<body>
+<main class="el-page reunioes-page" id="acervo-reunioes">
+  <header class="el-page-header rn-header">
+    <div class="rn-header-titulo"><h1>Reuniões</h1></div>
+    <label class="rn-busca"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="rnBusca" type="search" placeholder="Pesquisar reunião" aria-label="Pesquisar reuniões"></label>
+    <nav class="rn-abas-top rn-abas-esq el-tabs" role="tablist" aria-label="Reuniões">
+      <button type="button" role="tab" data-vista="proximas" aria-selected="true">Próximas</button>
+      <button type="button" role="tab" data-vista="convites" aria-selected="false">Convites<b class="rn-bolinha" id="rnQtdConvites" hidden></b></button>
+    </nav>
+    <nav class="rn-abas-top rn-abas-dir el-tabs" role="tablist" aria-label="Reuniões anteriores">
+      <button type="button" role="tab" data-vista="realizadas" aria-selected="false">Realizadas<b class="rn-bolinha" id="rnQtdRevisar" hidden></b></button>
+    </nav>
+    <div class="rn-header-acoes"><button type="button" class="rn-btn rn-btn-pri" id="rnNova"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Nova reunião</span></button></div>
+  </header>
+
+
+  <section class="rn-vista" id="rnVista" aria-live="polite"></section>
+
+  <div class="rn-detalhe" id="rnDetalhe" hidden>
+    <div class="rn-det-topo"><button type="button" class="rn-voltar" id="rnVoltar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Voltar</span></button><div class="rn-capa-linha" id="rnCapa"></div></div>
+    <div class="rn-det-grade">
+      <section class="rn-col rn-centro" id="rnCentro" aria-live="polite"></section>
+      <aside class="rn-col rn-dir" id="rnDireita"></aside>
+    </div>
+  </div>
+</main>
+
+<dialog class="rn-dialog" id="rnDialog"></dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
+<script src="../../../js/core/permissions.js?v=20261111-reunioes"></script>
+<script src="../../../js/core/alerta.js?v=20261027-modal"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
+<script src="reunioes.js?v=20261114-sem-convite-passado"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
+</body>
+</html>

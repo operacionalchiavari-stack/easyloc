@@ -12,7 +12,7 @@ const BASE='http://localhost:9907/';
  await page.evaluate(BASE=>{
   window.__CONTEXT={empresa_id:'e1',usuario_nome:'Supervisor'};window.aguardarContexto=async()=>__CONTEXT;window.__salvos=[];
   const projeto={noivos:'Decoradora',dados:{ambientes:[{id:'a1',nome:'Cerimônia',itens:[{item_id:'cadeira',quantidade:2,observacao:'Reservar primeira fila',personalizacao_id:'pers',personalizacao_nome:'Linho claro',personalizacao_valor:12345}],renders:[{id:'r1',url:BASE+'foto.svg',origem:'Projeto da cerimônia'}]},{id:'a2',nome:'Lounge',itens:[{item_id:'cadeira',quantidade:2},{item_id:'kit',quantidade:1}],renders:[]}],plantas:[{id:'pl',nome:'Planta do evento',url:BASE+'foto.svg',papel:'A4-P',legendas:[{id:'leg',ambienteId:'a1',renderId:'r1',ponto:{x:.5,y:.5}}]}]}};
-  const pedido={id:'p1',numero_pedido:'8',cliente_nome:'Decoradora',local_nome:'Local do evento',local_id:'local1',data_entrega:'2026-11-03',fluxo_etapa:'entrega',observacoes:{projeto_comercial:projeto,contrato:'CONTRATO_SIGILOSO',financeiro:{total:987654}}};
+  const pedido={id:'p1',numero_pedido:'8',cliente_nome:'Decoradora',local_nome:'Local do evento',local_id:'local1',data_entrega:'2026-11-03',fluxo_etapa:'entrega',observacoes:{observacoes_entrega:"ENTREGA: usar o portao lateral",observacoes_coleta:"COLETA: falar com o porteiro",projeto_comercial:projeto,contrato:'CONTRATO_SIGILOSO',financeiro:{total:987654}}};
   const itens=[{chave:'lc|cadeira',item_id:'cadeira',nome:'Cadeira',previsto:4,carregado:4},{chave:'lk|tampo',item_id:'tampo',nome:'Tampo do kit',previsto:1,carregado:1},{chave:'lk|base',item_id:'base',nome:'Base do kit',previsto:1,carregado:1},{chave:'fora|extra',item_id:'extra',nome:'Peça adicionada à carga',previsto:1,carregado:1}];
   window.b={pedido,itens,historico:[],atual:null,token:'1'};window.PedidoFluxo={fila:async()=>[pedido]};
   const banco={locais_empresas:[{endereco:'Estrada do Passatempo, 976 - Tres Rios, Areal - RJ, 25850-000',numero_endereco:'976'}],logistica_motivos:[{id:'m1',nome:'Item nao entregue',etapa:'entrega'}],separacoes_pedidos:[pedido],separacoes_itens:[{id:'lc',separacao_pedido_id:'p1',item_id:'cadeira',item_nome:'Cadeira',quantidade_solicitada:4},{id:'lk',separacao_pedido_id:'p1',item_id:'kit',item_nome:'Mesa',quantidade_solicitada:1}],itens:[{id:'cadeira',produto:'Cadeira Tiffany',descricao_total:'Cadeira Tiffany (L) 0.50 m (A) 0.90 m (P) 0.50 m',foto_url:BASE+'foto.svg',codigo:'CAD1'},{id:'kit',produto:'Mesa Nice',foto_url:BASE+'foto.svg'},{id:'tampo',produto:'Tampo'},{id:'base',produto:'Base'},{id:'extra',produto:'Peça extra'}],clientes_empresas:[{catalogo_logo_url:BASE+'foto.svg'}]};
@@ -24,6 +24,10 @@ const BASE='http://localhost:9907/';
  await page.addScriptTag({url:BASE+'js/core/alerta.js'});
  await page.addScriptTag({url:BASE+'js/logistica/pedido-conferencia.js'});await page.addScriptTag({url:BASE+'Modulos/Logistica/EntregasColetas/entregas-coletas.js'});
  await page.locator('[data-pedido=p1]').click();await page.locator('.ec-documento-tabela').waitFor();
+ assert.match(await page.locator('.ec-observacoes-pedido').innerText(),/ENTREGA: usar o portao lateral/);
+ assert.doesNotMatch(await page.locator('.ec-observacoes-pedido').innerText(),/COLETA:/);
+ const coletaObs=await page.evaluate(async()=> (await PedidoConferencia.carregar(supabaseClient,'e1',window.b,'coleta')).observacoesOperacao);
+ assert.deepEqual(coletaObs,[{numero:'8',texto:'COLETA: falar com o porteiro'}]);
  const fontesDocumento=await page.evaluate(()=>Object.fromEntries([
   ['local','.cpj-order-local h2'],['ambiente','.cpj-order-environment th']
  ].map(([nome,seletor])=>{const s=getComputedStyle(document.querySelector(seletor));return[nome,{familia:s.fontFamily,peso:s.fontWeight,tamanho:s.fontSize}]})));
@@ -97,7 +101,7 @@ const BASE='http://localhost:9907/';
  assert.match(await page.locator('[role=alertdialog]').innerText(),/Selecione o motivo/);
  const alertaTopo=await page.locator('[role=alertdialog]').boundingBox();assert.ok(alertaTopo.y<=30,'modal de aviso fica no topo');
  assert.equal(await page.locator('#ecMensagem').isVisible(),false,'aviso nao aparece na faixa');
- await page.locator('[role=alertdialog] button').filter({hasText:'OK'}).click();
+ await page.locator('[role=alertdialog] button[aria-label="Fechar alerta"]').click();
  await page.waitForFunction(()=>document.activeElement?.name==='motivo');
  await page.locator('[name=motivo][data-i="0"]').selectOption('m1');
  assert.equal(await page.locator('.ec-documento-layout').isVisible(),false,'opcoes de impressao ocultas durante conferencia');

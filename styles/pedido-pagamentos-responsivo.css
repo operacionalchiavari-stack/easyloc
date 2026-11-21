@@ -1,0 +1,146 @@
+/* Cada parcela se adapta ao espaço disponível ao lado do resumo. */
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pagamento-card>.pagamento-secao-titulo{display:flex;align-items:center;justify-content:center;gap:20px;width:100%;box-sizing:border-box;margin:6px 0 26px;padding:0;border:0;background:transparent;color:#34382f;font:500 clamp(30px,2.6vw,38px)/1.2 "Cormorant Garamond",Georgia,serif;letter-spacing:.025em;text-align:center;text-transform:none}
+.pedido-screen .pagamento-secao-titulo::before,.pedido-screen .pagamento-secao-titulo::after{content:"";flex:0 1 76px;height:1px;background:#c9ba9d}
+.pedido-screen .resumo-linha[hidden]{display:none!important}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-logistica-titulo{display:flex;align-items:center;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;min-width:0;padding:18px 20px}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-logistica-titulo h2{margin:0;padding:0;border:0}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .montagem-topo{border-bottom:1px solid #e3e7ec}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-mostrar-desconto{display:flex;align-items:center;gap:6px;margin:0;font:500 11px/1.4 Inter,system-ui,sans-serif;letter-spacing:0;text-transform:none;cursor:pointer;color:#526454}
+.pedido-mostrar-desconto input{flex:none;width:14px;height:14px;margin:0;accent-color:#54735f}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-bv-card{gap:0}
+.pedido-screen .pbv-painel{display:flex;flex-direction:column;gap:16px;padding:18px 0}
+.pedido-screen .pbv-metricas{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pbv-metricas>div{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:14px 16px;margin:0;border:1px solid #e3e8e5;border-radius:12px;background:#f8faf9}
+.pedido-screen .pbv-metricas span{font:500 12px/1.4 Inter,system-ui,sans-serif;color:#647268}
+.pedido-screen .pbv-metricas strong{font:600 19px/1.3 Inter,system-ui,sans-serif;color:#234c36}
+.pedido-screen .pbv-destino{padding:16px;border:1px solid #e0e5e3;border-radius:12px;background:#fff}
+.pedido-screen .pbv-destino.is-desconto{background:#f0f8f3;border-color:#c5ddcd}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pbv-opcao{display:flex;flex-direction:row;align-items:flex-start;gap:10px;margin:0;font:500 13px/1.5 Inter,system-ui,sans-serif;text-transform:none;letter-spacing:0;color:#263a2d;cursor:pointer}
+.pedido-screen .pbv-opcao input{flex:none;width:16px;height:16px;margin:2px 0 0;accent-color:#54735f}
+.pedido-screen .pbv-opcao small{display:block;margin-top:4px;font-size:12px;font-weight:400;color:#647268}
+.pedido-screen .pbv-exibicao{display:flex;flex-direction:column;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid #d1e2d7}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pbv-texto-cliente{display:flex;flex-direction:column;gap:6px;max-width:520px;font:500 12px/1.4 Inter,system-ui,sans-serif;text-transform:none;letter-spacing:0;color:#526454}
+.pedido-screen .pbv-texto-cliente[hidden]{display:none!important}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pbv-texto-cliente input{width:100%;height:36px;min-height:36px;box-sizing:border-box}
+.pedido-screen .pbv-privacidade{font-size:12px!important;color:#647268!important}
+.pedido-screen .pedido-bv-card .pbv-div{padding:0 0 16px}
+.pedido-screen .pedido-bv-card .pbv-div li{padding:10px 0;border-bottom:1px solid #edf0ee}
+.pedido-screen .pedido-bv-card .pbv-padrao{margin-block:0 16px}
+@media(max-width:480px){.pedido-screen .pbv-metricas{grid-template-columns:1fr}}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-bv-card>.pbv-cabecalho{display:flex;align-items:center;flex-wrap:wrap;gap:8px 24px;margin:0;padding:18px 20px;border-bottom:1px solid #e3e7ec}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pbv-cabecalho h2{flex:none;width:auto;margin:0;padding:0;border:0}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pbv-cabecalho .pbv-regra{margin:0}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pbv-cabecalho .pbv-regra-sem-bv{color:#9f3030;background:#fff1f1;box-shadow:0 0 0 1px #f0cccc;border-radius:5px}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pbv-negociacao{display:flex;align-items:center;flex-wrap:wrap;gap:12px 20px}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pbv-negociacao label{display:flex;flex-direction:row;align-items:center;gap:8px;margin:0;font-size:13px;font-weight:400;text-transform:none;letter-spacing:0}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pbv-negociacao :is(.pbv-manual,.pbv-percentual-inline){flex:none;white-space:nowrap}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pbv-percentual-inline input{width:76px;min-width:0;box-sizing:border-box}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pbv-motivo-inline{flex:1 1 250px;min-width:0}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pbv-motivo-inline span{white-space:nowrap}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pbv-motivo-inline select{flex:1;width:100%;min-width:0;max-width:350px;box-sizing:border-box;height:36px;min-height:36px;font:400 13px Inter,system-ui,sans-serif}
+.pedido-screen .pbv-motivos-aviso{flex-basis:100%;color:#8a5a00;font-size:12px}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-etapa-financeiro>*{min-width:0}
+@media(max-width:1100px){
+  html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-etapa-financeiro{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:760px){
+  html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-etapa-financeiro>.pedido-financeiro{grid-template-columns:minmax(0,1fr)}
+}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-etapa-financeiro:has(.pedido-financeiro-principal){grid-template-columns:minmax(0,1fr) clamp(360px,28vw,440px);gap:24px;align-items:start}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-financeiro-principal{display:flex;flex-direction:column;gap:24px;min-width:0}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-financeiro-detalhes{position:static;top:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-financeiro-detalhes>.finance-card{margin:0;width:auto;min-width:0;box-sizing:border-box}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-financeiro-detalhes #cardMontagemPedido{grid-column:1;grid-row:1}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-financeiro-detalhes #cardLogisticaPedido{grid-column:2;grid-row:1}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-financeiro-detalhes .pedido-bv-card{grid-column:1/-1;grid-row:2}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-financeiro-detalhes:has(.pedido-desconto-card) .pedido-bv-card{grid-column:1}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-financeiro-detalhes>.pedido-desconto-card{grid-column:1/-1;grid-row:2;gap:0}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-financeiro-detalhes:has(.pedido-bv-card:not([hidden]))>.pedido-desconto-card{grid-column:2}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-desconto-card>h2{margin:0;padding:18px 20px;border-bottom:1px solid #e3e7ec}
+.pedido-screen .pedido-desconto-corpo{display:flex;flex-direction:column;gap:14px;margin:0;padding:20px}
+.pedido-screen .pedido-descontos-tabela{width:100%;table-layout:fixed;border-collapse:collapse;background:transparent}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-descontos-tabela :is(th,td){width:50%;padding:10px 0;border:0;border-bottom:1px solid #edf0f2;background:transparent;vertical-align:middle;text-align:left;font:500 13px/1.4 Inter,system-ui,sans-serif;letter-spacing:0;text-transform:none}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-descontos-tabela thead th{padding:0 0 12px;color:#647268;font-size:12px}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-descontos-tabela th label{margin:0;font:inherit;color:#263a2d;letter-spacing:0;text-transform:none;cursor:pointer}
+.pedido-screen .pedido-descontos-tabela td input{width:100%;min-width:0;max-width:100%;height:40px;min-height:40px;box-sizing:border-box;padding:8px 12px;font-size:14px;text-align:right;font-variant-numeric:tabular-nums}
+.pedido-screen .pedido-descontos-tabela tr:last-child :is(th,td){border-bottom:0}
+.pedido-screen .pedido-descontos-tabela input[aria-invalid=true]{border-color:#b42318}
+.pedido-screen .pedido-desconto-corpo p{margin:0;font-size:13px;line-height:1.6;color:#586779}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-desconto-campo{display:flex;flex-direction:column;gap:8px;margin:0;font:500 13px/1.4 Inter,system-ui,sans-serif;letter-spacing:0;text-transform:none}
+.pedido-screen .pedido-desconto-campo :is(input,select){width:100%;min-width:0;box-sizing:border-box}
+.pedido-screen .pedido-desconto-corpo small{font-size:12px;line-height:1.6;color:#647268}
+.pedido-screen .pedido-desconto-corpo .pedido-desconto-erro{color:#b42318}
+.pedido-screen .pedido-desconto-erro[hidden],.pedido-screen .pedido-desconto-remover[hidden]{display:none!important}
+.pedido-screen .pedido-desconto-aplicado{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:16px;border-top:1px solid #e3e7ec;font-size:13px}
+.pedido-screen .pedido-desconto-aplicado strong{font-size:18px;white-space:nowrap}
+.pedido-screen .pedido-desconto-remover{align-self:flex-end;border:1px solid #d9d3c8;border-radius:999px;padding:8px 14px;background:#fff;color:#655138;font:500 12px Inter,system-ui,sans-serif;cursor:pointer}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-financeiro-resumo{display:block;grid-column:2;grid-row:1;position:sticky;top:var(--pedido-resumo-top,92px);align-self:start;max-height:calc(100dvh - var(--pedido-resumo-top,92px) - 16px);overflow:auto}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-financeiro-resumo>.resumo-card{margin:0;width:auto;grid-column:auto;grid-row:auto}
+@media(max-width:1100px){
+  html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-etapa-financeiro:has(.pedido-financeiro-principal){grid-template-columns:minmax(0,1fr)}
+  html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-financeiro-resumo{position:static;grid-column:1;grid-row:auto;max-height:none;overflow:visible}
+}
+@media(max-width:600px){
+  html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-financeiro-detalhes{grid-template-columns:minmax(0,1fr)}
+  html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pedido-financeiro-detalhes :is(#cardMontagemPedido,#cardLogisticaPedido,.pedido-bv-card,.pedido-desconto-card){grid-column:1;grid-row:auto}
+}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .cronograma-table{display:table;width:100%;min-width:0;table-layout:fixed}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .cronograma-table thead{display:table-header-group}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .cronograma-table tbody{display:table-row-group}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .cronograma-table tr.pg-linha{display:table-row;margin:0;border:0;border-radius:0}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .cronograma-table :is(th,td){display:table-cell;width:auto;min-width:0;padding:10px 6px;white-space:nowrap;overflow-wrap:normal;vertical-align:middle}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .cronograma-table td::before{display:none!important;content:none!important}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .cronograma-table th{font-size:10px;letter-spacing:.025em}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .cronograma-table th:nth-child(1){width:12%}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .cronograma-table th:nth-child(2){width:19%}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .cronograma-table th:nth-child(3){width:17%}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .cronograma-table th:nth-child(4){width:13%}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .cronograma-table th:nth-child(5){width:17%}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .cronograma-table th:nth-child(6){width:9%}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .cronograma-table th:nth-child(7){width:13%}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela :is(input,select){min-width:0;max-width:100%;box-sizing:border-box}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela :is(.pg-vencimento,.pagamento-metodo-select){height:34px!important;min-height:34px!important;padding:0 6px!important;font-size:12px!important}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .pg-vencimento{width:118px}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .pagamento-metodo-select{width:112px;padding-right:20px!important}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela :is(.pedido-cobranca-btn,.pg-action-btn){width:28px;min-width:28px;height:30px;padding:4px}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .pg-row-actions{gap:4px}
+.pedido-screen .pagamento-abatimentos-aplicados{margin:0 0 22px;padding:0;border:1px solid #c8e0d3;border-radius:16px;background:#f1fbf5;color:#26313d;font-size:13px;box-shadow:0 1px 2px rgba(15,23,42,.06),0 8px 22px rgba(15,23,42,.09)}
+.pagamento-abatimentos-aplicados[hidden]{display:none!important}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pagamento-abatimentos-aplicados{background:#f1fbf5;border-color:#c8e0d3}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pagamento-abatimentos-aplicados>.pg-grupo{background:#e8f6ed;border-bottom:1px solid #c8e0d3}
+.pedido-screen .pagamento-abatimentos-corpo{padding:0 20px}
+.pedido-screen .pagamento-abatimento-linha{display:flex;align-items:center;gap:20px;padding:16px 0}
+.pedido-screen .pagamento-abatimento-linha+.pagamento-abatimento-linha{border-top:1px solid #d9eadd}
+.pedido-screen .pagamento-abatimento-info{display:flex;align-items:center;justify-content:space-between;gap:16px;flex:1;min-width:0}
+.pedido-screen .pagamento-abatimento-info strong{white-space:nowrap;font-variant-numeric:tabular-nums}
+.pedido-screen .pagamento-abatimento-linha button{flex:none;border:1px solid #bdd8c8;border-radius:999px;background:#fff;color:#285c40;text-decoration:none;cursor:pointer;font:500 12px Inter,system-ui,sans-serif;padding:7px 14px}
+.pedido-screen .pagamento-abatimento-linha button:hover{background:#e8f6ed}
+.pedido-screen .pagamento-abatimentos-nota{display:block;margin:0;padding:12px 20px;border-top:1px solid #d9eadd;color:#586779;line-height:1.5}
+@media(max-width:480px){
+  .pedido-screen .pagamento-abatimentos-corpo{padding:0 16px}
+  .pedido-screen .pagamento-abatimento-linha{gap:12px}
+  .pedido-screen .pagamento-abatimento-info{gap:8px}
+  .pedido-screen .pagamento-abatimento-linha button{padding:7px 10px}
+  .pedido-screen .pagamento-abatimentos-nota{padding:12px 16px}
+}
+#pagamentoAbatimentoPopover small{font-size:11px;color:#64748b}
+#pagamentoAbatimentoErro{font-size:12px;color:#b42318;margin:0}
+#pagamentoAbatimentoPopover :is(input,button):disabled{opacity:.5;cursor:not-allowed}
+@container (max-width:600px){
+  html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela .cronograma-table thead{display:none}
+  html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela :is(table,tbody){display:block;width:100%;min-width:0}
+  html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela tr.pg-linha{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-areas:none;gap:14px 16px;margin:0;padding:16px;border-bottom:1px solid #e6e9ee;border-radius:0}
+  html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela tr.pg-linha td{display:flex;position:static;grid-area:auto;justify-self:stretch;margin:0;flex-direction:column;align-items:stretch;justify-content:center;gap:6px;width:auto;min-width:0;min-height:0;padding:0;border:0;background:transparent;text-align:left;white-space:normal;box-shadow:none}
+  html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela tr.pg-linha td::before{content:attr(data-rotulo)!important;display:block!important;position:static;font:500 11px/1.3 Inter,system-ui,sans-serif;color:#64748b;text-transform:none;letter-spacing:0}
+  html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela tr.pg-linha td:first-child{grid-column:1/-1;flex-direction:row;justify-content:space-between;align-items:center;width:auto;min-width:0}
+  html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela tr.pg-linha td:first-child::before{display:none!important}
+  html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela tr.pg-linha .pg-row-actions{justify-content:flex-start}
+  html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela tr.pg-linha .pg-status-badge{align-self:flex-start;white-space:normal}
+}
+@container (max-width:480px){
+  html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pg-card-tabela tr.pg-linha{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 12px}
+}
+/* Observação da negociação do BV (18/11/2026) */
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pbv-detalhe{flex:1 1 100%;display:grid;gap:4px;min-width:0}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pbv-detalhe span{font:500 12px Inter,system-ui,sans-serif;color:#4f4f4f}
+html:root:is(#pg-fit#pg-fit#pg-fit#pg-fit,html) .pedido-screen .pbv-detalhe textarea{width:100%;box-sizing:border-box;min-height:56px;resize:vertical;padding:8px 10px;border:1px solid #dfe4ea;border-radius:10px;font:400 13px Inter,system-ui,sans-serif;background:#fff}

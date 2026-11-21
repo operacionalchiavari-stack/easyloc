@@ -56,7 +56,7 @@
     });
   }
   const api={
-    getClient:()=>({rpc:async(name)=>({error:{message:'Esta ação de entrega terceirizada não se aplica ao Acervo.'}})}),
+    getClient:()=>({rpc:async(name)=>({error:{message:'Esta ação de entrega terceirizada não se aplica ao Acervo.'}}),from:()=>({select:()=>({maybeSingle:async()=>({data:null})})})}),
     getCompanyProfile:profile,
     getPcpParameters:async()=>({purchase_quotation_lead_days:5}),
     listSuppliers:async()=>{const {data,error}=await query('fornecedores');if(error)throw error;return (data || []).filter(f=>f.status!=='inativo').map(f=>({...f,nome:f.nome_fantasia || f.nome_razao_social,trade_name:f.nome_fantasia,legal_name:f.nome_razao_social}));},
@@ -64,7 +64,8 @@
       const orders=await list('pedido'),rncs=await list('rnc');
       return [...new Set(orders.map(o=>o.fornecedor_id))].map(supplier_id=>{const recebimentos=orders.filter(o=>o.fornecedor_id===supplier_id&&o.status==='recebido').length,com_rnc=rncs.filter(r=>r.fornecedor_id===supplier_id).length;return {supplier_id,recebimentos,com_rnc,indice:recebimentos?Math.max(0,Math.round(100*(recebimentos-com_rnc)/recebimentos)):100};});
     },
-    listWarehouseMaterials:async()=>{const {data,error}=await query('insumos');if(error)throw error;return (data || []).map(i=>({...i,status:i.status || 'ativo'}));},
+    // 16/11/2026: materiais do Almoxarifado novo (warehouse_materials), não mais da tabela antiga insumos
+    listWarehouseMaterials:async()=>{const {data,error}=await query('warehouse_materials');if(error)throw error;return (data || []).filter(m=>m.status!=='inativo').sort((a,b)=>String(a.nome).localeCompare(String(b.nome),'pt-BR')).map(m=>({...m,estoque_atual:m.quantidade_disponivel,status:'ativo'}));},
     listPurchaseNeeds:()=>list('necessidade'),
     listQuotationRequests:()=>list('cotacao'),
     listPurchaseOrdersV2:async()=>(await list('pedido')).map(o=>({...o,op_numeros:[],pendencia_documental:!(o.nfe_receipts || []).length})),
@@ -93,7 +94,9 @@
     createPurchaseOrdersFromQuotation:(id,selections)=>run('gerar_pedidos',{id,selections}),
     getPurchaseOrderV2Detail:detail,
     // valores e pagamento do pedido -> Contas a Pagar (out/2026)
-    setPurchaseOrderPayment:async(id,forma,parcelas,total)=>{await ready;const {data,error}=await client().rpc('compras_pedido_pagamento',{p_empresa:empresa(),p_pedido:id,p_forma:forma,p_parcelas:parcelas,p_total:total});if(error)throw Error(error.message || 'Não foi possível enviar ao Contas a Pagar.');return data;},
+    // cartão (nov/2026): com forma 'cartao', o cartão e a data da compra decidem em qual fatura cada parcela cai
+    listCreditCards:async()=>{await ready;const {data,error}=await client().rpc('fin_cartoes_lista',{p_empresa:empresa()});if(error)throw Error(error.message);return data||[];},
+    setPurchaseOrderPayment:async(id,forma,parcelas,total,cartao=null,compra=null)=>{await ready;const {data,error}=await client().rpc('compras_pedido_pagamento',{p_empresa:empresa(),p_pedido:id,p_forma:forma,p_parcelas:parcelas,p_total:total,p_cartao:forma==='cartao'?cartao:null,p_cartao_compra:forma==='cartao'?compra:null});if(error)throw Error(error.message || 'Não foi possível enviar ao Contas a Pagar.');return data;},
     cancelPurchaseOrderV2:(id,motivo)=>run('cancelar_pedido',{id,motivo}),
     cancelQuotationRequest:(id,motivo)=>run('cancelar_cotacao',{id,motivo}),
     listBillingCompaniesBasic:async()=>{const p=await profile();return {empresas:[{id:empresa(),rotulo:p.nome_fantasia,cnpj:p.cnpj,razao_social:p.razao_social}]};},
@@ -113,7 +116,22 @@
       const arquivo=await upload(new File([nota.xml_text],nota.nome_arquivo_xml||'nota.xml',{type:'application/xml'}));
       return run('nota_fiscal',{id,nota:{...nota,documento_path:arquivo.path,xml_text:undefined},items});
     },
-    listReceivingRncs:()=>list('rnc'),
+    // (16/11/2026) tela de divergência copiada da Tecnoweld: decisão no formato dela (decisao_tipo = ação) + crédito gerado
+    listReceivingRncs:async()=>{
+      const rows=await list('rnc');
+      const acoes=['aceitar','abater','devolver_repor','devolver_cancelar'];
+      let cred=[];try{const r=await client().from('compras_creditos').select('rnc_id,valor,saldo').eq('empresa_id',empresa());cred=r.data||[];}catch{}
+      return rows.map(r=>{const c=cred.find(x=>x.rnc_id===r.id);const t=acoes.includes(r.decisao)?r.decisao:(r.decisao_tipo||null);
+        return {...r,criado_em:r.criado_em||r.created_at,decisao_tipo:t,decisao:acoes.includes(r.decisao)?null:r.decisao,credito_valor:c?Number(c.valor):null,credito_saldo:c?Number(c.saldo):null};});
+    },
+    receivingRncHistory:async id=>{
+      const r=(await api.listReceivingRncs()).find(x=>x.id===id);if(!r)return [];
+      const ev=[{evento:'aberta',em:r.criado_em||r.created_at,por:r.aberto_por||null,descricao:'Divergência registrada no recebimento'}];
+      if(r.status!=='aberta')ev.push({evento:'decisao',em:r.decidido_em||r.resolvido_em,por:r.decidido_por||null,descricao:'Decisão de Compras: '+({aceitar:'Aceitar como está',abater:'Aceitar com abatimento',devolver_repor:'Devolver — fornecedor repõe',devolver_cancelar:'Devolver — comprar de outro'}[r.decisao_tipo]||'resolvida')},{evento:'encerrada',em:r.resolvido_em||r.decidido_em,por:r.decidido_por||null,descricao:'Divergência encerrada'});
+      return ev;
+    },
+    supplierOccurrenceConfig:async()=>({ocorrencias:[],faixas:[]}),
+    setReceivingRncType:async()=>({ok:true}),
     resolveReceivingRnc:(id,decisao,observacao,valor)=>run('decidir_rnc',{id,decisao,observacao,valor}),
     saveNfeDivergence:async payload=>{
       await ready;const {data,error}=await client().from('almoxarifado_compras').select('compras_pedido_id,numero_nf').eq('empresa_id',empresa()).eq('id',payload.recebimento_id).single();
@@ -127,6 +145,9 @@
       document.body.appendChild(d);d.querySelector('[data-cancel]').onclick=()=>d.close();d.addEventListener('close',()=>{d.remove();resolve();},{once:true});
       d.querySelector('form').onsubmit=async e=>{e.preventDefault();const btn=e.target.querySelector('button[type="submit"],button:not([type])');btn.disabled=true;try{await run('criar_rnc',{id:order.id,...Object.fromEntries(new FormData(e.target))});d.close();window.dispatchEvent(new Event('acervo:compras-rnc'));}catch(error){d.querySelector('[data-error]').textContent=error.message;btn.disabled=false;}};d.showModal();
     }),
+    // Créditos com fornecedor (16/11/2026, aba Créditos): nascem da divergência no recebimento; abatidos numa conta a pagar
+    listSupplierCredits:async()=>{await ready;const {data,error}=await client().rpc('compras_creditos_lista',{p_empresa:empresa()});if(error)throw Error(error.message);return data||[];},
+    useSupplierCredit:async(id,valor,titulo,obs)=>{await ready;const {data,error}=await client().rpc('compras_credito_usar',{p_empresa:empresa(),p_id:id,p_valor:valor,p_titulo:titulo||null,p_obs:obs||null});if(error)throw Error(error.message);return data;},
     analyzePurchaseProposal:async({file,quotationItems})=>{
       await ready;
       const fileBase64=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(',')[1]);r.onerror=reject;r.readAsDataURL(file);});

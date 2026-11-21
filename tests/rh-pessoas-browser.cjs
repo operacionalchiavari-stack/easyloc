@@ -12,7 +12,9 @@ const mock = `(() => {
     rh_exames: [], rh_exames_cadastro: [{ id: "c1", empresa_id: "e1", nome: "ASO periódico", tipo: "periodico", validade_meses: 12, setores_obrigatorios: [], ativo: true }],
     rh_treinamentos: [{ id: "t1", empresa_id: "e1", nome: "NR-35 Trabalho em altura", categoria: "nr", validade_meses: 24, setores_obrigatorios: ["Montagem"], ativo: true }],
     rh_turmas: [], rh_beneficios: [{ id: "b1", empresa_id: "e1", nome: "Plano de saúde", meses_carencia: 3, tipos_contrato: ["clt"], adesao: "quem_aderir", cobranca: "dividido", ativo: true }],
-    rh_beneficio_adesoes: [], rh_ferias: [], rh_checklists: []
+    rh_beneficio_adesoes: [], rh_ferias: [], rh_checklists: [],
+    // nov/2026: o Controle RH saiu da planilha (era /api/gs) para esta tabela
+    controle_rh_ocorrencias: [{ id: "o1", empresa_id: "e1", funcionario_id: "p1", funcionario_nome: "Ana Souza", tipo: "Falta", data_ocorrencia: "2026-10-10", observacao: "Sem aviso", responsavel: "Lia", registrado_em: "2026-10-10T12:00:00Z" }, { id: "o2", empresa_id: "e1", funcionario_id: null, funcionario_nome: "Bruno Lima", tipo: "Atraso", data_ocorrencia: "2026-10-11", registrado_em: "2026-10-11T12:00:00Z" }]
   };
   const pessoas = [
     { id: "p1", nome: "Ana Souza", setor: "Montagem", cargo: "Montadora", ativo: true, cpf: "•••.•••.•••-01", protegidos: ["cpf"], pode_revelar: true, data_admissao: "${anos(3)}", dados_rh: { rg: "11" }, ficha: { tipo_contrato: "clt", status: "ativo" } },

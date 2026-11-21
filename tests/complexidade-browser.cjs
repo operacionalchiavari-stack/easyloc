@@ -15,51 +15,65 @@ contexto.cliente={complexidade:{},reclamacao_historico:{valor:false,fonte:'Hist�
     if(fn==='validarSenhaPlanilha')return true;return [];
    }).then(r=>ok?.(r)).catch(e=>no?.(e))});}
    window.google={script:{run:runner()}};
-   window.supabaseClient={auth:{getSession:async()=>({data:{session:{user:{id:'gestor'}}}})},rpc:async(nome,args)=>{
+   const PNG='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+   window.supabaseClient={from:t=>{const dado=t==='clientes_empresas'?[{nome_razao:'Cliente de teste',catalogo_logo_url:PNG}]:{config:{faixas_cor:{azul_ate:10,amarelo_ate:20}}};const q={select:()=>q,eq:()=>q,maybeSingle:()=>q,then:(ok,no)=>Promise.resolve({data:dado,error:null}).then(ok,no)};return q;},auth:{getSession:async()=>({data:{session:{user:{id:'gestor'}}}})},rpc:async(nome,args)=>{
     if(nome==='complexidade_salvar_excecoes'){window.__writes.push({nome,args});window.__contexto.excecoes={...args.p_dados,respostas:Object.fromEntries(Object.entries(args.p_dados.respostas).map(([k,v])=>[k,{valor:v,motivo:args.p_motivo}]))};}
+    if(nome==='complexidade_contextos_tela')return {data:[{...window.__contexto,id:window.__contexto.id}],error:null};
     return {data:null,error:null};
    }};
   },contexto);
   await page.goto(`http://127.0.0.1:${server.address().port}/Modulos/Chiavari/Costura/costura.html`);
-  await page.locator('#listaPedidos tbody tr').waitFor();assert.match(await page.locator('#listaPedidos .score').textContent(),/\d+(,\d+)?%/);assert.equal(await page.locator('#listaPedidos .cx-score-legenda').textContent(),'Dificuldade mínima');assert.doesNotMatch(await page.locator('#listaPedidos').textContent(),/Não se aplica/);
-  assert.equal((await page.locator('#listaPedidos tbody tr td').nth(8).textContent()).trim(),'Não');
-  await page.locator('#btnPintura').click();assert.equal(await page.locator('#listaPedidos .cx-score-legenda').textContent(),'Dificuldade mínima');
-  await page.locator('#listaPedidos tbody tr').click();await page.locator('.cx-auto-dialog[open]').waitFor();assert.match(await page.locator('.cx-auto-scores').textContent(),/Dificuldade mínima/);assert.doesNotMatch(await page.locator('.cx-auto-scores').textContent(),/Não se aplica/);assert.match(await page.locator('.cx-auto-dialog').textContent(),/Histórico de feedbacks/);await page.getByRole('button',{name:'Fechar análise',exact:true}).click();
-  await page.locator('#btnPersonalizacao').click();
+  await page.locator('#listaPedidos tbody tr').waitFor();
+  // nov/2026: sem abas nem botão Painel; uma tabela com todos os setores, foto do cliente, número em card azul e a cor da nota pela faixa
+  assert.equal(await page.locator('.btn-setor').count(),0);assert.equal(await page.getByRole('button',{name:'Painel',exact:true}).count(),0);
+  assert.deepEqual((await page.locator('#listaPedidos thead th').allTextContents()).map(t=>t.trim()),['Data','Pedido','Cliente','Local','Estofados','Pintura','Montagem','Triagem','Carregamento']);
+  assert.equal(await page.locator('#listaPedidos').evaluate(e=>getComputedStyle(e,'::before').content),'none','sem o título Pedidos');
+  assert.equal(await page.locator('#listaPedidos .pedido-destaque').evaluate(e=>getComputedStyle(e).color),'rgb(185, 28, 28)','número em vermelho');
+  await page.waitForFunction(()=>document.querySelector('#listaPedidos .cx-foto img'));
+  assert.deepEqual(await page.$$eval('#listaPedidos .cx-esq',l=>[...new Set(l.map(e=>getComputedStyle(e).textAlign))]),['left'],'Cliente e Local alinhados à esquerda');
+  assert.ok(await page.$eval('#listaPedidos tbody td.cx-esq .cx-cliente',e=>e.getBoundingClientRect().left-e.closest('td').getBoundingClientRect().left<20),'cliente encostado à esquerda da coluna');
+  const setor=n=>page.locator('#listaPedidos tbody tr td.cx-td-setor').nth(n);
+  assert.equal(await page.locator('#listaPedidos tbody tr .score').count(),5);
+  assert.match(await setor(0).locator('.score').textContent(),/\d+(,\d+)?%/);assert.equal(await setor(0).locator('.cx-score-legenda').textContent(),'Dificuldade mínima');
+  assert.equal(await setor(1).locator('.cx-score-legenda').textContent(),'Dificuldade mínima');assert.doesNotMatch(await page.locator('#listaPedidos').textContent(),/Não se aplica/);
+  assert.match(await setor(2).locator('.score').textContent(),/\d+(,\d+)?%/);assert.equal(await setor(2).locator('.cx-score-legenda').count(),0);
+  assert.equal(await page.locator('#listaPedidos .score.cx-cor-vermelho').count(),5,'faixas do teste: azul até 10%, amarelo até 20%');
+  await page.evaluate(()=>{window.__cxFaixas={azul_ate:90,amarelo_ate:95};render();});assert.equal(await page.locator('#listaPedidos .score.cx-cor-azul').count(),5);
+  await page.locator('#listaPedidos tbody tr').click();await page.locator('.cxt:not([hidden]) .cxt-q').first().waitFor();assert.match(await page.locator('.cxt-setores').textContent(),/Estofados/);assert.doesNotMatch(await page.locator('.cxt').textContent(),/Não se aplica/);await page.locator('[data-cxt-q="5"]').click();await page.waitForFunction(()=>/Histórico de feedbacks/.test(document.querySelector('[data-cxt-provas]').textContent));await page.getByRole('button',{name:'← Voltar',exact:true}).click();
   await page.getByRole('searchbox',{name:'Filtrar cliente ou local',exact:true}).click();await page.getByRole('searchbox',{name:'Filtrar cliente ou local',exact:true}).fill('Local de teste');assert.equal(await page.locator('#listaPedidos tbody tr').count(),1);
   await page.getByRole('searchbox',{name:'Filtrar cliente ou local',exact:true}).fill('Cliente de teste');assert.equal(await page.locator('#listaPedidos tbody tr').count(),1);
   await page.getByRole('searchbox',{name:'Filtrar cliente ou local',exact:true}).fill('');
   if(width>1100){assert.ok(await page.locator('.cx-cabecalho-linha').evaluate(e=>{const [a,b,c]=[...e.children].map(x=>x.getBoundingClientRect());return a.right<b.left&&b.right<c.left&&Math.abs((b.left+b.right)/2-innerWidth/2)<3;}));}
   assert.equal(await page.getByRole('button',{name:'Limpar',exact:true}).count(),0);assert.equal(await page.getByRole('button',{name:'Atualizar dados',exact:true}).count(),0);assert.equal(await page.locator('.cx-automacao-ajuda').count(),0);
   await page.screenshot({path:path.join(os.tmpdir(),`complexidade-cabecalho-${width}.png`)});
-  await page.locator('#btnMontagem').click();
-  assert.match(await page.locator('#listaPedidos .score').textContent(),/\d+(,\d+)?%/);assert.equal(await page.locator('#listaPedidos .cx-score-legenda').textContent(),'');
   await page.evaluate(async()=>{__contexto.cliente={};pedidos=await new Promise(ok=>google.script.run.withSuccessHandler(ok).listarPedidos());render();});
-  assert.match(await page.locator('#listaPedidos .score').textContent(),/%.*%/);assert.match(await page.locator('#listaPedidos .cx-score-legenda').textContent(),/Parcial/);
-  assert.match(await page.locator('#listaPedidos .score').getAttribute('title'),/Faixa possível/);
-  await page.locator('#listaPedidos tbody tr').click();await page.locator('.cx-auto-dialog[open]').waitFor();
-  assert.match(await page.locator('.cx-auto-scores').textContent(),/Parcial/);assert.equal(await page.locator('[data-cx-pendente="true"]').count(),1);
-  await page.getByRole('button',{name:'Fechar análise',exact:true}).click();
+  const montagemParcial=page.locator('#listaPedidos tbody tr td.cx-td-setor').nth(2);
+  assert.match(await montagemParcial.locator('.score').textContent(),/%.*%/);assert.match(await montagemParcial.locator('.cx-score-legenda').textContent(),/Parcial/);
+  assert.match(await montagemParcial.locator('.score').getAttribute('title'),/Faixa possível/);
+  await page.locator('#listaPedidos tbody tr').click();await page.locator('.cxt:not([hidden]) .cxt-q').first().waitFor();
+  assert.equal(await page.locator('.cxt-q-resp.sem').count(),1,'a resposta sem dado aparece');await page.getByRole('button',{name:'← Voltar',exact:true}).click();
   await page.screenshot({path:path.join(os.tmpdir(),`complexidade-score-parcial-${width}.png`)});
   await page.evaluate(async()=>{__contexto.cliente={complexidade:{reclamacao:false}};pedidos=await new Promise(ok=>google.script.run.withSuccessHandler(ok).listarPedidos());render();});
-  await page.locator('#listaPedidos tbody tr').click();await page.locator('.cx-auto-dialog[open]').waitFor();
-  assert.equal(await page.locator('[data-cx-resposta]').count(),26);assert.match(await page.locator('.cx-auto-dialog').textContent(),/Cadastro do local/);
-  assert.equal(await page.locator('#cxSemPendencias').isVisible(),true);await page.locator('#cxMostrarTodas').check();
-  await page.locator('[data-cx-resposta="16"]').selectOption('false');await page.locator('[name=motivo]').fill('Neste evento a montagem acontece no térreo');
-  await page.getByRole('button',{name:'Salvar ajustes do pedido',exact:true}).click();await page.waitForFunction(()=>document.getElementById('cxAutoStatus').textContent.includes('recalculados'));
-  const saved=await page.evaluate(()=>__writes[0]);assert.equal(saved.args.p_empresa,'empresa');assert.equal(saved.args.p_dados.respostas[16],false);assert.equal(saved.args.p_dados.viagens,1);
-  assert.match(await page.locator('.cx-auto-dialog').textContent(),/Exceção do pedido/);assert.ok(await page.locator('.cx-auto-dialog').evaluate(e=>e.getBoundingClientRect().width<=innerWidth));
+  await page.locator('#listaPedidos tbody tr').click();await page.locator('.cxt:not([hidden]) .cxt-q').first().waitFor();
+  // nov/2026: tela de consulta com provas. Cada setor mostra as suas perguntas + os fatores gerais, sem nada para editar.
+  assert.equal(await page.locator('.cxt-setor').count(),5);
+  for(const s of ['personalizacao','pintura','montagem','triagem','carregamento']){await page.locator(`[data-cxt-setor="${s}"]`).click();const ids=await page.$$eval('[data-cxt-q]',l=>l.map(e=>+e.dataset.cxtQ));const esperado={personalizacao:[1,2,3,4],pintura:[11,12,13,14],montagem:[15,16,18],triagem:[19,20,21,22],carregamento:[23,24,26]}[s];assert.deepEqual(ids,[...esperado,5,6,7,9,10],s);}
+  for(const sel of ['select','textarea','input','[data-cx-resposta]'])assert.equal(await page.locator('.cxt '+sel).count(),0,sel);
+  assert.doesNotMatch(await page.locator('.cxt').textContent(),/Planejamento do pedido|Confirmação autorizada|Exibir também|Salvar/);
+  assert.equal(await page.locator('.cxt-q-resp.sem').count(),0,'tudo automático');
+  // provas: a pergunta escolhida mostra, à direita, de onde veio e os pontos
+  await page.locator('[data-cxt-setor="montagem"]').click();await page.locator('[data-cxt-q="16"]').click();
+  await page.waitForFunction(()=>/Cadastro do local/.test(document.querySelector('[data-cxt-provas]').textContent)&&/pontos/.test(document.querySelector('[data-cxt-provas]').textContent));
+  assert.match(await page.locator('.cxt-conta').textContent(),/Somou \d+ de \d+ pontos/);
+  if(width>1000)assert.ok(await page.evaluate(()=>document.querySelector('[data-cxt-provas]').getBoundingClientRect().left>document.querySelector('[data-cxt-perguntas]').getBoundingClientRect().right),'provas na coluna da direita');
+  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'sem rolagem lateral');
   await page.screenshot({path:path.join(os.tmpdir(),`complexidade-automatica-${width}.png`)});
-  await page.getByRole('button',{name:'Fechar análise',exact:true}).click();
-  await page.getByRole('button',{name:'Painel',exact:true}).click();await page.locator('#painelCX.aberto').waitFor();
-  assert.match(await page.locator('#cxSubtitulo').textContent(),/pendentes ficam fora/);
-  assert.equal(await page.locator('#painelCX svg').evaluateAll(els=>els.some(e=>/NaN/.test(e.outerHTML))),false);
-  await page.evaluate(()=>PainelCX.fechar());
-  await page.evaluate(async()=>{__contexto.local={};__contexto.excecoes={viagens:1,montagem_aplica:false};pedidos=await new Promise(ok=>google.script.run.withSuccessHandler(ok).listarPedidos());render();});await page.locator('#listaPedidos tbody tr').click();
-  await page.locator('.cx-auto-dialog[open]').waitFor();assert.match(await page.locator('.cx-auto-scores').textContent(),/Dificuldade mínima/);assert.equal(await page.locator('#cxSemPendencias').isVisible(),true);assert.equal(await page.locator('[data-cx-pendente="true"]').count(),0);
-  await page.getByRole('button',{name:'Fechar análise',exact:true}).click();
-  await page.evaluate(async()=>{__contexto.congelado_em='2026-11-05T10:00:00Z';pedidos=await new Promise(ok=>google.script.run.withSuccessHandler(ok).listarPedidos());render();});await page.locator('#listaPedidos tbody tr').click();
-  await page.locator('.cx-auto-dialog[open]').waitFor();assert.equal(await page.getByRole('button',{name:'Salvar ajustes do pedido',exact:true}).count(),0);assert.equal(await page.locator('[data-cx-resposta="16"]').isDisabled(),true);
+  await page.getByRole('button',{name:'← Voltar',exact:true}).click();
+  // A conta é refeita na tela com a regra atual, mesmo que o servidor devolva outra coisa
+  await page.evaluate(async()=>{__contexto.caminhoes=9;pedidos=await new Promise(ok=>google.script.run.withSuccessHandler(ok).listarPedidos());render();});
+  await page.locator('#listaPedidos tbody tr').click();await page.locator('.cxt:not([hidden]) .cxt-q').first().waitFor();await page.locator('[data-cxt-setor="montagem"]').click();await page.locator('[data-cxt-q="18"]').click();
+  await page.waitForFunction(()=>/Caminhões escalados no carregamento\s*9/.test(document.querySelector('[data-cxt-provas]').textContent));
+  await page.getByRole('button',{name:'← Voltar',exact:true}).click();
   assert.deepEqual(errors,[]);await page.close();console.log(`Complexidade ${width}px: fontes, exceções, gráficos e histórico congelado OK.`);
  }}finally{await browser.close();server.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

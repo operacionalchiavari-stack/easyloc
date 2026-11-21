@@ -45,6 +45,23 @@
     sessionStorage.setItem("login_ok", "1");
     sessionStorage.setItem("empresa_id", empresaId);
     sessionStorage.setItem("usuario_nome", nome);
+    // Marca da empresa já guardada antes de abrir o sistema (nov/2026): sem isso a 1ª pintura do sistema não sabe a
+    // logo nem a cor do menu. Nunca atrasa a entrada (no máximo 2,5 s) e nunca troca um cache que já existe.
+    try{
+      localStorage.setItem("acervo_ultima_empresa", empresaId);
+      const chave = "easyloc_theme_" + empresaId;
+      if(!localStorage.getItem(chave)){
+        const limite = new Promise(r => setTimeout(() => r(null), 2500));
+        const busca = (async () => {
+          const cfg = await sb.from("configuracoes_empresa").select("logo_url,cor_sidebar,cor_destaque").eq("empresa_id", empresaId).maybeSingle();
+          let logo = cfg.data?.logo_url || "";
+          if(!logo){ const emp = await sb.from("empresas").select("logo_url").eq("id", empresaId).maybeSingle(); logo = emp.data?.logo_url || ""; }
+          return { logo_url: logo, cor_sidebar: cfg.data?.cor_sidebar || "", cor_destaque: cfg.data?.cor_destaque || "" };
+        })().catch(() => null);
+        const marca = await Promise.race([busca, limite]);
+        if(marca && marca.logo_url && !localStorage.getItem(chave)) localStorage.setItem(chave, JSON.stringify(marca));
+      }
+    }catch(e){}
     return { empresaId, nome, userId };
   }
   window.EasyLocEntrar = { entrar };

@@ -3,9 +3,9 @@
    EasyLoc
 ===================================================== */
 
-import { carregarItens } from "./itens.api.mjs?v=20261103-kit-unificado";
-import "./itens.modal.mjs?v=20261031-complexidade";
-import "./itens.tabela.mjs?v=20261023-lista-dispon";
+import { carregarItens } from "./itens.api.mjs?v=20261115-qr-protegido";
+import "./itens.modal.mjs?v=20261115-qr-protegido";
+import "./itens.tabela.mjs?v=20261115-estoque";
 import "./itens.foto.mjs?v=20261008-banco";
 // itens.3d.mjs antes só era carregado em item-detalhes.html (Item/Componente).
 // Kit precisa do mesmo upload direto de GLB (ver kits.modal.mjs) — o módulo é

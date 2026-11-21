@@ -17,12 +17,12 @@ const {chromium}=require('playwright'),express=require('express'),assert=require
   });
   assert.match(await page.locator('#pedidoContratoPreview').innerText(),/11111111111.*Rua antiga/);
   await page.locator('#clienteInput').fill('Beatriz');assert.equal(await page.locator('#clienteIdHidden').inputValue(),'');assert.equal(await page.locator('#telefoneInput').inputValue(),'');
-  await page.locator('#clienteLista .autocomplete-item').click();await page.evaluate(()=>window.__pedidoContratoAtualizar());
+  await page.locator('#clienteLista div.autocomplete-item').filter({hasText:'Beatriz'}).click();await page.evaluate(()=>window.__pedidoContratoAtualizar());
   assert.equal(await page.locator('#clienteIdHidden').inputValue(),'c2');assert.match(await page.locator('#pedidoContratoPreview').innerText(),/22222222222/);
   await page.locator('#localInput').fill('Local novo');assert.equal(await page.locator('#localIdHidden').inputValue(),'');
   assert.equal(await page.evaluate(()=>window.kmPedido),0);assert.equal(await page.locator('#freteKmManual').inputValue(),'');
   await page.evaluate(()=>window.__pedidoContratoAtualizar());assert.doesNotMatch(await page.locator('#pedidoContratoPreview').innerText(),/Rua antiga/);
-  await page.locator('#localLista .autocomplete-item').click();await page.evaluate(()=>window.__pedidoContratoAtualizar());
+  await page.locator('#localLista div.autocomplete-item').filter({hasText:'Local novo'}).click();await page.evaluate(()=>window.__pedidoContratoAtualizar());
   assert.equal(await page.evaluate(()=>window.kmPedido),7);assert.match(await page.locator('#pedidoContratoPreview').innerText(),/Rua nova/);
   await page.evaluate(()=>{
     window.sb.auth={getSession:async()=>({data:{session:{access_token:'teste'}}})};window.sb.supabaseUrl=location.origin;window.sb.supabaseKey='teste';

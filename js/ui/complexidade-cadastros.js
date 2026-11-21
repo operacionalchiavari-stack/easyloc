@@ -1,16 +1,19 @@
 /* Condições reutilizáveis; vazio significa não informado, nunca Não. */
 (function(){
  'use strict';
- const campos={cliente:[['reclamacao','Há reclamação operacional registrada?','bool'],['exclusivo','Cliente possui exclusividade?','bool']],local:[['distancia_manual_m','Distância do caminhão até a montagem (metros)','numero']],item:[['fragil','Peça frágil?','bool'],['volumoso','Exige manuseio de carga volumosa?','bool'],['sob_medida','Peça sob medida?','bool'],['grupo','Grupo utilizado na complexidade','grupo']]};
+ const campos={cliente:[['reclamacao','Há reclamação operacional registrada?','bool'],['exclusivo','Cliente possui exclusividade?','bool']],local:[], /* nov/2026: a distância manual saiu da matriz (baldeação e escada vêm das etiquetas do local) */item:[['fragil','Peça frágil?','bool'],['volumoso','Exige manuseio de carga volumosa?','bool'],['grupo','Grupo utilizado na complexidade','grupo']]};
  const grupos=[['sofa','Sofá'],['cadeira_puff','Cadeira, poltrona ou puff'],['bar','Bar'],['mesa','Mesa'],['aparador_estante','Aparador ou estante'],['painel','Painel'],['outro','Outro']];
  campos.kit=campos.item;
  const bases={},hosts={};
  function montar(tipo){
   if(hosts[tipo])return hosts[tipo];
+  if(!campos[tipo]||!campos[tipo].length)return null;
   const root=document.querySelector(tipo==='cliente'?'#modal .clientes-detail-card':tipo==='local'?'#locais-modal .locais-detail-card':tipo==='kit'?'#kitsModal [data-kit-panel="dados"]':'[data-item-panel="dados"],#itensModal .modal-content');
   if(!root)return null;
-  const box=document.createElement('fieldset');box.className='cx-cadastro';box.dataset.cxCadastro=tipo;
-  box.innerHTML='<legend>Condições para a complexidade dos pedidos</legend><p>Informe uma vez para reutilizar nos pedidos. Deixe “Não informado” quando ainda não souber. Exceções podem ser registradas em cada pedido.</p><div class="cx-cadastro-campos"></div>';
+  /* nov/2026: na página do item vira um card igual aos outros (dentro de .item-form-grid) */
+  const grade=root.querySelector(':scope > .item-form-grid');
+  const box=document.createElement(grade?'article':'fieldset');box.className=grade?'item-card cx-cadastro cx-cadastro-card':'cx-cadastro';box.dataset.cxCadastro=tipo;
+  box.innerHTML=(grade?'<h3>Condições para a complexidade dos pedidos</h3>':'<legend>Condições para a complexidade dos pedidos</legend>')+'<p>Informe uma vez para reutilizar nos pedidos. Deixe “Não informado” quando ainda não souber. Exceções podem ser registradas em cada pedido.</p><div class="cx-cadastro-campos"></div>';
   for(const [key,label,t] of campos[tipo]){
    const l=document.createElement('label');l.textContent=label;
    const input=document.createElement(t==='numero'?'input':'select');input.id='cx-'+tipo+'-'+key;input.dataset.cxCampo=key;
@@ -18,7 +21,7 @@
    else{input.add(new Option(t==='grupo'?'Usar família/categoria do item':'Não informado',''));for(const [v,n] of t==='grupo'?grupos:[['true','Sim'],['false','Não']])input.add(new Option(n,v));}
    l.append(input);box.querySelector('div').append(l);
   }
-  const footer=root.querySelector('.modal-actions-right,.modal-footer');if(footer)footer.before(box);else root.append(box);
+  const footer=root.querySelector('.modal-actions-right,.modal-footer');if(grade)grade.append(box);else if(footer)footer.before(box);else root.append(box);
   hosts[tipo]=box;return box;
  }
  function preencher(tipo,dados){const host=montar(tipo);if(!host)return;bases[tipo]={...(dados||{})};for(const [k,,t] of campos[tipo])host.querySelector('[data-cx-campo="'+k+'"]').value=dados?.[k]===null||dados?.[k]===undefined?'':String(dados[k]);}

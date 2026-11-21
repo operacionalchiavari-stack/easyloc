@@ -46,11 +46,11 @@
     const cel=document.createElement('section');cel.className='pr-card';cel.dataset.rhIdeia='';
     cel.innerHTML='<h2>Ideia Premiada na Início</h2><p class="pr-ajuda">Quando uma ideia é premiada, o banner da Ideia Premiada na Início vira uma celebração (a ideia escolhida, quem enviou e a premiação) durante estes dias. Depois volta ao convite normal. Use 0 para não mostrar.</p><form class="pr-rh-form" data-ideia-form><label>Dias de celebração<input name="dias" class="el-input" type="number" min="0" max="60" step="1" required></label><button class="btn primary" type="submit">Salvar</button></form>';
     host.appendChild(cel);
-    const formCel=cel.querySelector('[data-ideia-form]');
+    const formCel=cel.querySelector('[data-ideia-form]');let celebracaoCarregada=false;formCel.querySelector('button').disabled=true;
     if(!pode){formCel.querySelectorAll('input,button').forEach(el=>el.disabled=true);}
-    try{const {data,error}=await sb.rpc('ideias_premiadas_config_ler',{p_empresa:empresa});if(error)throw error;formCel.elements.dias.value=data?.dias_celebracao??4;}catch(err){formCel.elements.dias.value=4;console.warn('[Parâmetros RH] ideia premiada:',err);}
+    try{const {data,error}=await sb.rpc('ideias_premiadas_config_ler',{p_empresa:empresa});if(error)throw error;formCel.elements.dias.value=data?.dias_celebracao??4;celebracaoCarregada=true;formCel.querySelector('button').disabled=!pode;}catch(err){const aviso=document.createElement('p');aviso.textContent='Não foi possível carregar a celebração: '+err.message;cel.append(aviso);}
     formCel.addEventListener('submit',async e=>{
-      e.preventDefault();const botao=formCel.querySelector('[type=submit]');botao.disabled=true;
+      e.preventDefault();if(!pode||!celebracaoCarregada)return;const botao=formCel.querySelector('[type=submit]');botao.disabled=true;
       try{const {error}=await sb.rpc('ideias_premiadas_config_salvar',{p_empresa:empresa,p_dias:Number(formCel.elements.dias.value)});if(error)throw error;window.alerta('Parâmetro salvo.','Sucesso','sucesso');}
       catch(err){window.alerta(err.message,'Erro','erro');}finally{botao.disabled=!pode;}
     });

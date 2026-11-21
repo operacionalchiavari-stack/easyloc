@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel gerencial</title>
+  <link rel="icon" type="image/png" href="../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <meta name="theme-color" content="#000000">
+  <!-- (2026-11-14) Painel do CFO trazido da Tecnoweld: aberto em nova aba pelo Financeiro → Gerencial; fora do menu, tela toda (TV da sala). -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="financeiro-cfo.css?v=20261114-cfo">
+  <style>html, body { margin: 0; background: #000; }</style>
+<script src="../../js/app/relatorio-app.js?v=20261120-agentes2" data-titulo="Painel do CFO"></script>
+</head>
+<body>
+  <section class="cfo" id="cfoPainel"><div class="cfo-carregando">Montando o painel…</div></section>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+  <script src="../../js/core/supabase.js"></script>
+  <script>
+    // O painel abre numa aba nova, que não herda o login guardado na aba do sistema (sessionStorage é por aba).
+    // Com a sessão do Supabase já salva neste navegador, usa a empresa que veio no endereço; o context.js confere de novo
+    // no servidor (vínculo com a empresa, acesso ativo e verificação em duas etapas) antes de mostrar qualquer dado.
+    (function () {
+      try {
+        var emp = new URLSearchParams(location.search).get("empresa");
+        if (!sessionStorage.getItem("login_ok") && emp && /^[0-9a-f-]{36}$/i.test(emp) && localStorage.getItem("easyloc-auth")) {
+          sessionStorage.setItem("login_ok", "1"); sessionStorage.setItem("empresa_id", emp);
+        }
+      } catch (_) {}
+    })();
+  </script>
+  <script src="../../js/core/context.js?v=20261114-login-raiz"></script>
+  <script src="financeiro-gerencial.js?v=20261114-cfo2"></script>
+  <script src="financeiro-cfo.js?v=20261114-cfo"></script>
+</body>
+</html>

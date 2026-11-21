@@ -178,13 +178,15 @@ const SAIDA = process.env.CLARA_PRINTS || path.join(require("os").tmpdir(), "cla
     await page.screenshot({ path: path.join(SAIDA, "3c-todas.png"), fullPage: true });
     console.log("ok 6b - extrato só com conciliações finalizadas; Todas as contas soma e não concilia");
     await conciliar(contaA);
+    // troca de aba logo em seguida, de propósito: o Bancos ainda está se redesenhando e não pode apagar a aba nova
 
     // Conversa: aba própria
     assert.equal(await page.locator("#clChat").count(), 0, "Bancos sem a coluna de conversa");
     await page.click('#finAbas [data-aba="clara"]');
     await page.waitForSelector(".ch-boasvindas");
-    await page.waitForSelector(".ch-lado-blocos");
-    assert.equal(await page.locator(".ch-lado-blocos .ch-lado-item").count() >= 6, true, "panorama com contas, conciliação, a receber e a pagar");
+    await page.waitForSelector("#chLado .clp-rel");
+    assert.equal(await page.locator("#chLado .clp-rel").count(), 6, "coluna da direita com os 6 relatórios prontos");
+    await page.waitForTimeout(3000); assert.equal(await page.locator("#chTexto").count(), 1, "a aba da Clara continua aberta depois que o Bancos termina");
     await page.screenshot({ path: path.join(SAIDA, "4a-clara-inicio.png") });
     await page.fill("#chTexto", "O que falta conciliar na Conta Locação?");
     await page.press("#chTexto", "Enter");
@@ -192,6 +194,19 @@ const SAIDA = process.env.CLARA_PRINTS || path.join(require("os").tmpdir(), "cla
     const resp = await page.locator(".ch-msg.is-bot .ch-bubble").last().textContent();
     assert.ok(resp.length > 20, resp);
     console.log("ok 7 - a Clara tem aba própria e responde: " + resp.slice(0, 140).replace(/s+/g, " "));
+    // nov/2026: Clara CFO (igual à Tecnoweld) — relatório pronto com provas calculadas no servidor e relatório A4
+    if (await page.locator("#clpVoltar").count()) await page.click("#clpVoltar");
+    await page.locator("#chLado .clp-rel", { hasText: "Diagnóstico financeiro do mês" }).click();
+    await page.waitForFunction(() => document.querySelectorAll(".ch-msg.is-bot").length >= 2 && !document.querySelector(".ch-digitando"), null, { timeout: 180000 });
+    const provas = await page.locator("#chLado .clp-card").count();
+    assert.ok(provas >= 1, "o diagnóstico traz pelo menos uma prova (gráfico/tabela)");
+    const titulosProvas = await page.locator("#chLado .clp-card h4").allTextContents();
+    await page.screenshot({ path: path.join(SAIDA, "4b-clara-provas.png") });
+    await page.click("#clpRel"); await page.waitForSelector("#finRelPrev iframe");
+    await page.waitForFunction(() => document.querySelector("#finRelPrev iframe").contentDocument?.querySelector(".rr-doc h1"));
+    await page.screenshot({ path: path.join(SAIDA, "4c-clara-relatorio.png") });
+    await page.keyboard.press("Escape");
+    console.log("ok 7b - diagnóstico com " + provas + " prova(s): " + titulosProvas.join(" | ") + " · relatório A4 aberto");
     await page.screenshot({ path: path.join(SAIDA, "4-conversa.png") });
 
     // DRE
@@ -229,6 +244,7 @@ const SAIDA = process.env.CLARA_PRINTS || path.join(require("os").tmpdir(), "cla
     }
     if (empresa) { const { data: arqs } = await admin.storage.from("empresas-logos").list(empresa + "/bancos"); if (arqs?.length) await admin.storage.from("empresas-logos").remove(arqs.map((a) => empresa + "/bancos/" + a.name)); }
     if (user) { await admin.from("usuarios_empresas").delete().eq("user_id", user.id); await admin.from("usuarios").delete().eq("id", user.id); await admin.auth.admin.deleteUser(user.id); }
+    if (empresa) await admin.from("sistema_erros_operacionais").delete().eq("empresa_id", empresa);
     if (empresa) { const r = await admin.from("empresas").delete().eq("id", empresa); if (r.error) console.error("empresa", r.error.message); }
   }
 })().catch((e) => { console.error(e); process.exit(1); });

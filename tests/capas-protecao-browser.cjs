@@ -1,6 +1,7 @@
 const {chromium}=require('playwright'),fs=require('node:fs'),path=require('node:path'),os=require('node:os'),assert=require('node:assert/strict');
 const raiz=path.resolve(__dirname,'..'),BASE='http://localhost:5637/';
 function mock(){
+ sessionStorage.setItem('capas_exemplos:e1','false');
  const hoje=new Date().toISOString().slice(0,10);window.__gravados=[];window.__capasWrites=[];window.__avisos=[];
  const banco={separacoes_pedidos:[{id:'p1',empresa_id:'e1',numero_pedido:'12',cliente_nome:'Cliente',local_nome:'Local',modo_separacao:'manual',status:'pendente',status_comercial:'aprovado',data_evento:hoje,data_entrega:hoje,operacao:{carregamento_caminhoes:[{id:'c1',codigo:'G'}]}}],
  separacoes_itens:[{id:'s1',empresa_id:'e1',separacao_pedido_id:'p1',item_id:'i1',item_nome:'Cadeira',quantidade_solicitada:5,quantidade_separada:5,itens:{id:'i1',produto:'Cadeira',tipo:'item'}},{id:'s2',empresa_id:'e1',separacao_pedido_id:'p1',item_id:'i2',item_nome:'Mesa',quantidade_solicitada:1,quantidade_separada:1,itens:{id:'i2',produto:'Mesa',tipo:'item'}}],
@@ -60,7 +61,7 @@ function mock(){
    if(etapa==='retorno')assert.match(await page.locator('#cfQtd [data-capas-resumo]').textContent(),/Sairam 2.*1 nao devolvido.*1 danificado/);
    await page.screenshot({path:path.join(os.tmpdir(),`capas-${etapa}-${width}.png`)});
   }
-  await page.goto(BASE+'Modulos/Estoque/CapasProtecao/capas.html');await page.locator('[data-cp-aba="fabricacoes"]').click();await page.locator('[data-modelo="m1"]').click();await page.locator('#cpNovaMovimentacao').click();await page.locator('[name=tipo]').selectOption('inventario');await page.locator('[name=quantidade]').fill('20');await page.locator('[name=observacao]').fill('Contagem fisica inicial no galpao');await page.locator('#cpDialogo [type=submit]').click();await page.waitForFunction(()=>!document.getElementById('cpDialogo').open);
+  await page.goto(BASE+'Modulos/Estoque/CapasProtecao/capas.html');await page.locator('[data-cp-aba="historico"]').click();await page.locator('[data-modelo="m1"]').click();await page.locator('#cpNovaMovimentacao').click();await page.locator('[name=tipo]').selectOption('inventario');await page.locator('[name=quantidade]').fill('20');await page.locator('[name=observacao]').fill('Contagem fisica inicial no galpao');await page.locator('#cpDialogo [type=submit]').click();await page.waitForFunction(()=>!document.getElementById('cpDialogo').open);
   assert.equal((await page.evaluate(()=>__capasWrites.find(x=>x.n==='material_movimentar'))).args.p_quantidade,20);
   assert.deepEqual(erros,[]);await page.close();console.log(`Capas ${width}px: contagem na ida e volta, ausência na saída, danos, configuração e estoque OK.`);
  }

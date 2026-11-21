@@ -1,6 +1,6 @@
 import { colorirValor } from "./pedido.valores-ui.mjs";
 import { parseCurrency, formatCurrency } from "./pedido.utils.mjs";
-import { iniciarEntradaComercial } from "./pedido.entrada.mjs?v=20261107-lista-sublocacao";
+import { iniciarEntradaComercial } from "./pedido.entrada.mjs?v=20261118-card-desconto";
 
 export function initItens({ supabase, els }){
 
@@ -257,8 +257,16 @@ window.__TOTAL_PEDIDO = totalFinalPedido;
 window.__PEDIDO_VALORES = {
   locacao: Math.max(locacaoFinal + customizacoes + servicos + terceirizados, 0),
   locacao_bv: Math.max(locacaoFinal, 0),
+  customizacoes: Math.max(customizacoes,0),
+  servicos: Math.max(servicos,0),
+  terceirizados: Math.max(terceirizados,0),
   frete: Math.max(freteFinal, 0),
   montagem: Math.max(montagemFinal, 0),
+  frete_bruto: Math.max(freteBruto,freteFinal,0),
+  frete_desconto: Math.max(freteDesconto,0),
+  montagem_bruto: Math.max(montagemBruta,montagemFinal,0),
+  montagem_desconto: Math.max(montagemDesconto,0),
+  subtotal: Math.max(locacaoFinal+customizacoes+terceirizados,0),
   total: totalFinalPedido
 };
 
@@ -747,7 +755,7 @@ function calcularVolumeTotalPedido(){
     const salvo=window.__pedidoProjetoComercial || window.__PEDIDO_DADOS_ATUAL?.observacoes?.projeto_comercial;
     if(salvo)return structuredClone({...salvo,...window.pedidoMetadadosCatalogo()});
     const itens=Array.from(tbody.querySelectorAll('tr.item-row')).filter(tr=>tr.dataset.itemId).map(tr=>({item_id:tr.dataset.itemId,quantidade:Number(tr.querySelector('.qtd')?.innerText)||1}));
-    return {id:window.__PEDIDO_ATUAL_ID || crypto.randomUUID(),...window.pedidoMetadadosCatalogo(),status:'rascunho',dados:{ambientes:[{id:crypto.randomUUID(),nome:'Evento',itens,renders:[],notas:''}],plantas:[]}};
+    return {id:window.__PEDIDO_ATUAL_ID || crypto.randomUUID(),...window.pedidoMetadadosCatalogo(),status:'rascunho',dados:{ambientes:itens.length?[{id:crypto.randomUUID(),nome:'Evento',itens,renders:[],notas:''}]:[],plantas:[]}};
   };
   let sincronizacao=Promise.resolve(), assinaturaAplicada='';
   // Troca de aba (out/2026): antes cada item regravava a linha e recalculava resumo, parcelas e frete (com ida ao banco)

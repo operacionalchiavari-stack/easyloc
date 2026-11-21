@@ -213,3 +213,28 @@ html:root:is(#acervo-separacao,html) .producao-fila-page .producao-kanban.separa
 .producao-page .producao-reabrir{margin:0 14px 14px;padding:6px 12px;min-height:32px;border:1px solid #a9ceba;border-radius:8px;background:#fff;color:#236342;font:600 12px/1.4 Inter,system-ui,sans-serif;}
 .producao-page .producao-reabrir:hover{background:#dff1e6;border-color:#75ac8d;}
 .producao-page .producao-reabrir:focus-visible{outline:2px solid #236342;outline-offset:3px;}
+
+/* 16/11/2026: linha do pedido com a foto do cliente; foto de referência menor */
+.op-ped-v2{display:flex!important;align-items:center!important;gap:14px!important;flex-wrap:nowrap!important;min-width:0}
+.op-ped-foto{position:relative;flex:0 0 46px;width:46px;height:46px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#eaf0fa;color:#123f86;font:600 15px Inter,system-ui,sans-serif;border:1px solid #dce4ec;box-shadow:0 1px 3px rgba(15,23,42,.08)}
+.op-ped-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.op-ped-info{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1 1 auto}
+.op-ped-linha1{display:flex;align-items:center;gap:10px;min-width:0}
+.op-ped-numero{flex:none;display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:7px;background:#fdecea;border:1px solid #f6c9c4;color:#b42318;font:600 12.5px Inter,system-ui,sans-serif;white-space:nowrap}
+.op-ped-cliente{font:600 16px Inter,system-ui,sans-serif;color:#1f2020;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.op-ped-local{font-size:13px;color:#6b6b6b;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.op-ped-local::before{content:"\1F4CD";margin-right:5px;font-size:11px;opacity:.7}
+.op-ped-prazo{flex:none;display:flex!important;flex-direction:column;align-items:center!important;gap:1px!important;padding:6px 12px!important;border:1px solid #dce4ec!important;border-radius:10px!important;background:#fff!important}
+.op-ped-prazo small{font-size:10.5px!important}
+.op-ped-prazo strong{font:600 16px Inter,system-ui,sans-serif;color:#123f86}
+html:root body .op-galeria{max-width:300px!important}
+html:root body .op-galeria-thumbs button{width:64px!important;height:64px!important}
+
+/* 16/11/2026: cliente e local à esquerda; número do pedido e prazo no canto direito da mesma linha */
+.op-ped-v2>.op-ped-numero{margin-left:auto;height:30px;padding:0 11px;font-size:13.5px}
+.op-lista-progresso>div:first-child{width:100%}
+
+/* 16/11/2026: "← Voltar" antes da foto do cliente */
+html:root body .op-voltar-movido{display:none!important}
+.op-ped-v2>.op-ped-voltar{flex:none;display:inline-flex;align-items:center;height:34px;padding:0 14px;border:1px solid #dce4ec;border-radius:999px;background:#fff;color:#1f2020;font:500 13px Inter,system-ui,sans-serif;text-decoration:none;white-space:nowrap}
+.op-ped-v2>.op-ped-voltar:hover{border-color:#123f86;color:#123f86}

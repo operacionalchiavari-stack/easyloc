@@ -2,11 +2,12 @@
 <html data-theme-legacy lang="pt-BR">
 <head>
 <link rel="stylesheet" href="../../../styles/tokens.css?v=20261019-globais">
-<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/themePrepaint.js?v=20261019-globais"></script>
-<script src="../../../js/core/companyTheme.js?v=20261019-globais"></script>
-<script src="../../../js/core/moduleTheme.js?v=20261025-mascaras"></script>
-  <script src="../gas-cliente.js?v=20261026-supabase" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261107-teste-usuario"></script>
+<script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js?v=20261108-zoom-padrao"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
+  <script src="../gas-cliente.js?v=20261120-sem-servidor" data-projeto="cronograma" data-sem-motor></script>
+  <script src="../operacao-sem-motor.js?v=20261120-bonus-supabase"></script>
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <meta charset="UTF-8" />
 <meta
@@ -8806,8 +8807,24 @@ html:root body .topbar .semana-nav .semana-seta:focus-visible{outline:2px solid 
 html:root body .topbar .semana-nav .week-badge{padding:0 10px!important;font-size:13px!important;font-weight:500!important;letter-spacing:0!important;color:#111!important}
 @media(max-width:600px){html:root body .topbar .semana-nav .week-badge{font-size:12px!important;padding:0 4px!important}}
 </style>
-<link rel="stylesheet" href="cronograma-detalhes.css?v=20261031-pedido-divisor">
+<link rel="stylesheet" href="cronograma-detalhes.css?v=20261114-fotos-maiores">
 <script src="cronograma-sequencia.js?v=20261027-contagem-circular"></script>
+<style id="crono-foto-decorador">
+.crono-decorador-foto{position:relative;display:inline-grid;place-items:center;flex:0 0 auto;width:42px;height:42px;border-radius:50%;overflow:hidden;background:#e3e7ec;color:#4f4f4f;font:600 13px/1 Inter,system-ui,sans-serif;vertical-align:middle}
+.crono-decorador-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+html body .board .col-evento .evento-box > .evento-cliente{display:flex !important;align-items:center;gap:8px;min-width:0}
+.evento-cliente-nome{min-width:0}
+/* Número do pedido igual nas duas visões, em vermelho (nov/2026) */
+html body .board .col-evento .evento-box > .pedido-tag.pedido-tag{display:inline-block !important;padding:5px 9px !important;border:1px solid #deceba !important;border-radius:7px !important;background:#f4efe8 !important;color:#c4302b !important;font-size:12px !important;font-weight:600 !important;line-height:1.2 !important;white-space:nowrap;font-variant-numeric:tabular-nums}
+</style>
+<script>
+function cronoFotoDecorador(nome, url){
+  var n = String(nome || "").trim(), ini = n ? n.split(/\s+/).slice(0,2).map(function(p){return p[0];}).join("").toUpperCase() : "?";
+  var e = function(v){ return String(v == null ? "" : v).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); };
+  var foto = /^https?:\/\//i.test(url || "") ? '<img src="' + e(url) + '" alt="" loading="lazy" onerror="this.remove()">' : "";
+  return '<span class="crono-decorador-foto" title="' + e(n) + '"><span aria-hidden="true">' + e(ini) + '</span>' + foto + '</span>';
+}
+</script>
 </head>
 <body>
 
@@ -11818,7 +11835,7 @@ html += `
       </span>
 
       <div class="evento-cliente">
-        ${escapeHtml(pedido.cliente || "-")}
+        ${cronoFotoDecorador(pedido.cliente, pedido.clienteFoto)}<span class="evento-cliente-nome">${escapeHtml(pedido.cliente || "-")}</span>
       </div>
 
 
@@ -12089,7 +12106,7 @@ ${
 }
         "
 
-        data-crono-detalhes="${escapeHtml(JSON.stringify({pedido:pedido.pedido,cliente:pedido.cliente,local:pedido.local,data:etapa.dataEtapa || etapa.data || pedido.dataEvento || pedido.data,etapa:etapa.etapa,hora:etapa.horario || etapa.hora,responsavel:etapa.responsavel,equipe:etapa.equipe,caminhao:etapa.caminhao,observacao:obsEtapaCompleta(etapa,pedido)}))}"
+        data-crono-detalhes="${escapeHtml(JSON.stringify({pedido:pedido.pedido,cliente:pedido.cliente,clienteFoto:pedido.clienteFoto||'',local:pedido.local,data:etapa.dataEtapa || etapa.data || pedido.dataEvento || pedido.data,etapa:etapa.etapa,hora:etapa.horario || etapa.hora,responsavel:etapa.responsavel,equipe:etapa.equipe,caminhao:etapa.caminhao,observacao:obsEtapaCompleta(etapa,pedido)}))}"
         tabindex="0" role="button" aria-expanded="false"
         ${onclickEtapa}
       >
@@ -18268,8 +18285,8 @@ function avisoRapido(msg){
 }
 </script>
 <script src="cronograma-detalhes.js?v=20261027-clique"></script>
-<link rel="stylesheet" href="cronograma-tabela.css?v=20261031-progresso">
-<script src="cronograma-tabela.js?v=20261031-sem-resumo"></script>
+<link rel="stylesheet" href="cronograma-tabela.css?v=20261114-pedido-vermelho">
+<script src="cronograma-tabela.js?v=20261114-fotos-maiores"></script>
 <!-- Nov/2026: problemas da Triagem (separação) no cronograma: bolinha vermelha piscando no cartão da Triagem. -->
 <style id="crono-problema-estilo">
   :is(.task, .app-cartao, [data-crono-detalhes]):has(> .crono-problema:not([hidden])), .app-cartao:has(.crono-problema:not([hidden])){position:relative}
@@ -18316,29 +18333,9 @@ function avisoRapido(msg){
 })();
 </script>
 <style id="cronograma-rolagem-visivel">
-/* Nov/2026 (teste de usuário): a barra lateral aparece e um aviso mostra que há mais dias à direita. */
+/* Nov/2026 (teste de usuário): a barra lateral aparece e o botão "Mais dias à direita" saiu a pedido (14/11). */
 html body .board-wrap{scrollbar-width:thin !important;scrollbar-color:#9e9e9e transparent}
 html body .board-wrap::-webkit-scrollbar{height:9px !important}
-.crono-mais-dias{position:fixed;z-index:30;display:flex;align-items:center;gap:6px;padding:8px 14px;border:0;border-radius:999px;background:#123f86;color:#fff;font:600 13px Inter,system-ui,sans-serif;box-shadow:0 4px 14px rgba(15,23,42,.25);cursor:pointer}
-.crono-mais-dias[hidden]{display:none}
 </style>
-<script>
-(function(){
-  var wrap=document.querySelector('.board-wrap');if(!wrap)return;
-  var b=document.createElement('button');b.type='button';b.className='crono-mais-dias';b.hidden=true;
-  b.textContent='Mais dias à direita →';b.title='Arraste a tabela para o lado (ou use a barra embaixo) para ver os outros dias, como sábado e domingo.';
-  document.body.appendChild(b);
-  b.addEventListener('click',function(){wrap.scrollBy({left:Math.max(260,wrap.clientWidth*.6),behavior:'smooth'});});
-  function ver(){
-    var r=wrap.getBoundingClientRect();
-    var falta=wrap.scrollWidth-wrap.clientWidth-wrap.scrollLeft>40;
-    b.hidden=!falta||r.width<200||window.innerWidth<900;
-    if(!b.hidden){b.style.top=Math.max(r.top+8,8)+'px';b.style.left=(r.right-b.offsetWidth-18)+'px';}
-  }
-  wrap.addEventListener('scroll',ver,{passive:true});window.addEventListener('resize',ver);
-  new MutationObserver(function(){requestAnimationFrame(ver);}).observe(wrap,{childList:true,subtree:true});
-  setTimeout(ver,800);
-})();
-</script>
 </body>
 </html>

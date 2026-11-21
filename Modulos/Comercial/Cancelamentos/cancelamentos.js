@@ -13,7 +13,7 @@
   const { esc, fmt, pct, fmtPct, dataBr } = R;
   const $ = (id) => document.getElementById(id);
   const MESES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
-  const s = { pedidos: [], locais: new Map(), foco: null };
+  const s = { pedidos: [], locais: new Map(), foco: null, aba: "visao" };
   const SEM_MOTIVO = "Sem motivo registrado";
 
   // data do cancelamento no dia do Brasil (gravada em UTC: depois das 21h já seria o dia seguinte)
@@ -25,6 +25,73 @@
   const regiaoDe = (p) => { const l = s.locais.get(p.local_id); return { ...R.regiao(l?.endereco), faixa: R.faixaDistancia(l?.distancia_galpao_km), km: l?.distancia_galpao_km }; };
   const cidadeDe = (p) => regiaoDe(p).cidade || "Cidade não identificada";
 
+  // Fotos (15/11/2026): decorador = foto do catálogo do cliente; quem registrou = avatar da conta (bucket avatares,
+  // <empresa>/<usuário>.jpg), achado pelo nome no Cadastro de Funcionários. Sem foto, as iniciais.
+  const norm = (t) => String(t || "").trim().toLowerCase();
+  const iniciais = (nome) => String(nome || "").split(/\s+/).filter(Boolean).slice(0, 2).map((x) => x[0]).join("").toUpperCase() || "?";
+  const fotoHtml = (nome, url, cls = "") => '<span class="cc-foto ' + cls + '" title="' + esc(nome || "") + '"><i>' + esc(iniciais(nome)) + "</i>" + (url ? '<img src="' + esc(url) + '" alt="" loading="lazy" onerror="this.remove()">' : "") + "</span>";
+  const fotoCliente = (p) => { const c = (s.clis || []).find((x) => (p.cliente_id && x.id === p.cliente_id)) || (s.clis || []).find((x) => norm(x.nome_razao) === norm(p.cliente_nome)); return c?.catalogo_logo_url || ""; };
+  const avatarDe = (id) => { try { return id ? s.sb.storage.from("avatares").getPublicUrl(s.empresa + "/" + id + ".jpg").data?.publicUrl || "" : ""; } catch (_) { return ""; } };
+  const idPorNome = (nome) => (s.funcs || []).find((f) => norm(f.nome) === norm(nome))?.id || null;
+  const pessoaHtml = (nome, id) => nome ? '<span class="cc-pessoa">' + fotoHtml(nome, avatarDe(id || idPorNome(nome))) + "<span>" + esc(nome) + "</span></span>" : "–";
+  const quandoBr = (v) => { const d = new Date(v); return isNaN(d) ? dataBr(v) : d.toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }) + " " + d.toLocaleTimeString("pt-BR", { timeZone: "America/Sao_Paulo", hour: "2-digit", minute: "2-digit" }); };
+
+  // Gaveta com o histórico completo do pedido: tudo que mudou (comercial_historico) + todos os contatos do acompanhamento
+  // (comercial_followups) + o encerramento "Não vai fechar". Mais recente em cima.
+  function gaveta(cabHtml) {
+    let g = document.getElementById("ccGaveta");
+    if (!g) {
+      g = document.createElement("div"); g.id = "ccGaveta"; g.className = "cc-gaveta"; g.setAttribute("aria-hidden", "true"); g.inert = true;
+      g.innerHTML = '<div class="cc-gaveta-fundo" data-fechar></div><aside class="cc-gaveta-painel" role="dialog" aria-modal="true" aria-labelledby="ccGavetaTit"><header><div id="ccGavetaTit"></div><button type="button" class="cc-gaveta-x" data-fechar aria-label="Fechar">×</button></header><div class="cc-gaveta-corpo"></div></aside>';
+      document.body.append(g);
+      g.addEventListener("click", (e) => {
+        if (e.target.closest("[data-fechar]")) { fecharHistorico(); return; }
+        const hb = e.target.closest("[data-historico]"); if (hb) { abrirHistorico(hb.dataset.historico, true); return; }
+        if (e.target.closest("[data-voltar-grupo]") && s.grupo) { abrirGrupo(s.grupo.tipo, s.grupo.valor); return; }
+        const ab = e.target.closest("[data-abrir]"); if (ab) window.location.href = "../Pedidos/pedido.html?pedido=" + encodeURIComponent(ab.dataset.abrir);
+      });
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape" && g.classList.contains("aberta")) fecharHistorico(); });
+    }
+    g.querySelector("#ccGavetaTit").innerHTML = cabHtml;
+    g.removeAttribute("aria-hidden"); g.inert = false; g.classList.add("aberta"); document.documentElement.classList.add("cc-gaveta-aberta"); g.querySelector(".cc-gaveta-x").focus();
+    const corpo = g.querySelector(".cc-gaveta-corpo"); corpo.scrollTop = 0; return corpo;
+  }
+  // Clicar numa linha da Visão geral (15/11/2026): a gaveta mostra os pedidos daquela linha, cada um com o Histórico.
+  const FILTROS = { motivo: (p) => motivoDe(p), decorador: (p) => decoradorDe(p), equipe: (p) => equipeDe(p), cidade: (p) => cidadeDe(p), distancia: (p) => regiaoDe(p).faixa, mes: (p) => dataCanc(p).slice(0, 7), todos: () => "todos" };
+  const ROTULO_FILTRO = { motivo: "Motivo", decorador: "Decorador", equipe: "Equipe", cidade: "Cidade", distancia: "Distância do galpão", mes: "Mês", todos: "" };
+  function abrirGrupo(tipo, valor) {
+    s.grupo = { tipo, valor };
+    const lista = cancelados().filter((p) => FILTROS[tipo](p) === valor).sort((a, b) => dataCanc(b).localeCompare(dataCanc(a)));
+    const nomeValor = tipo === "mes" ? MESES[Number(valor.slice(5, 7)) - 1] + "/" + valor.slice(0, 4) : valor;
+    const soma = lista.reduce((a, p) => a + valorDe(p), 0);
+    const corpo = gaveta('<div class="cc-gav-grupo"><span>' + esc(ROTULO_FILTRO[tipo] || "Pedidos cancelados") + "</span><h3>" + esc(tipo === "todos" ? textoPeriodo() : nomeValor) + "</h3><p>" + lista.length + " pedido(s) cancelado(s) · " + fmt(soma) + "</p></div>");
+    corpo.innerHTML = lista.length ? '<table class="cc-gav-tab"><thead><tr><th>Pedido</th><th>Decorador</th><th>Evento</th><th class="num">Valor</th><th>Motivo</th><th>Cancelado em</th><th>Por</th><th></th></tr></thead><tbody>' +
+      lista.map((p) => '<tr><td><button type="button" class="cc-num-ped" data-abrir="' + p.id + '">' + esc(p.numero_pedido || "—") + '</button></td><td><span class="cc-pessoa">' + fotoHtml(p.cliente_nome, fotoCliente(p)) + "<span>" + esc(decoradorDe(p)) + "</span></span></td><td>" + esc([p.tipo_evento, dataBr(p.data_evento)].filter((x) => x && x !== "–").join(" · ")) + '</td><td class="num">' + fmt(valorDe(p)) + "</td><td>" + esc(motivoDe(p)) + (p.cancelamento?.observacao ? '<small class="cc-obs">' + esc(p.cancelamento.observacao) + "</small>" : "") + "</td><td>" + dataBr(dataCanc(p)) + "</td><td>" + pessoaHtml(p.cancelamento?.usuario || p.cancelamento?.por || "") + '</td><td><button type="button" class="btn secondary cc-hist-btn" data-historico="' + p.id + '">Histórico</button></td></tr>').join("") + "</tbody></table>"
+      : '<p class="cr-vazio">Nenhum pedido.</p>';
+  }
+  async function abrirHistorico(id, doGrupo) {
+    const p = s.pedidos.find((x) => x.id === id); if (!p) return;
+    const corpo = gaveta((doGrupo && s.grupo ? '<button type="button" class="cc-gav-voltar" data-voltar-grupo>← Voltar à lista</button>' : "") + '<div class="cc-gav-cab">' + fotoHtml(p.cliente_nome, fotoCliente(p), "grande") + "<div><h3>Pedido " + esc(p.numero_pedido || "") + " · " + esc(decoradorDe(p)) + "</h3><p>" + esc([p.tipo_evento, dataBr(p.data_evento), p.local_nome].filter((x) => x && x !== "–").join(" · ")) + " · " + fmt(valorDe(p)) + '</p><p class="cc-gav-canc">Cancelado em ' + dataBr(dataCanc(p)) + " · " + esc(motivoDe(p)) + (p.cancelamento?.observacao ? " — " + esc(p.cancelamento.observacao) : "") + "</p></div></div>");
+    corpo.innerHTML = '<p class="cr-vazio">Carregando…</p>';
+    try {
+      const [h, f, e] = await Promise.all([
+        s.sb.rpc("comercial_historico", { p_empresa_id: s.empresa, p_pedido: id, p_limite: 5000 }),
+        s.sb.from("comercial_followups").select("criado_em,criado_por,criado_por_nome,motivo,observacao,proximo").eq("empresa_id", s.empresa).eq("alvo_id", id),
+        s.sb.from("comercial_followup_encerrados").select("em,por,por_nome,motivo,observacao").eq("empresa_id", s.empresa).eq("alvo_id", id)
+      ]);
+      const itens = []
+        .concat((Array.isArray(h.data) ? h.data : []).map((x) => ({ quando: x.quando, autor: x.autor, tipo: x.tipo, texto: x.descricao })))
+        .concat((f.data || []).map((x) => ({ quando: x.criado_em, autor: x.criado_por_nome, autorId: x.criado_por, tipo: "contato", texto: x.motivo + (x.observacao ? " — " + x.observacao : "") + (x.proximo ? " · próximo contato " + dataBr(x.proximo) : "") })))
+        .concat((e.data || []).map((x) => ({ quando: x.em, autor: x.por_nome, autorId: x.por, tipo: "encerrado", texto: "Não vai fechar: " + x.motivo + (x.observacao ? " — " + x.observacao : "") })))
+        .sort((a, b) => String(b.quando).localeCompare(String(a.quando)));
+      const contatos = itens.filter((x) => x.tipo === "contato").length;
+      const ROT = { contato: "Contato", encerrado: "Não vai fechar", status: "Situação", itens: "Itens", valores: "Valores", financeiro: "Financeiro", contrato: "Contrato", evento: "Evento", pedido: "Pedido", operacao: "Operação", catalogo: "Catálogo" };
+      corpo.innerHTML = itens.length ? '<p class="cc-gav-total">' + itens.length + " registro(s) · " + contatos + " contato(s)</p><ol class=\"cc-linha-tempo\">" + itens.map((x) =>
+        '<li class="cc-ev cc-ev-' + esc(x.tipo) + '">' + fotoHtml(x.autor || "Sistema", avatarDe(x.autorId || idPorNome(x.autor))) + '<div><div class="cc-ev-topo"><b>' + esc(x.autor || "Sistema") + '</b><span class="cc-ev-tipo">' + esc(ROT[x.tipo] || x.tipo || "") + '</span><time>' + quandoBr(x.quando) + "</time></div><p>" + esc(x.texto || "") + "</p></div></li>").join("") + "</ol>" : '<p class="cr-vazio">Nenhum registro no histórico deste pedido.</p>';
+    } catch (err) { corpo.innerHTML = '<p class="cr-vazio">Não foi possível carregar: ' + esc(err.message || err) + "</p>"; }
+  }
+  function fecharHistorico() { const g = document.getElementById("ccGaveta"); if (!g) return; g.classList.remove("aberta"); g.setAttribute("aria-hidden", "true"); g.inert = true; document.documentElement.classList.remove("cc-gaveta-aberta"); }
+
   async function carregar() {
     const { sb, empresa } = await R.contexto();
     const [pedidos, locais] = await Promise.all([
@@ -33,17 +100,22 @@
     ]);
     s.pedidos = pedidos;
     s.locais = new Map(locais.map((l) => [l.id, l]));
+    s.sb = sb; s.empresa = empresa;
+    const [funcs, clis] = await Promise.all([
+      R.todos(sb, "funcionarios_acesso", "id,nome", (q) => q.eq("empresa_id", empresa)).catch(() => []),
+      R.todos(sb, "clientes_empresas", "id,nome_razao,catalogo_logo_url", (q) => q.eq("empresa_id", empresa)).catch(() => [])
+    ]);
+    s.funcs = funcs; s.clis = clis;
   }
 
   function periodo() { return { de: $("cDe").value || "0000-01-01", ate: $("cAte").value || "9999-12-31" }; }
   function cancelados() {
-    const { de, ate } = periodo(), dec = $("cDecorador").value, mot = $("cMotivo").value;
-    return s.pedidos.filter((p) => p.status_comercial === "cancelado").filter((p) => { const d = dataCanc(p); return d >= de && d <= ate; })
-      .filter((p) => (!dec || decoradorDe(p) === dec) && (!mot || motivoDe(p) === mot));
+    const { de, ate } = periodo();
+    return s.pedidos.filter((p) => p.status_comercial === "cancelado").filter((p) => { const d = dataCanc(p); return d >= de && d <= ate; });
   }
   function criados() {
-    const { de, ate } = periodo(), dec = $("cDecorador").value;
-    return s.pedidos.filter((p) => { const d = String(p.criado_em || "").slice(0, 10); return d >= de && d <= ate && (!dec || decoradorDe(p) === dec); });
+    const { de, ate } = periodo();
+    return s.pedidos.filter((p) => { const d = String(p.criado_em || "").slice(0, 10); return d >= de && d <= ate; });
   }
   function agrupar(lista, chave) {
     const m = new Map();
@@ -54,6 +126,25 @@
   const linhaFiltro = (tipo, valor, celulas) => '<tr data-filtro="' + tipo + '" data-valor="' + esc(valor) + '" class="' + (s.foco && s.foco.tipo === tipo && s.foco.valor === valor ? "ativo" : "") + '" tabindex="0">' + celulas + "</tr>";
   const barra = (p) => '<span class="cr-barra-pct"><i style="width:' + Math.min(100, Math.max(0, p || 0)) + '%"></i></span>';
 
+  // Gráficos (nov/2026, mesmo estilo da Produtividade comercial): cada quadro tem a tabela à esquerda e o gráfico à direita.
+  const CORES = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6", "#e34948"];
+  const brlC = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+  // rosca: até 7 fatias, o resto vira "Outros"
+  function rosca(grupos, total, rotuloCentro) {
+    let itens = grupos.map((g) => ({ k: g.k, v: g.n, valor: g.valor }));
+    if (itens.length > 8) { const resto = itens.slice(7); itens = itens.slice(0, 7).concat([{ k: "Outros", v: resto.reduce((a, x) => a + x.v, 0), valor: resto.reduce((a, x) => a + x.valor, 0) }]); }
+    const R = 60, C = 2 * Math.PI * R, vivos = itens.filter((x) => x.v).length; let ang = 0;
+    const fatias = total > 0 ? itens.map((x, n) => { if (!x.v) return ""; const frac = x.v / total, len = Math.max(0, frac * C - (vivos > 1 ? 2 : 0)), off = -ang * C; ang += frac;
+      return '<circle r="' + R + '" cx="80" cy="80" fill="none" stroke="' + CORES[n % CORES.length] + '" stroke-width="26" stroke-dasharray="' + len + " " + (C - len) + '" stroke-dashoffset="' + off + '" transform="rotate(-90 80 80)"><title>' + esc(x.k) + ": " + x.v + " (" + Math.round(frac * 100) + "%)</title></circle>"; }).join("") : '<circle r="' + R + '" cx="80" cy="80" fill="none" stroke="#e8ecf1" stroke-width="26"/>';
+    return '<div class="cc-rosca"><svg viewBox="0 0 160 160" role="img" aria-label="' + esc(rotuloCentro) + '">' + fatias + '<text x="80" y="76" text-anchor="middle" class="cc-rosca-rot">' + esc(rotuloCentro) + '</text><text x="80" y="98" text-anchor="middle" class="cc-rosca-val">' + total + "</text></svg>" +
+      '<ul class="cc-legenda">' + itens.map((x, n) => '<li><i style="background:' + CORES[n % CORES.length] + '"></i><span>' + esc(x.k) + "</span><b>" + x.v + "</b><small>" + (total ? Math.round(x.v / total * 100) : 0) + "%</small></li>").join("") + "</ul></div>";
+  }
+  // barras horizontais de uma série só (uma cor); mostra até 10 linhas
+  function barras(itens, fmtV, cor) {
+    const lista = itens.slice(0, 10), max = Math.max(1, ...lista.map((x) => Number(x.v) || 0));
+    return '<div class="cc-barras">' + lista.map((x) => '<div class="cc-barra" title="' + esc(x.k) + ": " + fmtV(x.v) + '"><span class="cc-barra-nome">' + esc(x.k) + '</span><div class="cc-barra-trilho"><span style="width:' + ((Number(x.v) || 0) / max * 100) + "%;background:" + (cor || CORES[0]) + '"></span></div><b>' + fmtV(x.v) + "</b></div>").join("") + (itens.length > 10 ? '<p class="cc-mais">+ ' + (itens.length - 10) + " na tabela</p>" : "") + "</div>";
+  }
+  const quadro = (titulo, sub, tabela, grafico, extra = "") => '<section class="cr-bloco cc-quadro"' + extra + '><h3>' + titulo + (sub ? " <small>" + sub + "</small>" : "") + '</h3><div class="cc-corpo' + (grafico ? "" : " sem-grafico") + '"><div class="cc-dados"><div class="gr-rolar">' + tabela + "</div></div>" + (grafico ? '<div class="cc-graf">' + grafico + "</div>" : "") + "</div></section>";
   function pintar() {
     const lista = cancelados(), base = criados();
     const totN = lista.length, totV = lista.reduce((a, p) => a + valorDe(p), 0);
@@ -105,60 +196,46 @@
     // lista
     const focados = s.foco ? lista.filter((p) => ({ motivo: motivoDe, decorador: decoradorDe, equipe: equipeDe, cidade: cidadeDe, distancia: (x) => regiaoDe(x).faixa, mes: (x) => dataCanc(x).slice(0, 7) })[s.foco.tipo](p) === s.foco.valor) : lista;
     focados.sort((a, b) => dataCanc(b).localeCompare(dataCanc(a)));
-    const tLista = focados.length ? '<div class="gr-rolar"><table class="gr-planilha"><thead><tr><th>Pedido</th><th>Decorador / cliente</th><th>Evento</th><th>Local</th><th>Cidade</th><th class="num">Valor</th><th>Motivo</th><th>Observação</th><th>Cancelado em</th><th>Por</th></tr></thead><tbody>' +
-      focados.map((p) => { const r = regiaoDe(p); return '<tr><th scope="row"><button type="button" class="cr-link" data-abrir="' + p.id + '">' + esc(p.numero_pedido || "—") + "</button></th><td>" + esc(decoradorDe(p)) + (p.equipe_nome ? '<br><small class="cr-sub">' + esc(p.equipe_nome) + "</small>" : "") + "</td><td>" + esc([p.tipo_evento, dataBr(p.data_evento)].filter((x) => x && x !== "–").join(" · ")) + "</td><td>" + esc(p.local_nome || "–") + "</td><td>" + esc(r.cidade || "–") + '</td><td class="num">' + fmt(valorDe(p)) + "</td><td>" + esc(motivoDe(p)) + '</td><td class="cr-texto">' + esc(p.cancelamento?.observacao || "") + "</td><td>" + dataBr(dataCanc(p)) + "</td><td>" + esc(p.cancelamento?.usuario || "–") + "</td></tr>"; }).join("") +
+    const tLista = focados.length ? '<div class="gr-rolar"><table class="gr-planilha"><thead><tr><th>Pedido</th><th>Decorador / cliente</th><th>Evento</th><th>Local</th><th>Cidade</th><th class="num">Valor</th><th>Motivo</th><th>Observação</th><th>Cancelado em</th><th>Por</th><th></th></tr></thead><tbody>' +
+      focados.map((p) => { const r = regiaoDe(p); return '<tr><th scope="row"><button type="button" class="cr-link" data-abrir="' + p.id + '">' + esc(p.numero_pedido || "—") + "</button></th><td><span class=\"cc-pessoa\">" + fotoHtml(p.cliente_nome, fotoCliente(p)) + "<span>" + esc(decoradorDe(p)) + (p.equipe_nome ? '<br><small class="cr-sub">' + esc(p.equipe_nome) + "</small>" : "") + "</span></span></td><td>" + esc([p.tipo_evento, dataBr(p.data_evento)].filter((x) => x && x !== "–").join(" · ")) + "</td><td>" + esc(p.local_nome || "–") + "</td><td>" + esc(r.cidade || "–") + '</td><td class="num">' + fmt(valorDe(p)) + "</td><td>" + esc(motivoDe(p)) + '</td><td class="cr-texto">' + esc(p.cancelamento?.observacao || "") + "</td><td>" + dataBr(dataCanc(p)) + "</td><td>" + pessoaHtml(p.cancelamento?.usuario || p.cancelamento?.por || "") + '</td><td><button type="button" class="btn secondary cc-hist-btn" data-historico="' + p.id + '">Histórico</button></td></tr>'; }).join("") +
       "</tbody></table></div>" : '<div class="cr-vazio">Nenhum pedido cancelado com esses filtros.</div>';
     const rotuloFoco = s.foco ? { motivo: "Motivo", decorador: "Decorador", equipe: "Equipe", cidade: "Cidade", distancia: "Distância", mes: "Mês" }[s.foco.tipo] + ": " + (s.foco.tipo === "mes" ? nomeMes(s.foco.valor) : s.foco.valor) : "";
-    $("cConteudo").innerHTML =
-      '<section class="cr-bloco"><h3>Resumo <small>' + esc(textoPeriodo()) + '</small></h3><div class="gr-rolar"><table class="gr-planilha"><tbody>' + resumo.map(([a, b]) => '<tr><th scope="row">' + a + '</th><td class="num forte">' + b + "</td></tr>").join("") + "</tbody></table></div></section>" +
-      '<div class="cr-grade"><section class="cr-bloco"><h3>Por motivo</h3><div class="gr-rolar">' + tMotivo + '</div></section><section class="cr-bloco"><h3>Por decorador</h3><div class="gr-rolar">' + tDec + "</div></section></div>" +
-      '<section class="cr-bloco"><h3>Por equipe <small>todas as pessoas da equipe juntas</small></h3><div class="gr-rolar">' + tEq + "</div></section>" +
-      '<div class="cr-grade"><section class="cr-bloco"><h3>Por cidade <small>tirada do endereço do local</small></h3><div class="gr-rolar">' + tCid + '</div></section><section class="cr-bloco"><h3>Por distância do galpão</h3><div class="gr-rolar">' + tFaixa + "</div></section></div>" +
-      '<section class="cr-bloco"><h3>Mês a mês</h3><div class="gr-rolar">' + tMes + "</div></section>" +
-      '<section class="cr-bloco" id="cLista"><h3>Pedidos cancelados <small>' + focados.length + " pedido(s)</small>" + (s.foco ? '<span class="cr-filtro-ativo">' + esc(rotuloFoco) + ' <button type="button" data-tirar-foco aria-label="Tirar filtro">×</button></span>' : "") + "</h3>" + tLista + "</section>";
+    const taxaPct = pct(base.filter((p) => p.status_comercial === "cancelado").length, base.length);
+    const grafResumo = '<h4>Taxa de cancelamento</h4><div class="cc-taxa"><div class="cc-taxa-trilho"><span style="width:' + Math.min(100, Math.max(0, taxaPct || 0)) + '%"></span></div><b>' + fmtPct(taxaPct) + '</b></div><p class="cc-graf-sub">' + base.filter((p) => p.status_comercial === "cancelado").length + " de " + base.length + " pedidos criados no período foram cancelados.</p>" +
+      '<h4>Valor perdido</h4><p class="cc-grande">' + fmt(totV) + '</p><p class="cc-graf-sub">em ' + totN + " pedido(s) cancelado(s)</p>";
+    const mesesCron = meses.slice().reverse();
+    $("cConteudo").innerHTML = '<div class="cc-painel-aba" data-painel="visao"' + (s.aba === "visao" ? "" : " hidden") + ">" +
+      quadro("Resumo", esc(textoPeriodo()), '<table class="gr-planilha"><tbody>' + resumo.map(([a, b], n) => n < 2 ? linhaFiltro("todos", "todos", '<th scope="row">' + a + '</th><td class="num forte">' + b + "</td>") : '<tr><th scope="row">' + a + '</th><td class="num forte">' + b + "</td></tr>").join("") + "</tbody></table>", grafResumo) +
+      quadro("Por motivo", "", tMotivo, rosca(porMotivo, totN, "Cancelados")) +
+      quadro("Por decorador", "", tDec, barras(porDec.map((g) => ({ k: g.k, v: g.n })), (v) => String(v))) +
+      quadro("Por equipe", "todas as pessoas da equipe juntas", tEq, barras(porEq.map((g) => ({ k: g.k, v: g.n })), (v) => String(v))) +
+      quadro("Por cidade", "tirada do endereço do local", tCid, barras(porCidade.map((g) => ({ k: g.k, v: g.n })), (v) => String(v))) +
+      quadro("Por distância do galpão", "", tFaixa, barras(porFaixa.map((g) => ({ k: g.k, v: g.n })), (v) => String(v))) +
+      quadro("Mês a mês", "valor cancelado por mês", tMes, barras(mesesCron.map((m) => ({ k: nomeMes(m), v: lista.filter((p) => dataCanc(p).startsWith(m)).reduce((a, p) => a + valorDe(p), 0) })), brlC, "#e34948")) +
+      "</div>" + '<div class="cc-painel-aba" data-painel="lista"' + (s.aba === "lista" ? "" : " hidden") + '><section class="cr-bloco" id="cLista"><h3>Pedidos cancelados <small>' + focados.length + " pedido(s)</small>" + (s.foco ? '<span class="cr-filtro-ativo">' + esc(rotuloFoco) + ' <button type="button" data-tirar-foco aria-label="Tirar filtro">×</button></span>' : "") + "</h3>" + tLista + "</section></div>";
+    const nAba = $("cAbaN"); if (nAba) nAba.textContent = focados.length || "";
+    marcarAba();
+  }
+  // Abas (15/11/2026): Visão geral (quadros com gráficos) e Pedidos cancelados (a lista).
+  function marcarAba() {
+    document.querySelectorAll("[data-aba]").forEach((b) => { const on = b.dataset.aba === s.aba; b.classList.toggle("active", on); b.setAttribute("aria-selected", String(on)); });
+    document.querySelectorAll("[data-painel]").forEach((d) => { d.hidden = d.dataset.painel !== s.aba; });
   }
   function textoPeriodo() {
     const de = $("cDe").value, ate = $("cAte").value;
     return de && ate ? "cancelados de " + dataBr(de) + " a " + dataBr(ate) : de ? "cancelados desde " + dataBr(de) : ate ? "cancelados até " + dataBr(ate) : "todos os cancelamentos";
   }
-  function opcoes() {
-    const canc = s.pedidos.filter((p) => p.status_comercial === "cancelado");
-    const preencher = (sel, valores) => { const v = sel.value; sel.innerHTML = '<option value="">Todos</option>' + valores.map((x) => '<option' + (x === v ? " selected" : "") + ">" + esc(x) + "</option>").join(""); };
-    preencher($("cDecorador"), [...new Set(s.pedidos.map(decoradorDe))].sort((a, b) => a.localeCompare(b, "pt-BR")));
-    preencher($("cMotivo"), [...new Set(canc.map(motivoDe))].sort((a, b) => a.localeCompare(b, "pt-BR")));
-  }
-  function exportar() {
-    const lista = cancelados();
-    R.exportar([{
-      nome: "Pedidos cancelados",
-      linhas: [["Pedidos cancelados · " + textoPeriodo()], [], ["Pedido", "Decorador / cliente", "Tipo de evento", "Data do evento", "Local", "Cidade", "Bairro", "Distância do galpão (km)", "Valor", "Motivo", "Observação", "Cancelado em", "Por"]]
-        .concat(lista.map((p) => { const r = regiaoDe(p); return [String(p.numero_pedido || ""), decoradorDe(p), p.tipo_evento || "", R.dataPlan(p.data_evento), p.local_nome || "", r.cidade, r.bairro, Number(r.km) || "", R.r2(valorDe(p)), motivoDe(p), p.cancelamento?.observacao || "", R.dataPlan(dataCanc(p)), p.cancelamento?.usuario || ""]; })),
-      larguras: [10, 30, 16, 13, 30, 22, 20, 12, 14, 26, 40, 13, 20]
-    }, {
-      nome: "Por motivo",
-      linhas: [["Motivo", "Pedidos", "Valor"]].concat(agrupar(lista, motivoDe).map((g) => [g.k, g.n, R.r2(g.valor)])), larguras: [32, 10, 14]
-    }, {
-      nome: "Por decorador",
-      linhas: [["Decorador / cliente", "Cancelados", "Valor"]].concat(agrupar(lista, decoradorDe).map((g) => [g.k, g.n, R.r2(g.valor)])), larguras: [32, 10, 14]
-    }, {
-      nome: "Por equipe",
-      linhas: [["Equipe", "Cancelados", "Valor"]].concat(agrupar(lista, equipeDe).map((g) => [g.k, g.n, R.r2(g.valor)])), larguras: [32, 10, 14]
-    }, {
-      nome: "Por cidade",
-      linhas: [["Cidade", "Cancelados", "Valor"]].concat(agrupar(lista, cidadeDe).map((g) => [g.k, g.n, R.r2(g.valor)])), larguras: [32, 10, 14]
-    }], "Cancelamentos");
-  }
-
   async function iniciar() {
     const ano = new Date().getFullYear();
     $("cDe").value = ano + "-01-01"; $("cAte").value = R.hoje();
     try { await carregar(); } catch (e) { console.error(e); $("cConteudo").innerHTML = '<div class="cr-vazio">Não foi possível carregar: ' + esc(e.message || e) + "</div>"; return; }
-    opcoes(); pintar();
-    ["cDe", "cAte", "cDecorador", "cMotivo"].forEach((id) => $(id).addEventListener("change", () => { s.foco = null; pintar(); }));
-    $("cLimpar").addEventListener("click", () => { $("cDe").value = ""; $("cAte").value = ""; $("cDecorador").value = ""; $("cMotivo").value = ""; s.foco = null; pintar(); });
-    $("cExcel").addEventListener("click", exportar);
-    const escolher = (tr) => { const f = { tipo: tr.dataset.filtro, valor: tr.dataset.valor }; s.foco = s.foco && s.foco.tipo === f.tipo && s.foco.valor === f.valor ? null : f; pintar(); document.getElementById("cLista")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
+    pintar();
+    ["cDe", "cAte"].forEach((id) => $(id).addEventListener("change", () => { s.foco = null; pintar(); }));
+    $("cLimpar").addEventListener("click", () => { $("cDe").value = ""; $("cAte").value = ""; s.foco = null; pintar(); });
+    const escolher = (tr) => abrirGrupo(tr.dataset.filtro, tr.dataset.valor);
+    document.querySelectorAll("[data-aba]").forEach((b) => b.addEventListener("click", () => { s.aba = b.dataset.aba; marcarAba(); }));
     $("cConteudo").addEventListener("click", (e) => {
+      const hb = e.target.closest("[data-historico]"); if (hb) { abrirHistorico(hb.dataset.historico); return; }
       const ab = e.target.closest("[data-abrir]"); if (ab) { window.location.href = "../Pedidos/pedido.html?pedido=" + encodeURIComponent(ab.dataset.abrir); return; }
       if (e.target.closest("[data-tirar-foco]")) { s.foco = null; pintar(); return; }
       const tr = e.target.closest("tr[data-filtro]"); if (tr) escolher(tr);

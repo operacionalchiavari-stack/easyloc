@@ -50,14 +50,7 @@
   ],
   "functions": {
     "api/*.js": {
-      "maxDuration": 60,
-      "includeFiles": "api/_gas/**"
+      "maxDuration": 60
     }
-  },
-  "crons": [
-    {
-      "path": "/api/gs-cron?projeto=almoxarifado&fn=atualizarTetoGastosAutomatico",
-      "schedule": "0 9 * * *"
-    }
-  ]
+  }
 }

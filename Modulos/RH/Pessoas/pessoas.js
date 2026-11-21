@@ -5,7 +5,7 @@
    (afastado/desligado/ativo) por rh_status — desligar deixa o funcionário inativo.
    Documentos, exames, treinamentos, benefícios, férias e checklists gravam direto nas
    tabelas rh_* (RLS: rh.colaboradores.visualizar / editar).
-   Ocorrências: só leitura, do Controle RH (planilha da Chiavari, /api/gs).
+   Ocorrências: só leitura, do Controle RH (tabela controle_rh_ocorrencias).
 ===================================================== */
 (function () {
   "use strict";
@@ -520,21 +520,18 @@
       }).join("") + "</tbody></table></div></section>";
   }
 
-  // ocorrências: Controle RH (planilha da Chiavari, servidor /api/gs)
+  // ocorrências: Controle RH (tabela controle_rh_ocorrencias no Supabase, nov/2026; antes era a planilha pelo /api/gs)
   async function carregarOcorrencias() {
     if (S.ocorr) return S.ocorr;
-    const local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
-    const servidor = (local && location.port === "3000") || /\.vercel\.app$/i.test(location.hostname) ? "" : "https://easyloc-zeta.vercel.app";
-    const { data } = await S.sb.auth.getSession();
-    const r = await fetch(servidor + "/api/gs", { method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + (data?.session?.access_token || "") }, body: JSON.stringify({ projeto: "controlerh", fn: "getHistoricoRH", args: [] }) });
-    const j = await r.json().catch(() => null);
-    if (!j?.ok) throw new Error(j?.erro || "Não foi possível ler o Controle RH.");
-    S.ocorr = j.resultado || [];
+    const { data, error } = await S.sb.from("controle_rh_ocorrencias").select("id,data_ocorrencia,hora_ocorrencia,funcionario_id,funcionario_nome,setor,tipo,observacao,responsavel,registrado_em").eq("empresa_id", S.emp).order("data_ocorrencia", { ascending: false }).limit(5000);
+    if (error) throw new Error("Não foi possível ler o Controle RH.");
+    const br = (d) => { const [a, m, dd] = String(d || "").split("-"); return a ? dd + "/" + m + "/" + a : ""; };
+    S.ocorr = (data || []).map((o) => ({ id: o.id, data: br(o.data_ocorrencia), hora: String(o.hora_ocorrencia || "").slice(0, 5), dataOcorrencia: br(o.data_ocorrencia), horaOcorrencia: String(o.hora_ocorrencia || "").slice(0, 5), funcionario: o.funcionario_nome, funcionarioId: o.funcionario_id, setor: o.setor || "", tipo: o.tipo || "", observacao: o.observacao || "", responsavel: o.responsavel || "" }));
     return S.ocorr;
   }
   function ocorrenciasDe(p, lista) {
     const n = norm(p.nome), partes = n.split(" ");
-    return lista.filter((o) => { const m = norm(o.funcionario); if (!m) return false; if (m === n) return true; const q = m.split(" "); return q[0] === partes[0] && (q.length === 1 || partes.includes(q[q.length - 1])); });
+    return lista.filter((o) => { if (o.funcionarioId) return o.funcionarioId === p.id; const m = norm(o.funcionario); if (!m) return false; if (m === n) return true; const q = m.split(" "); return q[0] === partes[0] && (q.length === 1 || partes.includes(q[q.length - 1])); });
   }
   async function fichaOcorrencias(p) {
     const corpo = $("rhFichaCorpo");

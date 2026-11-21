@@ -44,10 +44,10 @@
     const e = state.empresa || {};
     container.querySelector("#simplesInput").value = e.simples_nacional || "Sim";
     container.querySelector("#tipoTributacaoInput").value = e.tipo_tributacao || "";
-    container.querySelector("#naturezaInput").value = e.natureza || "";
-    container.querySelector("#regimeInput").value = e.regime || "";
-    container.querySelector("#aliquotaIssInput").value = e.aliquota_iss || "";
-    container.querySelector("#aliquotaIrInput").value = e.aliquota_ir || "";
+    container.querySelector("#naturezaInput").value = e.natureza_tributacao ?? "";
+    container.querySelector("#regimeInput").value = e.regime_tributacao ?? "";
+    container.querySelector("#aliquotaIssInput").value = e.aliquota_iss ?? "";
+    container.querySelector("#aliquotaIrInput").value = e.aliquota_ir ?? "";
     return () => {};
   }
 

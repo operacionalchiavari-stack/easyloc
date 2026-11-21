@@ -1,0 +1,114 @@
+/* Entrada, saída e retirada: campos e listas de seleção consistentes. */
+.almoxarifado-page :is(#entryModal,#exitModal,#withdrawalsWorkspaceTab,#movementWorkspaceTab) :is(select,input:not([type=hidden]):not([type=file]),textarea){font-size:14px!important}
+.almoxarifado-page :is(#entryModal,#exitModal,#withdrawalsWorkspaceTab,#movementWorkspaceTab) select{min-height:44px;border:1px solid #cdd7e4;border-radius:10px;background-color:#fff;color:#24364e;padding:10px 12px;box-shadow:0 1px 2px #14243b08;cursor:pointer}
+.almoxarifado-page :is(#entryModal,#exitModal,#withdrawalsWorkspaceTab,#movementWorkspaceTab) :is(select,input,textarea):focus-visible{outline:2px solid #2563eb;outline-offset:2px;border-color:#8aafe8}
+.almoxarifado-page :is(#entryModal,#exitModal,#withdrawalsWorkspaceTab,#movementWorkspaceTab) select:disabled{background-color:#f3f5f8;color:#8792a1;cursor:default}
+@supports(appearance:base-select){
+ .almoxarifado-page :is(#entryModal,#exitModal,#withdrawalsWorkspaceTab,#movementWorkspaceTab) select,
+ .almoxarifado-page :is(#entryModal,#exitModal,#withdrawalsWorkspaceTab,#movementWorkspaceTab) select::picker(select){appearance:base-select!important}
+ .almoxarifado-page :is(#entryModal,#exitModal,#withdrawalsWorkspaceTab,#movementWorkspaceTab) select{background-image:none!important;display:flex;align-items:center;gap:10px;white-space:normal}
+ .almoxarifado-page :is(#entryModal,#exitModal,#withdrawalsWorkspaceTab,#movementWorkspaceTab) select::picker-icon{color:#65748b;margin-left:auto;transition:rotate .15s}
+ .almoxarifado-page :is(#entryModal,#exitModal,#withdrawalsWorkspaceTab,#movementWorkspaceTab) select:open::picker-icon{rotate:180deg}
+ .almoxarifado-page :is(#entryModal,#exitModal,#withdrawalsWorkspaceTab,#movementWorkspaceTab) select::picker(select){margin-top:6px;padding:6px;border:1px solid #d8e1ec;border-radius:12px;background:#fff;color:#24364e;box-shadow:0 12px 32px #14243b26;max-height:340px;max-width:min(620px,calc(100vw - 24px));overflow:auto;font:400 14px/1.5 Inter,system-ui,sans-serif}
+ .almoxarifado-page :is(#entryModal,#exitModal,#withdrawalsWorkspaceTab,#movementWorkspaceTab) select option{display:flex;gap:10px;padding:11px 12px;margin:2px 0;border:0;border-radius:8px;color:#24364e;background:#fff;font:400 14px/1.5 Inter,system-ui,sans-serif;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
+ .almoxarifado-page :is(#entryModal,#exitModal,#withdrawalsWorkspaceTab,#movementWorkspaceTab) select option:is(:hover,:focus){background:#f0f5fc;outline:0}
+ .almoxarifado-page :is(#entryModal,#exitModal,#withdrawalsWorkspaceTab,#movementWorkspaceTab) select option:checked{background:#eaf2ff;color:#194a91;font-weight:600}
+ .almoxarifado-page :is(#entryModal,#exitModal,#withdrawalsWorkspaceTab,#movementWorkspaceTab) select option:disabled{color:#8b96a5;cursor:default}
+}
+.almox-operation-suggestions{box-sizing:border-box;position:fixed;inset:auto;margin:0;padding:6px;border:1px solid #d8e1ec;border-radius:12px;background:#fff;color:#24364e;box-shadow:0 12px 32px #14243b26;overflow:auto;overscroll-behavior:contain;font:400 14px/1.5 Inter,system-ui,sans-serif;z-index:5000}
+.almox-operation-suggestions::backdrop{background:transparent;pointer-events:none}
+.almox-operation-suggestions[hidden]{display:none!important}
+.almox-operation-option{padding:12px;margin:2px 0;border-radius:8px;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
+.almox-operation-option:hover,.almox-operation-option[aria-selected=true]{background:#eaf2ff;color:#194a91}
+.almox-operation-suggestions>p{margin:0;padding:18px 12px;color:#65748b}
+.almox-operation-picker{overflow:auto!important;overscroll-behavior:contain}
+.almox-operation-picker::backdrop{background:transparent;pointer-events:none}
+.almoxarifado-page :is(#withdrawalsWorkspaceTab,#movementWorkspaceTab) :is(.movement-picker-dropdown,.movement-op-options){border:1px solid #d8e1ec;border-radius:12px;background:#fff;box-shadow:0 12px 32px #14243b26}
+.almoxarifado-page :is(#withdrawalsWorkspaceTab,#movementWorkspaceTab) :is(.movement-picker-options,.movement-op-options){padding:6px;max-height:320px}
+.almoxarifado-page :is(#withdrawalsWorkspaceTab,#movementWorkspaceTab) :is(.movement-picker-options,.movement-op-options) button{padding:12px;border-radius:8px;border-bottom:1px solid #edf1f6;gap:12px}
+.almoxarifado-page :is(#withdrawalsWorkspaceTab,#movementWorkspaceTab) :is(.movement-picker-options,.movement-op-options) button:hover{background:#eaf2ff}
+.almoxarifado-page :is(#withdrawalsWorkspaceTab,#movementWorkspaceTab) :is(.movement-picker-options,.movement-op-options) strong{font-size:14px!important;white-space:normal;overflow-wrap:anywhere}
+.almoxarifado-page :is(#withdrawalsWorkspaceTab,#movementWorkspaceTab) :is(.movement-picker-options,.movement-op-options) small{font-size:12px!important;white-space:normal;line-height:1.5}
+.ref-item-material-menu-portal{padding:6px;border:1px solid #d8e1ec;border-radius:12px;background:#fff;box-shadow:0 12px 32px #14243b26}
+.ref-item-material-menu-portal button{padding:12px;border-radius:8px;font:400 14px/1.5 Inter,system-ui,sans-serif;white-space:normal}
+.ref-item-material-menu-portal button:hover{background:#eaf2ff;color:#194a91}
+/* Entrada e saída seguem a mesma composição e paleta da Retirada. */
+.almoxarifado-page :is(#entryModal,#exitModal) .operation-workspace-card{width:100%;max-width:none}
+.almoxarifado-page .operation-workspace-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;padding:16px}
+.almoxarifado-page .operation-entry-exit-panel{min-width:0;display:flex;flex-direction:column;align-self:start;border:2px solid var(--movement-color)!important;border-radius:14px;overflow:visible;box-shadow:0 2px 8px #14283f17}
+.almoxarifado-page .operation-entry-exit-panel.is-entry{background:#ecfdf3;--movement-color:#16a34a}
+.almoxarifado-page .operation-entry-exit-panel.is-exit{background:#fff1f2;--movement-color:#dc2626}
+.almoxarifado-page .operation-entry-exit-panel .almox-modal-actions{background:transparent;border-color:color-mix(in srgb,var(--movement-color) 22%,transparent);border-radius:0 0 14px 14px;margin-top:auto}
+.almoxarifado-page .operation-entry-exit-panel .almox-modal-actions .btn-primary{background:var(--movement-color)!important;border-color:var(--movement-color)!important}
+.almoxarifado-page .operation-entry-exit-panel :is(.entry-return-form,.supermarket-exit-form){grid-template-columns:repeat(2,minmax(0,1fr));padding:18px;gap:14px;background:transparent}
+.almoxarifado-page .operation-entry-exit-panel label{font-size:14px}
+.almoxarifado-page .operation-entry-exit-panel .entry-add-item{align-self:end;grid-column:1/-1;justify-self:start}
+.almoxarifado-page .entry-cart-wrap{grid-column:1/-1;min-width:0;background:#fff;border:1px solid #d3e2dc;border-radius:10px;overflow:hidden}
+.almoxarifado-page .entry-cart-table{width:100%;table-layout:fixed;border-collapse:collapse}
+.almoxarifado-page .entry-cart-table :is(th,td){padding:10px 8px;font-size:14px;text-align:left;overflow-wrap:anywhere;border-bottom:1px solid #e3e9ed}
+.almoxarifado-page .entry-cart-table th{background:#f5f8f7;color:#64748b}
+.almoxarifado-page .entry-cart-table th:first-child{width:40%}
+.almoxarifado-page .entry-cart-table th:last-child{width:40px}
+.almoxarifado-page .entry-cart-table .tw-field{width:100%;min-width:0;padding-inline:8px;background:#fff}
+.almoxarifado-page .entry-cart-table small{display:block;font-size:13px;color:#64748b;margin-top:4px}
+.almoxarifado-page .operation-entry-exit-panel .exit-top-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.almoxarifado-page .operation-entry-exit-panel .exit-scanner-label{grid-column:1/-1}
+.almoxarifado-page .operation-entry-exit-panel .exit-top-row>label:not(.exit-scanner-label) .tw-field{min-height:44px}
+.almoxarifado-page .operation-entry-exit-panel .exit-cart-table{table-layout:fixed;width:100%;min-width:0}
+.almoxarifado-page .operation-entry-exit-panel .exit-cart-table :is(th,td){font-size:14px;padding:8px;white-space:nowrap;vertical-align:middle;height:54px}
+.almoxarifado-page .operation-entry-exit-panel .exit-cart-table :is(th,td):first-child{width:82px}
+.almoxarifado-page .operation-entry-exit-panel .exit-cart-table :is(th,td):nth-child(2){width:auto;overflow:hidden}
+.almoxarifado-page .operation-entry-exit-panel .exit-cart-table :is(th,td):last-child{width:154px}
+.almoxarifado-page .operation-entry-exit-panel .exit-cart-table input{width:100%;min-width:0}
+.almoxarifado-page .operation-entry-exit-panel .exit-cart-table .exit-item-name{font-weight:600;font-size:14px}
+.almoxarifado-page .operation-entry-exit-panel .exit-cart-table .exit-item-value{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}
+.almoxarifado-page .exit-item-value [data-exit-total]{font-size:14px;font-weight:600}
+.almoxarifado-page .exit-item-value [data-remove-exit]{width:28px;height:28px;min-height:28px;flex:0 0 28px;padding:0;font-size:18px}
+.almoxarifado-page .operation-history-panel{min-width:0;align-self:start;padding:18px;border-radius:14px;box-shadow:0 2px 8px #14283f17}
+.almoxarifado-page .operation-history-heading{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:16px}
+.almoxarifado-page .operation-history-heading h2{font-size:17px;margin:0;flex:1;white-space:nowrap}
+.almoxarifado-page .operation-history-heading .tw-field{width:240px;max-width:100%;min-width:0;font-size:14px}
+.almoxarifado-page .operation-history-list{max-height:650px;overflow:auto;scrollbar-gutter:stable}
+.almoxarifado-page .operation-history-list table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:14px}
+.almoxarifado-page .operation-history-list :is(th,td){padding:12px 9px;text-align:left;border-bottom:1px solid #e3e9ef;overflow-wrap:anywhere;white-space:normal}
+.almoxarifado-page .operation-history-list th{position:sticky;top:0;background:#f1f4f7;color:#64748b;font-size:14px;z-index:1}
+.almoxarifado-page .operation-history-list th:nth-child(1){width:22%}
+.almoxarifado-page .operation-history-list th:nth-child(2){width:34%}
+.almoxarifado-page .operation-history-list th:nth-child(3){width:20%}
+.almoxarifado-page .operation-history-list small{display:block;font-size:13px;color:#64748b;margin-top:5px}
+.almoxarifado-page .operation-history-quantity.entry{color:#087657}
+.almoxarifado-page .operation-history-quantity.exit{color:#c53030}
+.almoxarifado-page .operation-history-person{display:flex;align-items:center;gap:7px}
+.almoxarifado-page .operation-history-avatar{width:30px;height:30px;flex:0 0 30px;border-radius:50%;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;background:#e9eef5}
+.almoxarifado-page .operation-history-avatar img{display:block;width:100%;height:100%;object-fit:cover}
+.almoxarifado-page .operation-workspace-grid :is(th,td,label,.btn){font-size:14px!important}
+.almoxarifado-page .operation-history-empty{text-align:center!important;padding:30px!important;color:#64748b}
+@media(max-width:1100px){.almoxarifado-page .operation-workspace-grid{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:600px){
+ .almoxarifado-page :is(#entryModal,#exitModal)>.operation-workspace-card>.almox-modal-head{flex-wrap:wrap;gap:12px}
+ .almoxarifado-page :is(#entryModal,#exitModal)>.operation-workspace-card>.almox-modal-head>div:first-child{flex:1 1 70%}
+ .almoxarifado-page #exitModal .exit-release-head{order:3;width:100%}
+ .almoxarifado-page .operation-workspace-grid{padding:8px;gap:16px}
+ .almoxarifado-page .operation-entry-exit-panel :is(.entry-return-form,.supermarket-exit-form,.exit-top-row){grid-template-columns:minmax(0,1fr);padding:12px}
+ .almoxarifado-page .operation-entry-exit-panel .exit-top-row{padding:0}
+ .almoxarifado-page .operation-entry-exit-panel .entry-return-form>label.span-2{grid-column:1/-1}
+ .almoxarifado-page :is(.entry-cart-table,.operation-history-list table) thead{display:none}
+ .almoxarifado-page :is(.entry-cart-table,.operation-history-list table) :is(tbody,tr,td){display:block;width:100%!important}
+ .almoxarifado-page :is(.entry-cart-table,.operation-history-list table) tr{height:auto!important;padding:10px;border-bottom:1px solid #dce4ed}
+ .almoxarifado-page :is(.entry-cart-table,.operation-history-list table) td{height:auto!important;min-height:0!important;border:0;padding:10px 0!important}
+ .almoxarifado-page :is(.entry-cart-table,.operation-history-list table) td[data-label]::before{content:attr(data-label);display:block;color:#64748b;font-size:14px;margin-bottom:5px}
+ .almoxarifado-page .operation-entry-exit-panel .exit-cart-table :is(th,td){padding:7px 5px}
+ .almoxarifado-page .operation-entry-exit-panel .exit-cart-table :is(th,td):first-child{width:64px}
+ .almoxarifado-page .operation-entry-exit-panel .exit-cart-table :is(th,td):last-child{width:130px}
+ .almoxarifado-page .entry-cart-table .tw-field{max-width:100%}
+ .almoxarifado-page .operation-history-heading .tw-field{width:100%}
+}
+.operation-material-quantities{display:flex;flex-wrap:wrap;gap:5px 12px;margin-top:8px;line-height:1.5;text-align:left}
+.operation-material-quantities .operation-material-metric{display:inline;font:400 14px/1.5 Inter,system-ui,sans-serif;color:#526176;white-space:normal}
+.operation-material-quantities .operation-material-metric strong{display:inline!important;font:600 14px/1.5 Inter,system-ui,sans-serif;color:#24364e}
+.operation-material-quantities .operation-material-metric.free strong{color:#087657}
+.operation-material-quantities .operation-material-metric.reserved strong{color:#a35a0b}
+.almox-operation-option .operation-material-quantities{padding-top:3px;margin-top:4px}
+.almoxarifado-page .quantity-stock-warning{white-space:pre-line;border:1px solid #f4b4b4;background:#fff1f2;color:#b42318;font-size:14px;line-height:1.5}
+.almoxarifado-page #loanStockWarning{margin:12px 18px;padding:10px 12px;border-radius:9px}
+.almoxarifado-page :is(#exitCartBody,#loanItems) input[aria-invalid=true]{border-color:#dc2626!important;box-shadow:0 0 0 1px #dc262626}

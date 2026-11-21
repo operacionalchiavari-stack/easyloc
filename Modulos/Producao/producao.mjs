@@ -34,14 +34,12 @@ async function carregar(){
 // detalhes/ambientadas do cadastro e o 3D do ambiente no projeto do pedido) ao lado das informações de execução.
 function otimizar(v,w=1400){const u=url(v);if(!u||!u.includes('/storage/v1/object/public/'))return u;return u.replace('/storage/v1/object/public/','/storage/v1/render/image/public/')+(u.includes('?')?'&':'?')+`width=${w}&quality=80&resize=contain`;}
 const galerias=new Map();
+// Só uma foto: a do item personalizado (3D do ambiente no projeto do pedido); sem ela, a foto do item (pedido do usuário, 18/11).
 function imagensDoItem(t){
- const lista=[],vistos=new Set();
- const add=(src,rotulo,tipo)=>{const u=url(src);if(!u||vistos.has(u))return;vistos.add(u);lista.push({src:u,rotulo,tipo});};
- for(const [tipo,c] of Object.entries(t.origem.personalizacao_escolhas||{}))if(c?.foto_url)add(c.foto_url,`Referência · ${tipo} ${c.codigo||''}`.trim(),'referencia');
- add(t.foto,'Foto do item','item');
- for(const f of t.fotos||[])add(f.url,/^galeria/.test(f.slot||'')?'Ambientada':/^detalhe/.test(f.slot||'')?'Detalhe':'Foto do item','item');
- for(const r of t.renders||[])add(r.url,`Projeto 3D · ${t.origem.ambiente||'ambiente'}`,'projeto');
- return lista;
+ const r=(t.renders||[]).find(x=>url(x.url));
+ if(r)return [{src:url(r.url),rotulo:`Item personalizado · ${t.origem.ambiente||'projeto'}`,tipo:'projeto'}];
+ const f=url(t.foto)||url((t.fotos||[]).find(x=>!/^(galeria|detalhe)/.test(x.slot||''))?.url);
+ return f?[{src:f,rotulo:'Foto do item',tipo:'item'}]:[];
 }
 function amostra(c){
  if(c?.foto_url&&url(c.foto_url))return `<img src="${esc(otimizar(c.foto_url,400))}" alt="" loading="lazy">`;
@@ -153,18 +151,30 @@ function pintar(){
   const prazo=lista.map(t=>t.fim_previsto).filter(Boolean).sort()[0];
   // Pedido, cliente, local e prazo ficam em destaque dentro do card de progresso (pedido do usuário: "Pedido 350 Kelly Khawam - Vale dos Desejos  Prazo 25/10").
   const diaMes=v=>v?new Date(v).toLocaleDateString('pt-BR',{timeZone:'America/Sao_Paulo',day:'2-digit',month:'2-digit'}):'sem prazo';
-  const destaque=p?`<div class="op-progresso-pedido"><div class="op-progresso-id"><b>Pedido <em>${esc(p.numero)}</em></b>${p.cliente?`<span class="op-progresso-campo"><small>Cliente</small> ${esc(p.cliente)}</span>`:''}${p.local?`<span class="op-progresso-campo"><small>Local</small> ${esc(p.local)}</span>`:''}</div><div class="op-progresso-prazo" title="${esc('Finalizar serviços até '+quando(prazo))}"><small>Prazo</small><strong>${diaMes(prazo)}</strong></div></div>`:'';
+  // 16/11/2026: linha do pedido mais bonita, com a foto do cliente (ou iniciais) — foto preenchida depois (fotoClienteOP)
+  const destaque=p?`<div class="op-progresso-pedido op-ped-v2"><span class="op-ped-foto" data-op-cliente="${esc(p.cliente||'')}">${esc(String(p.cliente||'?').trim().split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join('').toUpperCase())}</span><div class="op-ped-info"><div class="op-ped-linha1">${p.cliente?`<strong class="op-ped-cliente">${esc(p.cliente)}</strong>`:''}</div>${p.local?`<span class="op-ped-local">${esc(p.local)}</span>`:''}</div><span class="op-ped-numero">Pedido ${esc(p.numero)}</span><div class="op-progresso-prazo op-ped-prazo" title="${esc('Finalizar serviços até '+quando(prazo))}"><small>Prazo</small><strong>${diaMes(prazo)}</strong></div></div>`:'';
   const cabecalho='';
   const sel=lista.find(t=>t.id===itemSel);
   const etapas=lista.flatMap(t=>t.etapas.filter(e=>['todos','almoxarifado'].includes(setor)||e.setor===setor));
   const prontas=etapas.filter(e=>e.estado==='concluida').length;const pct=etapas.length?Math.round(prontas/etapas.length*100):0;
-  $('#ordens').innerHTML=cabecalho+(sel?`<div class="op-triagem-layout"><section class="op-triagem-lista"><div class="op-lista-progresso"><div>${destaque||'<span>Progresso da produção</span>'}<strong>${pct}%</strong></div><progress max="100" value="${pct}">${pct}%</progress><small>${prontas} / ${etapas.length} etapas concluídas</small></div><div class="op-lista-linhas">${lista.map(t=>linhaProducao(t)).join('')}</div></section><aside class="op-referencia-painel" aria-label="Referência e informações"><h2>Referência e informações</h2>${itemHtml(sel)}</aside></div>`:'<p class="producao-sem-pedido">Nenhum item para este setor.</p>');
+  $('#ordens').innerHTML=cabecalho+(sel?`<div class="op-triagem-layout"><section class="op-triagem-lista"><div class="op-lista-progresso"><div>${destaque||'<span>Progresso da produção</span>'}</div></div><div class="op-lista-linhas">${lista.map(t=>linhaProducao(t)).join('')}</div></section><aside class="op-referencia-painel" aria-label="Referência e informações"><h2>Referência e informações</h2>${itemHtml(sel)}</aside></div>`:'<p class="producao-sem-pedido">Nenhum item para este setor.</p>');
+  fotoClienteOP();voltarNaLinha();
   $('#contagem').textContent='';
   return;
  }
  const resultado=renderizarFila(dados.itens,{executar:dados.executar,setor,situacao:$('#situacao').value,busca:$('#busca').value.trim()});
  $('#contagem').textContent=`${resultado.total} pedido(s)`;
  $('#ordens').innerHTML=resultado.html;
+}
+// 16/11/2026: o "← Voltar" fica antes da foto do cliente, na linha do pedido (cópia do link do topo, que some)
+let voltarTopo=null;
+function voltarNaLinha(){voltarTopo||=document.getElementById('voltarFila');const linha=document.querySelector('.op-ped-v2');if(!voltarTopo||!linha||voltarTopo.hidden)return;const v=voltarTopo.cloneNode(true);voltarTopo.id='voltarFilaTopo';voltarTopo.classList.add('op-voltar-movido');v.id='voltarFila';v.classList.remove('op-voltar-movido');v.classList.add('op-ped-voltar');linha.prepend(v);}
+const fotosClientesOP=new Map();
+async function fotoClienteOP(){
+ const el=document.querySelector('[data-op-cliente]');if(!el)return;const nome=el.dataset.opCliente;if(!nome)return;
+ if(!fotosClientesOP.has(nome)){fotosClientesOP.set(nome,(async()=>{try{const {data}=await sb.from('clientes_empresas').select('catalogo_logo_url').eq('empresa_id',empresa).ilike('nome_razao',nome).limit(1);return data?.[0]?.catalogo_logo_url||'';}catch(_){return '';}})());}
+ const url=await fotosClientesOP.get(nome);const alvo=document.querySelector('[data-op-cliente]');
+ if(url&&/^https?:/i.test(url)&&alvo&&alvo.dataset.opCliente===nome&&!alvo.querySelector('img')){const img=document.createElement('img');img.src=url;img.alt='';img.onerror=()=>img.remove();alvo.append(img);}
 }
 function dialogo(titulo,corpo,confirmar,executar){
  const d=document.createElement('dialog');d.className='producao-dialog';

@@ -320,7 +320,18 @@
     };
   }
 
+  // Cor da barra pelo quanto já foi pago (nov/2026): pouco pago = vermelho, quase quitado = verde.
+  function corPago(pct){
+    const p = Math.max(0, Math.min(100, Number(pct) || 0));
+    if(p <= 0) return "#c8ccd2";
+    const hue = Math.min(132, Math.round(p * 1.5));
+    return `hsl(${hue} 68% ${p >= 80 ? 38 : 45}%)`;
+  }
+
   function renderValorFinanceiro(pedido){
+    if(pedido.finIndisponivel){
+      return `<div class="central-finance-indicator unavailable"><span class="central-finance-value">${formatCurrency(moneyNumber(pedido.valor))}</span><span class="central-finance-label" role="status">Recebimentos indisponíveis</span><button type="button" class="central-finance-retry" data-action="repetir-recebimentos">Tentar novamente</button></div>`;
+    }
     const financeiro = calcularFinanceiroPedido(pedido);
     const tooltip = [
       `Valor total: ${formatCurrency(financeiro.total)}`,
@@ -331,12 +342,12 @@
     ].map(escapeHtml).join("&#10;");
 
     return `
-      <div class="central-finance-indicator ${escapeHtml(financeiro.estado)}" style="--finance-progress:${financeiro.percentual}%" title="${tooltip}" aria-label="${tooltip}">
+      <div class="central-finance-indicator ${escapeHtml(financeiro.estado)}" style="--finance-progress:${financeiro.percentual}%;--finance-cor:${corPago(financeiro.percentual)}" title="${tooltip}" aria-label="${tooltip}">
         <span class="central-finance-value">${formatCurrency(financeiro.total)}</span>
         <span class="central-finance-track">
           <span class="central-finance-fill"></span>
         </span>
-        <span class="central-finance-label">${escapeHtml(financeiro.label)}</span>
+        <span class="central-finance-label">${escapeHtml(financeiro.label)}${financeiro.estado === "overdue" ? ' <em class="central-finance-atraso">· em atraso</em>' : ""}</span>
       </div>
     `;
   }
@@ -621,23 +632,8 @@ function infoCadastro(rotulo, valor, icone){
     }
 
     try{
-      if(els.centralCadastroRelacionadoSubtitulo){
-        els.centralCadastroRelacionadoSubtitulo.textContent = isCliente ? "Cadastro de cliente" : "Cadastro de local";
-      }
-      if(els.centralCadastroRelacionadoTitulo){
-        els.centralCadastroRelacionadoTitulo.textContent = "Carregando...";
-      }
-      if(els.centralCadastroRelacionadoBody){
-        els.centralCadastroRelacionadoBody.innerHTML = `<div class="central-cadastro-loading">Buscando cadastro...</div>`;
-      }
-      els.centralCadastroRelacionadoModal?.classList.remove("hidden");
-
-      const registro = await buscarCadastroRelacionado(tipo, pedido);
-      renderCadastroRelacionado(tipo, registro || {
-        nome_razao: nome,
-        telefone: pedido.contato,
-        status: "Nao encontrado"
-      }, pedido);
+      const {abrirCadastroDoPedido}=await import('../../../js/pedido/pedido.cadastro.mjs?v=20261109-central-detalhes');
+      abrirCadastroDoPedido({tipo,id:id||'',nome:nome||'',origem:'central-pedidos',supabase:state.supabase});
     }catch(error){
       console.error("[CentralPedidos] cadastro relacionado:", error);
       avisar("Nao foi possivel abrir o cadastro neste momento.", "Cadastro", "erro");
@@ -649,7 +645,7 @@ function infoCadastro(rotulo, valor, icone){
     const observacoes = normalizarObservacoes(row.observacoes);
     return {
       id: row.id,
-      criadoEm: row.created_at || row.data_hora || "",
+      criadoEm: row.criado_em || row.created_at || "", // data_hora é a do evento, não a de envio
       numero: row.numero_pedido || row.numero || row.codigo || row.id || "-",
       origemId: row.pedido_origem_id || null, // pedido extra: id do pedido principal
       cliente_id: row.cliente_id || null,
@@ -663,6 +659,7 @@ function infoCadastro(rotulo, valor, icone){
       entrega: row.data_entrega || "",
       coleta: row.data_coleta || "",
       fin: row.fin || null,
+      finIndisponivel: !!row.finIndisponivel,
       status: row.status_comercial || row.status || "orcamento",
       fluxo: row.fluxo || null,
       pre_reserva_ate: row.pre_reserva_ate || null,
@@ -695,22 +692,25 @@ function infoCadastro(rotulo, valor, icone){
 
     const ids = [...new Set(pedidos.map((pedido) => pedido.cliente_id).filter(Boolean))];
     const nomesSemContato = [...new Set(pedidos
-      .filter((pedido) => !pedido.contato && !pedido.cliente_id && pedido.cliente)
+      .filter((pedido) => !pedido.cliente_id && pedido.cliente)
       .map((pedido) => pedido.cliente))];
 
     const contatosPorId = new Map();
     const contatosPorNome = new Map();
+    const fotosPorId = new Map(), fotosPorNome = new Map(); // foto do cliente (catálogo) na coluna Cliente, 15/11/2026
+    const foto = (c) => /^https?:\/\//i.test(c?.catalogo_logo_url || "") ? c.catalogo_logo_url : "";
 
     try{
       if(ids.length){
         const { data, error } = await state.supabase
           .from("clientes_empresas")
-          .select("id,nome_razao,telefone")
+          .select("id,nome_razao,telefone,catalogo_logo_url")
           .eq("empresa_id", state.empresaId)
           .in("id", ids);
         if(error && !isTabelaAusente(error)) console.warn("[CentralPedidos] contatos clientes:", error);
         (data || []).forEach((cliente) => {
           contatosPorId.set(String(cliente.id), cliente.telefone || "");
+          fotosPorId.set(String(cliente.id), foto(cliente));
           if(cliente.nome_razao) contatosPorNome.set(String(cliente.nome_razao).toLowerCase(), cliente.telefone || "");
         });
       }
@@ -718,7 +718,7 @@ function infoCadastro(rotulo, valor, icone){
       if(nomesSemContato.length){
         const buscas = await Promise.allSettled(nomesSemContato.map((nome) => state.supabase
           .from("clientes_empresas")
-          .select("nome_razao,telefone")
+          .select("nome_razao,telefone,catalogo_logo_url")
           .eq("empresa_id", state.empresaId)
           .ilike("nome_razao", nome)
           .limit(1)
@@ -726,7 +726,7 @@ function infoCadastro(rotulo, valor, icone){
 
         buscas.forEach((result) => {
           const cliente = result.value?.data;
-          if(cliente?.nome_razao) contatosPorNome.set(String(cliente.nome_razao).toLowerCase(), cliente.telefone || "");
+          if(cliente?.nome_razao){ contatosPorNome.set(String(cliente.nome_razao).toLowerCase(), cliente.telefone || ""); fotosPorNome.set(String(cliente.nome_razao).toLowerCase(), foto(cliente)); }
         });
       }
     }catch(error){
@@ -738,6 +738,10 @@ function infoCadastro(rotulo, valor, icone){
       contato: pedido.contato
         || contatosPorId.get(String(pedido.cliente_id))
         || contatosPorNome.get(String(pedido.cliente).toLowerCase())
+        || "",
+      clienteFoto: pedido.clienteFoto
+        || fotosPorId.get(String(pedido.cliente_id))
+        || fotosPorNome.get(String(pedido.cliente).toLowerCase())
         || ""
     }));
   }
@@ -934,7 +938,7 @@ function infoCadastro(rotulo, valor, icone){
   async function abrirPreviewPedido(pedidoId){
     if(!pedidoId || !state.supabase || !state.empresaId) return;
     try{
-      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261107-lista-sublocacao"); await carregarAvisosDocumento();
+      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261118-fixo"); await carregarAvisosDocumento();
       const { data: pedido, error } = await state.supabase.from("separacoes_pedidos").select("*")
         .eq("empresa_id", state.empresaId).eq("id", pedidoId).single();
       if(error || !pedido) throw error || new Error("Pedido não encontrado.");
@@ -1093,7 +1097,7 @@ function infoCadastro(rotulo, valor, icone){
 
   async function abrirPreviewProjetoCatalogo(pedido){
     try{
-      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261107-lista-sublocacao"); await carregarAvisosDocumento();
+      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261118-fixo"); await carregarAvisosDocumento();
       const { data: projeto, error } = await state.supabase.from("projetos").select("*")
         .eq("empresa_id", state.empresaId).eq("id", pedido.projetoId).single();
       if(error || !projeto) throw error || new Error("Projeto não encontrado.");
@@ -1162,15 +1166,87 @@ function infoCadastro(rotulo, valor, icone){
     { status: "pre_reserva", titulo: "Pré-reserva", alerta: true },
     { status: "orcamento", titulo: "Orçamento", alerta: true },
     // Catálogo (nov/2026): pedidos enviados pelo decorador que o Comercial ainda precisa finalizar (pagamento, frete, montagem)
-    { status: "catalogo", titulo: "Catálogo", alerta: true }
+    { status: "catalogo", titulo: "Catálogo", alerta: true },
+    // Confirmar datas (18/11/2026): entrega chegando (Parâmetros > Comercial) e o Comercial ainda não confirmou as datas com o decorador
+    { status: "confirmar_datas", titulo: "Confirmar datas", alerta: true }
   ];
   const CATALOGO_PENDENTE = ["catalogo_pedido_enviado", "catalogo_em_analise"];
+  // ---- Confirmar datas com o decorador (18/11/2026) ----
+  state.confirmar = { dias: 10, mapa: new Map() };
+  const STATUS_CONFIRMAR = ["aprovado", "finalizado", "enviado", "pre_reserva"];
+  async function carregarConfirmacoes(){
+    try{
+      const { data, error } = await state.supabase.rpc("comercial_confirmar_datas_lista", { p_empresa: state.empresaId });
+      if(error) throw error;
+      state.confirmar.dias = Number(data?.dias) || 10;
+      state.confirmar.mapa = new Map((data?.confirmados || []).map((c) => [String(c.pedido_id), c]));
+    }catch(e){ console.warn("Confirmar datas:", e.message || e); }
+  }
+  const diaISO = (v) => v ? String(v).slice(0, 10) : "";
+  function diasAteEntrega(p){
+    if(!p.entrega) return null;
+    const hoje = new Date(new Date().toLocaleDateString("sv-SE") + "T00:00:00");
+    return Math.round((new Date(diaISO(p.entrega) + "T00:00:00") - hoje) / 86400000);
+  }
+  function confirmacaoValida(p){
+    const c = state.confirmar.mapa.get(String(p.id));
+    if(!c) return null;
+    return diaISO(c.entrega) === diaISO(p.entrega) && diaISO(c.coleta) === diaISO(p.coleta) && (!c.evento || diaISO(c.evento) === diaISO(p.data)) ? c : null;
+  }
+  function precisaConfirmar(p){
+    if(p.origemCatalogo || p.encerrado || !STATUS_CONFIRMAR.includes(p.status)) return false;
+    const d = diasAteEntrega(p);
+    return d != null && d >= 0 && d <= state.confirmar.dias && !confirmacaoValida(p);
+  }
+  function confirmarCelula(p){
+    const d = diasAteEntrega(p);
+    const quando = d === 0 ? "Entrega hoje" : d === 1 ? "Entrega amanhã" : `Entrega em ${d} dias`;
+    const antiga = state.confirmar.mapa.get(String(p.id));
+    return `<div class="central-confirmar${d <= 2 ? " is-urgente" : ""}">
+      <div><b>${escapeHtml(quando)}</b><small>Confirme com ${escapeHtml(p.cliente)} a entrega, o evento e a coleta.</small>${antiga ? `<small class="central-confirmar-mudou">As datas mudaram depois da última confirmação (${escapeHtml(antiga.por || "")}).</small>` : ""}</div>
+      <button type="button" class="central-confirmar-btn" data-action="confirmar-datas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Confirmar</button>
+    </div>`;
+  }
+  function abrirConfirmarDatas(p){
+    const dlg = document.createElement("dialog");
+    dlg.className = "central-confirmar-dialog";
+    const linha = (rotulo, data) => `<div><dt>${rotulo}</dt><dd>${data ? escapeHtml(formatDate(data)) : "—"}</dd></div>`;
+    const tel = String(p.contato || "").replace(/\D/g, "");
+    dlg.innerHTML = `<form method="dialog">
+      <h2>Confirmar as datas · Pedido ${escapeHtml(p.numero)}</h2>
+      <p>Fale com <b>${escapeHtml(p.cliente)}</b>${p.contato ? ` (${escapeHtml(formatPhone(p.contato))})` : ""} e confira se as datas do pedido estão certas.</p>
+      <dl>${linha("Entrega", p.entrega)}${linha("Evento", p.data)}${linha("Coleta", p.coleta)}</dl>
+      <label><span>Observação (opcional)</span><textarea rows="3" maxlength="1000" placeholder="Ex.: confirmado por WhatsApp"></textarea></label>
+      <p class="central-confirmar-erro" role="alert" hidden></p>
+      <footer>
+        ${tel ? `<a class="btn btn-secondary" href="https://wa.me/${tel.length <= 11 ? "55" + tel : tel}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
+        <button type="button" class="btn btn-secondary" data-mudar>As datas mudaram: abrir o pedido</button>
+        <span></span>
+        <button type="button" class="btn btn-secondary" data-cancelar>Cancelar</button>
+        <button type="button" class="btn btn-primary" data-ok>Datas confirmadas</button>
+      </footer></form>`;
+    document.body.append(dlg);
+    dlg.addEventListener("close", () => dlg.remove());
+    dlg.querySelector("[data-cancelar]").addEventListener("click", () => dlg.close());
+    dlg.querySelector("[data-mudar]").addEventListener("click", () => { dlg.close(); abrirPedido(p.id, "editar"); });
+    dlg.querySelector("[data-ok]").addEventListener("click", async (ev) => {
+      const b = ev.currentTarget, erro = dlg.querySelector(".central-confirmar-erro");
+      b.disabled = true; erro.hidden = true;
+      try{
+        const { error } = await state.supabase.rpc("comercial_confirmar_datas_registrar", { p_empresa: state.empresaId, p_pedido: p.id, p_observacao: dlg.querySelector("textarea").value });
+        if(error) throw error;
+        await carregarConfirmacoes(); dlg.close(); aplicarFiltros();
+        avisar("Datas confirmadas.", "Confirmar datas", "sucesso");
+      }catch(e){ erro.textContent = e.message || "Não foi possível salvar."; erro.hidden = false; b.disabled = false; }
+    });
+    dlg.showModal();
+  }
   function renderAvisoPreReserva(){
     const caixa = $("centralSituacoes");
     if(!caixa) return;
     const atual = els.filtroStatusPedido?.value || "";
     caixa.innerHTML = SITUACOES.map((sit) => {
-      const lista = sit.status === "catalogo" ? state.pedidos.filter((p) => CATALOGO_PENDENTE.includes(p.status) && !window.CentralAcompanhamento?.encerrado(p)) : sit.status ? state.pedidos.filter((p) => p.status === sit.status) : state.pedidos;
+      const lista = sit.status === "confirmar_datas" ? state.pedidos.filter(precisaConfirmar) : sit.status === "catalogo" ? state.pedidos.filter((p) => CATALOGO_PENDENTE.includes(p.status) && !window.CentralAcompanhamento?.encerrado(p)) : sit.status ? state.pedidos.filter((p) => p.status === sit.status) : state.pedidos;
       let detalhe = "";
       if(sit.status === "pre_reserva"){
         const pre = lista.map(prazoPreReserva);
@@ -1247,7 +1323,7 @@ function infoCadastro(rotulo, valor, icone){
         && (!numero || String(pedido.numero).toLowerCase().includes(numero))
         && (!local || pedido.local.toLowerCase().includes(local))
         && (!comercial || pedido.comercial.toLowerCase().includes(comercial))
-        && (!status || pedido.status === status || (status === "catalogo" && CATALOGO_PENDENTE.includes(pedido.status) && !window.CentralAcompanhamento?.encerrado(pedido)) || (status === "finalizados" && pedido.fluxo?.finalizado === true))
+        && (!status || pedido.status === status || (status === "catalogo" && CATALOGO_PENDENTE.includes(pedido.status) && !window.CentralAcompanhamento?.encerrado(pedido)) || (status === "finalizados" && pedido.fluxo?.finalizado === true) || (status === "confirmar_datas" && precisaConfirmar(pedido)))
         && (!inicial || dataISO >= inicial)
         && (!final || dataISO <= final);
     });
@@ -1355,14 +1431,22 @@ function infoCadastro(rotulo, valor, icone){
     const ids = rows.map((r) => r.id).filter(Boolean);
     if(!ids.length) return rows;
     const porPedido = new Map();
-    try{
-      for(let i = 0; i < ids.length; i += 150){
+    const indisponiveis = new Set();
+    for(let i = 0; i < ids.length; i += 150){
+      const lote = ids.slice(i, i + 150);
+      try{
         const { data, error } = await state.supabase.rpc("pedidos_recebimentos", { p_empresa: state.empresaId, p_pedidos: ids.slice(i, i + 150) });
         if(error) throw error;
-        (data || []).forEach((t) => porPedido.set(t.pedido_id, { devido: Number(t.devido) || 0, recebido: Number(t.recebido) || 0, proximo: t.proximo ? String(t.proximo).slice(0, 10) : "", titulos: Number(t.titulos) || 0 }));
+        if(!Array.isArray(data)) throw Error("Resposta financeira incompleta");
+        data.forEach((t) => porPedido.set(t.pedido_id, { devido: Number(t.devido) || 0, recebido: Number(t.recebido) || 0, proximo: t.proximo ? String(t.proximo).slice(0, 10) : "", titulos: Number(t.titulos) || 0 }));
+        // A consulta agrupa títulos: um pedido sem títulos não produz linha.
+        lote.filter(id=>!porPedido.has(id)).forEach(id=>porPedido.set(id,{devido:0,recebido:0,proximo:"",titulos:0}));
+      }catch(e){
+        lote.forEach(id=>indisponiveis.add(id));
+        console.warn("[CentralPedidos] contas a receber indisponíveis:", e.message);
       }
-    }catch(e){ console.warn("[CentralPedidos] contas a receber indisponiveis:", e.message); return rows; }
-    return rows.map((r) => porPedido.has(r.id) ? { ...r, fin: porPedido.get(r.id) } : r);
+    }
+    return rows.map((r) => ({ ...r, fin: porPedido.get(r.id) || null, finIndisponivel: indisponiveis.has(r.id) }));
   }
 
   // Nov/2026: até a 1ª carga terminar, a tabela mostra linhas "esqueleto" (nunca "Nenhum pedido encontrado").
@@ -1388,8 +1472,9 @@ function infoCadastro(rotulo, valor, icone){
     els.centralPedidosTbody.closest("table")?.classList.add("central-sem-rolagem"); // nov/2026: nenhuma aba com barra horizontal
     // Nov/2026: nessas abas a linha é a mesma dos pedidos; no lugar do Fluxo entra o acompanhamento (central-acompanhamento.js).
     const comAcomp = ["pre_reserva", "orcamento", "catalogo"].includes(statusAba) && !!window.CentralAcompanhamento;
-    const thFluxo = document.getElementById("centralColFluxo"); if(thFluxo) thFluxo.textContent = comAcomp ? "Acompanhamento" : "Fluxo";
+    const thFluxo = document.getElementById("centralColFluxo"); if(thFluxo) thFluxo.textContent = statusAba === "confirmar_datas" ? "Confirmação das datas" : comAcomp ? "Acompanhamento" : "Fluxo";
 
+    if(!state.filtrados.length && statusAba === "confirmar_datas"){ els.centralPedidosTbody.innerHTML = `<tr><td colspan="9"><div class="central-empty">Nenhum pedido para confirmar agora. Os pedidos aparecem aqui ${state.confirmar.dias} dias antes da entrega.</div></td></tr>`; return; }
     if(!state.filtrados.length && statusAba === "catalogo"){ els.centralPedidosTbody.innerHTML = ""; return; }
     if(!state.filtrados.length){
       els.centralPedidosTbody.innerHTML = `
@@ -1408,8 +1493,8 @@ function infoCadastro(rotulo, valor, icone){
       <tr data-pedido-id="${escapeHtml(pedido.id)}" class="${pedido.origemCatalogo ? "is-catalogo" : ""}${pedido.origemId ? " is-extra" : ""}${presencaDe(pedido)?.ativo ? " is-montando" : ""}" title="${pedido.origemCatalogo ? "Projeto do catálogo: clique duas vezes para abrir como pedido" : "Clique duas vezes para abrir o pedido"}">
         <td><span class="pedido-numero-card${pedido.origemCatalogo ? " pedido-numero-catalogo" : ""}" title="${pedido.origemCatalogo ? "Veio do catálogo" : "Pedido comercial"}" aria-label="${pedido.origemCatalogo ? "Pedido do catálogo" : "Pedido comercial"} ${escapeHtml(pedido.numero)}">${escapeHtml(pedido.numero)}</span>${presencaHtml(pedido)}</td>
         <td>
-          <button type="button" class="central-record-link" data-action="abrir-cliente" title="Abrir cadastro do cliente">
-            ${escapeHtml(pedido.cliente)}
+          <button type="button" class="central-record-link central-cliente-link" data-action="abrir-cliente" title="Abrir cadastro do cliente">
+            <span class="central-cliente-foto" aria-hidden="true">${pedido.clienteFoto ? `<img src="${escapeHtml(pedido.clienteFoto)}" alt="" loading="lazy" onerror="this.remove()">` : ""}<span>${escapeHtml(iniciais(pedido.cliente))}</span></span><span class="central-cliente-nome">${escapeHtml(pedido.cliente)}</span>
           </button>${pedido.equipe ? `<small class="pedido-equipe-tag" title="Equipe do pedido">${escapeHtml(pedido.equipe)}</small>` : ""}
         </td>
         <td>
@@ -1420,7 +1505,7 @@ function infoCadastro(rotulo, valor, icone){
         <td>${escapeHtml(formatDate(pedido.data))}</td>
         <td>${pedido.entrega ? escapeHtml(formatDate(pedido.entrega)) : "—"}</td>
         <td>${pedido.coleta ? escapeHtml(formatDate(pedido.coleta)) : "—"}</td>
-        <td class="central-fluxo-cell">${comAcomp ? window.CentralAcompanhamento.celula(pedido) : renderFluxoPedido(pedido)}${prazoHtml(pedido)}</td>
+        <td class="central-fluxo-cell">${statusAba === "confirmar_datas" ? confirmarCelula(pedido) : comAcomp ? window.CentralAcompanhamento.celula(pedido) : renderFluxoPedido(pedido)}${prazoHtml(pedido)}</td>
         <td class="central-value-cell">${renderValorFinanceiro(pedido)}</td>
         <td>
           <div class="central-actions">
@@ -1464,11 +1549,11 @@ function infoCadastro(rotulo, valor, icone){
       const cartoes = [pos(pai), ...filhos.sort((x, y) => x.top - y.top)].filter((c, i, l) => i === 0 || c.top > l[0].top);
       for(let i = 1; i < cartoes.length; i++){
         const de = cartoes[i - 1], ate = cartoes[i];
-        const altura = ate.top - de.bottom; if(altura < 4) continue;
+        const altura = ate.top - de.bottom - 10; if(altura < 4) continue;
         const linha = document.createElement("span");
         linha.className = "central-extra-ligacao";
         linha.setAttribute("aria-hidden", "true");
-        linha.style.cssText = "left:" + (de.left + de.width / 2 - 1) + "px;top:" + de.bottom + "px;height:" + altura + "px";
+        linha.style.cssText = "left:" + (de.left + de.width / 2 - 0.5) + "px;top:" + (de.bottom + 5) + "px;height:" + altura + "px";
         wrap.append(linha);
       }
     }
@@ -1508,6 +1593,7 @@ function infoCadastro(rotulo, valor, icone){
         return [];
       });
       const acompPromise = Promise.resolve(window.CentralAcompanhamento?.carregar()).catch(() => {});
+      const confirmarPromise = carregarConfirmacoes();
       const { data, error } = await state.supabase
         .from("separacoes_pedidos")
         .select("*")
@@ -1528,7 +1614,7 @@ function infoCadastro(rotulo, valor, icone){
       }
       const [doCatalogo, comFluxo] = await Promise.all([projetosPromise, enriquecerFluxoPedidos(data||[]).then(enriquecerRecebimentos)]);
       state.pedidos = await enriquecerContatosClientes([...comFluxo.map(normalizarPedido), ...doCatalogo]);
-      await acompPromise;
+      await acompPromise; await confirmarPromise;
       state.pedidos.sort((a, b) => String(b.data || "").localeCompare(String(a.data || "")));
       sincronizarInatividadeCadastros(data || []).catch((error) => {
         console.warn("[CentralPedidos] sincronizacao de inatividade falhou:", error);
@@ -1592,6 +1678,10 @@ function infoCadastro(rotulo, valor, icone){
       try { if (window.parent !== window && window.parent.shellNavigate) { window.parent.shellNavigate("Modulos/Estoque/TabelasPreco/tabelas-preco.html"); return; } } catch (e) {}
       location.href = "../../Estoque/TabelasPreco/tabelas-preco.html";
     });
+    document.getElementById("btnPainelGerencial")?.addEventListener("click", () => {
+      try { if (window.parent !== window && window.parent.shellNavigate) { window.parent.shellNavigate("Modulos/Comercial/Pedidos/gerencial.html"); return; } } catch (e) {}
+      location.href = "gerencial.html";
+    });
     els.btnFecharWhatsappPedido?.addEventListener("click", fecharModalWhatsapp);
     els.btnCancelarWhatsappPedido?.addEventListener("click", fecharModalWhatsapp);
     els.btnEnviarWhatsappPedido?.addEventListener("click", enviarWhatsappPedido);
@@ -1628,6 +1718,13 @@ function infoCadastro(rotulo, valor, icone){
     els.centralPedidosTbody?.addEventListener("click", (event) => {
       const button = event.target.closest("[data-action]");
       if(!button) return;
+      if(button.dataset.action === "repetir-recebimentos"){
+        event.stopPropagation();
+        button.disabled = true;
+        button.textContent = "Consultando…";
+        carregarPedidos();
+        return;
+      }
 
       const row = button.closest("[data-pedido-id]");
       const pedidoId = row?.dataset?.pedidoId || "";
@@ -1668,6 +1765,7 @@ function infoCadastro(rotulo, valor, icone){
       if(action === "pix"){
         abrirPixPedido(pedido);
       }
+      if(action === "confirmar-datas"){ abrirConfirmarDatas(pedido); return; }
     });
 
     document.addEventListener("separacao-ocorrencias-atualizadas", () => contarOcorrenciasComercial());

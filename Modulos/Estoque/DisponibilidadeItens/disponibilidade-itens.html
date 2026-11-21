@@ -9,25 +9,33 @@
       <p>Compare estoque total, reservas por data, manutencao e quantidade disponivel para venda.</p>
     </div>
     <div class="dispon-filters dispon-hero-filtros">
-      <label>Data
+      <label>De
         <input class="el-input" type="date" id="disponData">
       </label>
+      <label>Até
+        <input class="el-input" type="date" id="disponDataFim">
+      </label>
+    </div>
+    <div class="dispon-hero-dir dispon-hero-busca">
       <label>Buscar item
         <input class="el-input" id="disponBusca" placeholder="Nome ou código" title="Busca pelo nome, código ou categoria">
       </label>
     </div>
-    <div class="dispon-hero-dir">
-      <div class="dispon-visao" role="group" aria-label="Como ver as reservas">
-        <button type="button" data-dispon-visao="resumo" title="Reservado somado numa coluna" aria-label="Reservado somado numa coluna">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18"/></svg>
-        </button>
-        <button type="button" data-dispon-visao="pedidos" title="Uma coluna por pedido na data" aria-label="Uma coluna por pedido na data">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16M3 10h18"/></svg>
-        </button>
-      </div>
-    </div>
   </header>
 
+  <!-- Filtros numa linha simples (18/11/2026). As opções vêm dos itens cadastrados. -->
+  <div class="dispon-filtros-linha" role="group" aria-label="Filtros">
+    <select class="el-select" id="disponCategoria" aria-label="Categoria"><option value="">Categoria</option></select>
+    <select class="el-select" id="disponSubcategoria" aria-label="Subcategoria"><option value="">Subcategoria</option></select>
+    <select class="el-select" id="disponCor" aria-label="Cor"><option value="">Cor</option></select>
+    <select class="el-select" id="disponMaterial" aria-label="Material"><option value="">Material</option></select>
+    <select class="el-select" id="disponEstilo" aria-label="Estilo"><option value="">Estilo</option></select>
+    <select class="el-select" id="disponSetor" aria-label="Setor do estoque"><option value="">Setor</option></select>
+    <select class="el-select" id="disponTipo" aria-label="Tipo"><option value="">Tipo</option><option value="Item">Item</option><option value="Kit">Kit</option><option value="Componente">Componente</option></select>
+    <select class="el-select" id="disponStatus" aria-label="Situação"><option value="">Situação</option><option value="disponivel">Disponível</option><option value="atencao">Atenção</option><option value="indisponivel">Indisponível</option></select>
+    <select class="el-select" id="disponReserva" aria-label="Reservas"><option value="">Reservas</option><option value="com">Com reserva no período</option><option value="sem">Sem reserva no período</option></select>
+    <button type="button" class="dispon-filtros-limpar" id="disponLimparFiltros" hidden>Limpar filtros</button>
+  </div>
 
   <p class="dispon-periodo-ajuda" id="disponErro" role="alert" hidden></p>
   <section class="dispon-card">
@@ -42,7 +50,6 @@
             <th class="dispon-quantity-cell">Reservado na data</th>
             <th class="dispon-quantity-cell">Manutenção</th>
             <th class="dispon-quantity-cell">Disponível</th>
-            <th>Status</th>
           </tr>
         </thead>
         <tbody id="disponTabela"></tbody>
@@ -52,58 +59,5 @@
   </section>
 
   </div>
-  <section class="dispon-detail-view" id="disponDetalheTela" aria-labelledby="disponReservasTitulo" hidden>
-    <div class="dispon-detail-shell">
-      <button type="button" class="dispon-back" id="btnVoltarDispon"><span aria-hidden="true">←</span> Voltar para disponibilidade</button>
-      <div class="dispon-detail-head">
-        <div class="dispon-detail-identity">
-        <div class="dispon-detail-photo" id="disponDetalheFoto"></div>
-        <div>
-          <span class="dispon-eyebrow">Disponibilidade de estoque</span>
-          <h2 id="disponReservasTitulo" tabindex="-1">Reservas no período</h2>
-          <p id="disponDetalheCodigo"></p>
-        </div>
-        </div>
-      </div>
-      <div class="dispon-detail-body">
-        <div class="dispon-detail-grid">
-          <div id="disponComponentes"></div>
-          <aside class="dispon-daily-panel" aria-label="Saldos diários no período">
-            <h3>Saldos no período</h3>
-            <div class="dispon-daily-period">
-              <label>De <input class="el-input" type="date" id="disponDetalheInicio"></label>
-              <label>Até <input class="el-input" type="date" id="disponDetalheFim"></label>
-            </div>
-            <p id="disponDiasResumo" role="status"></p>
-            <button type="button" class="dispon-period-reset" id="disponVerPeriodo" hidden>Ver todo o período</button>
-            <div class="dispon-daily-scroll" id="disponDiasScroll">
-              <table aria-label="Disponibilidade por dia">
-                <thead><tr><th>Data</th><th>Saldo</th></tr></thead>
-                <tbody id="disponDias"></tbody>
-              </table>
-            </div>
-          </aside>
-        </div>
-        <div class="dispon-reservas-wrap">
-        <h3 id="disponReservasPeriodo">Pedidos que utilizam as peças</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>Pedido</th>
-              <th>Cliente</th>
-              <th>Item reservado</th>
-              <th>Peça utilizada</th>
-              <th>Evento</th>
-              <th>Local</th>
-              <th>Data</th>
-              <th>Qtd de peças</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="disponReservasTbody"></tbody>
-        </table>
-        </div>
-      </div>
-    </div>
-  </section>
+
 </div>

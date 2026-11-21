@@ -91,9 +91,8 @@ body.com-pedido .pg-main{padding:24px 16px 96px}
 @media(max-width:700px){
   html:is(#pg-cel,html) #pgLista .cpj-order-paper{overflow:visible;width:100%}
   html:is(#pg-cel,html) #pgLista .cpj-order-event{display:block}
-  html:is(#pg-cel,html) #pgLista .cpj-order-datas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:14px}
+  html:is(#pg-cel,html) #pgLista .cpj-order-datas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
   html:is(#pg-cel,html) #pgLista .cpj-order-datas>div{min-width:0}
-  html:is(#pg-cel,html) #pgLista .cpj-order-datas>div:first-child{grid-column:1/-1}
   html:is(#pg-cel,html) #pgLista .cpj-order-table{display:block;min-width:0;width:100%}
   html:is(#pg-cel,html) #pgLista .cpj-order-table colgroup,html:is(#pg-cel,html) #pgLista .cpj-order-table thead,html:is(#pg-cel,html) #pgLista .cpj-order-colhead{display:none}
   html:is(#pg-cel,html) #pgLista .cpj-order-table tbody{display:block}
@@ -115,28 +114,22 @@ body.com-pedido .pg-main{padding:24px 16px 96px}
   html:is(#pg-cel,html) #pgLista .cpj-order-render-group>div{display:grid;grid-template-columns:1fr;gap:10px}
   html:is(#pg-cel,html) #pgLista .cpj-order-render-group figure{width:100%;margin:0}
 }
-@media(max-width:700px){html:is(#pg-cel,html) #pgLista .cpj-order-event-info{display:block;min-width:0}html:is(#pg-cel,html) #pgLista .cpj-order-datas dd{white-space:normal}html:is(#pg-cel,html) #pgLista .cpj-order-datas{width:100%}}
-/* Resumo numa faixa só, em cima; Pagamento embaixo, na largura toda da folha */
+@media(max-width:600px){html:is(#pg-cel,html) #pgLista .cpj-order-event-info{display:block;min-width:0}html:is(#pg-cel,html) #pgLista .cpj-order-datas dd{white-space:normal}html:is(#pg-cel,html) #pgLista .cpj-order-datas{width:100%;margin-top:14px}}
+/* Resumo em linhas, como na impressão; pagamentos continuam abaixo. */
 html:is(#pg-fin,html) #pgLista .cpj-order-financeiro{display:block}
 html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo{margin:0 0 28px}
-html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dl{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:0;margin:0;border:1px solid #e3e0d8;border-radius:12px;overflow:hidden}
-html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dl>div{display:block;padding:12px 16px;border:0;border-left:1px solid #e3e0d8;margin:0}
-html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dl>div:first-child{border-left:0}
-html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dt{font-size:12px;color:#6b6b6b}
-html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dd{margin:4px 0 0;font-size:16px;font-weight:600;text-align:left}
-html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo .is-total{background:#f7f5f0}
-html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo .is-total dd{font-size:19px;font-weight:700}
+html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dl{display:block;margin:0}
+html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dl>div{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:8px 0;border-bottom:1px solid #eeebe4;font-size:13px;margin:0}
+html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dt{color:#5f5f5f;min-width:0}
+html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dd{margin:0;font-weight:600;color:#34352f;white-space:nowrap;text-align:right}
+html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo .is-total{border-bottom:0;border-top:1.5px solid #34352f;margin-top:4px;padding-top:12px;font-size:15px}
+html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo .is-total dd{font-size:17px}
 html:is(#pg-fin,html) #pgLista .pg-tabela{width:100%;table-layout:auto}
 html:is(#pg-fin,html) #pgLista .pg-tabela td:first-child{white-space:nowrap}
 html:is(#pg-fin,html) #pgLista .pg-tabela .pg-chip{white-space:nowrap}
 html:is(#pg-fin,html) #pgLista .pg-tabela td,html:is(#pg-fin,html) #pgLista .pg-tabela th{padding:11px 10px}
 html:is(#pg-fin,html) #pgLista .pg-tabela .pg-acao{width:1%}
 @media(max-width:700px){
-  html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dl{grid-auto-flow:row;grid-template-columns:repeat(2,minmax(0,1fr))}
-  html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dl>div{border-left:0;border-top:1px solid #e3e0d8}
-  html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dl>div:nth-child(even){border-left:1px solid #e3e0d8}
-  html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo dl>div:nth-child(-n+2){border-top:0}
-  html:is(#pg-fin,html) #pgLista .cpj-order-financeiro-resumo .is-total{grid-column:1/-1;border-left:0!important;border-top:1px solid #e3e0d8!important}
   html:is(#pg-fin,html) #pgLista .pg-tabela td,html:is(#pg-fin,html) #pgLista .pg-tabela th{padding:0}
   html:is(#pg-fin,html) #pgLista .pg-tabela .pg-acao{width:auto}
 }
@@ -152,4 +145,4 @@ html:is(#pg-fin,html) #pgLista .pg-tabela .pg-acao{width:1%}
   html:is(#pg-cel,html) #pgLista .cpj-order-letterhead-side{flex-wrap:wrap;min-width:0;max-width:100%;gap:8px 12px}
   html:is(#pg-cel,html) #pgLista .cpj-order-kind{min-width:0;white-space:normal}
 }
-#pgLista .cpj-order-planta-folha{max-width:100%}
+#pgLista .cpj-order-planta-folha{max-width:none}

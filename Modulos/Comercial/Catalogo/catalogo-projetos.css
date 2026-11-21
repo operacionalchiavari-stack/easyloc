@@ -1,6 +1,6 @@
 /* Projetos do catálogo (ver catalogo-projetos.mjs). Mesma linguagem visual do resto do catálogo: fundo branco, tinta
    #251e19, acento terroso (--accent), títulos em Cormorant Garamond, corpo em Manrope; botão principal no cinza do
-   cabeçalho (#5a5a55). Piso de 12,8px em qualquer texto — o cliente pediu leitura confortável no catálogo inteiro. */
+   cabeçalho (var(--color-sidebar,#5a5a55)). Piso de 12,8px em qualquer texto — o cliente pediu leitura confortável no catálogo inteiro. */
 .catalog-projetos{background:var(--bg);min-height:calc(100vh - var(--header-h))}
 .cpj-wrap{max-width:none;margin:0;padding:26px clamp(20px,2.2vw,40px) 110px}
 .cpj-wrap h2,.cpj-wrap h3,.cpj-wrap h4,.cpj-modal h3{margin:0;font-family:"Cormorant Garamond",serif;font-weight:600;color:var(--ink)}
@@ -10,7 +10,7 @@
 .cpj-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:0 20px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font:600 .8125rem/1 "Manrope",sans-serif;letter-spacing:.04em;cursor:pointer;white-space:nowrap;transition:background-color .2s,border-color .2s,color .2s}
 .cpj-btn:hover{border-color:var(--accent);color:#7a5f3d}
 .cpj-btn:disabled{opacity:.55;cursor:default}
-.cpj-btn-primary{background:#5a5a55;border-color:#5a5a55;color:#fff}
+.cpj-btn-primary{background:var(--el-button-primary-bg,#7d603d);border-color:var(--el-button-primary-bg,#7d603d);color:#fff}
 .cpj-btn-primary:hover{background:#3f3f3b;border-color:#3f3f3b;color:#fff}
 .cpj-btn-danger{background:#a23b2f;border-color:#a23b2f;color:#fff}
 .cpj-btn-danger:hover{background:#862d23;border-color:#862d23;color:#fff}
@@ -150,7 +150,7 @@ button.cpj-status:hover,button.cpj-status:focus-visible{filter:brightness(.94)}
 .cpj-lightbox{display:block;width:100%;max-height:72vh;object-fit:contain;border-radius:10px}
 
 /* Dock */
-.cpj-dock{position:fixed;left:22px;bottom:22px;z-index:90;display:flex;align-items:stretch;border-radius:999px;background:#5a5a55;color:#fff;box-shadow:0 14px 38px rgba(31,24,19,.28)}
+.cpj-dock{position:fixed;left:22px;bottom:22px;z-index:90;display:flex;align-items:stretch;border-radius:999px;background:var(--color-sidebar,#5a5a55);color:#fff;box-shadow:0 14px 38px rgba(31,24,19,.28)}
 .cpj-dock.hidden{display:none!important}
 .cpj-dock button{display:flex;align-items:center;gap:10px;min-height:52px;border:0;background:transparent;color:inherit;font-family:"Manrope",sans-serif;cursor:pointer;transition:background-color .2s}
 .cpj-dock-main{padding:0 14px 0 18px;border-radius:999px 0 0 999px}
@@ -197,7 +197,7 @@ button.cpj-status:hover,button.cpj-status:focus-visible{filter:brightness(.94)}
 .cpj-qty-pop-row input{width:100%;min-width:0;height:40px;border:1px solid var(--el-color-border,#e3e7ec);border-radius:10px;text-align:center;font:600 1.05rem "Manrope",sans-serif;color:var(--ink,#2b2622);-moz-appearance:textfield}
 .cpj-qty-pop-row input:focus{outline:0;box-shadow:0 0 0 3px rgba(185,154,114,.22)}
 .cpj-qty-pop-row input::-webkit-inner-spin-button,.cpj-qty-pop-row input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
-.cpj-qty-pop-ok{width:100%;height:38px;margin-top:10px;border:0;border-radius:999px;background:#5a5a55;color:#fff;font:600 .844rem "Manrope",sans-serif;letter-spacing:.04em;cursor:pointer}
+.cpj-qty-pop-ok{width:100%;height:38px;margin-top:10px;border:0;border-radius:999px;background:var(--el-button-primary-bg,#7d603d);color:#fff;font:600 .844rem "Manrope",sans-serif;letter-spacing:.04em;cursor:pointer}
 .cpj-qty-pop-hint{display:block;margin-top:8px;color:var(--muted,#77716a);font-size:.75rem;text-align:center}
 /* Página do item: discreto de propósito — contorno fino e sem preenchimento, do tamanho do texto. O botão cheio e escuro
    chamava mais atenção que o próprio móvel (pedido do usuário: "precisa ser mais clean"). */
@@ -207,7 +207,7 @@ button.cpj-status:hover,button.cpj-status:focus-visible{filter:brightness(.94)}
 .cpj-add-page.is-added{border-color:var(--el-color-border,#e3e7ec);color:var(--el-color-text,#1f2020)}
 
 /* "Salvar no projeto" nos diálogos de resultado de IA */
-.cpj-save-render{display:inline-flex;align-items:center;justify-content:center;min-height:38px;margin:0 8px;padding:0 18px;border:1px solid #5a5a55;border-radius:999px;background:#5a5a55;color:#fff;font:600 .8125rem/1 "Manrope",sans-serif;letter-spacing:.05em;cursor:pointer;transition:background-color .2s}
+.cpj-save-render{display:inline-flex;align-items:center;justify-content:center;min-height:38px;margin:0 8px;padding:0 18px;border:1px solid var(--el-button-primary-bg,#7d603d);border-radius:999px;background:var(--el-button-primary-bg,#7d603d);color:#fff;font:600 .8125rem/1 "Manrope",sans-serif;letter-spacing:.05em;cursor:pointer;transition:background-color .2s}
 .cpj-save-render:hover{background:#3f3f3b}
 .cpj-save-render:disabled{opacity:.7;cursor:default}
 
@@ -293,7 +293,7 @@ dialog.cpj-modal::backdrop{background:rgba(20,16,12,.5)}
 
 /* "Levar também os móveis desta composição" (diálogo de salvar renderização) */
 .cpj-check{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border:1px solid #eadfca;border-radius:12px;background:#fdf9f0;cursor:pointer}
-.cpj-check input{flex:none;width:18px;height:18px;margin:2px 0 0;accent-color:#5a5a55}
+.cpj-check input{flex:none;width:18px;height:18px;margin:2px 0 0;accent-color:var(--color-sidebar,#5a5a55)}
 .cpj-check span{display:grid;gap:4px;min-width:0}
 .cpj-check strong{color:#3f2f1c;font:600 .875rem/1.3 "Manrope",sans-serif}
 .cpj-check small{color:#77716a;font-size:.8125rem;line-height:1.45}
@@ -320,9 +320,9 @@ dialog.cpj-modal::backdrop{background:rgba(20,16,12,.5)}
 .cpj-planta-viewport>.cpj-planta-frame{position:absolute;transform-origin:0 0}
 .cpj-planta-viewport .cpj-planta-pagina{background:#fff;box-shadow:0 2px 10px #00000012}
 .cpj-planta-editor{position:fixed;inset:calc(var(--header-h, 76px) + 10px) 16px 10px;z-index:40;padding:12px;background:#fff;box-sizing:border-box;gap:8px}
-body:has(.cpj-planta-editor:not(.cpj-planta-offscreen .cpj-planta-editor)){overflow:hidden}
+body:has(.cpj-planta-editor:not(.cpj-planta-offscreen .cpj-planta-editor):not(.cpj-planta-inline)){overflow:hidden}
 /* A planta aberta cobre a tela inteira e tem o próprio "← Plantas"; o "Voltar" global ficava por cima dele (o clique caía no Voltar). */
-body:has(.cpj-planta-editor:not(.cpj-planta-offscreen .cpj-planta-editor)) .catalog-global-back{display:none}
+body:has(.cpj-planta-editor:not(.cpj-planta-offscreen .cpj-planta-editor):not(.cpj-planta-inline)) .catalog-global-back{display:none}
 .cpj-planta-editor>.cpj-planta-toolbar{flex:none;gap:8px}
 .cpj-planta-editor>.cpj-planta-viewport{flex:1;min-height:0;height:auto}
 .cpj-planta-toolbar .cpj-work-actions{gap:6px;flex-wrap:nowrap;flex:none}
@@ -337,7 +337,7 @@ body:has(.cpj-planta-editor:not(.cpj-planta-offscreen .cpj-planta-editor)) .cata
 .cpj-planta-nome-input{flex:0 0 150px;width:150px;min-width:0;min-height:38px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font:600 .875rem "Manrope",sans-serif}
 .cpj-planta-nome-input:focus{outline:0;border-color:var(--el-color-border,#e3e7ec)}
 .cpj-planta-toggle{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:.8125rem;white-space:nowrap;cursor:pointer}
-.cpj-planta-toggle input{accent-color:#5a5a55}
+.cpj-planta-toggle input{accent-color:var(--color-sidebar,#5a5a55)}
 .cpj-planta-papel-select{min-height:38px;padding:0 10px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font:500 .8125rem "Manrope",sans-serif;cursor:pointer}
 .cpj-planta-papel-select:focus{outline:0;border-color:var(--el-color-border,#e3e7ec)}
 .cpj-planta-ajuste-group{display:inline-flex;align-items:center;gap:6px}
@@ -506,7 +506,7 @@ dialog.cpj-modal.cpj-order-preview{width:min(940px,calc(100vw - 28px));backgroun
 .cpj-order-requester span{display:block;font-size:9px;letter-spacing:.12em;color:#8c795c;margin-bottom:5px}
 .cpj-order-requester strong{font-size:14px;font-weight:500}
 .cpj-order-renders{margin-top:28px;padding-top:0}
-.cpj-order-renders>h2{font:400 28px/1.2 Georgia,serif;margin:0 0 24px}
+.cpj-order-renders>h2{font:400 28px/1.2 Georgia,serif;margin:0 0 24px;text-align:center}
 .cpj-order-render-group{margin-top:24px;break-inside:avoid}
 .cpj-order-render-group h3{text-align:center;font:400 23px/1.3 Georgia,serif;color:#655236;margin:0 0 14px}
 .cpj-order-render-group>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
@@ -515,9 +515,9 @@ dialog.cpj-modal.cpj-order-preview{width:min(940px,calc(100vw - 28px));backgroun
 .cpj-order-render-group img{display:block;width:100%;height:auto;object-fit:contain}
 @media(max-width:600px){.cpj-order-logo{width:160px;height:58px}.cpj-order-render-group>div{grid-template-columns:1fr}}
 
-/* Cabeçalho do pedido: faixa escura na MESMA cor do menu do catálogo (#5a5a55, .catalog-header), de ponta a ponta do papel,
+/* Cabeçalho do pedido: faixa escura na MESMA cor do menu do catálogo (var(--color-sidebar,#5a5a55), .catalog-header), de ponta a ponta do papel,
    logo branca à esquerda, decoradora + divisória + "PRÉVIA DO PEDIDO" à direita, filete bege/dourado embaixo. */
-.cpj-order-letterhead{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:-38px -42px 0;padding:26px 42px;background:#5a5a55;color:#fff;border-bottom:2px solid #c9ad84;print-color-adjust:exact;-webkit-print-color-adjust:exact}
+.cpj-order-letterhead{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:-38px -42px 0;padding:26px 42px;background:var(--color-sidebar,#5a5a55);color:#fff;border-bottom:2px solid var(--el-button-primary-bg,#7d603d);print-color-adjust:exact;-webkit-print-color-adjust:exact}
 .cpj-order-brand{display:flex;align-items:center;min-width:0}
 .cpj-order-logo{display:block;height:58px;width:auto;max-width:250px;object-fit:contain;object-position:left center;filter:brightness(0) invert(1)}
 .cpj-order-logo.is-quadrada{width:206px;height:58px;max-width:none;object-fit:cover;object-position:center 49%}
@@ -560,7 +560,7 @@ dialog.cpj-modal.cpj-order-preview{width:min(940px,calc(100vw - 28px));backgroun
 .cpj-entry .cpj-entry-action{display:inline-flex;align-items:center;gap:12px;min-height:52px;padding:0 26px 0 20px;border:1px solid #e3dbcf;border-radius:999px;background:#fff;color:#806342;font:400 21px/1 "Cormorant Garamond",Georgia,serif;cursor:pointer;transition:border-color .2s,background .2s,color .2s}
 .cpj-entry-action svg{width:22px;height:22px;flex:none}
 .cpj-entry .cpj-entry-action:hover{border-color:#b69a76;background:#faf7f2;color:#493922}
-.cpj-entry .cpj-entry-action.is-primary{background:#5a5a55;border-color:#5a5a55;color:#fff}
+.cpj-entry .cpj-entry-action.is-primary{background:var(--color-sidebar,#5a5a55);border-color:var(--color-sidebar,#5a5a55);color:#fff}
 .cpj-entry .cpj-entry-action.is-primary:hover{background:#46463f;border-color:#46463f}
 .cpj-entry-section{width:100%;margin-top:clamp(48px,7vh,72px)}
 .cpj-entry-section-title{display:flex;align-items:center;gap:18px;margin:0 0 28px;font:500 12px/1 Manrope,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:#9a8b76}
@@ -842,6 +842,11 @@ dialog.cpj-modal.cpj-order-preview.is-flutuante{position:fixed;inset:0;z-index:2
 .cpj-comp strong{display:block;font-size:14px;font-weight:600;color:#1f2020}
 .cpj-comp small{display:block;font-size:12px;color:#6b6b6b}
 .cpj-comp b{font-size:13px;color:#1f2020;white-space:nowrap}
+.cpj-comp .cpj-comp-estoque{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:6px;font-size:12px;color:#64748b}
+.cpj-comp .cpj-comp-estoque b{font-size:12px;color:inherit}
+.cpj-comp .is-livre{color:#138159}.cpj-comp .is-esgotado{color:#b42318}
+.cpj-comp .cpj-comp-reservado{margin-top:3px;color:#8c6540}
+.cpj-comp .cpj-comp-reservado b{font-size:12px;color:inherit}
 
 /* Pedido comercial: "＋ Componente" no canto direito da linha dos ambientes. */
 .cpj-work-comercial .cpj-amb-nav>.cpj-nav-componente{margin-left:auto;flex:none;white-space:nowrap}
@@ -882,6 +887,17 @@ dialog.cpj-modal.cpj-order-preview.is-flutuante{position:fixed;inset:0;z-index:2
 /* Cartela aberta pela página do item: custo da IA (decorador) e "Ver como fica com IA" no rodapé (out/2026). */
 .cpj-pers-ia-info{margin-right:auto;align-self:center;font-size:12.5px;color:#6b6b6b}
 .cpj-pers-ia{white-space:nowrap}
+.cpj-pers-ia[hidden],.cpj-pers-ia-info[hidden]{display:none!important}
+.cpj-pers-abas{display:flex;gap:8px;border-bottom:1px solid #e2ded6;padding-bottom:12px;flex-wrap:wrap}
+.cpj-pers-abas button{border:1px solid #ddd6ca;border-radius:999px;background:#fff;padding:10px 16px;font:600 13px Inter,sans-serif;color:inherit;cursor:pointer}
+.cpj-pers-abas button[aria-selected="true"]{background:#eee9df;border-color:#9d8864;color:#30291e}
+.cpj-pers-abas span{margin-left:5px;opacity:.65}.cpj-pers-dica{margin:0;font-size:13px;color:#6b6b6b;line-height:1.5}
+.cpj-pers-render-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.cpj-pers-render{display:flex;flex-direction:column;gap:10px;padding:10px;border:1px solid #e3ded5;border-radius:12px;background:#fff;text-align:left;cursor:pointer;color:inherit}
+.cpj-pers-render img{width:100%;aspect-ratio:4/3;object-fit:contain;background:#fff;border-radius:7px}
+.cpj-pers-render .cpj-pers-cod{font-size:13px;line-height:1.5;letter-spacing:0}.cpj-pers-reuso{font-size:12px;color:#607e68}
+.cpj-pers-render.is-sel{border:2px solid #123f86;padding:9px;box-shadow:0 0 0 3px #eaf0fa}
+.cpj-pers-render:focus-visible,.cpj-pers-abas button:focus-visible{outline:2px solid #123f86;outline-offset:3px}
 .catalog-card-personalizar{position:absolute;top:10px;left:10px;z-index:4;display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.95);color:var(--ink);font:600 .8125rem/1 "Manrope",sans-serif;cursor:pointer;opacity:0;transition:opacity .2s}
 .catalog-card-personalizar[hidden]{display:none!important}
 .catalog-grid-card:hover .catalog-card-personalizar,.catalog-grid-card:focus-within .catalog-card-personalizar{opacity:1}
@@ -927,7 +943,7 @@ dialog.cpj-modal.cpj-order-preview.is-flutuante{position:fixed;inset:0;z-index:2
 /* Layout do pedido (out/2026): seletor "Fotos no final" / "Horizontal · fotos ao lado" e o bloco horizontal por ambiente. */
 .cpj-order-layout{display:inline-flex;gap:0;margin:0 0 14px;border:1px solid #dedbd2;border-radius:999px;padding:3px;background:#fff}
 .cpj-order-layout button{border:0;background:transparent;border-radius:999px;padding:7px 14px;font:600 13px Inter,sans-serif;color:#4f4f4f;cursor:pointer}
-.cpj-order-layout button[aria-checked="true"]{background:#5a5a55;color:#fff}
+.cpj-order-layout button[aria-checked="true"]{background:var(--color-sidebar,#5a5a55);color:#fff}
 .cpj-modal-form>header .cpj-order-layout{margin:10px 0 0}
 .cpj-order-amb{margin:0 0 26px}
 .cpj-order-amb-nome{margin:0;padding:18px 8px 10px;text-align:center;font:400 23px/1.3 Georgia,serif;color:#655236}
@@ -1010,15 +1026,17 @@ html.catalogo-sem-valores .cpj-order-financeiro{display:none!important}
 .cpj-order-event-cliente{grid-column:1/-1}
 .cpj-order-local{min-width:0;align-self:center}
 .cpj-order-local-endereco{margin:6px 0 0;font-size:13.5px;line-height:1.5;color:#5f5f5f}
-.cpj-order-datas{display:flex;gap:12px;align-items:stretch}
+.cpj-order-datas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:stretch}
 .cpj-order-datas>div{padding:14px 18px;border:1px solid #e7dccb;border-left:1px solid #e7dccb;border-radius:12px;background:#faf8f3;min-width:140px;display:flex;flex-direction:column;justify-content:center}
 .cpj-order-datas dt{margin-bottom:6px}
 .cpj-order-datas dd{font-size:15px;font-weight:600;color:#34352f;white-space:nowrap}
-@media(max-width:1000px){.cpj-order-event-info{grid-template-columns:1fr}.cpj-order-datas{flex-wrap:wrap}}
+.cpj-order-datas .cpj-order-data,.cpj-order-datas .cpj-order-hora{display:block;white-space:nowrap}
+.cpj-order-datas .cpj-order-hora{margin-top:2px}
+@media screen and (max-width:600px){.cpj-order-event-info{grid-template-columns:1fr}}
 @media print{.cpj-order-datas>div{print-color-adjust:exact}}
-.cpj-order-event-info{grid-template-columns:minmax(260px,1fr) auto}
 .cpj-order-datas{align-self:center;gap:10px}
 .cpj-order-datas>div{min-width:0;padding:12px 16px}
+@media(max-width:600px){.cpj-order-datas{gap:6px}.cpj-order-datas>div{padding:10px 8px}.cpj-order-datas dt{font-size:9px;letter-spacing:.08em}.cpj-order-datas dd{font-size:13px}}
 .cpj-order-local h2{font-size:30px}
 .cpj-comp-destino select{height:40px;padding:0 12px;border:1px solid #dedbd2;border-radius:10px;background:#fff;font:14px Inter,sans-serif;color:#34352f}
 
@@ -1082,6 +1100,12 @@ html.catalogo-sem-valores .cpj-order-financeiro{display:none!important}
 .cpj-order-planta{margin:0;break-before:page;break-inside:avoid}
 .cpj-order-planta h2{margin:0 0 10px;font:500 1.35rem "Cormorant Garamond",serif;letter-spacing:.08em;text-transform:uppercase;text-align:center}
 .cpj-order-planta-folha{position:relative;overflow:hidden;margin:0 auto;background:#fff;print-color-adjust:exact}
+.cpj-order-planta-pagina{position:relative;margin:0 auto;background:#fff;zoom:var(--zt,1)}
+.cpj-order-planta-conteudo{position:absolute;left:0;top:0;width:269mm;height:182mm;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3mm;transform-origin:0 0}
+.cpj-order-planta.is-pagina-girada .cpj-order-planta-conteudo{transform:translateY(269mm) rotate(-90deg)}
+.cpj-order-planta .cpj-order-planta-conteudo h2{flex:none;margin:0;line-height:6mm;font-size:13pt;white-space:nowrap}
+.cpj-order-planta .cpj-order-planta-folha{flex:none;max-width:none!important;max-height:none!important;zoom:var(--zp,1)}
+.cpj-order-planta-original{position:absolute;left:0;top:0;transform-origin:0 0}
 
 /* Pedido mais compacto (out/2026, pedido do usuário: "muito espaçado"): faixa do topo mais baixa, fotos menores e menos
    espaço entre um item e outro. html:is(#…,html) vence o padding-block com !important de design-system.css. */
@@ -1132,8 +1156,8 @@ html:is(#cpj-pedido-compacto,html) .cpj-order-paper.is-horizontal .cpj-order-amb
 .cpj-amb-rapidos{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:12px 0 4px}
 .cpj-amb-rapidos>span{font:600 12px Manrope,Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#77716a;margin-right:4px}
 .cpj-amb-rapido{padding:7px 14px;border:1px solid #ddd6cc;border-radius:999px;background:#fff;color:#2c2a26;font:500 13px Manrope,Inter,sans-serif;cursor:pointer;transition:border-color .15s,background .15s,color .15s}
-.cpj-amb-rapido:hover,.cpj-amb-rapido:focus-visible{border-color:#5a5a55;outline:none}
-.cpj-amb-rapido[aria-pressed="true"]{background:#5a5a55;border-color:#5a5a55;color:#fff}
+.cpj-amb-rapido:hover,.cpj-amb-rapido:focus-visible{border-color:var(--color-sidebar,#5a5a55);outline:none}
+.cpj-amb-rapido[aria-pressed="true"]{background:var(--color-sidebar,#5a5a55);border-color:var(--color-sidebar,#5a5a55);color:#fff}
 .cpj-qty-pop-falta{margin:8px 0 0;padding:7px 9px;border-radius:8px;background:#fdecec;color:#b42318;font-size:.78rem;line-height:1.35}.cpj-qty-pop-falta[hidden]{display:none}
 /* "Adicionar ao projeto" com a foto da composição: duas colunas, sem barra de rolagem (out/2026) */
 dialog.cpj-modal.is-wide:has(.cpj-dest-2col){width:min(1080px,calc(100vw - 28px))}
@@ -1245,3 +1269,263 @@ body:has(#catalogProjetos:not(.hidden) .cpj-aba-pedido) #catalogAssistenteBotao{
 .cpj-terc-emp-foto img{width:100%;height:100%;object-fit:cover}
 .cpj-terc-emp-nome{font-weight:600;font-size:14px;text-align:center;line-height:1.25}
 .cpj-terc-emp small{color:#6b6b6b;font-size:12px}
+
+.cpj-servico-linha{display:flex;align-items:end;gap:10px;flex-wrap:wrap}
+.cpj-servico-linha>strong,.cpj-servico-linha>small{flex-basis:100%}
+.cpj-servico-linha>label{display:grid;gap:4px;flex:0 1 145px;min-width:112px}
+
+/* Selecao visual de impressao, seguida das acoes independentes. */
+.cpj-aba-pedido-topo .cpj-order-layout{display:grid;grid-template-columns:1fr;gap:10px;padding:0;border:0;border-radius:0;width:100%}
+.cpj-order-layout button{display:grid;gap:9px;justify-items:center;text-align:center;border:1px solid #dce2e8!important;border-radius:12px!important;padding:12px!important;background:#fff!important;color:#526176!important;white-space:normal}
+.cpj-order-layout button[aria-checked=true]{border-color:var(--el-button-primary-bg,#7d603d)!important;background:var(--el-button-primary-soft,#f4efe8)!important;color:var(--el-color-text,#1f2020)!important}
+.cpj-layout-mini{position:relative;display:grid;gap:5px;width:50px;height:65px;background:#fff;border:1px solid #cbd3dc;border-radius:3px;padding:10px 6px;box-sizing:border-box}
+.cpj-layout-mini i{display:block;height:3px;background:#d7dee5}.cpj-layout-mini b{display:block;height:12px;background:#e6ebef;margin-top:auto}
+.cpj-layout-mini.is-horizontal{width:75px;height:52px;padding-right:30px}.cpj-layout-mini.is-horizontal b{position:absolute;right:5px;top:9px;width:20px;height:30px}
+.cpj-aba-pedido-acoes{display:grid!important;gap:9px!important;margin-top:16px!important}
+.cpj-aba-pedido .cpj-btn-link-pedido{background:var(--el-button-primary-bg,#7d603d)!important;border-color:var(--el-button-primary-bg,#7d603d)!important;color:#fff!important}
+.cpj-planta-foto-tamanho{position:absolute;left:4px;top:4px;display:flex;gap:4px;z-index:4}
+.cpj-planta-foto-tamanho button{width:25px;height:25px;border:1px solid #dce2e8;border-radius:50%;background:white;color:#24364b;cursor:pointer}
+@media print{.cpj-planta-foto-tamanho{display:none!important}}
+
+.cpj-servicos-tabela .cpj-servico-agenda{display:flex;align-items:end;gap:10px;flex-wrap:nowrap}.cpj-servicos-tabela .cpj-servico-agenda label{display:grid;gap:4px;min-width:0}.cpj-servicos-tabela .cpj-servico-agenda input{min-width:0;width:135px}.cpj-servicos-tabela .cpj-servico-agenda input[type=time]{width:100px}
+
+.cpj-aba-pedido-topo .cpj-aba-pedido-acoes{width:100%;min-width:0}.cpj-aba-pedido-topo .cpj-aba-pedido-acoes>button{width:100%;min-width:0;white-space:normal;line-height:1.35;padding:10px 12px;box-sizing:border-box}
+
+/* Lista "Pedidos" no formato da Central de Pedidos (nov/2026) */
+.cpj-ped-head{display:grid !important;grid-template-columns:1fr auto;align-items:center;gap:28px;margin-bottom:18px}
+.cpj-ped-head h2{margin:0}
+.cpj-ped-abas{display:flex;gap:24px;border:0 !important;margin:0 !important}
+.cpj-ped-abas button{position:relative;border:0;background:none;padding:8px 2px;font:500 13px Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#4f4f4f;cursor:pointer;border-bottom:2px solid transparent}
+.cpj-ped-abas button[aria-selected="true"]{color:#1f6b45;border-bottom-color:#2e7d55;font-weight:600}
+.cpj-ped-bolinha{position:absolute;top:-6px;right:-16px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#e60012;color:#fff;font:700 10.5px/18px Inter,sans-serif;text-align:center;box-sizing:border-box}
+.cpj-ped-wrap{width:100%;overflow:auto;background:#fff;border-radius:14px;box-shadow:0 0 8px rgba(15,23,42,.15),0 0 2px rgba(15,23,42,.12)}
+.cpj-ped-tabela{width:100%;min-width:980px;border-collapse:collapse;font-family:Inter,system-ui,sans-serif}
+.cpj-ped-tabela th{padding:13px 14px;background:#fff;color:#4f4f4f;font-size:12px;font-weight:600;text-align:left;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #e3e7ec;white-space:nowrap}
+.cpj-ped-tabela td{padding:12px 14px;border-bottom:1px solid #eef1f4;color:#1f2020;font-size:14px;vertical-align:middle}
+.cpj-ped-linha{cursor:pointer}
+.cpj-ped-linha:hover td{background:#f6f8fb}
+.cpj-ped-linha:focus-visible{outline:2px solid #123f86;outline-offset:-2px}
+.cpj-ped-linha.is-past td{color:#6b6b6b}
+.cpj-ped-evento{display:flex;align-items:center;gap:12px;min-width:0}
+.cpj-ped-foto{position:relative;flex:0 0 44px;width:44px;height:44px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#e3e7ec;color:#4f4f4f;font:600 13px Inter,sans-serif}
+.cpj-ped-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cpj-ped-txt{display:flex;flex-direction:column;min-width:0}
+.cpj-ped-txt strong{font-weight:600;font-size:14.5px}
+.cpj-ped-txt small{color:#6b6b6b;font-size:12.5px;margin-top:2px}
+.cpj-ped-local{max-width:300px}
+.cpj-ped-data{white-space:nowrap;font-variant-numeric:tabular-nums}
+.cpj-ped-data small{display:block;color:#6b6b6b;font-size:12px;margin-top:2px}
+.cpj-ped-acoes{width:1%;text-align:center}
+.cpj-ped-sep td{background:#f3f5f6;color:#6b6b6b;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;padding:9px 14px}
+@media (max-width:760px){.cpj-ped-head{grid-template-columns:1fr auto}.cpj-ped-abas{grid-column:1/-1;grid-row:2}}
+
+/* Projeto do decorador/equipe com a tela da "Ambientes e lista" do pedido (nov/2026) */
+.cpj-work-projeto .cpj-geral-botoes .cpj-btn{display:inline-flex;align-items:center;gap:6px}
+.cpj-work-projeto .cpj-geral-botoes svg{width:16px;height:16px;flex:0 0 16px}
+
+/* Histórico: foto de quem fez cada alteração (nov/2026) */
+.cpj-hist-autor{display:inline-flex !important;align-items:center;gap:8px;margin-top:5px !important}
+.cpj-hist-foto{position:relative;display:inline-grid;place-items:center;flex:0 0 28px;width:28px;height:28px;border-radius:50%;overflow:hidden;background:#e3e7ec;color:#4f4f4f;font:600 11px/1 Inter,system-ui,sans-serif}
+.cpj-hist-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+
+/* Plantas embaixo da Lista Completa do projeto (nov/2026) */
+.cpj-plantas-na-lista{margin-top:36px;padding-top:24px;border-top:1px solid #e3e7ec}
+.cpj-plantas-na-lista .cpj-amb-head{margin-top:0}
+
+/* Planta aberta dentro da tela do projeto, logo abaixo da Lista Completa (nov/2026) — não cobre a tela */
+.cpj-planta-editor.cpj-planta-inline{position:relative !important;inset:auto !important;z-index:auto !important;height:min(80vh,860px);padding:0 !important;margin-top:8px;background:transparent}
+@media(max-width:1000px){.cpj-planta-editor.cpj-planta-inline{height:auto;min-height:70vh}}
+/* Celular: a Lista Completa do projeto rola de lado dentro dela, a página não */
+.cpj-work-projeto .pa-geral{position:relative;max-width:100%;overflow-x:clip}
+@media(max-width:700px){.cpj-work-projeto .pa-geral{overflow-x:auto}}
+
+/* Cards Evento / Entrega / Coleta na linha do nome do projeto, editáveis ali mesmo (nov/2026) */
+.cpj-work-projeto .cpj-work-head{grid-template-columns:auto minmax(0,1fr) auto}
+.cpj-work-datas{display:flex;gap:12px;justify-self:start;flex-wrap:wrap}
+.cpj-wd-card{display:grid;grid-template-columns:repeat(2,auto);grid-template-rows:auto auto;column-gap:10px;row-gap:6px;align-content:start;padding:12px 16px;border:1px solid #e3e7ec;border-radius:12px;background:#fff;box-shadow:0 0 8px rgba(15,23,42,.08)}
+.cpj-wd-tit{grid-column:1/-1;font:600 12px/1.2 Inter,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#1f2020}
+.cpj-wd-card label{display:flex;flex-direction:column;gap:3px;margin:0}
+.cpj-wd-card small{font:500 11px/1.2 Inter,system-ui,sans-serif;color:#6b6b6b}
+.cpj-wd-card input{height:36px;padding:0 10px;border:1px solid #d9dee5;border-radius:8px;background:#fff;font:500 14px Inter,system-ui,sans-serif;color:#1f2020;box-sizing:border-box}
+.cpj-wd-card input[type=date]{width:150px}.cpj-wd-card input[type=time]{width:110px}
+.cpj-wd-card input:focus{outline:none;border-color:#123f86;box-shadow:0 0 0 3px #eaf0fa}
+@media(max-width:1300px){.cpj-work-projeto .cpj-work-head{grid-template-columns:auto minmax(0,1fr)}.cpj-work-datas{grid-column:1/-1}}
+/* Dados do evento na tela (sem a janela) — os cards ficam numa linha própria, abaixo do nome */
+.cpj-work-projeto .cpj-work-head{grid-template-columns:auto minmax(0,1fr) auto}
+.cpj-work-projeto .cpj-work-datas{grid-column:1/-1;grid-row:2;justify-self:stretch}
+.cpj-wd-evento input[name=ev_tipo]{width:150px}.cpj-wd-evento input[name=noivos]{width:210px}
+.cpj-wd-local{grid-template-columns:1fr}.cpj-wd-local input{width:min(320px,70vw)}
+.cpj-wd-card input::placeholder{color:#a3a3a3}
+@media(max-width:700px){.cpj-work-datas{display:grid;grid-template-columns:1fr}.cpj-wd-card{grid-template-columns:1fr 1fr;min-width:0}.cpj-wd-card label{min-width:0}.cpj-wd-card input,.cpj-wd-card input[type=date],.cpj-wd-card input[type=time],.cpj-wd-evento input[name],.cpj-wd-local input{width:100%;min-width:0}}
+
+/* Cards do evento no visual dos "Dados do pedido" do comercial (nov/2026): título espaçado e centralizado, rótulos e
+   campos centralizados, "Um dia / Vários dias" em pílula, cards preenchendo a linha */
+.cpj-work-projeto .cpj-work-datas{display:grid !important;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;align-items:stretch}
+.cpj-work-projeto .cpj-wd-card{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));column-gap:10px;row-gap:8px;align-content:start;padding:16px 16px 18px;border:1px solid #e3e7ec;border-radius:14px;background:#fff;box-shadow:0 0 8px rgba(15,23,42,.08)}
+.cpj-work-projeto .cpj-wd-tit{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:2px;font:600 13px/1.3 "Cormorant Garamond",Georgia,serif;letter-spacing:.18em;text-transform:uppercase;color:#1f2020}
+.cpj-work-projeto .cpj-wd-card label{align-items:center;text-align:center;gap:5px}
+.cpj-work-projeto .cpj-wd-card small{font:500 11.5px/1.2 Inter,system-ui,sans-serif;color:#8e8678}
+.cpj-work-projeto .cpj-wd-card input,.cpj-work-projeto .cpj-wd-card input[type=date],.cpj-work-projeto .cpj-wd-card input[type=time],.cpj-work-projeto .cpj-wd-evento input[name],.cpj-work-projeto .cpj-wd-local input{width:100%;min-width:0;height:40px;border-radius:10px;text-align:center;font-size:14px}
+.cpj-wd-modo{display:inline-flex;padding:2px;border:1px solid #e3e7ec;border-radius:999px;background:#fff;font-family:Inter,system-ui,sans-serif;letter-spacing:0;text-transform:none}
+.cpj-wd-modo button{border:0;background:none;border-radius:999px;padding:3px 10px;font:500 11.5px Inter,system-ui,sans-serif;color:#6b6b6b;cursor:pointer;white-space:nowrap}
+.cpj-wd-modo button.is-ativo{background:#7d603d;color:#fff}
+.cpj-wd-data:not(.is-periodo) .cpj-wd-ate{display:none}
+.cpj-wd-local{grid-template-columns:1fr !important}
+.cpj-work-projeto .cpj-wd-card{grid-template-columns:minmax(0,1fr) minmax(0,1fr) !important}
+.cpj-work-projeto .cpj-wd-local,.cpj-work-projeto .cpj-wd-data:not(.is-periodo){grid-template-columns:minmax(0,1fr) !important}
+.cpj-work-projeto .cpj-wd-card:not(.cpj-wd-local):not(.cpj-wd-data):not(.cpj-wd-evento){grid-template-columns:minmax(0,1.45fr) minmax(0,1fr) !important;padding-left:12px;padding-right:12px}
+.cpj-work-projeto .cpj-wd-card input{padding:0 6px !important;font-size:13.5px !important}
+/* Foto, nome e status do projeto na linha do cabeçalho do catálogo ("Home › Pedidos"), à esquerda — só dentro do
+   sistema (cabeçalho claro, sem a logo do catálogo à esquerda). Nov/2026. */
+body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-id{position:fixed;top:calc((var(--header-h,76px) - 54px)/2);left:clamp(16px,1.6vw,28px);z-index:210;height:54px;max-width:calc(50vw - 260px);gap:12px}
+body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-id .cpj-avatar-wrap,body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-id .cpj-avatar{width:54px;height:54px;min-width:54px}
+body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-id .cpj-avatar small{display:none}
+body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-title h2{font-size:clamp(20px,1.8vw,28px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-title-row{flex-wrap:nowrap;min-width:0}
+body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-head{grid-template-columns:minmax(0,1fr) auto}
+body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-datas{grid-row:1 !important}
+body.catalog-modo-sistema.catalog-tem-voltar #catalogProjetos .cpj-work-projeto .cpj-work-head{padding-left:116px}
+body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-datas{grid-template-columns:repeat(auto-fit,minmax(185px,1fr)) !important;min-width:0}
+body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-head{grid-template-columns:minmax(0,1fr) !important}
+body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-head>.cpj-work-actions{position:fixed;top:calc(var(--header-h,76px) - 22px);right:clamp(16px,1.6vw,28px);z-index:210}
+/* Local do projeto buscado no Cadastro de Locais (nov/2026) */
+.cpj-wd-local{position:relative}
+.cpj-wd-endereco{margin:2px 0 0;font:400 12px/1.4 Inter,system-ui,sans-serif;color:#6b6b6b;text-align:center}
+.cpj-wd-sugestoes{position:absolute;left:12px;right:12px;top:calc(100% - 10px);z-index:60;margin:0;padding:6px;list-style:none;background:#fff;border:1px solid #e3e7ec;border-radius:12px;box-shadow:0 10px 30px rgba(15,23,42,.16);max-height:300px;overflow:auto;text-align:left}
+.cpj-wd-sugestoes li{display:flex;flex-direction:column;gap:2px;padding:8px 10px;border-radius:8px;cursor:pointer;font:500 13.5px Inter,system-ui,sans-serif;color:#1f2020}
+.cpj-wd-sugestoes li small{font-size:12px;color:#6b6b6b;font-weight:400}
+.cpj-wd-sugestoes li:hover{background:#eaf0fa}
+.cpj-wd-sugestoes li.is-vazio{cursor:default;color:#6b6b6b}.cpj-wd-sugestoes li.is-vazio:hover{background:none}
+/* "Histórico" na linha do cabeçalho do catálogo ("Home › Pedidos"), no canto direito — dentro do sistema (nov/2026) */
+body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-geral-botoes{position:fixed;top:calc((var(--header-h,76px) - 40px)/2);right:clamp(16px,1.6vw,28px);z-index:210}
+body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-head>.cpj-work-actions{right:calc(clamp(16px,1.6vw,28px) + 140px);top:calc((var(--header-h,76px) - 18px)/2)}
+/* Planta sempre aberta embaixo da lista (nov/2026): sem "Fechar planta", abas para trocar, altura que cabe a coluna de controles */
+.cpj-planta-inline [data-cpj="plantas-voltar"]{display:none !important}
+.cpj-planta-editor.cpj-planta-inline{height:clamp(740px,84vh,920px)}
+.cpj-plantas-abas{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 10px}
+.cpj-plantas-aba{display:inline-flex;align-items:center;height:34px;padding:0 14px;border:1px solid #e3e7ec;border-radius:999px;background:#fff;font:500 13px Inter,system-ui,sans-serif;color:#4f4f4f;cursor:pointer}
+.cpj-plantas-aba.is-ativa{background:#123f86;border-color:#123f86;color:#fff}
+.cpj-plantas-aba-nova{border-style:dashed;color:#123f86}
+/* Planta no projeto: sem a linha de ícones (trocar imagem, baixar, excluir) nem o "Nenhum ponto marcado"; a lixeira fica nas abas (nov/2026) */
+.cpj-planta-inline .cpj-planta-icones,.cpj-planta-inline [data-cpj-planta-vazio]{display:none !important}
+.cpj-plantas-abas{align-items:center}
+.cpj-plantas-excluir{margin-left:auto;display:inline-grid;place-items:center;width:36px;height:36px;border:1px solid #e3e7ec;border-radius:10px;background:#fff;color:#b42318;cursor:pointer}
+.cpj-plantas-excluir:hover{background:#fff1f2;border-color:#fecdd3}
+.cpj-plantas-excluir svg{width:18px;height:18px}
+.cpj-planta-inline .cpj-planta-dica{display:none !important}
+/* Cards do evento no tom creme dos cards de data do pedido (#faf8f3 / contorno #e7dccb) — nov/2026 */
+.cpj-work-projeto .cpj-wd-card{background:#faf8f3 !important;border-color:#e7dccb !important;box-shadow:none !important}
+.cpj-work-projeto .cpj-wd-card input{background:#fff}
+/* Títulos dos cards do evento maiores (nov/2026) */
+.cpj-work-projeto .cpj-wd-tit{font-size:17px !important;letter-spacing:.16em !important;font-weight:600 !important}
+.cpj-work-projeto .cpj-wd-tit .cpj-wd-modo{font-size:12px}
+/* Local com as informações do cadastro; Entrega e Coleta mais estreitas (horário embaixo da data) — nov/2026 */
+@media(min-width:1301px){
+  .cpj-work-projeto .cpj-work-datas{grid-template-columns:minmax(0,1.05fr) minmax(0,1.9fr) minmax(0,1fr) minmax(0,.72fr) minmax(0,.72fr) !important}
+  .cpj-work-projeto .cpj-wd-card:not(.cpj-wd-local):not(.cpj-wd-data):not(.cpj-wd-evento){grid-template-columns:minmax(0,1fr) !important}
+}
+.cpj-wd-local-info{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.cpj-wd-local-meta{margin:0;font:500 12px/1.4 Inter,system-ui,sans-serif;color:#7d603d}
+.cpj-wd-local-tags{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
+.cpj-wd-local-tags span{padding:3px 10px;border-radius:999px;background:#fff7ed;border:1px solid #f3c79b;color:#9a3d07;font:500 11.5px/1.4 Inter,system-ui,sans-serif}
+/* Local mais largo, Entrega e Coleta mais estreitas — vale também dentro do sistema (a regra do modo sistema vencia) */
+@media(min-width:1301px){
+  body #catalogProjetos .cpj-work-projeto .cpj-work-datas,
+  body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-datas{grid-template-columns:minmax(0,1.05fr) minmax(0,2.2fr) minmax(0,1fr) minmax(170px,.55fr) minmax(170px,.55fr) !important}
+}
+/* Endereço na mesma linha da caixa do local (nov/2026) */
+.cpj-wd-local-linha{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:12px;align-items:center}
+.cpj-wd-local-linha .cpj-wd-endereco{margin:0;text-align:left;font-size:12.5px;line-height:1.35}
+.cpj-wd-local-linha:not(:has(.cpj-wd-endereco)){grid-template-columns:minmax(0,1fr)}
+.cpj-wd-local .cpj-wd-sugestoes{right:auto;width:min(420px,calc(100% - 24px))}
+@media(max-width:700px){.cpj-wd-local-linha{grid-template-columns:1fr}.cpj-wd-local-linha .cpj-wd-endereco{text-align:center}}
+.cpj-work-projeto .cpj-wd-data .cpj-wd-tit{flex-direction:column !important;gap:10px}
+/* Títulos "Plantas" e "Condições de pagamento" no desenho da Lista Completa; pagamento abaixo das plantas (nov/2026) */
+.cpj-plantas-na-lista{border-top:0 !important;padding-top:0 !important;margin-top:44px !important}
+.cpj-plantas-na-lista .cpj-amb-head{display:none}
+.cpj-secao-titulo{margin:0 0 18px !important}
+.cpj-pagamento-na-lista{margin-top:44px}
+.cpj-pagamento-na-lista .cpj-cond-ajuda{margin:0 0 12px;text-align:center;color:#6b6b6b;font-size:13.5px}
+.cpj-cond-lista{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.cpj-pagamento-na-lista .cpj-cond-op{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border:1px solid #e7dccb;border-radius:12px;background:#faf8f3;cursor:pointer}
+.cpj-pagamento-na-lista .cpj-cond-op:has(input:checked){border-color:#123f86;background:#eaf0fa}
+.cpj-pagamento-na-lista .cpj-cond-op span{display:flex;flex-direction:column;gap:3px}
+.cpj-pagamento-na-lista .cpj-cond-op b{font:600 15px Inter,system-ui,sans-serif;color:#1f2020}
+.cpj-pagamento-na-lista .cpj-cond-op small{font:400 12.5px/1.4 Inter,system-ui,sans-serif;color:#6b6b6b}
+.cpj-pagamento-na-lista .cpj-cond-op input{margin-top:3px;accent-color:#123f86}
+/* Observações de entrega e de coleta na tela do projeto (nov/2026) */
+.cpj-obs-na-lista{margin-top:44px}
+.cpj-obs-grade{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.cpj-obs-campo{display:flex;flex-direction:column;gap:8px;padding:16px;border:1px solid #e7dccb;border-radius:14px;background:#faf8f3}
+.cpj-obs-campo span{font:600 13px/1.2 "Cormorant Garamond",Georgia,serif;letter-spacing:.16em;text-transform:uppercase;text-align:center;color:#1f2020}
+.cpj-obs-campo textarea{width:100%;box-sizing:border-box;min-height:96px;padding:10px 12px;border:1px solid #d9dee5;border-radius:10px;background:#fff;font:400 14px/1.5 Inter,system-ui,sans-serif;color:#1f2020;resize:vertical}
+.cpj-obs-campo textarea:focus{outline:none;border-color:#123f86;box-shadow:0 0 0 3px #eaf0fa}
+/* Cards do evento começam no canto esquerdo da tela (o recuo de 116px do cabeçalho é só para o botão Voltar) — nov/2026 */
+@media(min-width:768px){body.catalog-tem-voltar #catalogProjetos .cpj-work-projeto .cpj-work-datas{margin-left:-116px}}
+/* Proporção dos cards (nov/2026): Evento, Evento (datas), Entrega e Coleta com a mesma largura; Local um pouco maior */
+@media(min-width:1301px){
+  body #catalogProjetos .cpj-work-projeto .cpj-work-datas,
+  body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-datas{grid-template-columns:minmax(0,1fr) minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) !important}
+}
+/* Ordem nova (nov/2026): Local primeiro, depois Evento (tipo/noivos), datas, Entrega, Coleta; Histórico na linha do nome */
+@media(min-width:1301px){
+  body #catalogProjetos .cpj-work-projeto .cpj-work-datas,
+  body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-datas{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) !important}
+}
+.cpj-work-projeto .cpj-work-actions{display:flex;align-items:center;gap:14px}
+.cpj-btn-historico{display:inline-flex;align-items:center;gap:6px}
+.cpj-btn-historico svg{width:16px;height:16px}
+body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-head>.cpj-work-actions{right:clamp(16px,1.6vw,28px) !important;top:calc((var(--header-h,76px) - 40px)/2) !important}
+/* Ordem nova (nov/2026): Local primeiro (maior), depois Evento (tipo/noivos), datas, Entrega, Coleta; Histórico na linha do nome */
+@media(min-width:1301px){
+  body #catalogProjetos .cpj-work-projeto .cpj-work-datas,
+  body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-datas{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) !important}
+}
+.cpj-work-projeto .cpj-work-actions{display:flex;align-items:center;gap:14px}
+.cpj-btn-historico{display:inline-flex;align-items:center;gap:6px}
+.cpj-btn-historico svg{width:16px;height:16px}
+body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-head>.cpj-work-actions{right:clamp(16px,1.6vw,28px) !important;top:calc((var(--header-h,76px) - 40px)/2) !important}
+/* Linha do nome: "Casamento  Ana e Bruno" editáveis ali mesmo (nov/2026); o card Evento (tipo/noivos) saiu */
+.cpj-work-nome{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;min-width:0}
+.cpj-work-nome input{min-width:0;max-width:100%;padding:2px 6px;margin:0 -6px;border:1px solid transparent;border-radius:8px;background:transparent;font:500 clamp(26px,2.4vw,36px)/1.15 "Cormorant Garamond",Georgia,serif;color:#1f2020}
+.cpj-work-nome input[name=ev_tipo]{color:#7d603d;font-style:italic}
+.cpj-work-nome input:hover{border-color:#e7dccb;background:#faf8f3}
+.cpj-work-nome input:focus{outline:none;border-color:#123f86;background:#fff;box-shadow:0 0 0 3px #eaf0fa}
+.cpj-work-nome input::placeholder{color:#b8b0a4}
+body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-nome input{font-size:clamp(20px,1.8vw,28px)}
+@media(min-width:1301px){
+  body #catalogProjetos .cpj-work-projeto .cpj-work-datas,
+  body.catalog-modo-sistema #catalogProjetos .cpj-work-projeto .cpj-work-datas{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) !important}
+}
+/* Entrega e Coleta: horário na mesma linha da data (nov/2026) */
+@media(min-width:1301px){
+  body #catalogProjetos .cpj-work-projeto .cpj-wd-card:not(.cpj-wd-local):not(.cpj-wd-data):not(.cpj-wd-evento){grid-template-columns:minmax(0,1.45fr) minmax(0,1fr) !important}
+}
+/* Celular: os campos do nome quebram e cabem na tela */
+@media(max-width:700px){.cpj-work-nome{flex-direction:column;align-items:stretch;gap:2px}.cpj-work-nome input{width:100%}}
+/* Número do pedido grande em vermelho, como na Central de Pedidos (nov/2026) */
+.cpj-num-pedido{display:inline-flex;align-items:center;justify-content:center;min-width:64px;height:40px;padding:0 16px;border:1px solid rgba(220,38,38,.18);border-radius:999px;background:rgba(220,38,38,.10);color:#b91c1c;font:700 20px/1 Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.cpj-num-pedido[hidden]{display:none}
+@media(max-width:700px){.cpj-work-projeto .cpj-work-actions{flex-wrap:wrap;justify-content:flex-start;max-width:100%}}
+@media(max-width:1100px){
+  html body #catalogProjetos .cpj-work-projeto .cpj-work-head{grid-template-columns:minmax(0,1fr) !important}
+  html body #catalogProjetos .cpj-work-projeto .cpj-work-actions{flex-wrap:wrap;justify-content:flex-start}
+}
+@media(max-width:700px){
+  html body #catalogProjetos .cpj-work-projeto .cpj-work-head{grid-template-columns:minmax(0,1fr) !important;padding-left:0 !important}
+  html body #catalogProjetos .cpj-work-projeto .cpj-work-head>*{grid-column:1 !important;min-width:0}
+  html body #catalogProjetos .cpj-work-projeto .cpj-work-datas{grid-row:auto !important;margin-left:0 !important}
+}
+.pa-personalizacao-desc{display:block;margin-top:2px;color:#5b6470;font-weight:400;line-height:1.4}
+/* Aba Pedido: escolher o que entra no pedido impresso + renderizações um pouco menores (18/11/2026) */
+.cpj-pedido-mostrar{margin:0;padding:10px 12px;border:1px solid #e3e7ec;border-radius:12px;display:grid;gap:6px;background:#fff}
+.cpj-pedido-mostrar legend{padding:0 4px;font:600 11px Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#6b6b6b}
+.cpj-pedido-mostrar label{display:flex;align-items:center;gap:8px;font:500 13px Inter,system-ui,sans-serif;color:#1f2020;cursor:pointer}
+.cpj-pedido-mostrar input{width:16px;height:16px;accent-color:#123f86;margin:0}
+html:is(#cpj-render-menor,html) .cpj-order-render-group>div{grid-template-columns:repeat(3,minmax(0,1fr))}
+html:is(#cpj-render-menor,html) .cpj-order-paper.is-horizontal .cpj-order-amb.has-foto .cpj-order-amb-corpo{grid-template-columns:minmax(0,3fr) minmax(160px,.8fr)}
+@media(max-width:700px){html:is(#cpj-render-menor,html) .cpj-order-render-group>div{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* Regras do pedido, no fim de todo pedido (18/11/2026) */
+.cpj-order-regras{margin-top:28px;padding-top:16px;border-top:1px solid #e7e3db;break-inside:auto}
+.cpj-order-regras h2{margin:0 0 10px;font:600 13px Inter,Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#34352f}
+.cpj-order-regras div{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.6;color:#4f4f4f}

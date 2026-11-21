@@ -79,27 +79,21 @@ const mock = `(() => {
     return r.abort();
   });
   await page.goto(BASE + "Modulos/Financeiro/financeiro.html?aba=receber");
-  await page.waitForSelector(".fin-ped-resumo", { timeout: 15000 });
-  // ---- A receber: o pedido 7 tem 10.000, recebidos 7.000, falta 3.000 (vencido 3.000: as duas vencem hoje? não, vencem hoje = não vencido)
+  await page.waitForSelector(".fin-pedido td.fin-falta", { timeout: 15000 });
+  // nov/2026: a faixa de resumo do pedido e a coluna "Recebido em" saíram de A receber
   const ped = await page.evaluate(() => {
-    const a = [...document.querySelectorAll(".fin-pedido")].find((x) => /Pedido 7/.test(x.textContent));
-    return { resumo: a.querySelector(".fin-ped-resumo").textContent.replace(/\s+/g, " "), falta: [...a.querySelectorAll("td.fin-falta")].map((t) => t.textContent.replace(/\s+/g, " ").trim()) };
+    const a = [...document.querySelectorAll(".fin-pedido")].find((x) => x.querySelector(".fin-num-card")?.textContent.trim() === "7");
+    return { resumo: a.querySelectorAll(".fin-ped-resumo").length, recEm: /Recebido em/.test(a.querySelector("thead").textContent), falta: [...a.querySelectorAll("td.fin-falta")].map((t) => t.textContent.replace(/\s+/g, " ").trim()) };
   });
-  assert.match(ped.resumo, /Villa Bisutti/); assert.match(ped.resumo, /Entrega/); assert.match(ped.resumo, /Coleta/);
-  assert.match(ped.resumo, /70% pago/); assert.match(ped.resumo, /1 de 3 parcela/); assert.match(ped.resumo, /Falta para quitar R\$\s?3.000,00/);
+  assert.strictEqual(ped.resumo, 0, "sem a faixa de resumo do pedido"); assert.ok(!ped.recEm, "sem a coluna Recebido em");
   assert.ok(ped.falta.length === 2 && ped.falta.every((t) => /R\$\s?3.000,00/.test(t)), "cada parcela em aberto mostra quanto falta no pedido: " + ped.falta);
   assert.ok(ped.falta.some((t) => /depois desta/.test(t)), "e quanto vai faltar depois dela");
-  // recebido em: x1 venceu dia 05 e foi pago dia 08 = 3 dias depois
-  await page.selectOption("#frStatus", "todos");
-  await page.waitForFunction(() => /3 dias depois/.test(document.getElementById("finConteudo").textContent));
-  const recEm = await page.evaluate(() => [...document.querySelectorAll("td.fin-receb-em")].map((t) => t.textContent.trim()));
-  assert.ok(recEm.some((t) => t.includes("3 dias depois") && t.includes("/")), JSON.stringify(recEm));
   await page.selectOption("#frStatus", "abertos");
   console.log("ok 1 - A receber: situação do pedido e falta em cada parcela");
   await page.click("#frModo");
   await page.waitForSelector(".fin-receber-data td.fin-falta");
   const linhaData = await page.textContent(".fin-receber-data tbody tr");
-  assert.match(linhaData, /Villa Bisutti/); assert.match(linhaData, /R\$\s?3.000,00/);
+  assert.match(linhaData, /Villa Bisutti/); assert.strictEqual((await page.textContent(".fin-receber-data tbody tr td.fin-local")).trim(), "Villa Bisutti", "local em coluna própria"); assert.match(linhaData, /R\$\s?3.000,00/);
   await page.click("#frModo");
   console.log("ok 2 - por data: dados do pedido e falta no pedido");
 

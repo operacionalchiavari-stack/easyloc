@@ -1,0 +1,229 @@
+/* Compras com a cara do sistema (16/11/2026, pedido do usuário: "a tela de Compras ficou boa, mas não parece que é do
+   sistema"). Mesma estrutura copiada da Tecnoweld; só o acabamento segue o Financeiro (modelo escolhido pelo usuário):
+   botões com texto normal (sem caixa alta espaçada), campos de 40px, cartões brancos com borda e sombra padrão, tabelas
+   no padrão .fin-tabela e janelas no padrão .fin-modal. A cor dos botões vem da identidade visual da empresa
+   (--el-button-primary-*). Carregado por último; peso alto (#cp x4) para vencer o tema global com !important. */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page{
+  --cs-line:#e3e7ec; --cs-line-soft:#eef0f3; --cs-input:#dfe4ea; --cs-text:#1f2020; --cs-muted:#6b6b6b;
+  --cs-primary:var(--el-button-primary-bg,#7d603d); --cs-primary-hover:var(--el-button-primary-hover,#654d31);
+  --cs-soft:var(--el-button-primary-soft,#f4efe8);
+  --cs-sombra:var(--ch-sombra,0 0 8px rgba(31,32,32,.15),0 0 2px rgba(31,32,32,.12));
+  font-family:Inter,system-ui,sans-serif;
+}
+
+/* ---------- Botões (igual .fin-btn) ---------- */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(.btn,.btn-primary,.btn-secondary,.btn-outline){
+  display:inline-flex!important;align-items:center!important;justify-content:center;gap:6px!important;
+  min-height:38px!important;height:auto;padding:0 16px!important;border-radius:999px!important;
+  font:600 13px/1.2 Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;
+  box-shadow:none!important;
+}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(.btn,.btn-primary,.btn-secondary,.btn-outline) svg{width:16px!important;height:16px!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(.btn.btn-primary,.btn.primary,button.btn-primary):not(:disabled){
+  background:var(--cs-primary)!important;border:1px solid var(--cs-primary)!important;color:#fff!important;
+}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(.btn.btn-primary,.btn.primary,button.btn-primary):not(:disabled):hover{
+  background:var(--cs-primary-hover)!important;border-color:var(--cs-primary-hover)!important;transform:none!important;
+}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(.btn.btn-secondary,.btn.secondary,.btn-outline,.btn:not(.btn-primary):not(.primary)){
+  background:#fff!important;border:1px solid var(--cs-input)!important;color:#2b2b2b!important;
+}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(.btn.btn-secondary,.btn.secondary,.btn-outline,.btn:not(.btn-primary):not(.primary)):not(:disabled):hover{
+  border-color:var(--cs-primary)!important;background:var(--cs-soft)!important;transform:none!important;
+}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .btn:disabled{opacity:.45!important;cursor:not-allowed}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(.pv-btn-sm,.btn.pv-btn-sm){min-height:30px!important;padding:0 11px!important;font-size:12px!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #orderCancelBtn{color:#b0362d!important;border-color:#efc2bf!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .icon-btn{border-radius:10px!important;border:1px solid var(--cs-input)!important;background:#fff!important;color:#2b2b2b!important;box-shadow:none!important}
+
+/* ---------- Pesquisa e campos (igual .fin-barra-ferr) ---------- */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-search-box{
+  display:flex!important;align-items:center;gap:8px;height:40px;min-width:300px;padding:0 12px!important;
+  border:1px solid var(--cs-input)!important;border-radius:10px!important;background:#fff!important;box-shadow:none!important;
+}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-search-box input{
+  flex:1;height:38px!important;min-height:0!important;padding:0!important;border:0!important;border-radius:0!important;
+  background:transparent!important;box-shadow:none!important;font:400 14px Inter,system-ui,sans-serif!important;
+}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-search-box svg{width:16px;height:16px;color:var(--cs-muted)}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(input:not([type=checkbox],[type=radio],[type=file],[type=range],[type=color]),select,textarea){
+  border:1px solid var(--cs-input)!important;border-radius:10px!important;background-color:#fff!important;
+  font:400 14px Inter,system-ui,sans-serif!important;color:var(--cs-text)!important;box-shadow:none!important;
+}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(input:not([type=checkbox],[type=radio],[type=file],[type=range],[type=color]),select){min-height:40px!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-search-box input{border:0!important;min-height:0!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(input,select,textarea):focus{border-color:var(--cs-primary)!important;box-shadow:0 0 0 3px rgba(31,32,32,.08)!important;outline:none}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(input,select,textarea):is(:disabled,[readonly]){background-color:#f3f5f6!important;color:var(--cs-muted)!important}
+/* rótulos dos campos: pequenos, caixa alta e cinza (como nas janelas do Financeiro), sem o espaçamento largo do tema */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(dialog,.pv-od,.pv-panel) label:not(:has(> input[type=checkbox]),:has(> input[type=radio]),.crd-choice,.pv-search-box){
+  color:var(--cs-muted)!important;font:600 11px/1.4 Inter,system-ui,sans-serif!important;letter-spacing:.06em!important;
+}
+
+/* ---------- Tabelas em cartão (igual .fin-bloco + .fin-tabela) ---------- */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-panel > :is(.tw-table-scroll,.pv-table-wrap),
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #purchaseRncList > .tw-table-scroll{
+  background:#fff!important;border:1px solid var(--cs-line)!important;border-radius:16px!important;
+  box-shadow:var(--cs-sombra)!important;padding:6px 8px!important;overflow:auto;
+}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-table{width:100%;border-collapse:collapse!important;font:400 14px Inter,system-ui,sans-serif!important;color:var(--cs-text)}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-table thead th{
+  padding:10px 10px!important;background:#fff!important;color:var(--cs-muted)!important;
+  font:600 11px/1.3 Inter,system-ui,sans-serif!important;letter-spacing:.08em!important;text-transform:uppercase!important;
+  border-bottom:1px solid var(--cs-line)!important;box-shadow:none!important;white-space:nowrap;
+}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-table tbody td{
+  padding:11px 10px!important;border-bottom:1px solid var(--cs-line-soft)!important;font-size:14px!important;vertical-align:middle;background:transparent!important;
+}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-table tbody tr:last-child td{border-bottom:0!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-table tbody td strong{font-weight:600!important;color:var(--cs-text)!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-table tbody td small{display:block;margin-top:2px;color:var(--cs-muted)!important;font-size:12px!important;font-weight:400!important;letter-spacing:0!important;text-transform:none!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-table tbody tr.pv-row-clickable{cursor:pointer}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-table tbody tr.pv-row-clickable:hover td{background:#f7f9fb!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-table tbody tr.is-selected td{background:var(--cs-soft)!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-table tbody tr.is-selected td:first-child{box-shadow:inset 3px 0 0 var(--cs-primary)!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-empty{padding:40px!important;text-align:center;color:var(--cs-muted)!important;border:1px dashed var(--cs-input)!important;border-radius:14px!important;background:#fff!important;font-size:14px!important;margin-top:14px}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-empty.hidden,html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-empty[hidden]{display:none!important}
+
+/* ---------- Selos de situação (igual .fin-status) ---------- */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(.pv-status-pill,.pv-pcp-tag,.pv-origin-tag){
+  display:inline-block;padding:3px 10px!important;border-radius:999px!important;border:0!important;
+  font:600 12px/1.4 Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;white-space:nowrap;
+  background:#eef0f3!important;color:#5f5f5f!important;
+}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(.pv-status-pill.is-ok,.pv-pcp-tag.is-confirmada,.pv-status-pill.is-recebido,.pv-status-pill.is-respondida){background:#e7f4ec!important;color:#2f7a4b!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(.pv-status-pill.is-pending,.pv-pcp-tag.is-prevista,.pv-status-pill.is-aberta,.pv-status-pill.is-aguardando){background:#fff4dd!important;color:#8a5a00!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(.pv-status-pill.is-cancelado,.pv-status-pill.is-cancelada,.pv-status-pill.is-danger){background:#fbeceb!important;color:#b0362d!important}
+
+/* ---------- Barra de seleção ("Cotar selecionadas") ---------- */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #quoteSelectionBar{
+  background:#fff!important;border:1px solid var(--cs-line)!important;border-radius:14px!important;box-shadow:var(--cs-sombra)!important;padding:10px 14px!important;
+}
+
+/* ---------- Janelas (igual .fin-modal) ---------- */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page dialog.pv-dialog:not(.pv-dialog-full){border:0!important;padding:0!important;border-radius:18px!important;box-shadow:0 24px 60px rgba(31,29,26,.25)!important;background:#fff!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page dialog.pv-dialog:not(.pv-dialog-full)::backdrop{background:rgba(31,29,26,.35)!important;backdrop-filter:none!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page dialog.pv-dialog:not(.pv-dialog-full) > .dialog-card{border-radius:18px!important;box-shadow:none!important;background:#fff!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page dialog.pv-dialog:not(.pv-dialog-full) > .dialog-card > header{padding:18px 22px!important;border-bottom:1px solid #e9ecf0!important;background:#fff!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page dialog.pv-dialog:not(.pv-dialog-full) > .dialog-card > footer{padding:14px 22px!important;border-top:1px solid #e9ecf0!important;background:#fff!important;gap:8px!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page dialog .dialog-card > header h2{font:600 18px/1.3 Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;color:var(--cs-text)!important;margin:0!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page dialog .dialog-card .eyebrow{display:block;margin:0 0 4px!important;color:var(--cs-muted)!important;font:600 11px Inter,system-ui,sans-serif!important;letter-spacing:.1em!important;text-transform:uppercase!important}
+
+/* ---------- Telas inteiras (pedido, propostas, divergência): cartões do Financeiro ---------- */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page dialog.pv-dialog-full > .dialog-card > header{padding:18px 28px!important;border-bottom:1px solid var(--cs-line)!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page dialog.pv-dialog-full > .dialog-card > header h2{font:600 22px/1.2 Inter,system-ui,sans-serif!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page dialog.pv-dialog-full > .dialog-card > footer{padding:14px 28px!important;border-top:1px solid var(--cs-line)!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page dialog.pv-dialog-full #orderDetailBody,
+html:root:is(#cp#cp#cp#cp,html) body.compras-page dialog.pv-dialog-full .pv-proposals-scroll{padding:20px 28px!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(.pv-od-card,.pv-pay-section,.pv-od-kpi,.pv-od-steps,.pv-proposal-items-list){
+  background:#fff!important;border:1px solid var(--cs-line)!important;border-radius:16px!important;box-shadow:var(--cs-sombra)!important;
+}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-od-summary-head .pv-od-kpi{border-radius:14px!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-od-kpi small{color:var(--cs-muted)!important;font:600 11px Inter,system-ui,sans-serif!important;letter-spacing:.1em!important;text-transform:uppercase!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-od-kpi strong{font:600 15px/1.3 Inter,system-ui,sans-serif!important;color:var(--cs-text)!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-od-kpi .pv-od-money{font:500 26px/1.1 "Cormorant Garamond",Georgia,serif!important;color:#2c2a26!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(.pv-od-card,.pv-pay-section) h3,
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .crd-hist-title{font:600 16px/1.3 Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;color:var(--cs-text)!important;margin:0!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(.pv-od-card,.pv-pay-section) > header{padding:0 0 10px!important;border-bottom:1px solid var(--cs-line-soft)!important;margin:0!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-pay-section > header small{color:var(--cs-muted)!important;font:400 13px Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important}
+/* o bloco de pagamento de dentro já fica no cartão: sem moldura dupla */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-pay-section .pv-payment{border:0!important;background:transparent!important;padding:0!important;box-shadow:none!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-pay-section .pv-payment h3,
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-pay-section .pv-payment > header{display:none!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-od-step{border-radius:12px!important;font-family:Inter,system-ui,sans-serif!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-od-steps{padding:12px!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-order-table-wrap{border:0!important;box-shadow:none!important;padding:0!important;background:transparent!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-order-footer-total{font:400 13px Inter,system-ui,sans-serif!important;color:var(--cs-muted)!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-order-footer-total strong{font:500 22px "Cormorant Garamond",Georgia,serif!important;color:#2c2a26!important;margin-left:6px}
+/* divergência */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .crd-choice{border-radius:12px!important;border:1px solid var(--cs-line)!important;font-family:Inter,system-ui,sans-serif!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .crd-choice:has(input:checked){border-color:var(--cs-primary)!important;background:var(--cs-soft)!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .crd-choice strong{font-size:14px!important;font-weight:600!important;text-transform:none!important;letter-spacing:0!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .crd-choice small,
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .crd-choice span{text-transform:none!important;letter-spacing:0!important}
+
+/* ---------- Créditos ---------- */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(.ccr-card,.ccr-item,.ccr-head){border-radius:16px!important;border:1px solid var(--cs-line)!important;box-shadow:var(--cs-sombra)!important;background:#fff!important}
+
+/* ---------- Fotos de fornecedor e solicitante (compras-fotos.js) ---------- */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-com-foto{display:inline-flex;align-items:center;gap:10px;min-width:0;max-width:100%;vertical-align:middle}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-com-foto-txt{display:grid;min-width:0;gap:1px;text-align:left}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-com-foto-txt > *{overflow:hidden;text-overflow:ellipsis}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-foto{
+  display:inline-grid;place-items:center;flex:0 0 var(--cs-tam);width:var(--cs-tam);height:var(--cs-tam);border-radius:50%;overflow:hidden;
+  background:#eef1f5;color:#4b5563;border:1px solid var(--cs-line);font:600 calc(var(--cs-tam) * .38) Inter,system-ui,sans-serif;letter-spacing:0;text-transform:uppercase;
+}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-foto-fornecedor{border-radius:10px}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-foto[data-cs-foto]{
+  width:max(44px,var(--cs-tam,44px));height:max(44px,var(--cs-tam,44px));flex-basis:max(44px,var(--cs-tam,44px));box-sizing:border-box;
+  font-size:max(15px,calc(var(--cs-tam,44px) * .38));
+}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-foto.tem-foto{background:#fff}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-foto img{width:100%;height:100%;object-fit:cover;display:block}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-foto-fornecedor img{object-fit:contain;padding:2px;box-sizing:border-box}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-supplier-tab .cs-com-foto{gap:8px}
+/* o que está escondido continua escondido (a regra de botão acima não pode reexibir) */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(.btn,.btn-primary,.btn-secondary,.btn-outline,button,.pv-empty):is([hidden],.hidden){display:none!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-search-box input{background-color:transparent!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-supplier-tab :is(strong,small){text-transform:none!important;letter-spacing:0!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-supplier-tab strong{font:600 14px Inter,system-ui,sans-serif!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-supplier-tab small{font:400 12px Inter,system-ui,sans-serif!important;color:var(--cs-muted)!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-order-section-title{font:600 16px/1.3 Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;color:var(--cs-text)!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-proposal-items-list .pv-quote-item,
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-proposal-item{border-radius:14px!important;border-color:var(--cs-line)!important}
+
+/* ---------- Topo: título no centro exato e mais perto do menu ---------- */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main > header.compras-header{
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;align-items:center!important;
+  gap:24px!important;padding:6px 0 14px!important;margin:0!important;position:relative;
+}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main > header.compras-header > .pv-tabs-tools{grid-column:1;justify-self:start;margin:0!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main > header.compras-header > h1{grid-column:2;justify-self:center;margin:0!important;padding:0!important;text-align:center!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main > header.compras-header > .compras-header-actions{grid-column:3;justify-self:end}
+
+/* ---------- Necessidades operacionais: pedido, cliente e item a personalizar ---------- */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-pedido-num{display:inline-block;margin:0;padding:2px 9px;border-radius:999px;background:#fbeceb;color:#c4302b;font:700 12px/1.4 Inter,system-ui,sans-serif;letter-spacing:0}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-op-pedido{display:table-cell}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-op-pedido > .cs-com-foto{display:flex}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-item-foto{display:inline-grid;place-items:center;flex:0 0 52px;width:52px;height:44px;border-radius:8px;border:1px solid var(--cs-line);background:#fff;overflow:hidden}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-item-foto img{width:100%;height:100%;object-fit:contain;display:block}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .ccr-topo:empty,html:root:is(#cp#cp#cp#cp,html) body.compras-page .ccr-topo:not(:has(button)){display:none!important}
+
+/* ---------- "Cotar selecionadas" flutuando embaixo, por cima da lista (não empurra a tabela) ---------- */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #quoteSelectionBar{
+  position:fixed!important;left:50%!important;bottom:24px!important;transform:translateX(-50%);z-index:60;
+  display:flex!important;align-items:center;gap:12px;margin:0!important;width:auto!important;max-width:calc(100vw - 32px);
+  padding:10px 12px 10px 18px!important;border-radius:999px!important;border:1px solid var(--cs-line)!important;
+  background:#fff!important;box-shadow:0 12px 32px rgba(31,32,32,.18),0 2px 6px rgba(31,32,32,.08)!important;
+  animation:cs-sobe .18s ease-out;
+}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #quoteSelectionBar.hidden{display:none!important}
+@keyframes cs-sobe{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+@media (prefers-reduced-motion:reduce){html:root:is(#cp#cp#cp#cp,html) body.compras-page #quoteSelectionBar{animation:none}}
+/* espaço no fim da lista para a barra não cobrir a última linha */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main{padding-bottom:96px!important}
+
+/* ---------- Colunas com as respostas das assistentes (Carla e Marcos) ---------- */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-clamp{display:-webkit-box!important;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4;max-width:280px;white-space:normal}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page small.cs-clamp{max-width:280px}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-origem{display:block;margin-top:4px}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-fotos{display:flex;align-items:center;gap:4px}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-fotos a{display:block;width:40px;height:40px;border-radius:8px;overflow:hidden;border:1px solid var(--cs-line);cursor:zoom-in}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-fotos img{width:100%;height:100%;object-fit:cover;display:block}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-fotos b{font:600 12px Inter,sans-serif;color:var(--cs-muted)}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(#needsAvulsaTable,#needsOpTable) .pv-request-qty{width:64px;text-align:center}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-table td .subtext{white-space:nowrap}
+
+/* ---------- Cartão branco com o texto completo (passar o mouse) ---------- */
+.cs-dica{width:max-content;min-width:160px;position:fixed;z-index:200;padding:12px 14px;background:#fff;border:1px solid #e3e7ec;border-radius:12px;
+  box-shadow:0 12px 32px rgba(31,32,32,.16),0 2px 6px rgba(31,32,32,.06);font:400 13.5px/1.5 Inter,system-ui,sans-serif;color:#1f2020;pointer-events:none}
+.cs-dica[hidden]{display:none}
+.cs-dica .cs-dica-rot{display:block;margin-bottom:4px;color:#6b6b6b;font:600 11px Inter,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.cs-dica p{margin:0;white-space:pre-wrap}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page [data-cs-dica]{cursor:help;outline:none}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page small.cs-sem-vinculo{color:#8a5a00!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-quote-item-note{margin:6px 0 0;color:#6b6b6b;font:400 12px Inter,sans-serif}
+/* (16/11/2026) colunas na ordem nova: Solicitante · Qtd. · Item… — a Qtd. fica estreita, logo depois do nome */
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main .pv-panel #needsAvulsaTable td:nth-child(2){min-width:0!important;max-width:none!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main .pv-panel #needsAvulsaTable td:nth-child(3){min-width:200px!important;max-width:300px!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(#needsAvulsaTable,#needsOpTable) :is(th,td).pv-request-qty{width:1%!important;min-width:0!important;white-space:nowrap;padding-left:8px!important;padding-right:14px!important;text-align:center!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #needsAvulsaTable :is(th,td):first-child{width:1%;white-space:nowrap}

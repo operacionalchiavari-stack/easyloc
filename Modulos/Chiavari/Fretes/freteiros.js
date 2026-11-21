@@ -30,7 +30,7 @@
     $("frAbertos").textContent = abertos ? abertos + " sem freteiro" : "";
     document.querySelectorAll(".fr-abas [data-aba]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.aba === S.aba)));
     $("frConteudo").innerHTML = S.aba === "cadastros" ? cadastros() : fretes();
-    if (integrado === "fornecedores") requestAnimationFrame(() => window.parent.postMessage({tipo:"fretes-cadastros-altura",altura:document.documentElement.scrollHeight},location.origin));
+    if (integrado) requestAnimationFrame(() => window.parent.postMessage({tipo:"fretes-cadastros-altura",altura:document.documentElement.scrollHeight},location.origin));
   }
 
   function cadastros() {
@@ -116,8 +116,10 @@
     if (new URLSearchParams(location.search).get("aba") === "fretes") S.aba = "fretes";
     if(integrado){
       document.documentElement.classList.add('fr-integrado');
-      document.querySelectorAll('.header-list,.fr-abas,.cf-barra>a').forEach(el=>el.style.setProperty('display','none','important'));
-      const style=document.createElement('style');style.textContent='.fr-integrado .header-list,.fr-integrado .fr-abas,.fr-integrado .cf-barra>a{display:none!important}.fr-integrado .cf-page{padding:8px 12px!important}.fr-integrado .cf-barra{margin-bottom:6px}.fr-integrado .cf-vazio{padding:16px}.fr-integrado body{min-height:0!important}';document.head.append(style);
+      // 15/11/2026: dentro do Painel Logístico (integrado=painel) ficam as abas Cadastros / Fretes anunciados; só o título sai
+      const esconder=integrado==='painel'?'.header-list,.cf-barra>a':'.header-list,.fr-abas,.cf-barra>a';
+      document.querySelectorAll(esconder).forEach(el=>el.style.setProperty('display','none','important'));
+      const style=document.createElement('style');style.textContent=esconder.split(',').map(s=>'.fr-integrado '+s).join(',')+'{display:none!important}.fr-integrado .cf-page{padding:8px 12px!important}.fr-integrado .cf-barra{margin-bottom:6px}.fr-integrado .cf-vazio{padding:16px}.fr-integrado body{min-height:0!important}';document.head.append(style);
     }
     ligar();
     try { await carregar(); } catch (e) { $("frConteudo").innerHTML = '<div class="cf-vazio">' + esc(e.message) + "</div>"; }

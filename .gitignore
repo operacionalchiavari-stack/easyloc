@@ -45,3 +45,7 @@ tmp-*
 outputs/
 .backups/
 .tmp/
+
+# Dados locais (folha de pagamento) e prints soltos: nunca no git
+.codex-payroll/
+undefined/

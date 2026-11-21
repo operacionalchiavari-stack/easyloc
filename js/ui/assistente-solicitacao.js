@@ -14,10 +14,10 @@
   };
   const S = { cfg: null, ctx: null, msgs: [], resumo: null, enviando: false, gravador: null, pedacos: [], inicio: 0, relogio: 0, cancelada: false, dlg: null };
   const $ = (sel) => S.dlg.querySelector(sel);
-  const chave = () => "solic_chat:" + S.cfg.tipo + ":" + (S.ctx?.empresa_id || "") + ":" + (S.ctx?.usuario_id || "");
+  const chave = () => "solic_chat:" + S.cfg.tipo + ":" + (S.ctx?.empresa_id || "") + ":" + (S.ctx?.usuario_id || "") + (S.cfg.chave ? ":" + S.cfg.chave : "");
   const primeiroNome = () => String(S.ctx?.usuario_nome || "").trim().split(/\s+/)[0] || "";
 
-  function guardar() { try { sessionStorage.setItem(chave(), JSON.stringify({ msgs: S.msgs, resumo: S.resumo })); } catch (_) {} }
+  function guardar() { if(S.cfg.persistir===false)return;try { sessionStorage.setItem(chave(), JSON.stringify({ msgs: S.msgs, resumo: S.resumo })); } catch (_) {} }
   function recuperar() {
     try { const d = JSON.parse(sessionStorage.getItem(chave()) || "null"); if (d && Array.isArray(d.msgs) && d.msgs.length) { S.msgs = d.msgs; S.resumo = d.resumo || null; return true; } } catch (_) {}
     return false;
@@ -43,12 +43,16 @@
       (S.cfg.formulario ? '<p class="as-rodape"><button type="button" class="as-link" data-as="formulario">Prefiro preencher o formulário</button></p>' : "");
     if (host) { host.innerHTML = ""; host.appendChild(d); } else document.body.appendChild(d);
     S.dlg = d;
+    if(S.cfg.recomecar===false)$('[data-as="recomecar"]').hidden=true;
+    if(S.cfg.acoesHtml){const barra=document.createElement('div');barra.className='as-contexto';barra.innerHTML=S.cfg.acoesHtml;$('.as-msgs').before(barra);barra.addEventListener('click',e=>S.cfg.acao?.(e,d));barra.addEventListener('change',e=>S.cfg.acao?.(e,d));}
+    if(S.cfg.anexos===false)$('[data-as="foto"]').hidden=true;
     const texto = $("textarea");
     $("form").addEventListener("submit", (e) => { e.preventDefault(); const v = texto.value; texto.value = ""; texto.style.height = ""; enviarTexto(v); });
     texto.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("form").requestSubmit(); } });
     texto.addEventListener("input", () => { texto.style.height = "auto"; texto.style.height = Math.min(texto.scrollHeight, 150) + "px"; });
     d.addEventListener("click", (e) => {
       const b = e.target.closest("[data-as]"); const a = b?.dataset.as;
+      if(S.enviando && ["recomecar","nova","fechar"].includes(a))return;
       if (a === "fechar") fechar();
       else if (a === "recomecar") recomecar();
       else if (a === "mic") (S.gravador ? parar() : gravar());
@@ -63,8 +67,10 @@
     });
     $('[data-as="arquivo"]').addEventListener("change", (e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) transcrever(f); });
     $('[data-as="arquivo-foto"]').addEventListener("change", (e) => { const fs = [...(e.target.files || [])]; e.target.value = ""; if (fs.length) enviarFotos(fs); });
-    d.addEventListener("cancel", (e) => { if (S.gravador) { e.preventDefault(); S.cancelada = true; parar(); } });
-    d.addEventListener("close", () => { if (S.gravador) { S.cancelada = true; parar(); } });
+    d.addEventListener("cancel", (e) => { if(S.enviando)e.preventDefault(); if (S.gravador) { e.preventDefault(); S.cancelada = true; parar(); } });
+    d.addEventListener("close", () => { if (S.dlg===d&&S.gravador) { S.cancelada = true; parar(); } });
+    const aoFechar=S.cfg.aoFechar;d.addEventListener('close',()=>aoFechar?.(),{once:true});
+    if(!host)d.addEventListener('close',()=>d.remove(),{once:true});
   }
 
   function bolha(m) {
@@ -74,18 +80,19 @@
         (m.enviado ? '<p class="as-ok">✓ Registrada</p>' : '<footer><button type="button" class="as-link" data-as="ajustar">Quero ajustar</button><button type="button" class="btn btn-primary" data-as="aprovar">Está certo, registrar</button></footer>') + "</div>";
     }
     if (m.tipo === "ok") return '<div class="as-msg ia as-msg-ok"><p>' + esc(m.texto) + '</p><div class="as-ok-acoes">' + (S.cfg.verLista ? '<button type="button" class="as-link" data-as="ver-lista">Ver minhas solicitações</button>' : "") + '<button type="button" class="as-link" data-as="nova">Fazer outra solicitação</button></div></div>';
-    return '<div class="as-msg ' + (m.papel === "ia" ? "ia" : "pessoa") + (m.erro ? " erro" : "") + '">' + (m.audio ? '<span class="as-audio">🎙 Áudio</span>' : "") + fotosHtml(m.fotos) + (m.texto ? "<p>" + esc(m.texto) + "</p>" : "") + "</div>";
+    return '<div class="as-msg ' + (m.papel === "ia" ? "ia" : "pessoa") + (m.erro ? " erro" : "") + '">' + (m.autor?'<small class="as-autor">'+esc(m.autor)+'</small>':'') + (m.audio ? '<span class="as-audio">🎙 Áudio</span>' : "") + fotosHtml(m.fotos) + (m.texto ? "<p>" + esc(m.texto) + "</p>" : "") + (m.autor&&m.em?'<small class="as-data">'+esc(new Date(m.em).toLocaleString('pt-BR'))+'</small>':'') + "</div>";
   }
   function pintar(digitando) {
     const host = $(".as-msgs");
     host.innerHTML = S.msgs.map(bolha).join("") + (digitando ? '<div class="as-msg ia as-digitando" aria-label="A assistente está escrevendo"><span></span><span></span><span></span></div>' : "");
     host.scrollTop = host.scrollHeight;
-    const ocupado = S.enviando || !!S.gravador;
+    const ocupado = S.enviando || !!S.gravador || S.cfg.somenteLeitura;
     $(".as-enviar").disabled = ocupado; $('[data-as="mic"]').disabled = S.enviando; $('[data-as="clipe"]').disabled = ocupado; $('[data-as="foto"]').disabled = ocupado;
+    if(S.cfg.somenteLeitura){$('textarea').disabled=true;$('[data-as="mic"]').disabled=true;}
   }
 
   async function chamar(corpo) {
-    const { data, error } = await window.supabaseClient.functions.invoke("solicitacao-assistente", { body: { empresa_id: S.ctx.empresa_id, tipo: S.cfg.tipo, ...corpo } });
+    const { data, error } = await window.supabaseClient.functions.invoke("solicitacao-assistente", { body: { empresa_id: S.ctx.empresa_id, tipo: S.cfg.tipo, ...(S.cfg.dados||{}), ...corpo } });
     if (error) {
       let msg = "";
       try { msg = (await error.context?.json?.())?.erro || ""; } catch (_) {}
@@ -97,15 +104,18 @@
 
   async function enviarTexto(texto, audio, fotos) {
     texto = String(texto || "").trim();
-    if ((!texto && !fotos?.length) || S.enviando) return;
-    S.msgs.push({ papel: "pessoa", texto, audio: !!audio, ...(fotos?.length ? { fotos } : {}) });
+    if ((!texto && !fotos?.length) || S.enviando || S.cfg.somenteLeitura) return;
+    if(["separacao","montagem"].includes(S.cfg.tipo)){S.resumo=null;S.msgs=S.msgs.filter(m=>m.tipo!=="resumo"||m.enviado);}
+    S.msgs.push({ papel: "pessoa", em:new Date().toISOString(), texto, audio: !!audio, ...(fotos?.length ? { fotos } : {}) });
     S.enviando = true; guardar(); pintar(true);
     try {
+      if(S.cfg.enviarMensagem){const msgs=await S.cfg.enviarMensagem(texto);if(msgs)S.msgs=msgs;return;}
       const historico = S.msgs.filter((m) => !m.tipo && !m.erro && !m.provisorio).map((m) => ({ papel: m.papel, texto: m.texto, ...(m.fotos ? { fotos: m.fotos } : {}) }));
       const r = await chamar({ acao: "conversar", mensagens: historico });
-      S.msgs.push({ papel: "ia", texto: r.resposta });
+      S.msgs.push({ papel: "ia", em:new Date().toISOString(), texto: r.resposta });
       if (r.pronto && r.resumo) { S.resumo = r.resumo; S.msgs.push({ tipo: "resumo", resumo: r.resumo }); }
     } catch (e) {
+      if(S.cfg.enviarMensagem){S.msgs.pop();$('textarea').value=texto;aviso('Não foi possível enviar a mensagem: '+e.message);return;}
       S.msgs.push({ papel: "ia", texto: "Não consegui responder agora (" + e.message + "). Pode mandar de novo?", erro: true });
     } finally { S.enviando = false; guardar(); pintar(false); $("textarea").focus(); }
   }
@@ -115,7 +125,7 @@
     S.enviando = true; pintar(false);
     const botao = S.dlg.querySelector('[data-as="aprovar"]'); if (botao) { botao.disabled = true; botao.textContent = "Registrando…"; }
     try {
-      const msg = await S.cfg.confirmar(S.resumo, todasFotos());
+      const msg = await S.cfg.confirmar(S.resumo, todasFotos(), {mensagens:S.msgs.filter(m=>!m.tipo&&!m.erro&&!m.provisorio).map(m=>({papel:m.papel,texto:m.texto||"",em:m.em||null}))});
       const ultimo = [...S.msgs].reverse().find((m) => m.tipo === "resumo"); if (ultimo) ultimo.enviado = true;
       S.msgs.push({ tipo: "ok", texto: msg || "Pronto! Sua solicitação foi registrada." });
       S.resumo = null;
@@ -130,6 +140,7 @@
 
   function recomecar() {
     if (S.gravador) { S.cancelada = true; parar(); }
+    S.cfg.aoRecomecar?.();
     S.msgs = [{ papel: "ia", texto: S.cfg.saudacao(primeiroNome()) }]; S.resumo = null; guardar(); pintar(false);
     const t = $("textarea"); t.value = ""; t.placeholder = "Escreva aqui ou grave um áudio…"; t.focus();
   }
@@ -199,6 +210,7 @@
       for (const f of imagens.slice(0, 4)) {
         const blob = await paraJpeg(f);
         const caminho = S.ctx.empresa_id + "/" + uid + "/" + (crypto.randomUUID?.() || Date.now() + "-" + Math.random().toString(36).slice(2)) + ".jpg";
+        if(S.cfg.enviarFoto){urls.push(await S.cfg.enviarFoto(blob,caminho));continue;}
         const { error } = await sb.storage.from("solicitacoes-evidencias").upload(caminho, blob, { contentType: "image/jpeg", upsert: false });
         if (error) throw error;
         urls.push(sb.storage.from("solicitacoes-evidencias").getPublicUrl(caminho).data.publicUrl);
@@ -216,15 +228,18 @@
   function fechar() { if (S.dlg?.open) S.dlg.close(); }
 
   async function abrir(cfg, host) {
-    S.cfg = cfg;
-    try { S.ctx = await window.aguardarContexto(); } catch (_) {}
+    if(S.dlg?.open)S.dlg.close();
+    S.cfg = cfg; S.ctx=null; S.resumo=null; S.msgs=[]; S.enviando=false;
+    try { S.ctx = cfg.ctx || await window.aguardarContexto(); } catch (_) {}
     if (!S.ctx?.empresa_id) { window.alerta?.("Não foi possível identificar a empresa.", cfg.titulo, "erro"); return; }
     montar(host);
-    if (!recuperar()) S.msgs = [{ papel: "ia", texto: cfg.saudacao(primeiroNome()) }];
+    if(cfg.mensagens)S.msgs=cfg.mensagens;
+    else if (!recuperar()) S.msgs = [{ papel: "ia", texto: cfg.saudacao(primeiroNome()) }];
     pintar(false);
     if (!host) { S.dlg.showModal(); $("textarea").focus(); }
+    return S.dlg;
   }
   /* Nov/2026: na tela (duas colunas, como a Ideia Premiada) a conversa fica sempre aberta dentro de `host`. */
   const montarNaTela = (host, cfg) => abrir(cfg, host);
-  window.EasyLocAssistenteSolicitacao = { abrir, montarNaTela, fechar, focar: () => S.dlg?.querySelector("textarea")?.focus() };
+  window.EasyLocAssistenteSolicitacao = { abrir, montarNaTela, fechar, atualizarMensagens:(dlg,msgs,somenteLeitura)=>{if(S.dlg!==dlg||S.enviando||S.gravador)return;const log=$('.as-msgs'),fim=log.scrollHeight-log.scrollTop-log.clientHeight<60,scroll=log.scrollTop;S.msgs=msgs;S.cfg.somenteLeitura=somenteLeitura;pintar(false);if(!fim)log.scrollTop=scroll;}, focar: () => S.dlg?.querySelector("textarea")?.focus() };
 })();

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Personalizações IA — Comercial</title>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script>
+  <script src="../../../js/core/systemZoom.js?v=20261108"></script>
+  <script src="../../../js/core/themePrepaint.js"></script>
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
+  <link rel="stylesheet" href="personalizacoes-ia.css?v=20261118-pastas-topo">
+</head>
+<body>
+<main class="container el-page pia-page">
+  <div class="pia-header">
+    <h2>Personalizações IA</h2>
+    <div class="pia-toolbar">
+      <label class="pia-search"><span>Pesquisar</span><input type="search" id="piaBusca" placeholder="Item, código, tecido ou tinta" autocomplete="off"></label>
+      <label><span>Personalização</span><select id="piaTipo"><option value="">Todas</option><option value="tecido">Tecido</option><option value="tinta">Tinta</option></select></label>
+      <button type="button" class="pia-button" id="piaAtualizar">Atualizar</button>
+    </div>
+  </div>
+  <nav class="pia-breadcrumb" id="piaCaminho" aria-label="Caminho das personalizações"></nav>
+  <p id="piaStatus" class="pia-status" role="status">Carregando personalizações…</p>
+  <section id="piaGrade" class="pia-grid" aria-label="Pastas e imagens"></section>
+</main>
+<dialog class="pia-preview" id="piaPreview" aria-labelledby="piaPreviewTitulo">
+  <header><div><h3 id="piaPreviewTitulo"></h3><p id="piaPreviewDetalhe"></p></div><button type="button" class="pia-close" id="piaFechar" aria-label="Fechar imagem">×</button></header>
+  <img id="piaImagem" alt="">
+  <footer><span id="piaPreviewData"></span><button type="button" class="pia-button" id="piaBaixar">Baixar imagem</button></footer>
+</dialog>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
+<script src="../../../js/core/permissions.js?v=20261118-personalizacoes-ia"></script>
+<script type="module" src="personalizacoes-ia.mjs?v=20261118-pastas-topo"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
+</body>
+</html>

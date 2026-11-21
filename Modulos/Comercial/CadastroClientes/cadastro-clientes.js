@@ -287,6 +287,9 @@ function clientes_openAdd() {
   document.getElementById("clienteBvRecebe").value = "false";
   document.getElementById("clienteBvPercentual").value = "0";
   sugerirPessoasBv();
+  document.getElementById("clienteDescontoAtivo").value = "false";
+  document.getElementById("clienteDescontoPercentual").value = "0";
+  document.getElementById("clienteDescontoObservacao").value = "";
   const bvVig = document.getElementById('clienteBvVigencia'); if (bvVig) bvVig.textContent = 'A vigência será registrada automaticamente ao salvar.';
   atualizarEstadoSenhaCatalogo(false);
 
@@ -308,6 +311,10 @@ function clientes_enableEdit() {
 }
 
 function clientes_closeModal() {
+  if(['pedido','central-pedidos'].includes(new URLSearchParams(location.search).get('origem')) && window.parent!==window){
+    window.parent.postMessage({tipo:'pedido-cadastro-retorno',id:window.__pedidoCadastroSalvoId||null},location.origin);return;
+  }
+
   mostrarListaClientes();
   if(catalogoLogoObjectUrl) URL.revokeObjectURL(catalogoLogoObjectUrl);
   catalogoLogoObjectUrl = "";
@@ -481,6 +488,12 @@ async function clientes_salvar() {
     const falta = [[bvObs, 'por que o cliente recebe esse BV'], [bvNeg, 'quem negociou'], [bvApr, 'quem aprovou']].find(([c]) => (c?.value || '').trim().length < (c === bvObs ? 10 : 3));
     if (falta) { mostrarAlerta('Para dar BV, informe ' + falta[1] + (falta[0] === bvObs ? ' (pelo menos 10 letras).' : '.')); falta[0].focus(); return; }
   }
+  // Desconto fixo (18/11/2026): percentual e motivo obrigatórios quando ligado
+  const descAtivo = document.getElementById('clienteDescontoAtivo').value === 'true';
+  const descCampo = document.getElementById('clienteDescontoPercentual'), descObs = document.getElementById('clienteDescontoObservacao');
+  const descPercentual = descAtivo ? descCampo.valueAsNumber : 0;
+  if (descAtivo && (!Number.isFinite(descPercentual) || descPercentual <= 0 || descPercentual > 100)) { mostrarAlerta('Informe o desconto fixo entre 0,01% e 100%.'); descCampo.focus(); return; }
+  if (descAtivo && (descObs.value || '').trim().length < 10) { mostrarAlerta('Para dar o desconto fixo, explique por que o cliente tem essa condição (pelo menos 10 letras).'); descObs.focus(); return; }
   if (!validarClienteCompleto()) return;
 
   const senhaDigitada = document.getElementById("catalogoSenha")?.value || "";
@@ -529,6 +542,9 @@ async function clientes_salvar() {
       bv_observacao: (bvObs?.value || '').trim() || null,
       bv_negociado_por: (bvNeg?.value || '').trim() || null,
       bv_aprovado_por: (bvApr?.value || '').trim() || null,
+      desconto_fixo_ativo: descAtivo,
+      desconto_fixo_percentual: descAtivo ? descPercentual : 0,
+      desconto_fixo_observacao: (descObs?.value || '').trim() || null,
       nome_razao: nome.value,
       telefone: telefone.value,
       email: email.value,
@@ -585,8 +601,9 @@ async function clientes_salvar() {
       atualizarEstadoSenhaCatalogo(acessoAtivo);
     }
 
+    window.__pedidoCadastroSalvoId=clienteSalvoId;
     clientes_closeModal();
-    await carregarClientes(); // garante reload consistente
+    if(!["pedido","central-pedidos"].includes(new URLSearchParams(location.search).get("origem")))await carregarClientes(); // garante reload consistente
 
   } catch (err) {
     mostrarAlerta(err.message || "Erro ao salvar cliente");
@@ -602,6 +619,9 @@ async function abrirDetalhesCliente(cliente) {
   document.getElementById('clienteBvObservacao').value = cliente.bv_observacao || '';
   document.getElementById('clienteBvNegociadoPor').value = cliente.bv_negociado_por || '';
   document.getElementById('clienteBvAprovadoPor').value = cliente.bv_aprovado_por || '';
+  document.getElementById('clienteDescontoAtivo').value = String(Boolean(cliente.desconto_fixo_ativo));
+  document.getElementById('clienteDescontoPercentual').value = cliente.desconto_fixo_percentual || 0;
+  document.getElementById('clienteDescontoObservacao').value = cliente.desconto_fixo_observacao || '';
   sugerirPessoasBv();
   const bvVig = document.getElementById('clienteBvVigencia'); if (bvVig) bvVig.textContent = cliente.bv_vigente_desde
     ? 'Regra atual registrada em ' + new Date(cliente.bv_vigente_desde).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }) + '.'
@@ -1050,7 +1070,15 @@ window.clientes_abrirDetalhesPorIdOuNome = clientes_abrirDetalhesPorIdOuNome;
 window.aplicarFiltros = aplicarFiltros;
 
 // inicialização
-carregarClientes();
+if(new URLSearchParams(location.search).get('origem')==='central-pedidos'){
+  mostrarDetalhesCliente();
+  document.querySelector('.back-btn')?.setAttribute('title','Voltar para a Central de Pedidos');
+  const parametros=new URLSearchParams(location.search);
+  clientes_abrirDetalhesPorIdOuNome({id:parametros.get('id'),nome:parametros.get('nome')}).catch(e=>mostrarAlerta(e.message));
+}else if(new URLSearchParams(location.search).get('origem')==='pedido'){
+  clientes_openAdd();
+  document.getElementById('nome').value=new URLSearchParams(location.search).get('nome')||'';
+}else carregarClientes();
 // Etiquetas (Estilo, Canal...) vêm de Parâmetros > Comercial; sem cadastro ficam as do HTML.
 window.EasyLocEtiquetas?.aplicar("cliente", { filtros: { styleFilter: "estilo", budgetFilter: "orcamento" } });
 

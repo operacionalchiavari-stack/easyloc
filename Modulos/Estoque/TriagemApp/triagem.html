@@ -10,11 +10,16 @@
   <link rel="manifest" href="triagem.webmanifest">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="triagem.css?v=20261106-topo-branco">
+  <link rel="stylesheet" href="triagem.css?v=20261116-setor">
   <link rel="stylesheet" href="../../../styles/app-fila.css?v=20261107-compacto">
   <link rel="stylesheet" href="../../../styles/capas-operacao.css?v=20261101-ocorrencias-auto">
   <script src="../../../js/app/carregamento-app.js?v=20261106-abertura" data-auto></script>
   <script src="../../../js/core/limpezaDados.js?v=20261026"></script>
+<link rel="stylesheet" href="../../../styles/assistente-solicitacao.css?v=20261117-chat-unico">
+<script src="../../../js/ui/assistente-solicitacao.js?v=20261117-chat-unico"></script>
+<link rel="stylesheet" href="../../../styles/avaria-setor.css?v=20261116-setor2">
+<script src="../../../js/ui/avaria-setor.js?v=20261116-setor"></script>
+<script src="../../../js/ui/separacao-assistente.js?v=20261116-setor"></script>
 </head>
 <body>
   <header class="marca">
@@ -28,6 +33,7 @@
   </header>
   <main>
     <div id="taMensagem" class="mensagem" role="status" aria-live="polite" hidden></div>
+    <p id="taRascunho" class="muted" role="status" aria-live="polite" hidden></p>
     <section id="taCarregando" class="carregando"><span class="spinner" aria-hidden="true"></span><p>Preparando a Triagem…</p></section>
     <section id="taLogin" hidden>
       <div class="introducao"><span class="icone-qr" aria-hidden="true">▦</span><h1>Cada peça no seu lugar.</h1><p>Separe na ida. Confira na volta.<br>Leia o QR e acompanhe os materiais.</p></div>
@@ -60,8 +66,8 @@
   <script src="../../../js/core/evidenciasOperacao.js?v=20261024"></script>
   <script src="../../../js/ui/capas-operacao.js?v=20261101-ocorrencias-auto"></script>
   <script src="../../../js/app/fila-app.js?v=20261107-colunas"></script>
-  <script src="triagem.js?v=20261111-foco"></script>
-<script src="../../../js/app/rastreamento-app.js?v=20261107-config"></script>
+  <script src="triagem.js?v=20261120-rascunho"></script>
+<script src="../../../js/app/rastreamento-app.js?v=20261119-espera-conexao"></script>
 <script src="../../../js/app/android-principal.js?v=20261107"></script>
 </body>
 </html>

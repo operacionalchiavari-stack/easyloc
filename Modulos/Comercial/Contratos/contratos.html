@@ -4,22 +4,16 @@
       <h1>Modelos de Contrato</h1>
       <p>Crie modelos com tags automáticas para preencher os dados do pedido.</p>
     </div>
+    <nav class="contratos-abas el-tabs" role="tablist" aria-label="Contratos">
+      <button type="button" role="tab" class="is-active" aria-selected="true" data-contratos-aba="modelos">Contrato</button>
+      <button type="button" role="tab" aria-selected="false" data-contratos-aba="regras">Regras do pedido</button>
+    </nav>
     <button type="button" class="btn btn-primary" id="contratoNovoModelo">
       <i data-lucide="plus"></i>
       Novo modelo
     </button>
   </header>
 
-  <section class="contratos-assinatura-empresa" aria-label="Assinatura da empresa">
-    <h2>Assinatura da empresa</h2>
-    <p>Salve uma imagem da assinatura para usar automaticamente nos contratos de todos os modelos.</p>
-    <label>Nome de quem assina <input class="el-input" id="contratoSignatario" maxlength="200" placeholder="Nome do representante da empresa"></label>
-    <label>Imagem da assinatura (PNG ou JPG) <input id="contratoAssinaturaArquivo" type="file" accept="image/png,image/jpeg"></label>
-    <img id="contratoAssinaturaPreview" alt="Assinatura cadastrada da empresa" hidden>
-    <div><button type="button" class="btn btn-primary" id="contratoSalvarAssinatura">Salvar assinatura da empresa</button>
-    <button type="button" class="btn btn-secondary" id="contratoRemoverAssinatura">Remover assinatura</button></div>
-    <p id="contratoAssinaturaStatus" role="status"></p>
-  </section>
   <main class="contratos-layout">
     <aside class="contratos-list-panel">
       <div class="contratos-panel-head">
@@ -111,4 +105,16 @@
       <div class="contratos-tags" id="contratosTags"></div>
     </aside>
   </main>
+
+  <section class="contratos-regras" id="contratosRegras" hidden>
+    <div class="contratos-regras-card">
+      <h2>Regras do pedido</h2>
+      <p>Texto fixo que vai no fim de <b>todos</b> os pedidos (na tela, no PDF e no link do cliente), mesmo quando não há contrato. Deixe em branco para não mostrar nada.</p>
+      <textarea id="contratosRegrasTexto" rows="18" maxlength="20000" placeholder="Ex.: 1. A reserva dos móveis só é garantida após o pagamento da entrada.&#10;2. Danos e itens não devolvidos serão cobrados pelo valor de reposição.&#10;3. O local deve estar liberado no horário combinado para a entrega."></textarea>
+      <div class="contratos-regras-rodape">
+        <span id="contratosRegrasStatus" role="status"></span>
+        <button type="button" class="btn btn-primary" id="contratosRegrasSalvar">Salvar regras do pedido</button>
+      </div>
+    </div>
+  </section>
 </div>

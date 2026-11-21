@@ -1,0 +1,72 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),{chromium}=require('playwright');
+const BASE='http://localhost:5642/';
+(async()=>{
+ const browser=await chromium.launch({channel:'msedge',headless:true});
+ try{
+  const page=await browser.newPage({viewport:{width:1600,height:1100}}),erros=[];
+  page.on('pageerror',e=>erros.push(e.message));
+  await page.addInitScript(()=>{
+   window.__CONTEXT={empresa_id:'demo-teste',usuario_id:'pessoa-real',usuario_nome:'Teste'};sessionStorage.setItem('empresa_id','demo-teste');window.aguardarContexto=async()=>__CONTEXT;window.lucide={createIcons(){}};window.__realCalls=[];
+   window.EasyLocPermissions={hasPermission:()=>true};
+   window.supabaseClient={from(nome){__realCalls.push(nome);throw Error('A simulação tentou acessar o banco real: '+nome);},rpc(nome){__realCalls.push(nome);throw Error('A simulação tentou executar uma RPC real: '+nome);}};
+  });
+  await page.route('**/*',r=>{
+   const u=r.request().url();if(!u.startsWith(BASE))return r.abort();const pathname=decodeURIComponent(new URL(u).pathname);
+   if(/\/js\/core\//.test(pathname))return r.fulfill({body:'',contentType:'text/javascript'});
+   const f=path.join(process.cwd(),pathname);if(!fs.existsSync(f)||!fs.statSync(f).isFile())return r.fulfill({status:404,body:''});
+   return r.fulfill({body:fs.readFileSync(f),contentType:{'.css':'text/css','.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.jpg':'image/jpeg','.svg':'image/svg+xml'}[path.extname(f)]||'application/octet-stream'});
+  });
+  await page.goto(BASE+'Modulos/Almoxarifado/almoxarifado.html');
+  await page.waitForSelector('#almoxContent:not(.hidden)',{timeout:30000});
+  assert.match(await page.locator('#materialsResultCount').innerText(),/48/);
+  assert.match(await page.locator('#almoxDemoToggle').innerText(),/Simulação/);
+  await page.evaluate(()=>localStorage.setItem('tecnoweld_usuario_logado',JSON.stringify({id:'pessoa-real',nome:'Teste'})));
+
+  await page.locator('#exitBtn').click();
+  await page.locator('#exitScanCode').fill('INS-0001');await page.locator('#exitScanCode').press('Enter');
+  await page.waitForSelector('.exit-cart-qty');
+  const exitQuantity=page.locator('.exit-cart-qty');
+  await exitQuantity.fill('6');
+  await page.waitForFunction(()=>document.querySelector('.tw-alert-overlay.is-visible #twAlertMessage')?.textContent.includes('Quantidade maior que o estoque')); 
+  assert.match(await page.locator('#twAlertMessage').innerText(),/Quantidade maior que o estoque.*Dispon\u00edvel: 5 M.*Informado: 6 M/);
+  assert.equal(await page.locator('#saveExitBtn').isDisabled(),true);
+  assert.equal(await exitQuantity.getAttribute('aria-invalid'),'true');
+  assert.equal(await exitQuantity.evaluate(e=>document.activeElement===e),true);
+  await page.locator('.tw-alert-overlay.is-visible .tw-alert-close').click();
+  await exitQuantity.fill('5');
+  assert.equal(await page.locator('#exitWarning').isVisible(),false);
+  assert.equal(await page.locator('#saveExitBtn').isDisabled(),false);
+  assert.equal(await exitQuantity.getAttribute('aria-invalid'),'false');
+  await page.locator('#exitScanCode').fill('INS-0001');await page.locator('#exitScanCode').press('Enter');
+  await page.waitForFunction(()=>document.querySelector('.tw-alert-overlay.is-visible #twAlertMessage')?.textContent.includes('Quantidade maior que o estoque')); 
+  assert.match(await page.locator('#twAlertMessage').innerText(),/Informado: 6 M/);
+  assert.equal(await page.locator('#exitWarning').isVisible(),false,'sem aviso dentro do card');
+  await page.screenshot({path:'.tmp/almox-saida-aviso-saldo.png',fullPage:true});
+  await page.locator('.tw-alert-overlay.is-visible .tw-alert-close').click();
+  await page.locator('#withdrawalBtn').click();
+  const row=page.locator('#loanItems tr').first(),loanQuantity=row.locator('.loan-item-qty');
+  await row.locator('.loan-item-material-input').fill('Tecido linho off white');
+  await loanQuantity.fill('6');
+  await page.waitForFunction(()=>document.querySelector('.tw-alert-overlay.is-visible #twAlertMessage')?.textContent.includes('Quantidade maior que o estoque')); 
+  assert.match(await page.locator('#twAlertMessage').innerText(),/Quantidade maior que o estoque.*Dispon\u00edvel: 5 M.*Informado: 6 M/);
+  assert.equal(await page.locator('#saveLoanBtn').isDisabled(),true);
+  assert.equal(await loanQuantity.getAttribute('aria-invalid'),'true');
+  await page.locator('.tw-alert-overlay.is-visible .tw-alert-close').click();
+  await loanQuantity.fill('3');assert.equal(await page.locator('#loanStockWarning').count(),0);
+  await page.locator('#addLoanItem').click();
+  const second=page.locator('#loanItems tr').nth(1);
+  await second.locator('.loan-item-material-input').fill('Tecido linho off white');await second.locator('.loan-item-qty').fill('3');
+  await page.waitForFunction(()=>document.querySelector('.tw-alert-overlay.is-visible #twAlertMessage')?.textContent.includes('Quantidade maior que o estoque')); 
+  assert.match(await page.locator('#twAlertMessage').innerText(),/Informado: 6 M/);
+  assert.equal(await page.locator('#loanItems input[aria-invalid=true]').count(),2,'soma do mesmo material entre linhas');
+  await page.screenshot({path:'.tmp/almox-retirada-aviso-saldo.png',fullPage:true});
+  await page.locator('.tw-alert-overlay.is-visible .tw-alert-close').click();
+  await second.locator('[data-remove-loan-item]').click();
+  assert.equal(await page.locator('#loanStockWarning').count(),0);
+  assert.equal(await page.locator('#saveLoanBtn').isDisabled(),false);
+  const snapshot=await page.evaluate(async()=>{const {data}=await TecnoweldAPI.getClient().from('warehouse_materials').select('*').eq('id','demo-material-0').maybeSingle();return data;});
+  assert.equal(snapshot.quantidade_disponivel,5,'validacao nao movimenta estoque');
+  assert.deepEqual(erros,[]);assert.deepEqual(await page.evaluate(()=>__realCalls),[]);
+  console.log('OK: aviso imediato em saida/retirada, saldo e quantidade claros, bloqueio, correcao, soma entre linhas e estoque intacto.');
+ }finally{await browser.close();}
+})().catch(e=>{console.error(e);process.exit(1)});

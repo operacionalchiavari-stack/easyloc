@@ -110,7 +110,7 @@
     const nome = String(a.por || "").trim();
     const iniciais = nome.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase();
     let url = ""; try { if (a.por_id) url = S.sb.storage.from("avatares").getPublicUrl(S.empresa + "/" + a.por_id + ".jpg").data?.publicUrl || ""; } catch (_) {}
-    return `<span class="ca-h-quem"><span class="ca-h-avatar">${esc(iniciais)}${url ? `<img src="${esc(url)}" alt="" onerror="this.remove()">` : ""}</span>${esc(nome)}</span>`;
+    return `<span class="ca-h-quem"><span class="ca-h-avatar">${esc(iniciais)}${url ? `<img src="${esc(url)}" alt="" onerror="this.remove()">` : ""}</span><span class="ca-h-nome" title="${esc(nome)}">${esc(nome)}</span></span>`;
   }
   function fecharHistorico() { pop?.remove(); pop = null; }
   function abrirHistorico(card) {

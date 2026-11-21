@@ -93,6 +93,9 @@
   mensagem(error?'Coleta pausada; não foi possível remover a última posição. Tente novamente.':'Compartilhamento pausado e última posição removida.');
  }
  async function iniciar(id) {
+  // No App do Montador a conexão com o banco nasce depois deste script (operacao-sem-motor.js): espera até 10 s.
+  for(let i=0;!sb()?.auth&&i<40;i++) await new Promise(r=>setTimeout(r,250));
+  if(!sb()?.auth)return;
   const {data}=await sb().auth.getSession(); if(!data.session)return;
   const novoUsuario=data.session.user.id;
   if(empresa===id && usuario===novoUsuario)return;

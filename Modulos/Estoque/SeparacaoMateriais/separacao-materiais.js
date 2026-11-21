@@ -424,7 +424,7 @@
     const resumo = pedidoResumo(pedido.id);
     const regra = regraSeparacaoPedido(pedido);
     const numero = pedido.numero_pedido || "-";
-    const numeroLabel = String(numero).startsWith("#") ? String(numero) : `#${numero}`;
+    const numeroLabel = String(numero).replace(/^#+\s*/, "");
     const cliente = pedido.cliente_nome || "Cliente nao informado";
     const evento = pedido.tipo_evento || "Evento";
     const data = formatDateOnly(pedido.data_evento || pedido.data_hora);
@@ -452,9 +452,8 @@
     const bloqueado = coluna !== "separado" && state.bloqueados?.has(String(pedido.id));
     return `
       <article class="separacao-order-card${bloqueado ? " is-bloqueado-fin" : ""}${state.problemas?.[pedido.id] ? " tem-problema" : ""}" data-pedido-id="${escapeHtml(pedido.id)}" data-card-action="${escapeHtml(cardAction)}" data-clickable="${bloqueado ? "false" : "true"}" data-coluna="${escapeHtml(coluna)}" ${bloqueado ? 'aria-disabled="true" title="Aguardando aprovação do Financeiro. Avise o supervisor."' : 'tabindex="0"'}>
-        ${state.problemas?.[pedido.id] ? `<span class="sep-problema-dot" title="${state.problemas[pedido.id]} problema(s) reportado(s) na separação" aria-label="Problema reportado na separação"></span>` : ""}
         <div class="separacao-card-top">
-          <span class="separacao-order-number">Pedido ${escapeHtml(numeroLabel)}</span>
+          <span class="separacao-order-number">Pedido ${escapeHtml(numeroLabel)}${state.problemas?.[pedido.id] ? `<span class="sep-problema-dot" title="${state.problemas[pedido.id]} problema(s) reportado(s) na separação" aria-label="Problema reportado na separação"></span>` : ""}</span>
           <span class="card-tipo-ida">Ida</span>
           ${bloqueado ? '<span class="exp-aviso-fin">Aguardando Financeiro</span>' : ""}
           ${coluna === "separado" ? `<span class="separacao-done-mark"><i data-lucide="check"></i></span>` : ""}
@@ -466,6 +465,7 @@
         <div class="separacao-card-meta-line">${escapeHtml(data)} &middot; ${escapeHtml(setor)} &middot; ${escapeHtml(qtdLabel)}</div>
         ${coluna === "andamento" ? progresso : ""}
         ${regra.liberado ? "" : `<div class="separacao-lock-note">${escapeHtml(regra.motivo)}</div>`}
+        ${coluna==='aguardando' && pedido.reducao_liberada_em ? `<button type="button" class="btn" data-separacao-action="liberar-retirada" data-pedido-id="${escapeHtml(pedido.id)}">Cancelar libera\u00e7\u00e3o ao Comercial</button>` : ''}
         ${coluna === "andamento" && STATUS_EM_ANDAMENTO.has(pedido.status) && !pedido.status_operacional ? `<button type="button" class="btn" data-separacao-action="liberar-retirada" data-pedido-id="${escapeHtml(pedido.id)}" title="Devolve o pedido ao Comercial para revisar os itens">Devolver ao Comercial</button>` : ""}
         ${coluna==='separado'?`<button type="button" class="btn" data-separacao-action="reabrir-triagem" data-pedido-id="${escapeHtml(pedido.id)}">Reabrir triagem</button>`:''}
       </article>
@@ -485,7 +485,7 @@
 
   function retornoCard(pedido, coluna) {
     const numero = pedido.numero_pedido || "-";
-    const numeroLabel = String(numero).startsWith("#") ? String(numero) : "#" + numero;
+    const numeroLabel = String(numero).replace(/^#+\s*/, "");
     const lidos = state.retornoLidos?.get(String(pedido.id)) || 0;
     const feito = pedido.operacao?.retorno;
     let nota = pedido.fluxo_etapa==='retorno_simultaneo' ? "Conferência às cegas · simultânea com a Expedição" : "Conferência às cegas";
@@ -523,7 +523,7 @@
     const r = state.divergencias?.mapa.get(String(pedido.id)) || { falta: 0, sobra: 0 };
     const numero = String(pedido.numero_pedido || "-");
     return '<article class="separacao-order-card card-retorno card-divergencia' + (r.falta ? " tem-falta" : " so-sobra") + '" data-pedido-id="' + escapeHtml(pedido.id) + '" data-card-action="retorno" data-clickable="true" data-coluna="divergencias" tabindex="0">' +
-      '<div class="separacao-card-top"><span class="separacao-order-number">Pedido ' + escapeHtml(numero.startsWith("#") ? numero : "#" + numero) + '</span><span class="card-tipo-retorno">Retorno</span></div>' +
+      '<div class="separacao-card-top"><span class="separacao-order-number">Pedido ' + escapeHtml(numero.replace(/^#+\s*/, "")) + '</span><span class="card-tipo-retorno">Retorno</span></div>' +
       '<div class="separacao-card-mainline"><strong>' + escapeHtml(pedido.cliente_nome || "Cliente nao informado") + "</strong><span>" +
       escapeHtml(pedido.tipo_evento || "Evento") + " &middot; " + escapeHtml(pedidoLocal(pedido)) + "</span></div>" +
       '<div class="separacao-card-meta-line divergencia-meta"><span>Coleta ' + escapeHtml(formatDateOnly(pedido.data_coleta || pedido.data_evento)) + '</span><span class="card-divergencia-resumo" title="' + escapeHtml(resumoDivergencia(r)) + '">' + escapeHtml([r.falta ? r.falta + ' faltante(s)' : '', r.sobra ? r.sobra + ' a mais' : ''].filter(Boolean).join(' · ')) + '</span></div></article>';
@@ -1988,7 +1988,7 @@
       const op={sb:state.supabase,empresa:state.empresaId,pedido:item.separacao_pedido_id,item:item.item_id};
       if(b.hasAttribute('data-ver-ocorrencias')){window.SeparacaoOcorrencias.abrirPainel({...op,fila:'triagem'});return;}
       if(!modoEditavel()){avisarSeparacaoBloqueada();return;}
-      window.SeparacaoOcorrencias.reportar({...op,linha:linhaDoItem(item),quantidade:itemTotal(item)+itemProducao(item),nome:itemBaseInfo(item).nome,aoSalvar:renderItens});
+      window.SeparacaoOcorrencias.reportar({...op,linha:linhaDoItem(item),quantidade:itemTotal(item)+itemProducao(item),nome:itemBaseInfo(item).nome,aoSalvar:renderItens}).catch(e=>window.alerta(e.message,'Reportar problema','erro'));
     });
     document.addEventListener('separacao-ocorrencias-atualizadas',()=>{if(getPedidoAtual())renderItens();});
     document.addEventListener("click", (e) => {
@@ -2014,10 +2014,10 @@
         }
         if (action === "liberar-retirada") {
           const pedido = state.pedidos.find(p => String(p.id) === String(pedidoId));
-          if(!pedido || !STATUS_EM_ANDAMENTO.has(pedido.status) || pedido.status_operacional) return;
+          if(!pedido || (!STATUS_EM_ANDAMENTO.has(pedido.status) && !pedido.reducao_liberada_em) || pedido.status_operacional) return;
           const liberar = !pedido?.reducao_liberada_em;
           (async () => {
-            if(liberar && !await window.confirmarGlobal("O pedido voltará ao Comercial e sairá da fila da Triagem até a revisão ser salva. Peças separadas precisam ser desmarcadas antes de reduzir a quantidade.", "Devolver ao Comercial", { confirmarTexto: "Devolver", cancelarTexto: "Voltar" })) return;
+            if(liberar && !await window.confirmarGlobal("O pedido fica em Aguardando at\u00e9 o Comercial abrir para edi\u00e7\u00e3o. Voc\u00ea pode cancelar a libera\u00e7\u00e3o enquanto isso. Pe\u00e7as separadas precisam ser desmarcadas antes de reduzir a quantidade.", "Liberar para o Comercial", { confirmarTexto: "Liberar", cancelarTexto: "Voltar" })) return;
             actionButton.disabled = true;
             const { error } = await state.supabase.rpc("pedido_liberar_reducao", { p_pedido: pedidoId, p_liberar: liberar });
             if(error) throw error;
