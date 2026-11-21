@@ -191,3 +191,15 @@ html body.catalogo-equipe-helena .cas-modo-planta{ display:none!important; }
 .ag-item-foto{ overflow:hidden; }
 .ag-item-foto img{ display:block; max-height:100px; }
 .ag-item figcaption{ position:relative; background:#fff; }
+/* Helena como agente: o catálogo nunca aparece por trás (nem por um instante ao sair). */
+html body.catalogo-equipe-helena #app{ visibility:hidden!important; }
+
+/* 21/11/2026: balão de quem envia mais suave (pedido: "muito escuro"): azul bem claro com texto escuro, igual para todos os agentes. */
+:root{ --ag-eu:#e4ecf8; --ag-eu-texto:#1e2b40; }
+.ag-msg.eu .ag-balao{ color:var(--ag-eu-texto); }
+.ag-msg.eu .ag-balao time{ color:#7b8aa3; }
+html body.catalogo-equipe-helena .cas-msg.is-eu .cas-bubble{ color:var(--ag-eu-texto)!important; }
+html body.catalogo-equipe-helena .cas-msg.is-eu .cas-bubble *{ color:inherit!important; }
+/* os botões continuam grafite (o --ag-eu só mudou o balão) */
+.ag-redondo,.ag-btn{ background:#2b2622; }
+html body.catalogo-equipe-helena .cas-send{ background:#2b2622!important; }

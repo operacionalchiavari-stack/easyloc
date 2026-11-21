@@ -71,7 +71,7 @@ const saida = path.join(root, 'outputs', 'app-agentes'); fs.mkdirSync(saida, { r
         console.log('ok - Cora respondeu e gerou o relatório');
       }
       // voltar sai direto para a lista de agentes (a Helena nunca cai no catálogo)
-      if (nome === 'Helena') await page.locator('[data-cas-fechar]').first().click();
+      if (nome === 'Helena') { assert.equal(await page.evaluate(() => getComputedStyle(document.getElementById('app')).visibility), 'hidden', 'catálogo nunca aparece por trás da Helena'); await page.locator('[data-cas-fechar]').first().click(); }
       else await page.click('#agVoltar');
       await page.waitForSelector('#apAgentes:not([hidden]) .ap-agente', { timeout: 20000 });
       console.log(`ok - ${nome}: abre com o campo de conversa, sem rolagem lateral, voltar leva aos agentes`);

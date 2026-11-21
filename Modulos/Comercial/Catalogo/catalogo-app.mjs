@@ -1032,6 +1032,8 @@ async function iniciar(){
     }
     document.body.classList.toggle("catalogo-equipe", equipe());
     document.body.classList.toggle("catalogo-equipe-helena", helenaEquipe());
+    // Agente do app: o ← da Helena sai na hora para a lista de agentes (sem fechar o painel antes, senão o catálogo "pisca").
+    if(helenaEquipe()) document.addEventListener("click", (e) => { if(e.target.closest("#catalogAssistente [data-cas-fechar]")){ e.preventDefault(); e.stopImmediatePropagation(); window.AppCarregamento?.mostrar(); location.replace("../../../app.html#agentes"); } }, true);
     irParaAba(new URLSearchParams(location.search).get("aba") || (equipe() ? "catalogo" : "inicio"));
     if(helenaEquipe()) abrirHelena();
     sairAbertura();

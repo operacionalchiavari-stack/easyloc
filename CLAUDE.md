@@ -12518,4 +12518,7 @@ podem ser um botão discreto" e "quando eu volto da Helena ela cai no catálogo,
 - **Helena**: continua no motor dela (`catalogo-app.html?app=1&agente=helena`), com o mesmo visual pelo bloco do fim de
   `app-agente.css` (linkado no catalogo-app.html, só vale em `body.catalogo-equipe-helena`). Fechar/voltar sai para
   `app.html#agentes` (nunca o catálogo) e tocar numa peça só amplia a foto (`ctx.abrirItemSemFechar` em catalogo-assistente.mjs).
+- 21/11: o ← da Helena sai na hora (clique capturado antes de o painel fechar) e o `#app` do catálogo fica escondido em
+  `body.catalogo-equipe-helena`, para o catálogo não "piscar" ao sair. Balão de quem envia mais suave: azul bem claro
+  `--ag-eu:#e4ecf8` com texto escuro (todos os agentes, inclusive a Helena); os botões continuam grafite.
 - Teste: `RUN_AGENTES_LIVE=1 node tests/app-agentes-live.cjs` (`CONVERSA=1` também conversa com a Cora e pede um relatório).
