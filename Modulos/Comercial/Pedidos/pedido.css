@@ -7377,3 +7377,12 @@ html:is(#pc-ct,html) .pedido-sem-contrato span{font:400 13.5px Inter,system-ui,s
 html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas .pedido-cf-grade{grid-template-columns:1fr 1fr!important}
 html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas :is(.pedido-cf-nome,.pedido-cf-endereco,.pedido-cf-email){grid-column:1/-1}
 html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas .pedido-cf-campo input{width:100%;max-width:none}
+
+/* Etapa Contrato sem as margens largas dos lados (21/11/2026, pedido do usuário): ocupa a largura toda, com respiro
+   pequeno; a coluna dos clientes finais um pouco mais larga e todos os campos com a mesma largura. */
+html:is(#pc-ct,html) .pedido-screen .pedido-etapa-contrato{max-width:none;margin:0;padding:20px clamp(16px,1.6vw,28px) 28px}
+html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas{grid-template-columns:minmax(340px,440px) minmax(0,1fr)}
+html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas .pedido-cf-campo input{width:100%!important;max-width:none!important;box-sizing:border-box}
+html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas .pedido-cf-pessoa,html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas .pedido-cf-campo{width:100%!important;max-width:none!important;min-width:0}
+html:is(#pc-ct#pc-ct#pc-ct#pc-ct,html) body .pedido-screen .pedido-contrato-colunas .pedido-cf-campo :is(input,textarea,select){width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important}
+html:is(#pc-ct#pc-ct#pc-ct#pc-ct,html) body .pedido-screen .pedido-contrato-colunas .pedido-cf-grade{display:flex!important;flex-direction:column;gap:12px}

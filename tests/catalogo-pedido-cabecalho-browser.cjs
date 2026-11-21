@@ -44,7 +44,7 @@ const valores=await page.evaluate(()=>[...document.querySelectorAll('dialog.cpj-
  return {nome:tr.querySelector('strong').textContent,txt:tds.map(t=>t.textContent.replace(/\s+/g,' ').trim()),
   mesmaLinha:tds.every(t=>{const r=t.getBoundingClientRect();return r.top<nome.bottom&&r.bottom>nome.top&&r.left>=nome.right;})};}));
 const cabecalhoValores=await page.evaluate(()=>[...document.querySelectorAll('dialog.cpj-modal[open] .cpj-order-colhead td.cpj-order-valor')].map(t=>t.textContent));
-assert.deepEqual(cabecalhoValores,['Reposição','Valor un.','Total']);
+assert.deepEqual(cabecalhoValores,['Reposição (un.)','Valor un.','Total']);
 assert.equal(valores.length,2);
 const sofa=await page.evaluate(()=>{const tr=document.querySelector('dialog.cpj-modal[open] .cpj-order-table tbody tr:nth-child(3)');const n=getComputedStyle(tr.querySelector('strong')),m=getComputedStyle(tr.querySelector('.pa-medidas'));return {nome:tr.querySelector('strong').textContent,medidas:tr.querySelector('.pa-medidas')?.textContent,igual:['fontFamily','fontSize','fontWeight','color'].every(k=>n[k]===m[k])};});
 assert.equal(sofa.nome,'Sofá Um Linho Off','Medidas saem do nome');

@@ -1529,3 +1529,11 @@ html:is(#cpj-render-menor,html) .cpj-order-paper.is-horizontal .cpj-order-amb.ha
 .cpj-order-regras{margin-top:28px;padding-top:16px;border-top:1px solid #e7e3db;break-inside:auto}
 .cpj-order-regras h2{margin:0 0 10px;font:600 13px Inter,Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#34352f}
 .cpj-order-regras div{white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px;line-height:1.6;color:#4f4f4f}
+
+/* Coluna Total do pedido em destaque discreto (21/11/2026): faixa clarinha na coluna, valor mais escuro; a Reposição
+   fica mais apagada para não ser confundida com o valor cobrado. Vale na tela e no PDF. */
+.cpj-order-table td.cpj-order-valor.pa-valor-total,.cpj-order-table .cpj-order-colhead td.cpj-order-valor:last-child{background:#f5f2ec;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.cpj-order-table td.cpj-order-valor.pa-valor-total{padding-left:12px;padding-right:12px}
+.cpj-order-table .pa-valor-total b{font-weight:700;color:#1f1d1a}
+.cpj-order-table .cpj-order-colhead td.cpj-order-valor:last-child{color:#1f1d1a;font-weight:700;padding-left:12px;padding-right:12px}
+.cpj-order-table td.cpj-order-valor:has(+td.cpj-order-valor+td.pa-valor-total){color:#9a968c;font-size:.92em}
