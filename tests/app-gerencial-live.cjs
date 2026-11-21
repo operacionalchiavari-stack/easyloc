@@ -35,33 +35,28 @@ const saida = path.join(root, 'outputs', 'app-gerencial'); fs.mkdirSync(saida, {
 
     await page.goto(BASE + 'app.html', { waitUntil: 'domcontentloaded' });
     await page.waitForSelector('#apInicio:not([hidden]) .ap-modulo[href="#gerencial"]', { timeout: 30000 });
+    await page.evaluate(() => localStorage.removeItem('gd_periodo'));
     await page.click('.ap-modulo[href="#gerencial"]');
-    await page.waitForSelector('#apGerencial:not([hidden]) .ap-rel');
-    const nomes = await page.$$eval('#apGerencial .ap-rel .ap-modulo-titulo', (l) => l.map((x) => x.textContent));
-    assert.equal(nomes.length, 7, 'admin vê os 7 relatórios: ' + nomes.join(', '));
-    await page.screenshot({ path: path.join(saida, '00-lista.png'), fullPage: true });
-    console.log('ok 1 - módulo Gerencial com os relatórios:', nomes.join(' · '));
-
-    const n = nomes.length;
-    for (let i = 0; i < n; i++) {
-      const link = page.locator('#apGerencial .ap-rel').nth(i);
-      const nome = await link.locator('.ap-modulo-titulo').textContent();
-      await link.click();
-      await page.waitForSelector('#arBarra', { timeout: 30000 });
-      await page.waitForFunction(() => !document.getElementById('appCarregamento') || document.getElementById('appCarregamento').classList.contains('saindo'), null, { timeout: 30000 }).catch(() => {});
-      await page.waitForTimeout(6000);
-      const info = await page.evaluate(() => ({
-        titulo: document.querySelector('#arBarra b').textContent,
-        largo: document.documentElement.scrollWidth - innerWidth,
-        barraTopo: document.getElementById('arBarra').getBoundingClientRect().top,
-      }));
-      await page.screenshot({ path: path.join(saida, String(i + 1).padStart(2, '0') + '-' + nome.normalize('NFD').replace(/[^\w]+/g, '-').toLowerCase() + '.png'), fullPage: true });
-      assert.equal(info.titulo, nome);
-      assert.ok(info.largo <= 1, `${nome}: página rola de lado (${info.largo}px)`);
-      await page.click('#arBarra .ar-voltar');
-      await page.waitForSelector('#apGerencial:not([hidden]) .ap-rel', { timeout: 20000 });
-      console.log(`ok - ${nome}: faixa do app, sem rolagem lateral, voltar leva ao Gerencial`);
-    }
+    // 20/11/2026: Gerencial nativo, com gráficos (sem abrir as telas do computador)
+    const pronto = () => page.waitForFunction(() => document.querySelector('#gdCorpo .gd-hero') && !document.querySelector('#gdCorpo .gd-esq'), null, { timeout: 30000 });
+    await pronto();
+    const info = async () => page.evaluate(() => ({ largo: document.documentElement.scrollWidth - innerWidth, tabelas: document.querySelectorAll('#apGerencial table').length,
+      graficos: document.querySelectorAll('#apGerencial .gd-graf svg').length, cards: document.querySelectorAll('#apGerencial .gd-card').length, hero: document.querySelector('.gd-hero b').textContent }));
+    let a = await info();
+    assert.equal(a.tabelas, 0, 'sem tabelas'); assert.ok(a.graficos >= 2 && a.cards >= 5, 'comercial com gráficos: ' + JSON.stringify(a)); assert.ok(a.largo <= 1, 'não rola de lado');
+    await page.waitForTimeout(700); await page.screenshot({ path: path.join(saida, '01-comercial.png'), fullPage: true });
+    // toque numa coluna muda a leitura
+    const leit = page.locator('#gdFat .gd-leitura'); const antes = await leit.innerText();
+    await page.locator('#gdFat').scrollIntoViewIfNeeded(); await page.evaluate(() => window.scrollBy(0, 120)); const bb = await page.locator('#gdFat svg').boundingBox(); await page.mouse.click(bb.x + 60, bb.y + bb.height / 2);
+    assert.notEqual(await leit.innerText(), antes, 'tocar numa coluna mostra o mês');
+    for (const per of ['3m', '12m']) { await page.click('[data-gd-per="' + per + '"]'); await pronto(); assert.ok((await info()).largo <= 1); }
+    await page.screenshot({ path: path.join(saida, '02-comercial-12m.png'), fullPage: true });
+    console.log('ok 1 - Comercial: número principal ' + a.hero + ', ' + a.graficos + ' gráficos, ' + a.cards + ' quadros, sem tabela; toque e períodos funcionam');
+    await page.click('[data-gd-aba="financeiro"]'); await pronto();
+    a = await info();
+    assert.equal(a.tabelas, 0); assert.ok(a.graficos >= 2, 'financeiro com gráficos'); assert.ok(a.largo <= 1);
+    await page.waitForTimeout(700); await page.evaluate(() => scrollTo(0, 0)); await page.screenshot({ path: path.join(saida, '03-financeiro.png') }); await page.evaluate(() => scrollTo(0, 700)); await page.waitForTimeout(300); await page.screenshot({ path: path.join(saida, '04-financeiro-b.png') });
+    console.log('ok 2 - Financeiro: saldo ' + a.hero + ', ' + a.graficos + ' gráficos, sem tabela');
     await page.click('#apTopoVoltar');
     await page.waitForSelector('#apInicio:not([hidden])');
     assert.deepEqual(erros, []);

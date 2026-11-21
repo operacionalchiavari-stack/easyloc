@@ -12481,3 +12481,20 @@ Pedido: "gosto que seja um card, gosto que tenha cor, mas está muito grande, es
 - **Cartões** (`styles/app-cartoes.css`, classe `.ec`, comum a Montagem, Triagem e Expedição do app): faixa colorida à esquerda (horário + etapa no Montador; número do pedido + Ida/Volta na Triagem/Expedição) e corpo levemente colorido com cliente (foto), "Pedido N · local" e uma linha de datas ("Carreg. 20/11 · Entrega 21/11"); ~120px de altura (antes ~230). Cores por etapa (`ec-montagem/desmontagem/carregamento`) e pela coluna do quadro (`data-coluna`, volta em lilás). Markup em `cartaoEtapa` (`montador.html`) e `cartao()` (`js/app/fila-app.js`).
 - **Itens da Triagem/Expedição** compactos: foto 48px, nome em até 2 linhas, quantidade grande à direita, "Reportar problema" virou pílula pequena; botões −/+ com 48px.
 - **Conferência do App do Montador** (`montador-evento.js/.css`): cada item tem −/+ e o campo grande do entregue, botão "Todos (N)" que preenche com o esperado, e "Teve dano" que só então abre a linha do danificado. Aba Equipe em lista (Equipe, Caminhões, Uber um embaixo do outro).
+
+## Gerencial do app virou painel de gráficos nativo (20/11/2026)
+Pedido: "mostre mais gráficos, sem tabelas, pense como um dashboard pra celular… não adianta trazer algo de web pro app". A tela
+`#gerencial` do `app.html` não abre mais as telas do computador: `js/app/gerencial-app.js` (`window.AppGerencial.preparar/abrir`,
+chamado por `pintarRelatorios`/`tela()` em `app-celular.js`) + `styles/app-gerencial.css`. Abas Comercial | Financeiro (flags
+`ger_comercial`/`ger_financeiro`) e período Este mês / 3 meses / 12 meses (lembrado em `localStorage gd_periodo`), presos no topo.
+- **Comercial** (lê `separacoes_pedidos`, sem os pedidos de teste, e `posvenda_contatos`): faturamento de eventos reservados pela
+  data do evento com variação vs período anterior; quadros Eventos fechados, Ticket médio, Conversão (criados no período que hoje
+  estão reservados), Cancelados; colunas do faturamento por mês (6 ou 12), próximas 4 semanas (reservados + pré-reserva), barra
+  dos pedidos criados por situação, ranking de clientes, motivos de cancelamento e o medidor do pós-venda.
+- **Financeiro** (`fin_saldos`, `fin_contas`, `fin_receber`, `fin_pagar`, `fin_fluxo`, `fin_dre_centros`): saldo das contas e o
+  previsto em 30 dias, a receber/a pagar com o vencido, entrou e entrou−saiu no período, linha do saldo previsto 30 dias (arrasta o
+  dedo), colunas entrou × saiu por mês, a receber por divisão e despesas por categoria (12 meses).
+- Gráficos em SVG próprio: toque/arraste mostra o valor na faixa de leitura acima do gráfico. Cores da paleta validada (azul
+  `#2a78d6`, laranja `#eb6834`, verde-água `#1baf7a`, amarelo `#eda100`), vermelho só para alerta, sempre com texto.
+- Teste: `RUN_GERENCIAL_LIVE=1 node tests/app-gerencial-live.cjs` (sem tabela, gráficos presentes, toque, períodos, sem rolagem
+  lateral; fotos em `outputs/app-gerencial/`). As páginas do computador continuam com o `relatorio-app.js`, sem uso pelo app.

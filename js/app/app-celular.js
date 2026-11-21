@@ -18,7 +18,7 @@
       icone: '<svg viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5zM13 4h5.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H13z"/><path d="M7 8h1.5M7 11h1.5M16 8h-1M16 11h-1"/></svg>' },
     { chave: "bonus", nome: "Meu bônus", texto: "Seu bônus, extrato e prêmios.", href: "Modulos/Chiavari/Cronograma/montador.html?app=1&tela=bonus",
       icone: '<svg viewBox="0 0 24 24"><path d="M3 8h18v4H3zm2 4v9h14v-9M12 8v13"/><path d="M12 8H8a3 3 0 1 1 3-3Zm0 0h4a3 3 0 1 0-3-3Z"/></svg>' },
-    { chave: "gerencial", nome: "Gerencial", texto: "Os relatórios do sistema: eventos, vendas, pós-venda e financeiro.", href: "#gerencial",
+    { chave: "gerencial", nome: "Gerencial", texto: "Faturamento, agenda, cancelamentos, caixa e contas em gráficos.", href: "#gerencial",
       icone: '<svg viewBox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7m4 7H3"/></svg>' },
   ];
   /* 20/11/2026: módulo "Agentes de IA" = as assistentes que já existem nas telas do sistema, abertas com ?app=1
@@ -40,30 +40,11 @@
   }
   /* 20/11/2026: módulo Gerencial = os relatórios que já existem no sistema, abertos com ?app=1 (faixa do app em cima,
      js/app/relatorio-app.js). Cada um segue a permissão do sistema (flags ger_comercial / ger_financeiro da RPC). */
-  const RELATORIOS = [
-    { grupo: "Comercial", flag: "ger_comercial", nome: "Panorama dos Eventos", texto: "Faturamento, clientes, locais, cidades e o mapa de onde a empresa atua.", href: "Modulos/Comercial/Pedidos/gerencial.html?app=1",
-      icone: '<svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>' },
-    { grupo: "Comercial", flag: "ger_comercial", nome: "Produtividade comercial", texto: "Vendas, conversão, contatos e 3D por vendedor.", href: "Modulos/Comercial/Produtividade/produtividade.html?app=1",
-      icone: '<svg viewBox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7m4 7H3"/></svg>' },
-    { grupo: "Comercial", flag: "ger_comercial", nome: "Cancelamentos", texto: "Motivos, decoradores, regiões e valor perdido.", href: "Modulos/Comercial/Cancelamentos/cancelamentos.html?app=1",
-      icone: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 8.5l7 7m0-7-7 7"/></svg>' },
-    { grupo: "Comercial", flag: "ger_comercial", nome: "Pós-venda", texto: "Satisfação dos clientes, elogios e críticas à equipe.", href: "Modulos/Chiavari/Feedback/feedback.html?app=1&aba=painel",
-      icone: '<svg viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z"/></svg>' },
-    { grupo: "Comercial", flag: "ger_comercial", nome: "Sublocações", texto: "O que mais alugamos de parceiros e quanto pagamos.", href: "Modulos/Comercial/Terceirizacoes/terceirizacoes.html?app=1&aba=relatorios",
-      icone: '<svg viewBox="0 0 24 24"><path d="M7 7h11l-3-3m3 13H6l3 3"/></svg>' },
-    { grupo: "Financeiro", flag: "ger_financeiro", nome: "Financeiro gerencial", texto: "DRE mês a mês, ponto de equilíbrio e lucro por evento.", href: "Modulos/Financeiro/financeiro.html?app=1&aba=gerencial",
-      icone: '<svg viewBox="0 0 24 24"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M3.5 9h17M9 9v11"/></svg>' },
-    { grupo: "Financeiro", flag: "ger_financeiro", nome: "Painel do CFO", texto: "Caixa, previsões e alertas do financeiro numa tela só.", href: "Modulos/Financeiro/painel-cfo.html?app=1",
-      icone: '<svg viewBox="0 0 24 24"><path d="M3 17l5-5 4 4 8-8m-5 0h5v5"/></svg>' },
-  ];
+  /* Gerencial nativo (20/11/2026): painel com gráficos feito para o celular (js/app/gerencial-app.js), no lugar da lista
+     que abria as telas do computador. Comercial e Financeiro seguem as flags ger_comercial / ger_financeiro da RPC. */
   function pintarRelatorios(mods, empresa){
-    const grupos = {};
-    RELATORIOS.filter((r) => mods[r.flag]).forEach((r) => { (grupos[r.grupo] = grupos[r.grupo] || []).push(r); });
-    let i = 0;
-    $("apRelatorios").innerHTML = Object.keys(grupos).map((g) => '<p class="ap-rel-grupo">' + esc(g) + '</p><div class="ap-modulos ap-rel-lista">' +
-      grupos[g].map((r) => '<a class="ap-modulo ap-rel" href="' + r.href + (r.href.includes("painel-cfo") ? "&empresa=" + encodeURIComponent(empresa) : "") + '" style="--i:' + (i++) + '"><span class="ap-modulo-icone" aria-hidden="true">' + r.icone + '</span>' +
-        '<span class="ap-modulo-texto"><b class="ap-modulo-titulo">' + esc(r.nome) + '</b><small>' + esc(r.texto) + '</small></span><span class="ap-seta" aria-hidden="true">›</span></a>').join("") + '</div>').join("")
-      || '<p class="ap-vazio">Seu usuário não tem acesso a nenhum relatório. Fale com o administrador.</p>';
+    window.AppGerencial?.preparar({ sb, empresa, host: $("apRelatorios"), comercial: !!mods.ger_comercial, financeiro: !!mods.ger_financeiro });
+    if(location.hash === "#gerencial") window.AppGerencial?.abrir();
   }
   /* 20/11/2026: o app ganhou cara de aplicativo: barra de abas embaixo (Início · Agentes · Avisos · Ajustes), a caixa de
      avisos (notificações recebidas) e Ajustes com o que cada pessoa quer receber. Telas "empilhadas" (Gerencial) mostram
@@ -79,6 +60,7 @@
     const logado = !["apCarregando", "apLogin"].includes(id);
     $("apAbas").hidden = !logado; document.body.classList.toggle("ap-com-abas", logado);
     $("apTopoVoltar").hidden = id !== "apGerencial";
+    if(id === "apGerencial") window.AppGerencial?.abrir();
     $("apAbas").querySelectorAll("[data-aba]").forEach((b) => { const on = ABA_DA_TELA[id] === b.dataset.aba; b.classList.toggle("ativa", on); if(on){ b.setAttribute("aria-current", "page"); } else { b.removeAttribute("aria-current"); } });
     if(anterior !== id && logado){ const el = $(id); el.classList.remove("ap-entra", "ap-empilha"); void el.offsetWidth; el.classList.add(id === "apGerencial" ? "ap-empilha" : "ap-entra"); window.scrollTo(0, 0); }
     if(id === "apAvisosTela"){ carregarCaixa(); }
@@ -205,8 +187,7 @@
     window.AppCarregamento?.mostrar();
   });
   $("apNovos").addEventListener("click", (e) => { e.preventDefault(); history.replaceState(null, "", location.pathname + location.search + "#avisos"); tela("apAvisosTela"); });
-  $("apRelatorios").addEventListener("click", (e) => { if(e.target.closest(".ap-rel")){ window.AppCarregamento?.mostrar(); } });
-  $("apAgentesLista").addEventListener("click", (e) => { if(e.target.closest(".ap-agente")){ window.AppCarregamento?.mostrar(); } });
+    $("apAgentesLista").addEventListener("click", (e) => { if(e.target.closest(".ap-agente")){ window.AppCarregamento?.mostrar(); } });
   window.addEventListener("popstate", () => { if(!$("apLogin").hidden || !$("apCarregando").hidden){ return; } tela(telaDoEndereco()); });
 
   /* ---------- Avisos (caixa de notificações) ---------- */
