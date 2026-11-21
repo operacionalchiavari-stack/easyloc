@@ -192,3 +192,4 @@ html body .ia-outros h3{margin:0 0 8px;font:600 14px Inter,system-ui,sans-serif!
 .ia-hc-dados .tem-excedente{background:#fdecea}.ia-hc-dados .tem-excedente b{color:#b42318}
 .ia-hero-compacto .ia-hero-frase{grid-area:frase;margin:2px 0 0;color:#4f4f4f;font:400 13px Inter,system-ui,sans-serif}
 @media(max-width:900px){.ia-hero-compacto{grid-template-columns:1fr;grid-template-areas:"uso" "dados" "frase"}.ia-hc-dados{flex-wrap:wrap}}
+html:root:is(#ia-pd#ia-pd#ia-pd,html) body main.ia-page{padding:0 clamp(16px,2vw,32px) 40px!important;box-sizing:border-box}
