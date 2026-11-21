@@ -128,7 +128,7 @@ test('posição final: interface integrada, decisão, confirmação, pagamentos 
   await avaria.locator('.pf-evidencias-item a').click();await page.locator('dialog.pf-preview-evidencia[open] img').waitFor({state:'visible'});
   assert.equal(browser.contexts()[0].pages().length,abasAntes,'foto abre dentro do sistema');
   await page.keyboard.press('Escape');await page.locator('dialog.pf-preview-evidencia').waitFor({state:'detached'});
-  await falta.locator('.pf-evidencias-item a').click();await page.getByRole('button',{name:'Fechar prévia',exact:true}).click();assert.equal(await page.locator('dialog.pf-preview-evidencia').count(),0);
+  await falta.locator('.pf-evidencias-item a').click();await page.getByRole('button',{name:'Fechar prévia',exact:true}).click();await page.locator('dialog.pf-preview-evidencia').waitFor({state:'detached'});assert.equal(await page.locator('dialog.pf-preview-evidencia').count(),0);
 
   assert.equal(await page.locator('#pfEvidencias').count(),0,'sem galeria separada');
   assert.equal(await page.locator('.pf-financeiro-unificado').count(),1);
