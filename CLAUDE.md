@@ -12555,7 +12555,7 @@ sistema (`js/core/abertura.js`) também segue a cor do menu com o tema festivo. 
 
 ## Time de agentes (era "Uso de IA"): franquia mensal e excedente pós-pago (21/11/2026)
 Pedido: a mensalidade inclui um limite de IA; quem usar mais paga o excedente na próxima fatura (a IA nunca é bloqueada);
-a empresa acompanha em **Geral › Time de agentes** (os 6 agentes como funcionários, com foto grande, tarefas, créditos e R$ no mês; pizzas de equipe e decoradores) (`Modulos/Geral/UsoIA/`, permissão `gestao.ia_uso.visualizar`). O uso dos
+a empresa acompanha em **Gestão › Time de agentes** (os 6 agentes como funcionários, com foto grande, tarefas, créditos e R$ no mês; pizzas de equipe e decoradores) (`Modulos/Geral/UsoIA/`, permissão `gestao.ia_uso.visualizar`). O uso dos
 decoradores no catálogo conta e aparece separado.
 - **Registro**: `supabase/functions/_shared/ia-uso.ts` — `Deno.serve(comUsoIA("origem", handler))` abre um contexto por
   requisição (AsyncLocalStorage) e um vigia no `fetch` grava em `ia_uso` o consumo que a OpenAI devolve (tokens de texto,

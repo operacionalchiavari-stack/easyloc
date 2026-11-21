@@ -57,8 +57,6 @@
           { rotulo: "Catálogo", href: "Modulos/Comercial/Catalogo/catalogo.html" },
           { rotulo: "Painel de Complexidade", href: "Modulos/Chiavari/Costura/costura.html" },
           { rotulo: "Ocorrências operacionais", href: "Modulos/Chiavari/Ocorrencias/OcorrenciasOperacionais.html" },
-          // Uso de IA (nov/2026): franquia mensal de créditos, uso por agente e por pessoa, excedente na próxima fatura.
-          { rotulo: "Time de agentes", href: "Modulos/Geral/UsoIA/uso-ia.html" },
         ],
       },
       {
@@ -163,6 +161,9 @@
           { rotulo: "Central de Metas", href: "Modulos/Chiavari/CentralMetas/central.html" },
           // Saiu do Comercial a pedido (15/11/2026): é tela de gestão do time comercial.
           { rotulo: "Produtividade comercial", href: "Modulos/Comercial/Produtividade/produtividade.html" },
+          // Time de agentes (nov/2026, ex-"Uso de IA", saiu de Geral a pedido): os agentes de IA, franquia mensal de
+          // créditos, uso por pessoa e excedente na próxima fatura.
+          { rotulo: "Time de agentes", href: "Modulos/Geral/UsoIA/uso-ia.html" },
           { rotulo: "Parâmetros", href: "Modulos/Configuracoes/Parametros/parametros.html" },
           // Era categoria própria; com o menu no topo foi para dentro de Gestão (pedido do usuário).
           { rotulo: "Importar Itens", href: "Modulos/Importacao/ImportarItens/importar-itens.html" },
