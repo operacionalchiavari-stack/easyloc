@@ -15,6 +15,31 @@
   const reduzido = (() => { try { return matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (_) { return false; } })();
   const hex = v => /^#[0-9a-f]{6}$/i.test(String(v || "").trim());
 
+  function festivoAtivo(t) {
+    try {
+      if (!["carnaval", "natal", "pascoa", "ano_novo"].includes(t.tema_festivo)) return "";
+      const p = new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+      const v = k => p.find(x => x.type === k).value, hoje = `${v("year")}-${v("month")}-${v("day")}`;
+      const d = x => /^\d{4}-\d{2}-\d{2}$/.test(String(x || ""));
+      const c = String(t.cores_sistema?.cor_sidebar || "").trim().toLowerCase();
+      return d(t.tema_festivo_inicio) && d(t.tema_festivo_fim) && t.tema_festivo_inicio <= hoje && hoje <= t.tema_festivo_fim && hex(c) ? c : "";
+    } catch (_) { return ""; }
+  }
+  // A cor de fundo acompanha a do menu (--color-sidebar), inclusive quando o tema chega do banco depois.
+  function pintarCor(cor) {
+    if (!el || !hex(cor) || el.dataset.cor === cor) return;
+    el.dataset.cor = cor;
+    el.style.setProperty("--ab-cor", cor);
+    el.style.setProperty("--ab-claro", clarear(cor, .12));
+    el.style.setProperty("--ab-escuro", escurecer(cor, .38));
+  }
+  function corDoMenu() {
+    try {
+      const c = getComputedStyle(document.documentElement).getPropertyValue("--color-sidebar").trim().toLowerCase();
+      return hex(c) && c !== "#290610" ? c : "";
+    } catch (_) { return ""; }
+  }
+
   function marca() {
     let logo = "", cor = "#5a5a55";
     try {
@@ -24,6 +49,9 @@
         logo = t.logo_url || "";
         const c = String(t.cor_sidebar || "").trim().toLowerCase();
         if (hex(c) && c !== "#290610") cor = c;
+        // Tema festivo (Natal, Carnaval…) no período: a cor do menu é a do tema (mesma regra do themePrepaint).
+        const f = festivoAtivo(t);
+        if (f) cor = f;
       }
     } catch (_) {}
     if (logo && !/^(blob:|data:)/.test(logo)) {
@@ -124,9 +152,7 @@
     el.id = "acervoAbertura";
     el.setAttribute("role", "status");
     el.setAttribute("aria-label", "Abrindo o sistema");
-    el.style.setProperty("--ab-cor", m.cor);
-    el.style.setProperty("--ab-claro", clarear(m.cor, .12));
-    el.style.setProperty("--ab-escuro", escurecer(m.cor, .38));
+    pintarCor(m.cor);
     if (opcoes && opcoes.continua) el.classList.add("continua");
     if (fraco) el.classList.add("leve");
     el.innerHTML = `<span class="ab-fundo"></span><span class="ab-luz l1"></span><span class="ab-luz l2"></span>
@@ -227,6 +253,7 @@
     };
     const conferir = async () => {
       const t = performance.now() - inicio;
+      const cm = corDoMenu(); if (cm) pintarCor(cm);
       if ((pronto() && t >= minimo) || t >= maximo) {
         // deixa a logo terminar de se desenhar antes de voar
         if (!veioDoLogin && t < 1400 && !reduzido && logoPronta) await esperar(1400 - t);
