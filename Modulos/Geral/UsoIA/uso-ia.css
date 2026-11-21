@@ -114,3 +114,6 @@ html body .ia-dialogo h2{margin:0;font:600 19px Inter,system-ui,sans-serif!impor
 @media(max-width:600px){.ia-hero{padding:18px}.ia-hero-num b{font-size:36px}.ia-mes strong{min-width:0}}
 .ia-page [hidden],.ia-dialogo [hidden]{display:none!important}
 .ia-tabela th.n{text-align:right!important}
+.ia-bolinha{position:relative;overflow:hidden}
+.ia-bolinha img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ia-barra-nome .ia-bolinha{width:38px;height:38px}

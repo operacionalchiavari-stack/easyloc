@@ -10,16 +10,16 @@
   const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
   // Nomes e cores de cada agente/recurso (as cores dos agentes são as do app; as outras seguem a mesma paleta).
   const ORIGENS = {
-    helena: { nome: "Helena", papel: "Catálogo e pedidos", cor: "#b4657a" },
-    clara: { nome: "Clara", papel: "Financeiro", cor: "#2a78d6" },
-    miguel: { nome: "Miguel", papel: "Estoque e separação", cor: "#1baf7a" },
-    carla: { nome: "Carla", papel: "Compras", cor: "#eb6834" },
-    marcos: { nome: "Marcos", papel: "Manutenção", cor: "#6250d6" },
-    ideia: { nome: "Ideia Premiada", papel: "Ideias de melhoria", cor: "#eda100" },
+    helena: { foto: "helena", nome: "Helena", papel: "Catálogo e pedidos", cor: "#b4657a" },
+    clara: { foto: "clara", nome: "Clara", papel: "Financeiro", cor: "#2a78d6" },
+    miguel: { foto: "miguel", nome: "Miguel", papel: "Estoque e separação", cor: "#1baf7a" },
+    carla: { foto: "carla", nome: "Carla", papel: "Compras", cor: "#eb6834" },
+    marcos: { foto: "marcos", nome: "Marcos", papel: "Manutenção", cor: "#6250d6" },
+    ideia: { foto: "ideia", nome: "Ideia Premiada", papel: "Ideias de melhoria", cor: "#eda100" },
     reunioes: { nome: "Reuniões", papel: "Transcrição e atas", cor: "#0f8a8a" },
     studio3d: { nome: "3D e renderizações", papel: "Fotos com IA e tecido", cor: "#8a5a2b" },
     compras: { nome: "Propostas de compra", papel: "Leitura dos orçamentos", cor: "#c2410c" },
-    montagem: { nome: "Assistente da montagem", papel: "App do Montador", cor: "#4b5563" },
+    montagem: { foto: "montagem", nome: "Assistente da montagem", papel: "App do Montador", cor: "#4b5563" },
     avaria: { nome: "Setor da avaria", papel: "Sugere o setor da O.S.", cor: "#9a3412" },
     planejador: { nome: "Planejador de eventos", papel: "", cor: "#64748b" },
     solicitacao: { nome: "Solicitações", papel: "", cor: "#64748b" },
@@ -27,6 +27,11 @@
   const origem = (k) => ORIGENS[k] || { nome: k || "Outro", papel: "", cor: "#94a3b8" };
   const ACOES = { conversar: "conversa", transcrever: "áudio", ligacao: "ligação", ligacao_iniciar: "ligação", gerar_ata: "ata", transcrever_parte: "gravação", perguntar: "pergunta", relatorio: "relatório", organizar: "organizou o extrato", ler_extrato: "leu o extrato", classificar_dre: "organizou a DRE" };
   const acaoNome = (a) => ACOES[a] || String(a || "").replace(/_/g, " ");
+  // Retrato do agente (assets/agentes/<nome>.jpg, os mesmos do app e das conversas); sem retrato, a inicial na cor dele.
+  const bolinha = (k, cls = "") => {
+    const g = origem(k);
+    return `<span class="ia-bolinha ${cls}" style="background:${g.cor}">${esc(g.nome[0])}${g.foto ? `<img src="../../../assets/agentes/${g.foto}.jpg" alt="" loading="lazy" onerror="this.remove()">` : ""}</span>`;
+  };
   const iniciais = (n) => String(n || "?").trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join("").toUpperCase();
 
   const S = { empresa: null, mes: null, dados: null, abaPessoa: "equipe" };
@@ -119,7 +124,7 @@
     $("iaOrigens").innerHTML = `<ul class="ia-barras">${lista.map((o) => {
       const g = origem(o.origem);
       const partes = [o.equipe > 0 ? `equipe ${num(o.equipe)}` : "", o.decoradores > 0 ? `decoradores ${num(o.decoradores)}` : ""].filter(Boolean).join(" · ");
-      return `<li><div class="ia-barra-nome"><span class="ia-bolinha" style="background:${g.cor}">${esc(g.nome[0])}</span><div><b>${esc(g.nome)}</b><small>${esc([g.papel, `${num(o.chamadas)} usos`].filter(Boolean).join(" · "))}</small></div><strong>${num(o.creditos)}<small>${Math.round((o.creditos / total) * 100)}%</small></strong></div>
+      return `<li><div class="ia-barra-nome">${bolinha(o.origem)}<div><b>${esc(g.nome)}</b><small>${esc([g.papel, `${num(o.chamadas)} usos`].filter(Boolean).join(" · "))}</small></div><strong>${num(o.creditos)}<small>${Math.round((o.creditos / total) * 100)}%</small></strong></div>
         <div class="ia-barra-trilho"><i style="width:${(o.creditos / max) * 100}%;background:${g.cor}"></i></div>${partes ? `<small class="ia-barra-partes">${esc(partes)}</small>` : ""}</li>`;
     }).join("")}</ul>`;
   }
@@ -179,7 +184,7 @@
     const r = S.dados.recentes;
     if (!r.length) { $("iaRecentes").innerHTML = vazio("Nenhum uso de IA neste mês."); return; }
     const hora = (t) => new Date(t).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-    $("iaRecentes").innerHTML = `<ul class="ia-recentes">${r.map((u) => `<li><span class="ia-bolinha p" style="background:${origem(u.origem).cor}">${esc(origem(u.origem).nome[0])}</span>
+    $("iaRecentes").innerHTML = `<ul class="ia-recentes">${r.map((u) => `<li>${bolinha(u.origem, "p")}
       <div><b>${esc(origem(u.origem).nome)}</b>${u.acao ? ` <small>${esc(acaoNome(u.acao))}</small>` : ""}<small>${esc(u.nome)}${u.decorador ? " · decorador" : ""} · ${hora(u.criado_em)}</small></div><strong>${num(u.creditos)}</strong></li>`).join("")}</ul>`;
   }
 
