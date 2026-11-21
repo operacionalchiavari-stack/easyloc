@@ -18,7 +18,7 @@
       icone: '<svg viewBox="0 0 24 24"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v16H5.5A1.5 1.5 0 0 1 4 18.5zM13 4h5.5A1.5 1.5 0 0 1 20 5.5v13a1.5 1.5 0 0 1-1.5 1.5H13z"/><path d="M7 8h1.5M7 11h1.5M16 8h-1M16 11h-1"/></svg>' },
     { chave: "bonus", nome: "Meu bônus", texto: "Seu bônus, extrato e prêmios.", href: "Modulos/Chiavari/Cronograma/montador.html?app=1&tela=bonus",
       icone: '<svg viewBox="0 0 24 24"><path d="M3 8h18v4H3zm2 4v9h14v-9M12 8v13"/><path d="M12 8H8a3 3 0 1 1 3-3Zm0 0h4a3 3 0 1 0-3-3Z"/></svg>' },
-    { chave: "gerencial", nome: "Gerencial", texto: "Faturamento, agenda, cancelamentos, caixa e contas em gráficos.", href: "#gerencial",
+    { chave: "gerencial", nome: "Gerencial", texto: "Faturamento, agenda, cancelamentos, caixa e contas em gráficos.", href: "Modulos/Gestao/GerencialApp/gerencial.html?app=1",
       icone: '<svg viewBox="0 0 24 24"><path d="M4 20V10m6 10V4m6 16v-7m4 7H3"/></svg>' },
   ];
   /* 20/11/2026: módulo "Agentes de IA" = as assistentes que já existem nas telas do sistema, abertas com ?app=1
@@ -40,11 +40,11 @@
   }
   /* 20/11/2026: módulo Gerencial = os relatórios que já existem no sistema, abertos com ?app=1 (faixa do app em cima,
      js/app/relatorio-app.js). Cada um segue a permissão do sistema (flags ger_comercial / ger_financeiro da RPC). */
-  /* Gerencial nativo (20/11/2026): painel com gráficos feito para o celular (js/app/gerencial-app.js), no lugar da lista
+  /* Gerencial nativo (20/11/2026): tela própria Modulos/Gestao/GerencialApp/gerencial.html (js/app/gerencial-app.js), no lugar da lista
      que abria as telas do computador. Comercial e Financeiro seguem as flags ger_comercial / ger_financeiro da RPC. */
-  function pintarRelatorios(mods, empresa){
-    window.AppGerencial?.preparar({ sb, empresa, host: $("apRelatorios"), comercial: !!mods.ger_comercial, financeiro: !!mods.ger_financeiro });
-    if(location.hash === "#gerencial") window.AppGerencial?.abrir();
+  function pintarRelatorios(){
+    // o Gerencial virou tela própria (fundo branco, tela cheia, como Triagem e Expedição); endereço antigo #gerencial leva para lá
+    if(location.hash === "#gerencial") location.replace("Modulos/Gestao/GerencialApp/gerencial.html?app=1");
   }
   /* 20/11/2026: o app ganhou cara de aplicativo: barra de abas embaixo (Início · Agentes · Avisos · Ajustes), a caixa de
      avisos (notificações recebidas) e Ajustes com o que cada pessoa quer receber. Telas "empilhadas" (Gerencial) mostram
@@ -60,7 +60,6 @@
     const logado = !["apCarregando", "apLogin"].includes(id);
     $("apAbas").hidden = !logado; document.body.classList.toggle("ap-com-abas", logado);
     $("apTopoVoltar").hidden = id !== "apGerencial";
-    if(id === "apGerencial") window.AppGerencial?.abrir();
     $("apAbas").querySelectorAll("[data-aba]").forEach((b) => { const on = ABA_DA_TELA[id] === b.dataset.aba; b.classList.toggle("ativa", on); if(on){ b.setAttribute("aria-current", "page"); } else { b.removeAttribute("aria-current"); } });
     if(anterior !== id && logado){ const el = $(id); el.classList.remove("ap-entra", "ap-empilha"); void el.offsetWidth; el.classList.add(id === "apGerencial" ? "ap-empilha" : "ap-entra"); window.scrollTo(0, 0); }
     if(id === "apAvisosTela"){ carregarCaixa(); }
@@ -183,7 +182,6 @@
   /* Nov/2026: tocar num módulo mostra o carregamento padrão (branco, com a logo) enquanto a página do módulo abre. */
   $("apModulos").addEventListener("click", (e) => {
     const a = e.target.closest(".ap-modulo"); if(!a){ return; }
-    if(a.getAttribute("href") === "#gerencial"){ e.preventDefault(); history.pushState({ app: "#gerencial" }, "", "#gerencial"); tela("apGerencial"); return; }
     window.AppCarregamento?.mostrar();
   });
   $("apNovos").addEventListener("click", (e) => { e.preventDefault(); history.replaceState(null, "", location.pathname + location.search + "#avisos"); tela("apAvisosTela"); });

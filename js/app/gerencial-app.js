@@ -280,7 +280,7 @@
       '<div class="gd-corpo" id="gdCorpo"></div><p class="gd-atualizado" id="gdAtualizado"></p>';
     host.querySelectorAll("[data-gd-aba]").forEach((b) => b.addEventListener("click", () => { ST.aba = b.dataset.gdAba; marcar(); pintar(); }));
     host.querySelectorAll("[data-gd-per]").forEach((b) => b.addEventListener("click", () => { ST.periodo = b.dataset.gdPer; try{ localStorage.setItem("gd_periodo", ST.periodo); }catch(e){} marcar(); pintar(); }));
-    const cab = document.querySelector('.ap-barra'); const topo = host.querySelector('.gd-topo'); if(cab && topo) topo.style.top = cab.offsetHeight + 'px';
+    const cab = document.querySelector('.ap-barra, .gd-cabeca'); const topo = host.querySelector('.gd-topo'); if(cab && topo) topo.style.top = cab.offsetHeight + 'px';
     marcar();
   }
   function marcar(){
@@ -307,6 +307,7 @@
   window.AppGerencial = {
     preparar(ctx){ const novo = !ST.ctx || ST.ctx.empresa !== ctx.empresa; ST.ctx = ctx; if(novo){ ST.dados = {}; ST.carregando = {}; } try{ ST.periodo = localStorage.getItem("gd_periodo") || "mes"; }catch(e){} ST.montado = false; },
     abrir(){ if(!ST.ctx) return; if(!ST.montado){ casca(); ST.montado = true; } pintar(); },
+    atualizar(){ if(!ST.montado) return; ST.dados = {}; ST.carregando = {}; pintar(true); },
   };
   let largura = window.innerWidth;
   window.addEventListener("resize", () => { if(Math.abs(window.innerWidth - largura) > 40 && ST.montado && document.getElementById("gdCorpo")?.offsetParent){ largura = window.innerWidth; pintar(); } });

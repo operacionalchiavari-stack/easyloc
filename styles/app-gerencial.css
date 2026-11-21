@@ -83,3 +83,26 @@
 .gd-esq-hero{ height:110px; border-radius:20px; } .gd-esq-graf{ height:240px; border-radius:20px; }
 @keyframes gdBrilho{ from{ background-position:100% 0 } to{ background-position:-100% 0 } }
 @media(prefers-reduced-motion:reduce){ .gd-entra>*,.gd-esq{ animation:none!important } }
+
+/* Tela própria (Modulos/Gestao/GerencialApp/gerencial.html): fundo branco, tela cheia, sem a faixa com a logo.
+   Os quadros ficam num cinza bem claro para se destacar do branco. */
+html,body.gd-pagina{ margin:0; background:#fff; color:#2b2622; font-family:Manrope,system-ui,sans-serif; -webkit-tap-highlight-color:transparent; overscroll-behavior-y:none; }
+body.gd-pagina *{ box-sizing:border-box; }
+.gd-cabeca{ position:sticky; top:0; z-index:6; display:grid; grid-template-columns:44px 1fr 44px; align-items:center; gap:6px;
+  padding:calc(env(safe-area-inset-top) + 8px) 10px 6px; background:rgba(255,255,255,.96); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); }
+.gd-cabeca h1{ margin:0; text-align:center; color:#2b2622; font:800 18px Manrope,sans-serif; }
+.gd-icone{ width:44px; height:44px; border:0; border-radius:12px; background:transparent; color:#2b2622; display:grid; place-items:center; cursor:pointer; padding:0; }
+.gd-icone:active{ background:#f2f0ec; }
+.gd-icone svg{ width:24px; height:24px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.gd-pagina .ap-gerencial{ padding:0 16px calc(28px + env(safe-area-inset-bottom)); max-width:640px; margin:0 auto; }
+.gd-pagina .gd-topo{ background:rgba(255,255,255,.96); padding-top:4px; }
+.gd-pagina .gd-abas{ background:#f0eee9; }
+.gd-pagina .gd-periodos button{ background:#fff; }
+.gd-pagina :is(.gd-hero,.gd-tile,.gd-card){ background:#f7f6f3; box-shadow:none; }
+.gd-pagina .gd-tile.alerta{ box-shadow:0 0 0 1px #f4d3cf; }
+.gd-pagina .gd-leitura{ background:#fff; }
+.gd-pagina :is(.gd-rank-trilho,.gd-medidor-trilho){ background:#e9e6e0; }
+.gd-pagina .gd-esq{ background:linear-gradient(90deg,#f0eee9 0,#f8f7f4 40%,#f0eee9 80%); background-size:200% 100%; }
+.gd-pagina .ap-acao{ border:0; background:none; color:#2a78d6; font:700 13px Manrope,sans-serif; padding:4px 0; cursor:pointer; }
+.gd-pagina .ap-vazio,.gd-erro{ margin:40px 8px; text-align:center; color:#6b655c; font:500 14px/1.5 Manrope,sans-serif; }
+.gd-pagina .gd-periodos button.on{ background:#2b2622; border-color:#2b2622; color:#fff; }

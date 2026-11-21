@@ -12483,9 +12483,11 @@ Pedido: "gosto que seja um card, gosto que tenha cor, mas está muito grande, es
 - **Conferência do App do Montador** (`montador-evento.js/.css`): cada item tem −/+ e o campo grande do entregue, botão "Todos (N)" que preenche com o esperado, e "Teve dano" que só então abre a linha do danificado. Aba Equipe em lista (Equipe, Caminhões, Uber um embaixo do outro).
 
 ## Gerencial do app virou painel de gráficos nativo (20/11/2026)
-Pedido: "mostre mais gráficos, sem tabelas, pense como um dashboard pra celular… não adianta trazer algo de web pro app". A tela
-`#gerencial` do `app.html` não abre mais as telas do computador: `js/app/gerencial-app.js` (`window.AppGerencial.preparar/abrir`,
-chamado por `pintarRelatorios`/`tela()` em `app-celular.js`) + `styles/app-gerencial.css`. Abas Comercial | Financeiro (flags
+Pedido: "mostre mais gráficos, sem tabelas, pense como um dashboard pra celular… não adianta trazer algo de web pro app". Depois:
+"quero que abra como triagem, expedição, fundo branco sem logo, tela cheia". O cartão Gerencial do `app.html` abre a tela própria
+`Modulos/Gestao/GerencialApp/gerencial.html` (fundo branco, faixa com ← / Gerencial / ↻, sem a faixa grafite com a logo; o
+endereço antigo `app.html#gerencial` redireciona para ela). O painel é `js/app/gerencial-app.js` (`window.AppGerencial.preparar/
+abrir/atualizar`; permissões pela RPC `app_celular_modulos`) + `styles/app-gerencial.css` (bloco `.gd-pagina` no fim). Abas Comercial | Financeiro (flags
 `ger_comercial`/`ger_financeiro`) e período Este mês / 3 meses / 12 meses (lembrado em `localStorage gd_periodo`), presos no topo.
 - **Comercial** (lê `separacoes_pedidos`, sem os pedidos de teste, e `posvenda_contatos`): faturamento de eventos reservados pela
   data do evento com variação vs período anterior; quadros Eventos fechados, Ticket médio, Conversão (criados no período que hoje

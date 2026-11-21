@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <title>Gerencial</title>
+  <!-- Gerencial do app (20/11/2026): tela própria, fundo branco e tela cheia, como Triagem e Expedição (sem a faixa com a logo).
+       O painel em si é js/app/gerencial-app.js + styles/app-gerencial.css. Aberto pelo cartão "Gerencial" do app.html. -->
+  <link rel="icon" type="image/png" href="../../Comercial/Catalogo/app-icone-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../styles/app-gerencial.css?v=20261120-tela2">
+  <script src="../../../js/app/carregamento-app.js?v=20261106-abertura" data-auto></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script>
+</head>
+<body class="gd-pagina">
+  <header class="gd-cabeca">
+    <button type="button" class="gd-icone" id="gdVoltar" aria-label="Voltar ao início do app"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <h1>Gerencial</h1>
+    <button type="button" class="gd-icone" id="gdRecarregar" aria-label="Atualizar os números"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.34-5.66M20 4v5h-5"/></svg></button>
+  </header>
+  <main class="ap-gerencial" id="gdHost"></main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+  <script src="../../../js/core/supabase.js?v=20261106-app"></script>
+  <script src="../../../js/core/doisFatores.js?v=20261023-2fa"></script>
+  <script src="../../../js/app/gerencial-app.js?v=20261120-tela"></script>
+  <script>
+  (async function(){
+    const sb = window.supabaseClient, host = document.getElementById("gdHost");
+    const voltar = () => { if(/app\.html/.test(document.referrer)) history.back(); else location.href = "../../../app.html"; };
+    document.getElementById("gdVoltar").addEventListener("click", voltar);
+    document.getElementById("gdRecarregar").addEventListener("click", () => window.AppGerencial?.atualizar());
+    try{
+      const { data: { session } } = await sb.auth.getSession();
+      if(!session){ location.replace("../../../app.html"); return; }
+      let empresa = sessionStorage.getItem("empresa_id");
+      try{ empresa = empresa || localStorage.getItem("acervo_ultima_empresa"); }catch(e){}
+      if(!empresa){ const { data } = await sb.from("usuarios_empresas").select("empresa_id").eq("user_id", session.user.id).limit(1); empresa = data && data[0] && data[0].empresa_id; }
+      if(!empresa){ location.replace("../../../app.html"); return; }
+      const { data: mods, error } = await sb.rpc("app_celular_modulos", { p_empresa: empresa });
+      if(error) throw error;
+      window.AppGerencial.preparar({ sb, empresa, host, comercial: !!(mods && mods.ger_comercial), financeiro: !!(mods && mods.ger_financeiro) });
+      window.AppGerencial.abrir();
+    }catch(e){
+      console.error(e);
+      host.innerHTML = '<p class="gd-vazio gd-erro">Não foi possível abrir o Gerencial. Verifique a internet e tente de novo.</p>';
+    }
+    window.AppCarregamento?.pronto();
+  })();
+  </script>
+</body>
+</html>
