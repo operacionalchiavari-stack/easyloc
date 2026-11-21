@@ -94,8 +94,6 @@
 .pa-itens tr.pa-linha-sublocacao .pa-valor-input{width:96px;padding:6px 8px;border:1px solid #d9d2ec;border-radius:8px;text-align:right;font:inherit;background:#fff}
 .pa-personalizacao-desc{color:#5b6470;font-weight:400;line-height:1.4}
 
-/* Mesmo destaque discreto da coluna Total na Lista Completa (21/11/2026). */
-.pa-itens td.pa-valor.pa-valor-total,.pa-itens .pa-colhead td.pa-valor:last-child{background:#f5f2ec;padding-left:12px;padding-right:12px}
-.pa-itens .pa-valor-total b{font-weight:700;color:#1f1d1a}
-.pa-itens .pa-colhead td.pa-valor:last-child{color:#1f1d1a;font-weight:700}
+/* Mesmo cartãozinho do valor total na Lista Completa (21/11/2026). */
+.pa-itens .pa-valor-total b{display:inline-block;padding:5px 10px;border-radius:8px;background:#f5f2ec;font-weight:700;color:#1f1d1a}
 .pa-itens td.pa-valor:has(+td.pa-valor+td.pa-valor-total){color:#9a968c;font-size:.92em}

@@ -831,7 +831,7 @@ window.catalogAssistenteProjeto = {
     if(!abrir){ S.previaHelena?.close(); S.previaHelena = null; document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close()); return true; }
     if(!S.projeto) return false;
     const project = S.projeto;
-    await Promise.all(["catalogo-projetos.css?v=20261121-total", "projeto-apresentacao.css?v=20261121-total"].map(href => new Promise((resolve, reject) => {
+    await Promise.all(["catalogo-projetos.css?v=20261121-total-card", "projeto-apresentacao.css?v=20261121-total-card"].map(href => new Promise((resolve, reject) => {
       let l = document.querySelector(`link[data-previa="${href}"]`);
       if(l?.sheet){ resolve(); return; }
       if(!l){ l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; l.dataset.previa = href; document.head.appendChild(l); }
