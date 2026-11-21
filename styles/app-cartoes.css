@@ -69,3 +69,6 @@ html body .material [data-reportar]{display:inline-flex!important;align-items:ce
 html body .material [data-reportar]::before{content:"⚠";font-size:12px}
 html body .material .stepper button{min-width:48px;min-height:48px;font-size:24px}
 html body .material .stepper input{min-height:48px;font:800 19px Manrope,sans-serif;text-align:center}
+/* O Montador tem regras antigas "body[data-app-equipe=montagem] .etapa{background:azul!important}" que pintavam todos os
+   cartões de azul (inclusive desmontagem). Esta vence pelo peso e usa a cor de cada etapa. */
+html body[data-app-equipe] .ec{background:var(--ec-suave)!important;border:1px solid var(--ec-borda)!important}

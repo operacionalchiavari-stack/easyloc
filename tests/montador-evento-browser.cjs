@@ -83,6 +83,7 @@ async function main(){
    await page.evaluate(()=>carregar());assert.equal(await page.locator('#telaBonus').isVisible(),true,'atualizar não sai do bônus');
    await page.screenshot({path:path.join(os.tmpdir(),`montador-bonus-${width}.png`)});
    await page.goto(`http://127.0.0.1:${server.address().port}/Modulos/Chiavari/Cronograma/montador.html`);await page.locator('#telaInicio.ativa').waitFor();
+   {const cor=async(t)=>page.locator('#telaInicio .etapa').filter({hasText:t}).first().evaluate(e=>getComputedStyle(e).backgroundColor);assert.equal(await cor('Evento Jardim'),'rgb(241, 246, 254)','montagem azul');assert.equal(await cor('Outro evento'),'rgb(255, 245, 236)','desmontagem laranja, não azul');}
    const cartao=page.locator('#telaInicio .etapa').filter({hasText:'Evento Jardim'});assert.equal(await cartao.locator('.etapa-cliente-foto').count(),1,'foto do cliente no cartão');assert.equal(await cartao.locator('a.etapa-endereco').count(),1,'endereço como link');
    await cartao.click();
    for(const nome of ['Ana Silva','Bruno','Caminhão 01']){
