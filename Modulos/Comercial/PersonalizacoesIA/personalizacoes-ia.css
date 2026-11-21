@@ -37,5 +37,6 @@ html:root body main.pia-page{max-width:none;margin:0;padding:24px clamp(16px,2vw
 .pia-header{display:grid;grid-template-columns:1fr auto 1fr;align-items:end}
 html:root body .pia-page .pia-header h2{grid-column:2;text-align:center;align-self:center}
 .pia-header .pia-toolbar{grid-column:3;justify-self:end}
-@media(max-width:1750px){.pia-header{grid-template-columns:1fr;gap:14px}html:root body .pia-page .pia-header h2{grid-column:1}.pia-header .pia-toolbar{grid-column:1;justify-self:end}}
-@media(max-width:800px){.pia-header .pia-toolbar{justify-self:stretch}}
+/* Sem o botão Atualizar: busca e filtro na mesma linha do título (21/11/2026). */
+.pia-header .pia-search{width:clamp(170px,17vw,300px)}
+@media(max-width:1100px){.pia-header{grid-template-columns:1fr;gap:14px}html:root body .pia-page .pia-header h2{grid-column:1}.pia-header .pia-toolbar{grid-column:1;justify-self:center}}

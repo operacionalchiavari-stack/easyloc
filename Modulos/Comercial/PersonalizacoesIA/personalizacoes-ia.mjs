@@ -40,7 +40,7 @@ function renderizar(){
 
 async function carregar(){
   if(state.carregando)return;
-  state.carregando=true;$('piaAtualizar').disabled=true;$('piaStatus').hidden=false;$('piaStatus').textContent='Carregando personalizações…';
+  state.carregando=true;const at=$('piaAtualizar');if(at)at.disabled=true;$('piaStatus').hidden=false;$('piaStatus').textContent='Carregando personalizações…';
   try{
     const contexto=await window.aguardarContexto();
     if(!contexto?.empresa_id)throw Error('Não foi possível identificar a empresa. Entre novamente no sistema.');
@@ -48,7 +48,7 @@ async function carregar(){
     if(error)throw error;
     state.fotos=Array.isArray(data?.fotos)?data.fotos:[];renderizar();
   }catch(error){$('piaGrade').innerHTML='';$('piaStatus').hidden=false;$('piaStatus').textContent=error.message || 'Não foi possível carregar as imagens. Clique em Atualizar para tentar novamente.';}
-  finally{state.carregando=false;$('piaAtualizar').disabled=false;}
+  finally{state.carregando=false;const at=$('piaAtualizar');if(at)at.disabled=false;}
 }
 
 function abrirFoto(id){
@@ -76,7 +76,7 @@ $('piaCaminho').addEventListener('click',event=>{
   renderizar();
 });
 $('piaBusca').addEventListener('input',renderizar);$('piaTipo').addEventListener('change',renderizar);
-$('piaAtualizar').addEventListener('click',carregar);$('piaFechar').addEventListener('click',()=>$('piaPreview').close());
+$('piaAtualizar')?.addEventListener('click',carregar);$('piaFechar').addEventListener('click',()=>$('piaPreview').close());
 $('piaBaixar').addEventListener('click',async()=>{
   const foto=state.foto;if(!foto)return;
   const botao=$('piaBaixar');botao.disabled=true;botao.textContent='Preparando…';
