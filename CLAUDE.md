@@ -12572,3 +12572,11 @@ decoradores no catálogo conta e aparece separado.
 - Publicadas com o registro: ideia, avaria, catalogo (Helena), compras-proposta, financeiro (Clara), planejador, reunioes,
   studio-ai-engine. **Faltam `estoque-assistente` (Miguel) e `solicitacao-assistente` (Carla/Marcos)**: o código já está
   embrulhado, mas a outra sessão tinha mudanças em andamento nelas; publicar junto com o trabalho dela.
+
+## Renderizações (ex-"Personalizações IA", 21/11/2026)
+Comercial › Renderizações (`Modulos/Comercial/PersonalizacoesIA/`, mesma tabela `comercial_personalizacoes_ia`). Na raiz,
+duas pastas: **Itens personalizáveis** (tecido e tinta, por categoria e item, como antes) e **Módulo 3D** (tipo novo
+`render3d`). Toda imagem gerada pelo `studio-ai-engine` a partir de uma cena 3D (3D Livre, composições da Helena) é
+guardada sozinha (`guardarRender3d` em `studio-ai-engine/personalizacao-acervo.mjs` → RPC `comercial_render3d_salvar`,
+bucket `personalizacoes-ia`, pasta `<empresa>/_renders3d/`), com os móveis da cena no título e quem gerou. Migration
+`20261121000700_renderizacoes_3d.sql` (aplicada). Renderizações anteriores a esta data não foram guardadas.
