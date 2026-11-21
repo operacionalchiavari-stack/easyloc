@@ -1,4 +1,5 @@
-// Geral › Uso de IA (21/11/2026). Franquia mensal de créditos, uso por agente/pessoa/decorador, por dia, histórico
+// Geral › Time de agentes (antes "Uso de IA", 21/11/2026). A ideia da tela: ver os agentes de IA como um time de
+// funcionários (foto grande, quanto cada um trabalhou e custou no mês), para comparar com o custo de uma pessoa. Franquia mensal de créditos, uso por agente/pessoa/decorador, por dia, histórico
 // e excedente (pós-pago, vai na próxima fatura). Tudo vem da RPC ia_uso_painel; a franquia e o preço do excedente só o
 // responsável pelo sistema muda (ia_plano_salvar). Crédito = US$ 0,01 de custo de IA (ver a migration 20261121000500).
 (function () {
@@ -57,7 +58,7 @@
     const { data, error } = await window.supabaseClient.rpc("ia_uso_painel", { p_empresa: S.empresa, p_mes: iso(S.mes) });
     if (error) {
       $("iaConteudo").innerHTML = "";
-      $("iaErro").textContent = /permiss/i.test(error.message) ? "Você não tem permissão para ver o uso de IA." : "Não foi possível carregar o uso de IA. " + error.message;
+      $("iaErro").textContent = /permiss/i.test(error.message) ? "Você não tem permissão para ver o time de agentes." : "Não foi possível carregar o uso de IA. " + error.message;
       $("iaErro").hidden = false;
       return;
     }
@@ -92,41 +93,48 @@
           <div><small>Restante</small><b>${num(d.restante)}</b><span>créditos</span></div>
           ${mesAtual ? `<div><small>Projeção do mês</small><b>${num(d.projecao)}</b><span>${Math.round(pctProj)}% da franquia</span></div>` : ""}
           <div class="${d.excedente > 0 ? "tem-excedente" : ""}"><small>Excedente</small><b>${num(d.excedente)}</b><span>${d.excedente > 0 ? `${brl(d.valor_excedente_total)} na próxima fatura` : "nada a pagar a mais"}</span></div>
-          <div><small>Usos de IA</small><b>${num(d.chamadas)}</b><span>no mês</span></div>
-          ${d.eh_dono ? `<div class="ia-so-dono"><small>Custo real da IA · só você vê</small><b>US$ ${(Number(d.custo_usd) || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</b><span>${d.tem_plano ? `excedente a ${brl(d.valor_excedente)} por crédito` : "franquia padrão (ainda não configurada)"}</span></div>` : ""}
+          <div><small>Tarefas do time</small><b>${num(d.chamadas)}</b><span>no mês</span></div>
         </div>
         <p class="ia-hero-frase">${esc(frase)}</p>
       </section>`;
 
     $("iaConteudo").innerHTML = hero + `
+      <section class="ia-time"><header><h2>Seu time de agentes</h2><small>O que cada um fez e quanto custou em ${esc(MESES[S.mes.getMonth()])}</small></header><div id="iaOrigens"></div></section>
       <div class="ia-grade">
-        <section class="ia-card"><header><h2>Por agente</h2><small>Quem mais usa IA no sistema</small></header><div id="iaOrigens"></div></section>
-        <section class="ia-card"><header><h2>Por dia</h2><div class="ia-legenda"><span><i style="background:#2a78d6"></i>Equipe</span><span><i style="background:#eb6834"></i>Decoradores</span></div></header><div id="iaDias"></div></section>
+        <section class="ia-card"><header><h2>Equipe</h2><small>Quem da equipe mais usou os agentes</small></header><div id="iaPEquipe"></div></section>
+        <section class="ia-card"><header><h2>Decoradores</h2><small>Uso dos agentes pelo catálogo</small></header><div id="iaPDecoradores"></div></section>
       </div>
-      <section class="ia-card ia-pessoas-card"><header><h2>Quem mais usa</h2>
-        <nav class="el-tabs ia-abas" role="tablist">
-          <button type="button" role="tab" data-pessoa="equipe" aria-selected="${S.abaPessoa === "equipe"}">Equipe <b>${d.por_pessoa.filter((p) => p.tipo !== "decorador").length}</b></button>
-          <button type="button" role="tab" data-pessoa="decorador" aria-selected="${S.abaPessoa === "decorador"}">Decoradores <b>${d.por_pessoa.filter((p) => p.tipo === "decorador").length}</b></button>
-        </nav></header><div id="iaPessoas"></div></section>
       <div class="ia-grade">
+        <section class="ia-card"><header><h2>Por dia</h2><div class="ia-legenda"><span><i style="background:#2a78d6"></i>Equipe</span><span><i style="background:#eb6834"></i>Decoradores</span></div></header><div id="iaDias"></div></section>
         <section class="ia-card"><header><h2>Meses anteriores</h2><small>Uso e excedente de cada mês</small></header><div id="iaHistorico"></div></section>
-        <section class="ia-card"><header><h2>Últimos usos</h2><small>Os 40 mais recentes do mês</small></header><div id="iaRecentes"></div></section>
-      </div>`;
+      </div>
+      <section class="ia-card"><header><h2>Últimos trabalhos</h2><small>Os 40 mais recentes do mês</small></header><div id="iaRecentes"></div></section>`;
     pintarOrigens(); pintarDias(); pintarPessoas(); pintarHistorico(); pintarRecentes();
   }
 
   function vazio(texto) { return `<p class="ia-vazio">${esc(texto)}</p>`; }
 
+  // Os 6 agentes do time aparecem sempre (mesmo sem uso); as outras funções com IA vêm numa faixa menor embaixo.
+  const TIME = ["helena", "clara", "miguel", "carla", "marcos", "ideia"];
   function pintarOrigens() {
-    const lista = S.dados.por_origem;
-    if (!lista.length) { $("iaOrigens").innerHTML = vazio("Nenhum uso de IA neste mês."); return; }
-    const max = Math.max(...lista.map((o) => o.creditos), 0.0001), total = lista.reduce((s, o) => s + o.creditos, 0) || 1;
-    $("iaOrigens").innerHTML = `<ul class="ia-barras">${lista.map((o) => {
-      const g = origem(o.origem);
+    const d = S.dados, lista = d.por_origem, porK = new Map(lista.map((o) => [o.origem, o]));
+    const total = lista.reduce((t, o) => t + o.creditos, 0) || 1;
+    const time = TIME.concat(porK.has("montagem") ? ["montagem"] : []);
+    const cracha = (k) => {
+      const g = origem(k), o = porK.get(k) || { creditos: 0, chamadas: 0, equipe: 0, decoradores: 0 };
       const partes = [o.equipe > 0 ? `equipe ${num(o.equipe)}` : "", o.decoradores > 0 ? `decoradores ${num(o.decoradores)}` : ""].filter(Boolean).join(" · ");
-      return `<li><div class="ia-barra-nome">${bolinha(o.origem)}<div><b>${esc(g.nome)}</b><small>${esc([g.papel, `${num(o.chamadas)} usos`].filter(Boolean).join(" · "))}</small></div><strong>${num(o.creditos)}<small>${Math.round((o.creditos / total) * 100)}%</small></strong></div>
-        <div class="ia-barra-trilho"><i style="width:${(o.creditos / max) * 100}%;background:${g.cor}"></i></div>${partes ? `<small class="ia-barra-partes">${esc(partes)}</small>` : ""}</li>`;
-    }).join("")}</ul>`;
+      return `<article class="ia-agente ${o.creditos > 0 ? "" : "is-parado"}" style="--ag:${g.cor}">
+        <div class="ia-agente-foto">${esc(g.nome[0])}${g.foto ? `<img src="../../../assets/agentes/${g.foto}.jpg" alt="" loading="lazy" onerror="this.remove()">` : ""}</div>
+        <h3>${esc(g.nome)}</h3><span class="ia-agente-papel">${esc(g.papel)}</span>
+        ${o.creditos > 0 ? `<div class="ia-agente-num"><div><b>${num(o.chamadas)}</b><small>tarefas</small></div><div><b>${num(o.creditos)}</b><small>créditos</small></div><div><b>${brl(o.creditos * d.valor_excedente)}</b><small>no mês</small></div></div>
+        <div class="ia-barra-trilho"><i style="width:${(o.creditos / total) * 100}%;background:${g.cor}"></i></div>
+        <small class="ia-agente-parte">${Math.round((o.creditos / total) * 100)}% do uso do time${partes ? ` · ${esc(partes)}` : ""}</small>` : `<p class="ia-agente-livre">Sem tarefas neste mês</p>`}
+      </article>`;
+    };
+    const outros = lista.filter((o) => !time.includes(o.origem));
+    $("iaOrigens").innerHTML = `<div class="ia-agentes">${time.map(cracha).join("")}</div>
+      ${outros.length ? `<div class="ia-outros"><h3>Outras funções com IA</h3><ul>${outros.map((o) => `<li>${bolinha(o.origem, "p")}<div><b>${esc(origem(o.origem).nome)}</b><small>${esc([origem(o.origem).papel, `${num(o.chamadas)} usos`].filter(Boolean).join(" · "))}</small></div><strong>${num(o.creditos)} <small>créditos · ${brl(o.creditos * d.valor_excedente)}</small></strong></li>`).join("")}</ul></div>` : ""}
+      <p class="ia-nota">Valores em reais pelo preço do crédito (${brl(d.valor_excedente)} por crédito).</p>`;
   }
 
   function pintarDias() {
@@ -159,16 +167,27 @@
     });
   }
 
+  const CORES_PIZZA = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#6250d6"];
+  function pizza(lista) {
+    const top = lista.slice(0, 5), resto = lista.slice(5).reduce((t, p) => t + p.creditos, 0);
+    const fatias = top.map((p, i) => ({ p, v: p.creditos, cor: CORES_PIZZA[i] }));
+    if (resto > 0) fatias.push({ p: { nome: `Outros (${lista.length - 5})`, tipo: "outros" }, v: resto, cor: "#c3cad3" });
+    const total = fatias.reduce((t, f) => t + f.v, 0) || 1;
+    const R = 70, C = 2 * Math.PI * R;
+    let acc = 0;
+    const arcos = fatias.map((f) => {
+      const len = (f.v / total) * C, gap = fatias.length > 1 ? Math.min(3, len / 3) : 0;
+      const el = `<circle r="${R}" cx="90" cy="90" fill="none" stroke="${f.cor}" stroke-width="30" stroke-dasharray="${Math.max(len - gap, 0.01)} ${C}" stroke-dashoffset="${-acc}" transform="rotate(-90 90 90)"><title>${esc(f.p.nome)}: ${num(f.v)} créditos</title></circle>`;
+      acc += len; return el;
+    }).join("");
+    return `<div class="ia-pizza"><svg viewBox="0 0 180 180" role="img" aria-label="Divisão do uso">${arcos}<text x="90" y="86" text-anchor="middle" class="ia-pz-num">${num(total)}</text><text x="90" y="104" text-anchor="middle" class="ia-pz-rot">créditos</text></svg>
+      <ul class="ia-pz-leg">${fatias.map((f) => `<li><i style="background:${f.cor}"></i>${f.p.tipo === "outros" ? "" : avatar(f.p)}<div><b>${esc(f.p.nome)}</b>${f.p.chamadas ? `<small>${num(f.p.chamadas)} usos</small>` : ""}</div><strong>${num(f.v)}<small>${Math.round((f.v / total) * 100)}%</small></strong></li>`).join("")}</ul></div>`;
+  }
   function pintarPessoas() {
-    const lista = S.dados.por_pessoa.filter((p) => (S.abaPessoa === "decorador") === (p.tipo === "decorador"));
-    if (!lista.length) { $("iaPessoas").innerHTML = vazio(S.abaPessoa === "decorador" ? "Nenhum decorador usou IA neste mês." : "Ninguém da equipe usou IA neste mês."); return; }
-    const max = Math.max(...lista.map((p) => p.creditos), 0.0001);
-    $("iaPessoas").innerHTML = `<ul class="ia-pessoas">${lista.map((p) => {
-      const ags = Object.entries(p.origens || {}).sort((a, b) => b[1] - a[1]);
-      return `<li>${avatar(p)}<div class="ia-p-corpo"><div class="ia-p-topo"><b>${esc(p.nome)}</b><strong>${num(p.creditos)} <small>créditos</small></strong></div>
-        <div class="ia-barra-trilho"><i style="width:${(p.creditos / max) * 100}%"></i></div>
-        <div class="ia-chips">${ags.map(([k, v]) => `<span><i style="background:${origem(k).cor}"></i>${esc(origem(k).nome)} ${num(v)}</span>`).join("")}<small>${num(p.chamadas)} usos</small></div></div></li>`;
-    }).join("")}</ul>`;
+    const todos = S.dados.por_pessoa;
+    const eq = todos.filter((p) => p.tipo !== "decorador"), dec = todos.filter((p) => p.tipo === "decorador");
+    $("iaPEquipe").innerHTML = eq.length ? pizza(eq) : vazio("Ninguém da equipe usou IA neste mês.");
+    $("iaPDecoradores").innerHTML = dec.length ? pizza(dec) : vazio("Nenhum decorador usou IA neste mês.");
   }
 
   function pintarHistorico() {
@@ -214,13 +233,6 @@
     $("iaPlanoForm").addEventListener("submit", salvarPlano);
     $("iaPlCancelar").addEventListener("click", () => $("iaPlanoDlg").close());
     $("iaComoFunciona").addEventListener("click", () => $("iaAjudaDlg").showModal());
-    $("iaConteudo").addEventListener("click", (e) => {
-      const b = e.target.closest("[data-pessoa]");
-      if (!b) return;
-      S.abaPessoa = b.dataset.pessoa;
-      document.querySelectorAll("[data-pessoa]").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
-      pintarPessoas();
-    });
     carregar();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", iniciar); else iniciar();

@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Uso de IA</title>
+<title>Time de agentes</title>
 <!-- Geral › Uso de IA (21/11/2026): franquia mensal de créditos de IA, uso por agente, por pessoa e por decorador,
      histórico dos meses e o excedente que vai na próxima fatura. Dados: RPC ia_uso_painel (ver
      supabase/migrations/20261121000500_ia_uso.sql). Lógica em uso-ia.js. -->
@@ -10,13 +10,12 @@
 <script src="../../../js/core/systemZoom.js?v=20261108"></script>
 <script src="../../../js/core/themePrepaint.js"></script>
 <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
-<link rel="stylesheet" href="uso-ia.css?v=20261121-fotos">
+<link rel="stylesheet" href="uso-ia.css?v=20261121-time">
 </head>
 <body>
 <main class="el-page ia-page">
-  <header><h1>Uso de IA</h1></header>
-
-  <div class="ia-barra">
+  <header class="ia-topo">
+    <h1>Time de agentes</h1>
     <div class="ia-mes" role="group" aria-label="Mês">
       <button type="button" class="ia-seta" id="iaMesAnt" aria-label="Mês anterior">‹</button>
       <strong id="iaMesNome">—</strong>
@@ -26,7 +25,7 @@
       <button type="button" class="ia-link" id="iaComoFunciona">Como funcionam os créditos</button>
       <button type="button" class="btn btn-primary" id="iaPlanoBtn" hidden>Franquia e preço</button>
     </div>
-  </div>
+  </header>
 
   <p class="ia-erro" id="iaErro" role="alert" hidden></p>
   <div id="iaConteudo" aria-live="polite"><div class="ia-carregando">Carregando o uso de IA…</div></div>
@@ -64,7 +63,7 @@
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261121-ia"></script>
 <script src="../../../js/core/alerta.js"></script>
-<script src="uso-ia.js?v=20261121-fotos"></script>
+<script src="uso-ia.js?v=20261121-time"></script>
 <script src="../../../js/core/companyTheme.js"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
 </body>

@@ -58,7 +58,7 @@
           { rotulo: "Painel de Complexidade", href: "Modulos/Chiavari/Costura/costura.html" },
           { rotulo: "Ocorrências operacionais", href: "Modulos/Chiavari/Ocorrencias/OcorrenciasOperacionais.html" },
           // Uso de IA (nov/2026): franquia mensal de créditos, uso por agente e por pessoa, excedente na próxima fatura.
-          { rotulo: "Uso de IA", href: "Modulos/Geral/UsoIA/uso-ia.html" },
+          { rotulo: "Time de agentes", href: "Modulos/Geral/UsoIA/uso-ia.html" },
         ],
       },
       {
