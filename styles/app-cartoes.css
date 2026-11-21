@@ -1,0 +1,71 @@
+/* Cartões compactos do app da equipe (20/11/2026): Montagem (montador.html), Triagem e Expedição (fila-app.js).
+   Pedido do usuário: "gosto que seja um card, gosto que tenha cor, mas está muito grande, esteticamente feio".
+   Faixa colorida à esquerda (horário ou número do pedido + etapa/Ida/Volta) e o corpo levemente colorido com cliente,
+   local e uma linha de detalhes. As regras têm peso alto porque os apps trazem várias camadas antigas de .etapa/.af-card. */
+html body .ec{--ec-forte:#5a5a55;--ec-suave:#f6f5f2;--ec-borda:#e7e3dc;
+  position:relative;display:grid!important;grid-template-columns:68px minmax(0,1fr);align-items:stretch;gap:0!important;width:100%;
+  margin:0 0 10px!important;padding:0!important;border:1px solid var(--ec-borda)!important;border-radius:16px!important;overflow:hidden;
+  background:var(--ec-suave)!important;color:#2b2622;text-align:left;font:inherit;cursor:pointer;box-shadow:0 1px 2px rgba(15,23,42,.05)!important;
+  transition:transform .12s ease;-webkit-tap-highlight-color:transparent}
+html body .ec:active{transform:scale(.985)}
+html body .ec:focus-visible{outline:2px solid var(--ec-forte);outline-offset:2px}
+
+/* Cores: Montagem */
+html body .ec.ec-montagem{--ec-forte:#2563eb;--ec-suave:#f1f6fe;--ec-borda:#d6e4fb}
+html body .ec.ec-desmontagem{--ec-forte:#c2410c;--ec-suave:#fff5ec;--ec-borda:#f6dcc6}
+html body .ec.ec-carregamento{--ec-forte:#6d28d9;--ec-suave:#f6f2fe;--ec-borda:#e3d8fa}
+/* Cores: Triagem e Expedição (as colunas do quadro do computador) */
+html body .ec[data-coluna="aguardando"]{--ec-forte:#b45309;--ec-suave:#fffaf0;--ec-borda:#f2e2bd}
+html body .ec[data-coluna="andamento"]{--ec-forte:#2563eb;--ec-suave:#f1f6fe;--ec-borda:#d6e4fb}
+html body .ec:is([data-coluna="concluido"],[data-coluna="conferidos"]){--ec-forte:#15803d;--ec-suave:#f0f9f3;--ec-borda:#cfe9d8}
+html body .ec:is([data-coluna="divergencias"],[data-coluna="pendencias"]){--ec-forte:#b42318;--ec-suave:#fdf3f2;--ec-borda:#f4d3cf}
+html body .ec[data-tipo="volta"]:not([data-coluna="divergencias"]){--ec-forte:#7a5796;--ec-suave:#f7f3fc;--ec-borda:#e5dbf3}
+html body .ec.af-bloqueado{opacity:.72}
+
+/* Faixa da esquerda */
+html body .ec .ec-lado{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px 4px;background:var(--ec-forte);color:#fff;text-align:center;min-width:0}
+html body .ec .ec-lado b{font:800 17px/1.05 Manrope,Inter,system-ui,sans-serif;letter-spacing:-.01em;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html body .ec .ec-lado small{font:700 9.5px/1.1 Manrope,Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;opacity:.92;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html body .ec .ec-lado .af-dot{position:absolute;top:7px;right:7px;width:10px;height:10px;margin:0;background:#fff;box-shadow:0 0 0 0 rgba(255,255,255,.7)}
+
+/* Corpo */
+html body .ec .ec-corpo{display:flex;flex-direction:column;gap:3px;min-width:0;padding:11px 14px 12px}
+html body .ec .ec-t1{display:flex;align-items:center;gap:9px;min-width:0;margin:0!important}
+html body .ec .ec-t1 :is(strong,.etapa-cliente){flex:1;min-width:0;margin:0!important;font:700 15.5px/1.25 Manrope,Inter,sans-serif!important;color:#2b2622;letter-spacing:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html body .ec :is(.ec-foto,.etapa-cliente-foto){position:relative;flex:0 0 28px;width:28px!important;height:28px!important;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:#fff;color:var(--ec-forte);font:700 12px Manrope,sans-serif;border:1px solid rgba(0,0,0,.06)}
+html body .ec :is(.ec-foto,.etapa-cliente-foto) img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+html body .ec .ec-t2{margin:0!important;color:#6b655c;font:500 13px/1.35 Manrope,Inter,sans-serif!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html body .ec .ec-datas{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px;margin-top:2px;color:#6b655c;font:500 12.5px/1.35 Manrope,Inter,sans-serif}
+html body .ec .ec-datas b{color:#2b2622;font-weight:700}
+html body .ec .ec-datas i{font-style:normal;color:#b8b0a3}
+html body .ec .ec-status{display:flex;align-items:center;gap:6px;margin-top:3px;color:var(--ec-forte);font:700 12.5px/1.3 Manrope,Inter,sans-serif}
+html body .ec .ec-status::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:currentColor}
+html body .ec .ec-status-trava{color:#b42318}
+html body .ec .af-extra{font-size:12.5px;color:#6b655c}
+
+/* Montagem: endereço numa linha (toque abre o mapa) e avisos pequenos */
+html body .ec .etapa-endereco{display:flex!important;align-items:center;gap:5px;margin:2px 0 0!important;padding:3px 0;color:var(--ec-forte)!important;font:600 12.5px/1.3 Manrope,Inter,sans-serif!important;text-decoration:none!important;min-width:0}
+html body .ec .etapa-endereco span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:underline;text-underline-offset:2px;text-decoration-color:color-mix(in srgb,var(--ec-forte) 35%,transparent)}
+html body .ec .etapa-endereco svg{flex:none;width:14px!important;height:14px!important;margin:0!important}
+html body .ec .etapa-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px!important}
+html body .ec .etapa-chips>*{display:inline-flex;align-items:center;gap:4px;margin:0!important;padding:3px 8px!important;border-radius:999px!important;border:0!important;background:#fff!important;color:#4f4a44!important;font:700 11.5px/1.2 Manrope,Inter,sans-serif!important;box-shadow:0 0 0 1px var(--ec-borda)}
+html body .ec .etapa-chips>.ok{color:#15803d!important}
+html body .ec .etapa-chips>:is(.erro,.aviso){color:#b42318!important}
+html body .ec .etapa-chips svg{width:12px;height:12px}
+@media(prefers-reduced-motion:reduce){html body .ec{transition:none}}
+
+/* Triagem e Expedição (tela do pedido, 20/11/2026): itens mais compactos. Nome em até 2 linhas, código/kit numa linha,
+   a quantidade grande à direita e "Reportar problema" como um botão pequeno no canto (antes ocupava a largura toda). */
+html body .material{padding:12px 14px!important;border-radius:16px!important;margin-bottom:10px!important}
+html body .material .material-topo{display:grid!important;grid-template-columns:48px minmax(0,1fr) auto;align-items:center;gap:12px}
+html body .material .material-foto{width:48px!important;height:48px!important;border-radius:12px!important}
+html body .material .material-info h3{margin:0!important;font:700 14.5px/1.3 Manrope,Inter,sans-serif!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+html body .material .material-info small{display:block;margin-top:2px;font-size:12px!important;color:#857e74!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html body .material .material-qtd{font:800 22px/1 Manrope,Inter,sans-serif!important;white-space:nowrap}
+html body .material .material-qtd small{font-size:13px!important;font-weight:600;color:#8f897f}
+html body .material.is-completo{background:#f0f9f3!important;border-color:#cfe9d8!important;box-shadow:inset 3px 0 0 #15803d!important}
+html body .material.is-completo .material-qtd{color:#15803d!important}
+html body .material [data-reportar]{display:inline-flex!important;align-items:center;gap:6px;width:auto!important;min-height:0!important;height:34px;margin:10px 0 0 60px!important;padding:0 12px!important;border:1px solid #f1c9c4!important;border-radius:999px!important;background:#fff!important;color:#b42318!important;font:700 12.5px Manrope,Inter,sans-serif!important;box-shadow:none!important}
+html body .material [data-reportar]::before{content:"⚠";font-size:12px}
+html body .material .stepper button{min-width:48px;min-height:48px;font-size:24px}
+html body .material .stepper input{min-height:48px;font:800 19px Manrope,sans-serif;text-align:center}

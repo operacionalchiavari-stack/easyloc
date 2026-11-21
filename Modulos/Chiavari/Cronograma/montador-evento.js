@@ -103,8 +103,14 @@
    linha.innerHTML='<div class="entrega-item-topo">'+(foto?'<button type="button" class="entrega-foto" aria-label="Ampliar foto de '+esc(it.nome)+'"><img src="'+esc(foto)+'" alt="'+esc(it.nome)+'" loading="lazy"></button>':'<div class="entrega-foto sem-foto">Sem foto</div>')+
     '<div><h3 title="'+esc(it.nome)+'">'+esc(it.nome)+'</h3><p class="entrega-previsto">Previsto: <b>'+esc(it.esperado)+'</b></p></div></div>'+
     '<fieldset data-evento-dados>'+
-    '<div class="entrega-quantidades"><label for="entregue-'+i+'">Entregues<input id="entregue-'+i+'" class="input" data-entregue type="number" min="0" max="'+esc(it.esperado)+'" step="1" inputmode="numeric" placeholder="Qtd."></label>'+
-    '<label for="dano-'+i+'">Danificados<input id="dano-'+i+'" class="input" data-dano type="number" min="0" step="1" inputmode="numeric" value="0"></label></div>'+
+    /* 20/11/2026: botões grandes de − / + e "Todos" (sem precisar do teclado); "Danificados" só aparece depois de
+       "Teve dano". Os campos de número continuam (dá para digitar) e são a fonte do que é salvo. */
+    '<div class="entrega-quantidades">'+
+     '<div class="ei-linha"><label class="ei-rotulo" for="entregue-'+i+'">Entregues</label><div class="ei-passo"><button type="button" data-passo="-1" data-alvo="entregue" aria-label="Menos um entregue">−</button><input id="entregue-'+i+'" class="input" data-entregue type="number" min="0" max="'+esc(it.esperado)+'" step="1" inputmode="numeric" placeholder="–"><button type="button" data-passo="1" data-alvo="entregue" aria-label="Mais um entregue">+</button></div>'+
+     '<button type="button" class="ei-tudo" data-tudo>Todos ('+esc(it.esperado)+')</button></div>'+
+     '<div class="ei-linha ei-linha-dano"><label class="ei-rotulo" for="dano-'+i+'">Danificados</label><div class="ei-passo ei-passo-dano"><button type="button" data-passo="-1" data-alvo="dano" aria-label="Menos um danificado">−</button><input id="dano-'+i+'" class="input" data-dano type="number" min="0" step="1" inputmode="numeric" value="0"><button type="button" data-passo="1" data-alvo="dano" aria-label="Mais um danificado">+</button></div></div>'+
+     '<button type="button" class="ei-abrir-dano" data-abrir-dano>'+I.alerta+'<span>Teve dano</span></button>'+
+    '</div>'+
     '<p class="entrega-confirmado" hidden></p>'+
     '<div class="entrega-dano" hidden><label for="obs-'+i+'">O que aconteceu?<textarea class="input" id="obs-'+i+'" maxlength="1000" placeholder="Descreva o dano" data-obs></textarea></label>'+
     '<label class="entrega-anexo">'+I.camera+'<span>Foto do dano (opcional)</span><input type="file" accept="image/*" capture="environment" hidden></label><img class="entrega-foto-dano" alt="Foto do dano" hidden></div></fieldset>';
@@ -119,6 +125,15 @@
    if(salvo){linha.querySelector('[data-entregue]').value=salvo.entregue;linha.querySelector('[data-dano]').value=salvo.danificados;linha.querySelector('[data-obs]').value=salvo.observacao||'';}
    if(foto)linha.querySelector('button.entrega-foto').addEventListener('click',()=>abrirFolha('<h3>'+esc(it.nome)+'</h3><img class="foto-free-ampliada" src="'+esc(foto)+'" alt="'+esc(it.nome)+'"><button class="btn btn-claro" type="button" onclick="fecharFolha()">Fechar foto</button>'));
    linha.querySelectorAll('input[type=number],textarea').forEach(c=>c.addEventListener('input',()=>{guardar(linha,it);resumo();}));
+   linha.querySelectorAll('[data-passo]').forEach(b=>b.addEventListener('click',()=>{
+    const campo=linha.querySelector(b.dataset.alvo==='dano'?'[data-dano]':'[data-entregue]');
+    const max=b.dataset.alvo==='dano'?Number(linha.querySelector('[data-entregue]').value||it.esperado):Number(it.esperado);
+    const atualV=campo.value===''?(b.dataset.alvo==='dano'?0:(Number(b.dataset.passo)>0?0:Number(it.esperado))):Number(campo.value);
+    campo.value=String(Math.max(0,Math.min(max,atualV+Number(b.dataset.passo))));campo.dispatchEvent(new Event('input',{bubbles:true}));
+    try{navigator.vibrate?.(8);}catch(_){}
+   }));
+   linha.querySelector('[data-tudo]').addEventListener('click',()=>{const c=linha.querySelector('[data-entregue]');c.value=String(it.esperado);c.dispatchEvent(new Event('input',{bubbles:true}));try{navigator.vibrate?.(12);}catch(_){}});
+   linha.querySelector('[data-abrir-dano]').addEventListener('click',()=>{linha.classList.add('dano-aberto');linha.querySelector('[data-dano]').focus();});
    linha.querySelector('input[type=file]').addEventListener('change',e=>fotoDano(e,linha,it));
    if(salvo?.foto)mostrarFotoDano(linha,salvo.foto);
    pintarItem(linha,it);linha.querySelector('fieldset').disabled=atual.enviado||!ativo();
@@ -142,6 +157,8 @@
   const confirmado=linha.querySelector('.entrega-confirmado');confirmado.hidden=!perfeito||!atual.enviado;
   confirmado.textContent=d?.entregue+' entregues · sem danos';
   linha.querySelector('.entrega-dano').hidden=!(d?.danificados>0);
+  if(d?.danificados>0)linha.classList.add('dano-aberto');
+  const tudo=linha.querySelector('[data-tudo]');if(tudo)tudo.classList.toggle('ativo',d?.entregue===Number(it.esperado));
   linha.classList.toggle('com-dano',d?.danificados>0);
   linha.classList.toggle('conferido',valido(it,d));
  }

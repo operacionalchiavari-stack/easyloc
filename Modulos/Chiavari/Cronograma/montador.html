@@ -343,7 +343,8 @@
 </style>
   <meta name="theme-color" content="#5a5a55">
   <link rel="stylesheet" href="../apps-equipe.css?v=20261120-app">
-  <link rel="stylesheet" href="montador-evento.css?v=20261108-lista-chat4">
+  <link rel="stylesheet" href="../../../styles/app-cartoes.css?v=20261120-cartoes2">
+  <link rel="stylesheet" href="montador-evento.css?v=20261120-usabilidade3">
 <link rel="stylesheet" href="../../../styles/assistente-solicitacao.css?v=20261108-montagem">
 <link rel="stylesheet" href="montador-ia.css?v=20261108-montagem">
 <script src="../../../js/ui/assistente-solicitacao.js?v=20261108-montagem"></script>
@@ -417,7 +418,7 @@
 
   <div class="toast" id="toast"></div>
 
-<script src="montador-evento.js?v=20261108-montagem-ia"></script>
+<script src="montador-evento.js?v=20261120-usabilidade"></script>
 <script src="montador-bonus.js?v=20261031-integrado"></script>
 <script>
   /* =========================================================
@@ -838,17 +839,17 @@
   }
 
   function cartaoEtapa(e){
-    const t = tipoInfo(e.etapa);
+    const t = tipoInfo(e.etapa), chips = chipsEtapa(e), h = hora(e.horario);
     return (
-      /* Nov/2026: foto do cliente e endereço como link no cartão (dentro da etapa não aparecem mais). Div com
-         role=button porque um link não pode ficar dentro de um <button>. */
-      '<div class="etapa ' + t.classe + '" role="button" tabindex="0" style="--cor-fundo:' + t.fundo + ';--cor-forte:' + t.forte + '" onclick="abrirEtapa(\'' + esc(e.id) + '\')" onkeydown="if(event.target===this&&(event.key===\'Enter\'||event.key===\' \')){event.preventDefault();abrirEtapa(\'' + esc(e.id) + '\')}">' +
-        '<div class="etapa-topo"><span class="tipo">' + esc(e.etapa) + '</span><span class="hora">' + I.relogio + esc(hora(e.horario) || "A definir") + '</span></div>' +
-        '<div class="etapa-cliente-linha">' + fotoClienteCartao(e) + '<div class="etapa-cliente-texto"><div class="etapa-cliente">' + esc(e.cliente || "-") + '</div>' +
-        '<div class="etapa-local">Pedido #' + esc(e.pedido) + (e.localNome ? ' · ' + esc(e.localNome) : "") + '</div></div></div>' +
+      /* 20/11/2026: cartão compacto (faixa colorida com o horário e a etapa; cliente, pedido · local, endereço e os
+         avisos em linhas curtas). Div com role=button porque o endereço é um link e não pode ficar dentro de <button>. */
+      '<div class="etapa ec ec-' + t.classe + '" role="button" tabindex="0" onclick="abrirEtapa(\'' + esc(e.id) + '\')" onkeydown="if(event.target===this&&(event.key===\'Enter\'||event.key===\' \')){event.preventDefault();abrirEtapa(\'' + esc(e.id) + '\')}">' +
+        '<div class="ec-lado"><b>' + esc(h || "--:--") + '</b><small>' + esc(({ Desmontagem: "Desmont.", Carregamento: "Carreg.", Descarregamento: "Descarreg." })[e.etapa] || e.etapa) + '</small></div>' +
+        '<div class="ec-corpo"><div class="ec-t1">' + fotoClienteCartao(e) + '<span class="etapa-cliente">' + esc(e.cliente || "-") + '</span></div>' +
+        '<div class="ec-t2 etapa-local">Pedido ' + esc(e.pedido) + (e.localNome ? ' · ' + esc(e.localNome) : "") + '</div>' +
         enderecoCartao(e) +
-        '<div class="etapa-chips">' + chipsEtapa(e) + '</div>' +
-      '</div>'
+        (chips ? '<div class="etapa-chips">' + chips + '</div>' : '') +
+      '</div></div>'
     );
   }
 

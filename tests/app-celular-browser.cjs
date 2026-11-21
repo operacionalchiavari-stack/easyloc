@@ -49,29 +49,29 @@ async function abrir(browser,celular,opts){
  await page.waitForSelector('#apInicio:not([hidden])');
  assert.equal(await page.locator('#apOla').textContent(),'Olá, Jonatan');
  const mods=await page.locator('.ap-modulo').evaluateAll(a=>a.map(x=>[x.querySelector('.ap-modulo-titulo').textContent,x.getAttribute('href')]));
- assert.deepEqual(mods,[['Triagem','Modulos/Estoque/TriagemApp/triagem.html?app=1'],['Montagem','Modulos/Chiavari/Cronograma/montador.html?app=1'],['Catálogo','Modulos/Comercial/Catalogo/catalogo-app.html?app=1'],['Meu bônus','Modulos/Chiavari/Cronograma/montador.html?app=1&tela=bonus'],['Configurações','#config']]);
+ assert.deepEqual(mods,[['Triagem','Modulos/Estoque/TriagemApp/triagem.html?app=1'],['Montagem','Modulos/Chiavari/Cronograma/montador.html?app=1'],['Catálogo','Modulos/Comercial/Catalogo/catalogo-app.html?app=1'],['Meu bônus','Modulos/Chiavari/Cronograma/montador.html?app=1&tela=bonus']]);
  // Configurações: notificações e localização com um botão liga/desliga cada; voltar leva ao Início.
- await page.click('.ap-modulo[href="#config"]');await page.waitForSelector('#apConfig:not([hidden])');
+ await page.click('#apAbas [data-aba="ajustes"]');await page.waitForSelector('#apConfig:not([hidden])');
  assert.equal(await page.locator('#apAvisos b').first().textContent(),'Notificações');assert.equal(await page.locator('#apLocal b').first().textContent(),'Localização');
  assert.equal(await page.locator('#apLocal .ap-switch').getAttribute('aria-checked'),'false');assert.equal(await page.locator('section[aria-label="Compartilhamento de localização"]').count(),0,'sem painel flutuante');
- await page.screenshot({path:'.tmp/app-config.png'});await page.click('#apConfigVoltar');await page.waitForSelector('#apInicio:not([hidden])');
+ await page.screenshot({path:'.tmp/app-config.png'});await page.click('#apAbas [data-aba="inicio"]');await page.waitForSelector('#apInicio:not([hidden])');
  assert.equal(await page.evaluate(()=>sessionStorage.getItem('login_ok')),'1');
  await page.waitForTimeout(900);await page.screenshot({path:'.tmp/app-inicio.png'});
  // recarregar com a sessão: vai direto para o Início
  await page.reload();await page.waitForSelector('#apInicio:not([hidden])');
  // versão completa
- await page.click('#apCompleta');await page.waitForURL(/dashboard\.html/);await page.waitForSelector('#dash');
+ await page.click('#apAbas [data-aba="ajustes"]');await page.waitForSelector('#apConfig:not([hidden])');await page.click('#apCompleta');await page.waitForURL(/dashboard\.html/);await page.waitForSelector('#dash');
  assert.equal(await page.evaluate(()=>sessionStorage.getItem('acervo_versao')),'completa','fica na versão completa nesta aba');
  // sair volta ao login
  await page.goto(BASE+'app.html');await page.waitForSelector('#apInicio:not([hidden])');
- await page.click('#apSair');await page.waitForSelector('#apLogin:not([hidden])');
+ if(!await page.isVisible('#apSair')){await page.click('#apAbas [data-aba="ajustes"]');await page.waitForSelector('#apConfig:not([hidden])');}await page.click('#apSair');await page.waitForSelector('#apLogin:not([hidden])');
  assert.deepEqual(erros,[]);await ctx.close();
 
  // 2) Só Triagem liberada.
  ({ctx,page,erros}=await abrir(browser,true,{modulos:{triagem:true,montagem:false}}));
  await page.goto(BASE+'app.html');await page.fill('#apEmail','a@b.com');await page.fill('#apSenha','certa');await page.click('#apEntrar');
  await page.waitForSelector('#apInicio:not([hidden])');
- assert.deepEqual(await page.locator('.ap-modulo-titulo').allTextContents(),['Triagem','Configurações']);await ctx.close();
+ assert.deepEqual(await page.locator('.ap-modulo-titulo').allTextContents(),['Triagem']);await ctx.close();
 
  // 3) Os apps sem sessão do sistema voltam para o app (sem login próprio).
  ({ctx,page,erros}=await abrir(browser,true));

@@ -12475,3 +12475,9 @@ possíveis".
   desligar o serviço do app (`app-sw.js`)** — antes, o primeiro relatório aberto num celular novo desligava as notificações.
 - Testes: `RUN_AVISOS_LIVE=1 node tests/app-avisos-live.cjs` (novo), `app-gerencial-live.cjs` e `app-agentes-live.cjs`
   atualizados para as abas.
+
+## App da equipe: cartões compactos e conferência mais fácil (20/11/2026)
+Pedido: "gosto que seja um card, gosto que tenha cor, mas está muito grande, esteticamente feio" + "pense na usabilidade dos botões de colocar o que foi entregue".
+- **Cartões** (`styles/app-cartoes.css`, classe `.ec`, comum a Montagem, Triagem e Expedição do app): faixa colorida à esquerda (horário + etapa no Montador; número do pedido + Ida/Volta na Triagem/Expedição) e corpo levemente colorido com cliente (foto), "Pedido N · local" e uma linha de datas ("Carreg. 20/11 · Entrega 21/11"); ~120px de altura (antes ~230). Cores por etapa (`ec-montagem/desmontagem/carregamento`) e pela coluna do quadro (`data-coluna`, volta em lilás). Markup em `cartaoEtapa` (`montador.html`) e `cartao()` (`js/app/fila-app.js`).
+- **Itens da Triagem/Expedição** compactos: foto 48px, nome em até 2 linhas, quantidade grande à direita, "Reportar problema" virou pílula pequena; botões −/+ com 48px.
+- **Conferência do App do Montador** (`montador-evento.js/.css`): cada item tem −/+ e o campo grande do entregue, botão "Todos (N)" que preenche com o esperado, e "Teve dano" que só então abre a linha do danificado. Aba Equipe em lista (Equipe, Caminhões, Uber um embaixo do outro).

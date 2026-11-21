@@ -25,15 +25,19 @@
     }
     return mapa;
   }
+  // 20/11/2026: cartão compacto (pedido do usuário: "gosto que tenha cor, mas está muito grande"). Faixa colorida à
+  // esquerda com o número do pedido e Ida/Volta; ao lado, cliente, local, as datas numa linha e a situação.
+  const CURTO = { Carregamento: "Carreg.", Descarregamento: "Descarreg." };
   function cartao({ id, numero, cliente, local, foto, coluna, tipo, selo, datas: linhas = [], status, trava, extra = "" }) {
     const inicial = esc(String(cliente || "?").trim().charAt(0).toUpperCase());
-    return '<button type="button" class="af-card" data-coluna="' + esc(coluna) + '" data-tipo="' + esc(tipo || "") + '" data-pedido="' + esc(id) + '"' + (trava ? ' data-trava="' + esc(trava) + '"' : "") + ">" +
-      '<span class="af-topo"><span class="af-numero">Pedido #' + esc(numero) + "</span>" + (selo ? '<span class="af-selo">' + esc(selo) + "</span>" : "") + (trava ? '<span class="af-dot" aria-hidden="true"></span>' : "") + "</span>" +
-      '<span class="af-pessoa"><span class="af-avatar">' + inicial + (imagem(foto) ? '<img src="' + esc(foto) + '" alt="" loading="lazy" onerror="this.remove()">' : "") + '</span><span class="af-pessoa-texto"><strong>' + esc(cliente || "Decorador") + "</strong><small>" + esc(local || "Local não informado") + "</small></span></span>" +
-      (linhas.length ? '<span class="af-datas">' + linhas.map(([r, v]) => '<span><small>' + esc(r) + "</small><b>" + esc(dataCurta(v)) + "</b></span>").join("") + "</span>" : "") +
+    return '<button type="button" class="af-card ec" data-coluna="' + esc(coluna) + '" data-tipo="' + esc(tipo || "") + '" data-pedido="' + esc(id) + '"' + (trava ? ' data-trava="' + esc(trava) + '"' : "") + ">" +
+      '<span class="ec-lado"><b>' + esc(numero) + "</b>" + (selo ? "<small>" + esc(selo) + "</small>" : "") + (trava ? '<span class="af-dot" aria-hidden="true"></span>' : "") + "</span>" +
+      '<span class="ec-corpo"><span class="ec-t1"><span class="ec-foto">' + inicial + (imagem(foto) ? '<img src="' + esc(foto) + '" alt="" loading="lazy" onerror="this.remove()">' : "") + "</span><strong>" + esc(cliente || "Decorador") + "</strong></span>" +
+      '<span class="ec-t2">' + esc(local || "Local não informado") + "</span>" +
+      (linhas.length ? '<span class="ec-datas">' + linhas.map(([r, v]) => esc(CURTO[r] || r) + " <b>" + esc(dataCurta(v)) + "</b>").join('<i aria-hidden="true">·</i>') + "</span>" : "") +
       extra +
-      (trava ? '<span class="af-status af-status-trava">' + esc(trava) + "</span>" : status ? '<span class="af-status">' + esc(status) + "</span>" : "") +
-      "</button>";
+      (trava ? '<span class="ec-status ec-status-trava">' + esc(trava) + "</span>" : status ? '<span class="ec-status">' + esc(status) + "</span>" : "") +
+      "</span></button>";
   }
   function nav(host, colunas, ativa, contagens) {
     host.classList.add("af-nav");

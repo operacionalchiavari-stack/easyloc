@@ -93,9 +93,9 @@ async function main(){
    assert.equal(await page.locator('#etapaCabeca .cabeca,#etapaCabeca .evento-cliente,#etapaCabeca .evento-endereco').count(),0,'sem cliente/endereço dentro da etapa');
    await page.getByRole('button',{name:'Consultar Uber novamente',exact:true}).click();
    await page.locator('#etapaUber').filter({hasText:'Pedro Motorista'}).waitFor();
-   // Nov/2026: aba Equipe com Equipe · Caminhões · Uber lado a lado e a foto da equipe embaixo; o resto na aba Lista.
+   // 20/11/2026: aba Equipe com Equipe · Caminhões · Uber em lista (antes lado a lado) e a foto da equipe embaixo; o resto na aba Lista.
    const col=await page.evaluate(()=>['#etapaEquipe .evento-equipe','#etapaEquipe .evento-caminhoes','#etapaUber .secao','#etapaFotoEquipe'].map(q=>{const r=document.querySelector(q).getBoundingClientRect();return {top:Math.round(r.top),left:Math.round(r.left)};}));
-   assert.ok(col[0].top===col[1].top&&col[1].top===col[2].top,'três colunas na mesma linha');assert.ok(col[0].left<col[1].left&&col[1].left<col[2].left,'equipe, caminhões e uber lado a lado');
+   assert.ok(col[0].top<col[1].top&&col[1].top<col[2].top,'20/11/2026: equipe, caminhões e uber em lista, um embaixo do outro');assert.ok(Math.abs(col[0].left-col[1].left)<2&&Math.abs(col[1].left-col[2].left)<2,'mesma margem');
    assert.ok(col[3].top>col[0].top,'foto da equipe abaixo das colunas');
    assert.equal(await page.locator('#etapaEquipe .evento-equipe .pessoa-responsavel').count(),1,'responsável na lista da equipe');
    assert.equal(await page.getByText('O check-in da equipe registra o início').count(),0,'sem a frase do check-in');
@@ -126,7 +126,7 @@ async function main(){
    assert.equal(await page.getByText(/Tudo entregue|Corrigir quantidades|Precisa de troca/).count(),0,'sem atalho "tudo certo" nem troca/reposição');
    assert.equal(await linhas.nth(0).locator('[data-entregue]').isVisible(),true,'quantidade aberta para digitar');
    await linhas.nth(0).locator('[data-entregue]').fill('3');
-   await linhas.nth(1).locator('[data-entregue]').fill('1');await linhas.nth(1).locator('[data-dano]').fill('1');
+   await linhas.nth(1).locator('[data-entregue]').fill('1');await linhas.nth(1).locator('[data-abrir-dano]').click();await linhas.nth(1).locator('[data-dano]').fill('1');
    await linhas.nth(1).locator('[data-obs]').fill('Pé da mesa danificado no transporte');
    await linhas.nth(1).locator('input[type=file]').setInputFiles({name:'dano.png',mimeType:'image/png',buffer:png});await page.waitForSelector('.entrega-foto-dano:not([hidden])');
    await page.locator('#btnVoltar').click();await page.locator('#telaInicio.ativa').waitFor();await page.locator('#telaInicio .etapa').filter({hasText:'Evento Jardim'}).click();assert.equal(await linhas.nth(1).locator('[data-entregue]').inputValue(),'1');
