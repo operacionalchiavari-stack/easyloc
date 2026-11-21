@@ -12522,3 +12522,24 @@ podem ser um botão discreto" e "quando eu volto da Helena ela cai no catálogo,
   `body.catalogo-equipe-helena`, para o catálogo não "piscar" ao sair. Balão de quem envia mais suave: azul bem claro
   `--ag-eu:#e4ecf8` com texto escuro (todos os agentes, inclusive a Helena); os botões continuam grafite.
 - Teste: `RUN_AGENTES_LIVE=1 node tests/app-agentes-live.cjs` (`CONVERSA=1` também conversa com a Cora e pede um relatório).
+
+
+## Ajustes de 21/11/2026 (formatos, contrato, separação, financeiro)
+- **Clientes finais foram para a etapa Contrato** (pedido do usuário): saíram dos dados do pedido. A etapa Contrato tem no
+  topo "Este pedido tem contrato? Sim / Não" (`observacoes.tem_contrato`, padrão Sim) e, embaixo, duas colunas: clientes
+  finais | contrato (montadas por `pedido.clientes-finais.mjs` dentro de `.pedido-etapa-contrato`). Com contrato, nome +
+  CPF/CNPJ do cliente final continuam obrigatórios para salvar como Reservado (o aviso leva para a etapa Contrato); com
+  "Não", o pedido segue sem clientes finais, sem conferir o modelo de contrato e sem gravar contrato. Digitar um cliente
+  final atualiza o texto do contrato (`__pedidoContratoAtualizar`). Teste: ok 1b de `tests/pedido-datas-browser.cjs`.
+- **3D Livre, modais de formatos refeitos**: "Formatos" tem os tipos (categorias, com "Todos" e a quantidade) numa coluna à
+  esquerda e os formatos em 3 por linha à direita, foto grande em cima e só o nome embaixo (estrela no canto da foto).
+  "Escolher os móveis": título = nome do formato, sem textos; peças à esquerda (foto do móvel escolhido + disponibilidade) e
+  os modelos em 3 por linha com foto grande e o selo Estoque/Disponível (`data-stock-item`, pintado por `vigiarEstoque` com a
+  data do projeto/pedido; esgotado fica apagado). "Inserir formato" fecha o modal na hora e mostra o aviso pequeno no centro
+  "Montando <formato>…" (`avisoMontando` em catalogo-studio3d.mjs) até as peças entrarem; erro vira notificação. CSS no fim
+  de `catalogo-studio3d.css` (`.sfb-*`, `.sfa-*`, `.studio-montando`).
+- **Separação manual**: as gravações do mesmo pedido vão em fila (`atualizarItemSeparacao` → `atualizarItemSeparacaoAgora`);
+  se o servidor disser "Outro aparelho atualizou este item", relê o item e tenta de novo sozinho. Toques rápidos no +/−
+  somam a partir do último valor pedido (`_alvo`). O aviso mostra o motivo real (setor, produção, pausa…) em vez do genérico.
+- **Financeiro (A receber, A pagar) e Comercial › Contas a receber**: a busca filtra enquanto se digita (sem Enter),
+  mantendo o cursor no campo (`buscaAoDigitar` em financeiro.js).

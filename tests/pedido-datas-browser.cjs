@@ -91,6 +91,16 @@ const mockSupabase = `
   assert.deepEqual(ordem, ['Evento', 'Entrega', 'Coleta']);
   assert.equal(await page.locator('#dataEntrega').isDisabled(), true); assert.equal(await page.locator('#dataColeta').isDisabled(), true);
   if(process.env.FOTO){await page.fill('#dataEvento','2026-11-20');await page.locator('#dataEvento').dispatchEvent('change');await page.locator('.entrada-agenda').screenshot({path:process.env.FOTO});await page.locator('.entrada-identidade').screenshot({path:process.env.FOTO.replace('.png','-id.png')});const h=await page.evaluate(()=>[...document.querySelectorAll('.entrada-data-card')].map(c=>Math.round(c.getBoundingClientRect().height)));console.log('alturas',h);await page.fill('#dataEvento','');await page.locator('#dataEvento').dispatchEvent('change');}
+  { // 21/11/2026: clientes finais saíram dos dados do pedido e foram para a etapa Contrato (duas colunas + "tem contrato?")
+    assert.equal(await page.locator('.entrada-dados .pedido-clientes-finais').count(), 0, 'clientes finais não ficam mais nos dados do pedido');
+    await page.waitForSelector('.pedido-etapa-contrato .pedido-contrato-colunas .pedido-clientes-finais', { state: 'attached' });
+    assert.equal(await page.locator('.pedido-etapa-contrato .pedido-tem-contrato [data-tem-contrato="sim"].is-on').count(), 1, 'padrão: com contrato');
+    const ok = await page.evaluate(() => { const r1 = window.__pedidoValidarClientesFinais({ exigir: true }); document.querySelector('[data-tem-contrato="nao"]').click(); const r2 = window.__pedidoValidarClientesFinais({ exigir: true }); const tem = window.__pedidoTemContrato(); document.querySelector('[data-tem-contrato="sim"]').click(); return { r1, r2, tem }; });
+    assert.match(ok.r1, /cliente final/i, 'com contrato, exige o cliente final para reservar');
+    assert.equal(ok.r2, '', 'sem contrato, segue sem cliente final'); assert.equal(ok.tem, false);
+    if(process.env.FOTO_CONTRATO){ await page.evaluate(() => { const e = document.querySelector('.pedido-etapa-contrato'); e.hidden = false; e.style.cssText = 'position:fixed;inset:80px 20px 0;z-index:99;background:#f3f5f6;overflow:auto;padding:16px'; }); await page.waitForTimeout(600); await page.screenshot({ path: process.env.FOTO_CONTRATO }); await page.evaluate(() => { const e = document.querySelector('.pedido-etapa-contrato'); e.hidden = true; e.style.cssText = ''; }); }
+    console.log('ok 1b - clientes finais na etapa Contrato; obrigatórios só com contrato');
+  }
   console.log('ok 1 - evento primeiro, entrega e coleta travadas até preencher o evento');
   let perguntas = [];
   const responder = (r) => page.evaluate((r) => { window.__resp = r; window.confirmarGlobal = async (t) => { (window.__perg ||= []).push(t); return window.__resp; }; }, r);

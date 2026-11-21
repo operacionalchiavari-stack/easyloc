@@ -1,6 +1,9 @@
 // Clientes finais do pedido (18/11/2026): quem contrata de fato (ex.: os noivos). O decorador continua sendo quem faz o
 // pedido, mas o CONTRATO sai no nome dos clientes finais. Fica em observacoes.clientes_finais =
-// [{ nome, documento, rg, ie, telefone, email, endereco }] (RG para CPF, inscrição estadual para CNPJ; 18/11/2026). Obrigatório (nome + CPF/CNPJ) para salvar o pedido como Reservado.
+// [{ nome, documento, rg, ie, telefone, email, endereco }] (RG para CPF, inscrição estadual para CNPJ; 18/11/2026).
+// 21/11/2026 (pedido do usuário): saiu dos dados do pedido e foi para a etapa Contrato, em duas colunas (clientes finais |
+// contrato). No topo, "Este pedido tem contrato? Sim / Não" (observacoes.tem_contrato, padrão Sim). Só com contrato os
+// clientes finais (nome + CPF/CNPJ) são obrigatórios para salvar como Reservado; sem contrato o pedido segue normal.
 const esc = (v) => String(v ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const CAMPOS = [
   ["nome", "Nome completo", "text", "", 160, true],
@@ -22,7 +25,7 @@ export const documentoValido = (v) => { const d = soDigitos(v); return d.length 
 const ehCnpj = (v) => soDigitos(v).length > 11;
 
 export function initClientesFinais(){
-  const s = { lista: [vazio()], pedidoRef: undefined };
+  const s = { lista: [vazio()], pedidoRef: undefined, temContrato: true };
   const sec = document.createElement("section");
   sec.className = "pedido-clientes-finais";
   sec.setAttribute("aria-labelledby", "clientesFinaisTitulo");
@@ -43,7 +46,9 @@ export function initClientesFinais(){
       </div>`).join("")}`;
   }
   sec.addEventListener("input", (e) => { if(e.target.matches('[data-cf="documento"]')){ const bloco = e.target.closest("[data-cf-pessoa]"); const pj = ehCnpj(e.target.value); bloco.querySelector(".pedido-cf-rg").hidden = pj; bloco.querySelector(".pedido-cf-ie").hidden = !pj; }
-    if(e.target.matches("[data-cf]")){ e.target.closest(".pedido-cf-campo")?.classList.remove("is-invalido"); ler(); if(e.isTrusted) window.__pedidoHouveEdicao?.(); } });
+    if(e.target.matches("[data-cf]")){ e.target.closest(".pedido-cf-campo")?.classList.remove("is-invalido"); ler(); if(e.isTrusted) window.__pedidoHouveEdicao?.(); atualizarContrato(); } });
+  let tContrato = 0; // o texto do contrato acompanha o que é digitado (vai no nome dos clientes finais)
+  const atualizarContrato = () => { clearTimeout(tContrato); tContrato = setTimeout(() => window.__pedidoContratoAtualizar?.(), 450); };
   sec.addEventListener("click", (e) => {
     if(e.target.closest("[data-cf-add]")){ ler(); s.lista.push(vazio()); pintar(); sec.querySelector(`[data-cf-pessoa="${s.lista.length - 1}"] [data-cf="nome"]`)?.focus(); window.__pedidoHouveEdicao?.(); return; }
     const rem = e.target.closest("[data-cf-remover]");
@@ -51,12 +56,33 @@ export function initClientesFinais(){
   });
   pintar();
 
-  // Entra no bloco "O evento" dos dados do pedido, antes das observações (pedido.entrada.mjs monta os blocos).
+  // Etapa Contrato: "Tem contrato?" no topo e, embaixo, duas colunas: clientes finais | contrato (pedido.entrada.mjs
+  // cria a seção .pedido-etapa-contrato com o #pedidoContratoCard dentro).
+  const topo = document.createElement("div");
+  topo.className = "pedido-tem-contrato";
+  topo.innerHTML = `<span>Este pedido tem contrato?</span><div class="pedido-tem-contrato-opcoes" role="radiogroup" aria-label="Este pedido tem contrato?">
+      <button type="button" role="radio" data-tem-contrato="sim">Sim</button><button type="button" role="radio" data-tem-contrato="nao">Não</button></div>
+    <small data-tem-contrato-dica></small>`;
+  const semContrato = document.createElement("div");
+  semContrato.className = "pedido-sem-contrato";
+  semContrato.innerHTML = `<b>Pedido sem contrato</b><span>Ele segue normalmente, sem clientes finais e sem contrato. Para emitir um contrato, marque "Sim".</span>`;
+  const colunas = document.createElement("div");
+  colunas.className = "pedido-contrato-colunas";
+  const pintarTem = () => {
+    topo.querySelectorAll("[data-tem-contrato]").forEach((b) => { const on = (b.dataset.temContrato === "sim") === s.temContrato; b.classList.toggle("is-on", on); b.setAttribute("aria-checked", on); });
+    topo.querySelector("[data-tem-contrato-dica]").textContent = s.temContrato ? "Os clientes finais são obrigatórios para reservar: o contrato sai no nome deles." : "";
+    colunas.hidden = !s.temContrato; semContrato.hidden = s.temContrato;
+  };
+  topo.addEventListener("click", (e) => { const b = e.target.closest("[data-tem-contrato]"); if(!b) return; const v = b.dataset.temContrato === "sim"; if(v === s.temContrato) return; s.temContrato = v; pintarTem(); window.__pedidoHouveEdicao?.(); if(v) atualizarContrato(); });
   let tentativas = 0;
   const montar = () => {
-    const obs = document.querySelector(".entrada-dados .pedido-observacoes-evento") || (tentativas > 40 ? document.querySelector(".pedido-observacoes-evento") : null);
-    if(!obs){ tentativas++; if(tentativas < 60) setTimeout(montar, 250); return; }
-    obs.before(sec);
+    const etapa = document.querySelector(".pedido-etapa-contrato");
+    const card = etapa?.querySelector("#pedidoContratoCard");
+    if(!etapa || !card){ tentativas++; if(tentativas < 80) setTimeout(montar, 250); return; }
+    etapa.prepend(topo);
+    topo.after(colunas, semContrato);
+    colunas.append(sec, card);
+    pintarTem();
   };
   montar();
 
@@ -68,13 +94,17 @@ export function initClientesFinais(){
     const salvos = atual?.observacoes?.clientes_finais;
     s.lista = Array.isArray(salvos) && salvos.length ? salvos.map((p) => ({ ...vazio(), ...p })) : [vazio()];
     pintar();
+    s.temContrato = atual?.observacoes?.tem_contrato !== false;
+    pintarTem();
   }, 600);
 
-  window.__pedidoClientesFinais = () => { ler(); return s.lista.filter((p) => Object.values(p).some(Boolean)); };
+  window.__pedidoClientesFinais = () => { ler(); return s.temContrato ? s.lista.filter((p) => Object.values(p).some(Boolean)) : []; };
+  window.__pedidoTemContrato = () => s.temContrato;
   // Reservado precisa de pelo menos um cliente final com nome e CPF/CNPJ válido (vai no contrato).
   window.__pedidoValidarClientesFinais = ({ exigir = false } = {}) => {
     ler();
     sec.querySelectorAll(".is-invalido").forEach((el) => el.classList.remove("is-invalido"));
+    if(!s.temContrato) return ""; // sem contrato não exige nada
     const preenchidos = s.lista.map((p, i) => [p, i]).filter(([p]) => Object.values(p).some(Boolean));
     const marcar = (i, k, msg) => { const campo = sec.querySelector(`[data-cf-pessoa="${i}"] [data-cf="${k}"]`); campo?.closest(".pedido-cf-campo")?.classList.add("is-invalido"); campo?.focus({ preventScroll: false }); return msg; };
     if(exigir && !preenchidos.length) return marcar(0, "nome", "Informe o cliente final (nome completo e CPF ou CNPJ): o contrato sai no nome dele.");

@@ -7355,3 +7355,25 @@ html:is(#pedido-local-tags,html) body .pedido-screen .local-tag-real{min-height:
 .pedido-screen .pedido-cf-campo.is-invalido input{border-color:#d92d20;box-shadow:0 0 0 3px rgba(217,45,32,.12)}
 @media(max-width:1100px){.pedido-screen .pedido-cf-grade{grid-template-columns:1fr 1fr}.pedido-screen .pedido-cf-grade>.pedido-cf-campo{grid-column:auto}.pedido-screen .pedido-cf-grade>.pedido-cf-nome,.pedido-screen .pedido-cf-grade>.pedido-cf-endereco{grid-column:1/-1}}
 @media(max-width:600px){.pedido-screen .pedido-cf-grade{grid-template-columns:1fr}}
+
+/* Etapa Contrato (21/11/2026): "Este pedido tem contrato? Sim / Não" e, embaixo, duas colunas: clientes finais | contrato.
+   Os clientes finais saíram dos dados do pedido (pedido.clientes-finais.mjs). */
+html:is(#pc-ct,html) .pedido-screen .pedido-tem-contrato{display:flex;align-items:center;flex-wrap:wrap;gap:10px 14px;margin:0 0 16px;padding:12px 16px;border:1px solid #e3e7ec;border-radius:14px;background:#fff}
+html:is(#pc-ct,html) .pedido-tem-contrato>span{font:600 14px Inter,system-ui,sans-serif;color:#1f2020}
+html:is(#pc-ct,html) .pedido-tem-contrato-opcoes{display:inline-flex;padding:3px;border-radius:999px;background:#f1f3f6}
+html:is(#pc-ct,html) .pedido-tem-contrato-opcoes button{min-width:64px;height:32px;border:0;border-radius:999px;background:transparent;color:#4f4f4f;font:600 13px Inter,system-ui,sans-serif;cursor:pointer}
+html:is(#pc-ct,html) .pedido-tem-contrato-opcoes button.is-on{background:#123f86;color:#fff}
+html:is(#pc-ct,html) .pedido-tem-contrato small{flex:1;min-width:220px;color:#6b6b6b;font:400 12.5px Inter,system-ui,sans-serif}
+html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas{display:grid;grid-template-columns:minmax(320px,400px) minmax(0,1fr);gap:18px;align-items:start}
+html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas[hidden],html:is(#pc-ct,html) .pedido-sem-contrato[hidden]{display:none}
+html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas .pedido-clientes-finais{margin-top:0;position:sticky;top:calc(var(--pedido-resumo-top,90px));max-height:calc(100vh - 120px);overflow:auto}
+html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas .pedido-cf-grade{grid-template-columns:1fr!important}
+html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas .pedido-clientes-finais header p{display:none}
+html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas #pedidoContratoCard{min-width:0;margin:0}
+html:is(#pc-ct,html) .pedido-sem-contrato{display:flex;flex-direction:column;gap:4px;padding:28px;border:1px dashed #cfd6df;border-radius:16px;background:#fff;text-align:center}
+html:is(#pc-ct,html) .pedido-sem-contrato b{font:600 16px Inter,system-ui,sans-serif;color:#1f2020}
+html:is(#pc-ct,html) .pedido-sem-contrato span{font:400 13.5px Inter,system-ui,sans-serif;color:#6b6b6b}
+@media(max-width:1100px){html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas{grid-template-columns:1fr}html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas .pedido-clientes-finais{position:static;max-height:none}}
+html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas .pedido-cf-grade{grid-template-columns:1fr 1fr!important}
+html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas :is(.pedido-cf-nome,.pedido-cf-endereco,.pedido-cf-email){grid-column:1/-1}
+html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas .pedido-cf-campo input{width:100%;max-width:none}

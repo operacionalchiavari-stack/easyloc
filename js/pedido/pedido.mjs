@@ -5,7 +5,7 @@ console.log("✅ pedido.mjs carregado");
 import { getEls, bindDiasSemana } from "./pedido.utils.mjs";
 import { initAutocompleteClientes } from "./pedido.clientes.mjs?v=20261118-cadastrar-cliente";
 import { initEquipePedido } from "./pedido.equipe.mjs?v=20261031-bv";
-import { initClientesFinais } from "./pedido.clientes-finais.mjs?v=20261118-rg-ie";
+import { initClientesFinais } from "./pedido.clientes-finais.mjs?v=20261121-no-contrato";
 import { initBvPedido } from "./pedido.bv.mjs?v=20261118-varios";
 import {iniciarExibicaoFinanceira,aplicarExibicaoFinanceira} from './pedido.exibicao-financeiro.mjs?v=20261118-fixo';
 import {linhasDescontoComercial} from './pedido.desconto-area.mjs?v=20261118-resumo-areas';
@@ -1046,6 +1046,7 @@ async function setupPedidoWorkspace({ supabase }){
         ...(window.__pedidoEquipe ? window.__pedidoEquipe() : {}),
         // clientes finais (quem contrata; o contrato sai no nome deles) — pedido.clientes-finais.mjs
         clientes_finais: window.__pedidoClientesFinais ? window.__pedidoClientesFinais() : (observacoesAtuais.clientes_finais || []),
+        tem_contrato: window.__pedidoTemContrato ? window.__pedidoTemContrato() : (observacoesAtuais.tem_contrato !== false),
         // BV dividido / negociado neste pedido (pedido.bv.mjs); undefined = a tela não carregou, mantém o gravado
         bv: window.__pedidoBV?.() === undefined ? (observacoesAtuais.bv ?? null) : window.__pedidoBV(),
         observacoes_entrega: document.getElementById('observacoesEntrega')?.value.trim() || '',
@@ -1179,7 +1180,7 @@ async function setupPedidoWorkspace({ supabase }){
     }
     if(["aprovado", "finalizado", "enviado"].includes(statusComercial)){
       await window.__pedidoContratoInitPromise?.catch?.(() => null);
-      if(typeof window.__pedidoContratoPodeSalvarStatus === "function"){
+      if(window.__pedidoTemContrato?.() !== false && typeof window.__pedidoContratoPodeSalvarStatus === "function"){
         const contratoOk = await window.__pedidoContratoPodeSalvarStatus(statusComercial);
         if(!contratoOk) return;
       }
@@ -1210,9 +1211,9 @@ async function setupPedidoWorkspace({ supabase }){
     }
     const erroClientesFinais = window.__pedidoValidarClientesFinais?.({ exigir: ["aprovado", "finalizado", "enviado"].includes(statusComercialAtual()) });
     if(erroClientesFinais){
-      if(typeof window.__pedidoIrPara === "function") await window.__pedidoIrPara("dados");
+      if(typeof window.__pedidoIrPara === "function") await window.__pedidoIrPara("contrato");
       window.__pedidoValidarClientesFinais?.({ exigir: ["aprovado", "finalizado", "enviado"].includes(statusComercialAtual()) });
-      avisar(erroClientesFinais, "Dados do pedido", "aviso");
+      avisar(erroClientesFinais, "Contrato", "aviso");
       return;
     }
     const erroEquipe = window.__pedidoValidarEquipe?.();
@@ -1334,7 +1335,8 @@ async function setupPedidoWorkspace({ supabase }){
     const cronograma = await sincronizarCronogramaDoPedido(pedidoId);
     await window.__pedidoContratoInitPromise;
 
-    if(["aprovado", "finalizado", "enviado"].includes(statusComercial)){
+    if(window.__pedidoTemContrato?.() === false){ /* pedido sem contrato: nada a gravar */ }
+    else if(["aprovado", "finalizado", "enviado"].includes(statusComercial)){
       const contratoSalvo = typeof window.__pedidoSalvarContratoFinal === "function"
         ? await window.__pedidoSalvarContratoFinal(pedidoId, statusComercial)
         : false;
