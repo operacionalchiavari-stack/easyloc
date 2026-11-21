@@ -2,6 +2,7 @@
 // Se ficar em dúvida, conversa com esta assistente, que diz para qual setor mandar. Não grava nada: quem abre a O.S
 // é o navegador, pela RPC operacao_avaria_retorno / acervo_avaria_separacao, depois que a pessoa confirma.
 // Ação conversar {empresa_id, item, mensagens:[{papel:'pessoa'|'ia', texto}], fotos:[url]}.
+import { comUsoIA } from "../_shared/ia-uso.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
 
@@ -88,7 +89,7 @@ async function conversar(body: any) {
   return json({ resposta: String(s?.resposta || "").slice(0, 1200) || "Pode me contar onde está o dano?", pronto, setor: pronto ? setor : null, justificativa: pronto ? String(s?.justificativa || "").slice(0, 600) : "" });
 }
 
-Deno.serve(async (req) => {
+Deno.serve(comUsoIA("avaria", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ erro: "Método não permitido" }, 405);
   let body: any = {};
@@ -97,4 +98,4 @@ Deno.serve(async (req) => {
   if ("erro" in quem) return json({ erro: quem.erro }, quem.status);
   try { return await conversar(body); }
   catch (e) { console.error(e); return json({ erro: "Não foi possível falar com a assistente agora." }, 500); }
-});
+}));

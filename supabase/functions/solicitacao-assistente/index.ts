@@ -1,3 +1,4 @@
+import { comUsoIA } from "../_shared/ia-uso.ts";
 import { instrucoesEmpresa } from '../_shared/ia-config.ts';
 import { esquemaMontagem, sistemaMontagem, validarMontagem } from '../_shared/montagem-assistente.mjs';
 // Solicitações com assistente (nov/2026): no lugar de preencher um formulário, a pessoa conversa com uma especialista
@@ -315,7 +316,7 @@ async function transcrever(body: any) {
   return json({ texto: texto.slice(0, 4000) });
 }
 
-Deno.serve(async (req) => {
+Deno.serve(comUsoIA((b) => ({ compra: "carla", manutencao: "marcos", separacao: "miguel", montagem: "montagem" } as Record<string, string>)[String(b?.tipo || "")] || "solicitacao", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ erro: "Método não permitido" }, 405);
   let body: any = {};
@@ -342,4 +343,4 @@ Deno.serve(async (req) => {
     console.error(e);
     return json({ erro: "Algo deu errado. Tente de novo." }, 500);
   }
-});
+}));

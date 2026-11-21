@@ -5,6 +5,7 @@
 //                                                            cadastradas dos convidados já com o nome; grava em reuniao_partes.
 //   gerar_ata {empresa_id, reuniao_id}                     → junta as partes e escreve a ata (resumo, tópicos, decisões, tarefas…)
 //   perguntar {empresa_id, reuniao_id, pergunta}           → responde sobre o que foi dito (não grava nada).
+import { comUsoIA } from "../_shared/ia-uso.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
 
@@ -257,7 +258,7 @@ async function perguntar(ctx: any, pergunta: string) {
   return json({ resposta: resposta.trim() });
 }
 
-Deno.serve(async (req) => {
+Deno.serve(comUsoIA("reunioes", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ erro: "Método não permitido" }, 405);
   let body: any = {};
@@ -273,4 +274,4 @@ Deno.serve(async (req) => {
     console.error(e);
     return json({ erro: e instanceof Error ? e.message : "Algo deu errado. Tente de novo." }, 500);
   }
-});
+}));

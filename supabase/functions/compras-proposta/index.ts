@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { comUsoIA } from "../_shared/ia-uso.ts";
 import { instrucoesEmpresa } from '../_shared/ia-config.ts';
 const configuracao=()=>({url:Deno.env.get('SUPABASE_URL')});
 function liberarOrigem(res){res.setHeader('Access-Control-Allow-Origin','*');res.setHeader('Access-Control-Allow-Headers','authorization,apikey,content-type,x-client-info');res.setHeader('Access-Control-Allow-Methods','POST,OPTIONS');}
@@ -30,4 +31,4 @@ async function handler(req,res){
   }catch(error){return res.status(400).json({error:error.message || 'Falha ao ler a proposta.'});}
 };
 
-Deno.serve(async request=>{const headers=new Headers();let status=200,result;const res={setHeader(k,v){headers.set(k,v);return res;},status(n){status=n;return res;},json(value){headers.set("Content-Type","application/json");result=JSON.stringify(value);return res;},end(){result=null;return res;}};let body={};try{if(request.method!=="OPTIONS")body=await request.json();}catch{return new Response(JSON.stringify({error:"JSON inv?lido"}),{status:400});}await handler({method:request.method,headers:Object.fromEntries(request.headers),body},res);return new Response(result??null,{status,headers});});
+Deno.serve(comUsoIA("compras", async request=>{const headers=new Headers();let status=200,result;const res={setHeader(k,v){headers.set(k,v);return res;},status(n){status=n;return res;},json(value){headers.set("Content-Type","application/json");result=JSON.stringify(value);return res;},end(){result=null;return res;}};let body={};try{if(request.method!=="OPTIONS")body=await request.json();}catch{return new Response(JSON.stringify({error:"JSON inv?lido"}),{status:400});}await handler({method:request.method,headers:Object.fromEntries(request.headers),body},res);return new Response(result??null,{status,headers});}));

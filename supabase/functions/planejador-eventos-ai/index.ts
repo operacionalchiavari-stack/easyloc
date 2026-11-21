@@ -1,3 +1,4 @@
+import { comUsoIA } from "../_shared/ia-uso.ts";
 import { instrucoesEmpresa } from '../_shared/ia-config.ts';
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -217,7 +218,7 @@ async function gerarComOpenAI(input: PlannerInput) {
   };
 }
 
-serve(async (req) => {
+serve(comUsoIA("planejador", async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders(req) });
   }
@@ -246,4 +247,4 @@ serve(async (req) => {
       details: err instanceof Error ? err.message : String(err),
     }, 500);
   }
-});
+}));

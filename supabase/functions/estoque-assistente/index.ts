@@ -7,6 +7,7 @@
 // foto). Se a IA não citar nenhum, entram os itens mais críticos das próximas saídas.
 // Ações: conversar {empresa_id, dias?, mensagens:[{papel:'pessoa'|'ia', texto}]} → {resposta, itens[]}
 //        relatorio {empresa_id, dias?, pedido} → {relatorio:{titulo, resumo, destaques[], secoes[{titulo,texto,itens[]}], o_que_fazer[]}}
+import { comUsoIA } from "../_shared/ia-uso.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
 
@@ -220,7 +221,7 @@ async function relatorio(quem: any, body: any) {
   } });
 }
 
-Deno.serve(async (req) => {
+Deno.serve(comUsoIA("miguel", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ erro: "Método não permitido" }, 405);
   let body: any = {};
@@ -235,4 +236,4 @@ Deno.serve(async (req) => {
     console.error(e);
     return json({ erro: "Algo deu errado. Tente de novo." }, 500);
   }
-});
+}));

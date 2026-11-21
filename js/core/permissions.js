@@ -193,6 +193,7 @@
     [/Almoxarifado|OrdemdeServicos|Controledequalidade/i, 'estoque.almoxarifado.visualizar'],
     [/Geral\/SolicitacoesManutencao/i, 'geral.manutencao.visualizar'],
     [/Geral\/SolicitacoesCompra/i, 'geral.solicitacoes.visualizar'],
+    [/Geral\/UsoIA/i, 'gestao.ia_uso.visualizar'],
     [/Compras/i, 'estoque.compras.visualizar'],
     [/Estoque\/TriagemApp/i, 'logistica.separacao.visualizar'],
     [/SeparacaoMateriais/i, 'logistica.separacao.visualizar'],

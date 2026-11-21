@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Uso de IA</title>
+<!-- Geral › Uso de IA (21/11/2026): franquia mensal de créditos de IA, uso por agente, por pessoa e por decorador,
+     histórico dos meses e o excedente que vai na próxima fatura. Dados: RPC ia_uso_painel (ver
+     supabase/migrations/20261121000500_ia_uso.sql). Lógica em uso-ia.js. -->
+<script src="../../../js/core/limpezaDados.js?v=20261026"></script>
+<script src="../../../js/core/systemZoom.js?v=20261108"></script>
+<script src="../../../js/core/themePrepaint.js"></script>
+<link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
+<link rel="stylesheet" href="uso-ia.css?v=20261121-ia">
+</head>
+<body>
+<main class="el-page ia-page">
+  <header><h1>Uso de IA</h1></header>
+
+  <div class="ia-barra">
+    <div class="ia-mes" role="group" aria-label="Mês">
+      <button type="button" class="ia-seta" id="iaMesAnt" aria-label="Mês anterior">‹</button>
+      <strong id="iaMesNome">—</strong>
+      <button type="button" class="ia-seta" id="iaMesProx" aria-label="Próximo mês">›</button>
+    </div>
+    <div class="ia-barra-acoes">
+      <button type="button" class="ia-link" id="iaComoFunciona">Como funcionam os créditos</button>
+      <button type="button" class="btn btn-primary" id="iaPlanoBtn" hidden>Franquia e preço</button>
+    </div>
+  </div>
+
+  <p class="ia-erro" id="iaErro" role="alert" hidden></p>
+  <div id="iaConteudo" aria-live="polite"><div class="ia-carregando">Carregando o uso de IA…</div></div>
+</main>
+
+<dialog class="ia-dialogo" id="iaPlanoDlg">
+  <form method="dialog" id="iaPlanoForm">
+    <h2>Franquia de IA da empresa</h2>
+    <p class="ia-dica">Só você, responsável pelo sistema, vê e muda isto. A empresa vê a franquia e o excedente.</p>
+    <label>Créditos incluídos na mensalidade (por mês)<input type="number" min="0" step="1" id="iaPlFranquia" required></label>
+    <label>Valor de cada crédito excedente (R$)<input type="number" min="0" step="0.001" id="iaPlValor" required></label>
+    <label>Observação (opcional)<input type="text" id="iaPlObs" maxlength="200" placeholder="Ex.: Plano Profissional"></label>
+    <p class="ia-dica" id="iaPlCusto"></p>
+    <p class="ia-erro" id="iaPlErro" hidden></p>
+    <footer><button type="button" class="btn" value="cancel" id="iaPlCancelar">Cancelar</button><button type="submit" class="btn btn-primary" id="iaPlSalvar">Salvar</button></footer>
+  </form>
+</dialog>
+
+<dialog class="ia-dialogo" id="iaAjudaDlg">
+  <form method="dialog">
+    <h2>Como funcionam os créditos de IA</h2>
+    <ul class="ia-ajuda">
+      <li><b>A mensalidade inclui uma franquia</b> de créditos por mês. Ela renova no dia 1; o que sobra não passa para o mês seguinte.</li>
+      <li><b>Cada uso de IA gasta créditos</b> conforme o tamanho do trabalho. Uma conversa curta com um agente gasta poucos créditos; uma renderização com IA ou uma ligação com a Helena gastam mais.</li>
+      <li><b>A IA nunca para.</b> Se o mês passar da franquia, o excedente aparece aqui e é cobrado na próxima fatura.</li>
+      <li><b>O uso dos decoradores no catálogo</b> (Helena, renderizações, trocar tecido) também conta, e aparece separado.</li>
+      <li>Você recebe um aviso no celular quando o mês passa de 80% e de 100% da franquia.</li>
+    </ul>
+    <footer><button class="btn btn-primary" value="ok">Entendi</button></footer>
+  </form>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
+<script src="../../../js/core/permissions.js?v=20261121-ia"></script>
+<script src="../../../js/core/alerta.js"></script>
+<script src="uso-ia.js?v=20261121-ia"></script>
+<script src="../../../js/core/companyTheme.js"></script>
+<script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
+</body>
+</html>

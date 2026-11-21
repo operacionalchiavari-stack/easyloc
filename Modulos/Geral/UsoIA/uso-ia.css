@@ -1,0 +1,116 @@
+/* Geral › Uso de IA (21/11/2026). Visual do sistema: fundo cinza, cartões brancos com a sombra padrão, Inter. */
+.ia-page{padding-bottom:40px}
+.ia-barra{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:4px 0 18px}
+.ia-mes{display:flex;align-items:center;gap:10px}
+.ia-mes strong{min-width:170px;text-align:center;font:600 16px Inter,system-ui,sans-serif;color:#1f2020}
+.ia-seta{width:36px;height:36px;border:1px solid #dfe4ea;border-radius:10px;background:#fff;color:#1f2020;font-size:20px;line-height:1;cursor:pointer}
+.ia-seta:disabled{opacity:.35;cursor:default}
+.ia-barra-acoes{display:flex;align-items:center;gap:12px}
+.ia-link{border:0;background:none;color:#4f4f4f;font:500 13.5px Inter,system-ui,sans-serif;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.ia-erro{padding:12px 14px;border-radius:12px;background:#fdecea;color:#b42318;font:500 14px Inter,system-ui,sans-serif}
+.ia-carregando,.ia-vazio{padding:28px;text-align:center;color:#6b6b6b;font:400 14px Inter,system-ui,sans-serif}
+
+/* cartão principal */
+.ia-hero{--ia-cor:#1f7a44;padding:22px 26px;border:1px solid #e3e7ec;border-radius:18px;background:#fff;box-shadow:0 0 8px rgba(15,23,42,.12),0 0 2px rgba(15,23,42,.1);margin-bottom:18px}
+.ia-hero.is-alerta{--ia-cor:#b7791f}.ia-hero.is-passou{--ia-cor:#b42318}
+.ia-hero-topo{display:flex;justify-content:space-between;gap:10px;color:#6b6b6b;font:600 12px Inter,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.ia-hero-topo small{font:500 13px Inter,system-ui,sans-serif;letter-spacing:0;text-transform:none}
+.ia-hero-num{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:10px 0 12px}
+.ia-hero-num b{font:700 44px/1 Inter,system-ui,sans-serif;color:#1f2020;letter-spacing:-.02em}
+.ia-hero-num span{color:#4f4f4f;font:500 16px Inter,system-ui,sans-serif}
+.ia-hero-num em{margin-left:auto;padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--ia-cor) 12%,#fff);color:var(--ia-cor);font:700 14px Inter,system-ui,sans-serif;font-style:normal}
+.ia-uso{position:relative;height:14px;border-radius:999px;background:#eef1f5;overflow:hidden}
+.ia-uso i{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--ia-cor);transition:width .6s cubic-bezier(.22,1,.36,1)}
+.ia-uso s{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--ia-cor) 30%,#fff) 0 4px,transparent 4px 8px)}
+.ia-uso em{position:absolute;top:0;bottom:0;width:2px;background:#fff}
+.ia-hero-dados{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:18px}
+.ia-hero-dados>div{padding:12px 14px;border-radius:12px;background:#f7f9fb;display:flex;flex-direction:column;gap:2px}
+.ia-hero-dados small{color:#6b6b6b;font:500 12.5px Inter,system-ui,sans-serif}
+.ia-hero-dados b{color:#1f2020;font:700 22px Inter,system-ui,sans-serif}
+.ia-hero-dados span{color:#6b6b6b;font:400 12.5px Inter,system-ui,sans-serif}
+.ia-hero-dados .tem-excedente{background:#fdecea}
+.ia-hero-dados .tem-excedente b,.ia-hero-dados .tem-excedente span{color:#b42318}
+.ia-hero-dados .ia-so-dono{background:#fff;border:1px dashed #cfd6df}
+.ia-hero-frase{margin:14px 0 0;color:#1f2020;font:500 14.5px Inter,system-ui,sans-serif}
+
+/* grade de cartões */
+.ia-grade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-bottom:18px}
+.ia-card{padding:18px 20px;border:1px solid #e3e7ec;border-radius:16px;background:#fff;box-shadow:0 0 8px rgba(15,23,42,.12),0 0 2px rgba(15,23,42,.1);min-width:0}
+.ia-pessoas-card{margin-bottom:18px}
+.ia-card>header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+html body .ia-card>header h2{margin:0;font:600 17px Inter,system-ui,sans-serif!important;color:#1f2020;letter-spacing:0!important;text-transform:none!important}
+.ia-card>header small{color:#6b6b6b;font:400 13px Inter,system-ui,sans-serif}
+.ia-legenda{display:flex;gap:14px;color:#4f4f4f;font:500 12.5px Inter,system-ui,sans-serif}
+.ia-legenda i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* barras por agente */
+.ia-barras{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+.ia-barra-nome{display:flex;align-items:center;gap:10px}
+.ia-barra-nome>div{flex:1;min-width:0;display:flex;flex-direction:column}
+.ia-barra-nome b{color:#1f2020;font:600 14px Inter,system-ui,sans-serif}
+.ia-barra-nome small{color:#6b6b6b;font:400 12px Inter,system-ui,sans-serif}
+.ia-barra-nome strong{color:#1f2020;font:700 15px Inter,system-ui,sans-serif;text-align:right;white-space:nowrap}
+.ia-barra-nome strong small{display:block;color:#6b6b6b;font:500 11.5px Inter,system-ui,sans-serif}
+.ia-bolinha{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font:700 13px Inter,system-ui,sans-serif}
+.ia-bolinha.p{width:28px;height:28px;font-size:12px}
+.ia-barra-trilho{height:8px;margin-top:6px;border-radius:999px;background:#eef1f5;overflow:hidden}
+.ia-barra-trilho i{display:block;height:100%;border-radius:999px;background:#2a78d6}
+.ia-barra-partes{display:block;margin-top:4px;color:#6b6b6b;font:400 12px Inter,system-ui,sans-serif}
+
+/* gráfico por dia */
+.ia-graf svg{display:block;width:100%;height:auto}
+.ia-graf text{fill:#6b6b6b;font:500 11px Inter,system-ui,sans-serif}
+.ia-eixo{stroke:#dfe4ea;stroke-width:1}
+.ia-dia{cursor:pointer}
+.ia-dia.on .ia-dia-alvo{fill:rgba(15,23,42,.05)}
+.ia-graf-leitura{min-height:20px;margin-bottom:8px;color:#4f4f4f;font:400 13px Inter,system-ui,sans-serif}
+.ia-graf-leitura b{color:#1f2020}
+.ia-graf-leitura span{color:#6b6b6b}
+
+/* pessoas */
+.ia-abas{margin:0!important}
+.ia-abas b{margin-left:4px;color:#6b6b6b;font-weight:600}
+.ia-pessoas{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 28px}
+.ia-pessoas li{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #eef1f5}
+.ia-av{position:relative;flex:none;width:42px;height:42px;border-radius:50%;overflow:hidden;background:#e7ebf1;display:grid;place-items:center}
+.ia-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ia-ini{color:#4f4f4f;font:700 14px Inter,system-ui,sans-serif}
+.ia-p-corpo{flex:1;min-width:0}
+.ia-p-topo{display:flex;justify-content:space-between;gap:10px}
+.ia-p-topo b{color:#1f2020;font:600 14.5px Inter,system-ui,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ia-p-topo strong{color:#1f2020;font:700 15px Inter,system-ui,sans-serif;white-space:nowrap}
+.ia-p-topo strong small{color:#6b6b6b;font:500 12px Inter,system-ui,sans-serif}
+.ia-chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:8px}
+.ia-chips span{display:inline-flex;align-items:center;gap:5px;color:#4f4f4f;font:500 12px Inter,system-ui,sans-serif}
+.ia-chips i{width:8px;height:8px;border-radius:50%}
+.ia-chips small{color:#8b8b8b;font:400 12px Inter,system-ui,sans-serif}
+
+/* histórico e recentes */
+.ia-tabela{width:100%;border-collapse:collapse;font:400 14px Inter,system-ui,sans-serif}
+.ia-tabela th{padding:8px 6px;border-bottom:1px solid #e3e7ec;color:#6b6b6b;font:600 11.5px Inter,system-ui,sans-serif;text-transform:uppercase;letter-spacing:.06em;text-align:left;background:#fff}
+.ia-tabela td{padding:10px 6px;border-bottom:1px solid #eef1f5;color:#1f2020}
+.ia-tabela .n{text-align:right;font-variant-numeric:tabular-nums}
+.ia-tabela .neg{color:#b42318;font-weight:600}
+.ia-nota{margin:10px 0 0;color:#8b8b8b;font:400 12px Inter,system-ui,sans-serif}
+.ia-recentes{list-style:none;margin:0;padding:0;max-height:420px;overflow-y:auto}
+.ia-recentes li{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid #eef1f5}
+.ia-recentes div{flex:1;min-width:0;display:flex;flex-direction:column}
+.ia-recentes b{color:#1f2020;font:600 13.5px Inter,system-ui,sans-serif}
+.ia-recentes small{color:#6b6b6b;font:400 12px Inter,system-ui,sans-serif}
+.ia-recentes strong{color:#1f2020;font:600 14px Inter,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+
+/* janelas */
+.ia-dialogo{width:min(480px,calc(100% - 32px));padding:0;border:0;border-radius:18px;box-shadow:0 30px 80px -30px rgba(0,0,0,.4)}
+.ia-dialogo::backdrop{background:rgba(15,23,42,.35)}
+.ia-dialogo form{display:flex;flex-direction:column;gap:12px;padding:22px 24px}
+html body .ia-dialogo h2{margin:0;font:600 19px Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;color:#1f2020}
+.ia-dialogo label{display:flex;flex-direction:column;gap:6px;color:#4f4f4f;font:500 13px Inter,system-ui,sans-serif}
+.ia-dialogo input{height:40px;padding:0 12px;border:1px solid #dfe4ea;border-radius:10px;font:400 14px Inter,system-ui,sans-serif}
+.ia-dialogo footer{display:flex;justify-content:flex-end;gap:10px;margin-top:6px}
+.ia-dica{margin:0;color:#6b6b6b;font:400 13px Inter,system-ui,sans-serif}
+.ia-ajuda{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:10px;color:#1f2020;font:400 14px/1.45 Inter,system-ui,sans-serif}
+
+@media(max-width:1000px){.ia-grade,.ia-pessoas{grid-template-columns:1fr}}
+@media(max-width:600px){.ia-hero{padding:18px}.ia-hero-num b{font-size:36px}.ia-mes strong{min-width:0}}
+.ia-page [hidden],.ia-dialogo [hidden]{display:none!important}
+.ia-tabela th.n{text-align:right!important}

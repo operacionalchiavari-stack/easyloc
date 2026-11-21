@@ -1,3 +1,4 @@
+import { comUsoIA } from "../_shared/ia-uso.ts";
 import { instrucoesEmpresa } from '../_shared/ia-config.ts';
 // Ideia Premiada (nov/2026): assistente que ouve a ideia do funcionário, faz perguntas até entender (o problema, a
 // solução, os benefícios) e devolve um resumo para a pessoa aprovar. Quem grava a ideia é o navegador, depois que a
@@ -139,7 +140,7 @@ async function transcrever(body: any) {
   return json({ texto: texto.slice(0, 4000) });
 }
 
-Deno.serve(async (req) => {
+Deno.serve(comUsoIA("ideia", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ erro: "Método não permitido" }, 405);
   let body: any = {};
@@ -154,4 +155,4 @@ Deno.serve(async (req) => {
     console.error(e);
     return json({ erro: "Algo deu errado. Tente de novo." }, 500);
   }
-});
+}));

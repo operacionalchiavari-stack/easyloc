@@ -1,3 +1,4 @@
+import { comUsoIA, registrarUsoIA } from "../_shared/ia-uso.ts";
 import { instrucoesEmpresa } from '../_shared/ia-config.ts';
 // Assistente comercial do catálogo (out/2026).
 //
@@ -1517,6 +1518,8 @@ async function ligacaoRegistrar(ctx: Ctx, body: any) {
   const projetoId = body?.projeto_id ? String(body.projeto_id) : null;
   const gravadas: any[] = [];
   for (const f of falas) gravadas.push(await gravarMensagem(ctx, f.papel, f.texto, [{ tipo: f.papel === "user" ? "voz" : "voz_helena" }], projetoId));
+  // Uso de IA da ligação (o celular fala direto com a OpenAI): registrado pela duração (ver ia_precos, gpt-realtime).
+  if (segundos > 0) registrarUsoIA({ modelo: Deno.env.get("CATALOGO_ASSISTENTE_REALTIME_MODEL") || "gpt-realtime", segundos, acao: "ligacao" });
   const fim = `Ligação encerrada${segundos ? ` · ${Math.floor(segundos / 60)} min ${segundos % 60} s` : ""}.`;
   gravadas.push(await gravarMensagem(ctx, "assistant", fim, [{ tipo: "ligacao", segundos }], projetoId));
   const fala = falas.filter((f: any) => f.papel === "user").map((f: any) => f.texto).join("\n").slice(0, 4000);
@@ -1528,7 +1531,7 @@ async function ligacaoRegistrar(ctx: Ctx, body: any) {
   return json({ mensagens: gravadas.filter(Boolean) });
 }
 
-serve(async (req) => {
+serve(comUsoIA("helena", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   try {
     const body = await req.json();
@@ -1592,4 +1595,4 @@ serve(async (req) => {
     console.error("catalogo-assistente:", e);
     return json({ erro: (e as Error).message || "Erro inesperado" }, 500);
   }
-});
+}));

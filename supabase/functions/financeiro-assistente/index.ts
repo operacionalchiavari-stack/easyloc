@@ -1,3 +1,4 @@
+import { comUsoIA } from "../_shared/ia-uso.ts";
 import { instrucoesEmpresa } from '../_shared/ia-config.ts';
 // Clara, a assistente financeira da Conciliação (out/2026).
 //  ler_extrato:   lê o extrato enviado (grade de Excel/CSV, linhas de OFX, ou PDF). Para planilhas aprende o formato
@@ -686,7 +687,7 @@ async function conversar(ctx: any, body: any) {
 }
 
 // ------------------------------------------------------------------ servidor
-Deno.serve(async (req) => {
+Deno.serve(comUsoIA("clara", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return resposta({ error: "Método não permitido" }, 405);
   try {
@@ -721,4 +722,4 @@ Deno.serve(async (req) => {
     console.error(e);
     return resposta({ error: e instanceof Error ? e.message : "Erro" }, 400);
   }
-});
+}));
