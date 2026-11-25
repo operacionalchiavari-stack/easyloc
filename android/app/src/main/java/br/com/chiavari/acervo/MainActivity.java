@@ -6,6 +6,7 @@ import android.content.*;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.*;
+import android.view.View;
 import android.webkit.*;
 import androidx.webkit.WebViewCompat;
 import androidx.webkit.WebViewFeature;
@@ -27,14 +28,48 @@ public final class MainActivity extends Activity {
  // Câmera ao vivo nativa (CameraStreamService): pedido guardado enquanto o Android pede as permissões
  private JSONObject cameraPedido;
  private boolean cameraPermissaoPronta,cameraPausadaFoto;
+ private int[] bordas={0,0,0,0};
+ private boolean paginaCuidaBordas;
+ private void aplicarBordas(){
+  View d=getWindow().getDecorView();
+  if(paginaCuidaBordas)d.setPadding(0,0,0,0);else d.setPadding(bordas[0],bordas[1],bordas[2],bordas[3]);
+ }
+ private static final String MEDIR_BORDAS="(function(){try{var d=document.createElement('div');d.style.cssText='position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding-top:env(safe-area-inset-top,0px)';"
+  +"document.documentElement.appendChild(d);var h=parseFloat(getComputedStyle(d).paddingTop)||0;d.remove();"
+  +"var m=document.querySelector('meta[name=theme-color]'),cor=m&&m.content||'';"
+  +"if(!cor){var e=document.elementFromPoint(Math.max(1,innerWidth/2),Math.max(1,h/2+1));while(e){var b=getComputedStyle(e).backgroundColor;if(b&&b!=='transparent'&&!(b.indexOf('rgba(')===0&&b.split(' ').join('').slice(-3)===',0)')){cor=b;break}e=e.parentElement}}"
+  +"var c=document.createElement('canvas').getContext('2d');c.fillStyle=cor||'#ffffff';c.fillRect(0,0,1,1);var p=c.getImageData(0,0,1,1).data;"
+  +"return JSON.stringify({h:h,r:p[0],g:p[1],b:p[2]})}catch(e){return ''}})()";
+ private void medirBordas(){
+  if(web==null)return;
+  web.evaluateJavascript(MEDIR_BORDAS,v->{
+   try{
+    String s=v==null?"":v;if(s.startsWith("\""))s=new org.json.JSONTokener(s).nextValue().toString();if(s.isEmpty())return;
+    JSONObject o=new JSONObject(s);
+    boolean cuida=o.optDouble("h",0)>0;
+    if(cuida!=paginaCuidaBordas){paginaCuidaBordas=cuida;getSharedPreferences("acervo",MODE_PRIVATE).edit().putBoolean("pagina_cuida_bordas",cuida).apply();aplicarBordas();}
+    int r=o.optInt("r",255),g=o.optInt("g",255),b=o.optInt("b",255);
+    int cor=android.graphics.Color.rgb(r,g,b);boolean clara=(0.299*r+0.587*g+0.114*b)>150;
+    getWindow().getDecorView().setBackgroundColor(cor);
+    if(Build.VERSION.SDK_INT<35)getWindow().setStatusBarColor(cor);
+    if(Build.VERSION.SDK_INT>=30){android.view.WindowInsetsController w=getWindow().getInsetsController();
+     if(w!=null){w.setSystemBarsAppearance(clara?android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS:0,android.view.WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS);
+      w.setSystemBarsAppearance(android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS,android.view.WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);}}
+   }catch(Exception ignored){}
+  });
+ }
  @Override public void onCreate(Bundle state){
   super.onCreate(state);web=new WebView(this);setContentView(web);
   push=new NativePush(this,web);
   if(Build.VERSION.SDK_INT>=33)getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,()->back());
-  getWindow().getDecorView().setOnApplyWindowInsetsListener((v,insets)->{v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets;});
+  // Bordas da tela: se a página já reserva o espaço das barras do celular (env(safe-area-inset-*)), o app não reserva de novo
+  // (antes reservava duas vezes: faixa branca em cima e o menu de baixo "subido"). Página que não reserva: o app reserva.
+  paginaCuidaBordas=getSharedPreferences("acervo",MODE_PRIVATE).getBoolean("pagina_cuida_bordas",false);
+  getWindow().getDecorView().setOnApplyWindowInsetsListener((v,insets)->{bordas=new int[]{insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom()};aplicarBordas();return insets;});
   WebSettings settings=web.getSettings();settings.setJavaScriptEnabled(true);settings.setDomStorageEnabled(true);settings.setAllowFileAccess(false);settings.setAllowContentAccess(false);settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
   web.setDownloadListener((url,userAgent,disposition,mimetype,size)->{try{Uri u=Uri.parse(url);if("https".equals(u.getScheme()))startActivity(new Intent(Intent.ACTION_VIEW,u));}catch(Exception ignored){}});
   web.setWebViewClient(new WebViewClient(){
+   @Override public void onPageFinished(WebView view,String url){medirBordas();view.postDelayed(MainActivity.this::medirBordas,900);}
    @Override public boolean shouldOverrideUrlLoading(WebView view,WebResourceRequest req){
     Uri u=req.getUrl();if(ORIGIN.equals(u.getScheme()+"://"+u.getAuthority()))return false;
     if(req.isForMainFrame()&&("https".equals(u.getScheme())||"mailto".equals(u.getScheme())||"tel".equals(u.getScheme())))try{startActivity(new Intent(Intent.ACTION_VIEW,u));}catch(Exception ignored){}

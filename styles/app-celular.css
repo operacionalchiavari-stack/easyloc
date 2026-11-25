@@ -228,3 +228,10 @@ button.ap-linha:active{ background:#f7f4ee; }
 .ap-toast.on{ opacity:1; transform:translate(-50%,0); }
 .ap-toast.erro{ background:#b42318; }
 @media(prefers-reduced-motion:reduce){ .ap-entra,.ap-empilha,.ap-novos{ animation:none!important } .ap-toast{ transition:none } }
+
+/* 25/11/2026: faixa do topo compacta (pedido: "a logo ficou muito pra baixo, só uma faixa em cima compacta") */
+.ap-barra{ height:calc(50px + env(safe-area-inset-top)); }
+.ap-logo{ height:28px; max-width:160px; }
+.ap-logo.is-quadrada{ width:124px; height:34px; }
+.ap-marca{ font-size:18px; }
+.ap-topo-voltar{ top:calc(env(safe-area-inset-top) + 3px); }

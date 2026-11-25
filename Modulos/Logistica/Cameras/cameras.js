@@ -29,6 +29,13 @@
   };
 
   // ------------------------------------------------------------ tela
+  // "N câmeras ao vivo" à esquerda e os botões à direita, na mesma linha do título
+  function levarParaTopo() {
+    const h = document.querySelector(".cam-page > .page-header"), barra = S.host.querySelector(".plc-barra"); if (!h || !barra) return;
+    h.classList.add("cam-topo");
+    // o título continua o primeiro filho (o tema esconde o que vem antes dele); a posição é feita pelo CSS
+    h.append(barra.querySelector(".plc-resumo"), barra.querySelector(".plc-acoes")); barra.remove();
+  }
   function montar() {
     S.host.innerHTML =
       '<div class="plc">' +
@@ -91,7 +98,7 @@
   }
 
   function desenhar() {
-    S.host.querySelectorAll("[data-formato]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.formato === S.formato)));
+    document.querySelectorAll("[data-formato]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.formato === S.formato)));
     const noAr = S.cameras.filter((c) => c.no_ar || semConexao(c));
     let lista = noAr;
     if (S.foco) { const c = noAr.find((x) => x.id === S.foco); if (c) lista = [c]; else S.foco = null; }
@@ -340,7 +347,7 @@
   async function abrir() {
     const ctx = await window.aguardarContexto();
     S.empresa = ctx.empresa_id;
-    if (!S.host) { S.host = $("camHost"); montar(); }
+    if (!S.host) { S.host = $("camHost"); montar(); levarParaTopo(); }
     S.ativo = true;
     if (!S.canal) {
       S.canal = sb().channel("painel-cameras-sinais")
