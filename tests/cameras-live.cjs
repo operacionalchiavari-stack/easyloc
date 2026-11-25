@@ -39,19 +39,11 @@ const saida = path.join(root, 'outputs', 'cameras'); fs.mkdirSync(saida, { recur
     await prep(ctxCel);
     const cel = await ctxCel.newPage(); cel.on('pageerror', (e) => erros.push('celular: ' + e.message));
     await cel.goto(BASE + 'Modulos/Logistica/CameraApp/camera.html?app=1');
-    await cel.waitForSelector('#cmLista:not([hidden]) .cm-etapa', { timeout: 30000 }).catch(async (e) => { console.log('DEBUG', cel.url(), await cel.evaluate(() => document.body.innerText.slice(0, 600)), erros); throw e; });
-    await cel.locator('.cm-etapa', { hasText: 'Pedido' }).first().screenshot({ path: path.join(saida, '01-cartao.png') });
-    await cel.screenshot({ path: path.join(saida, '01-lista.png') });
-    const i = await cel.$$eval('.cm-etapa', (l, id) => l.findIndex((b) => b.dataset.i !== undefined), etapa);
-    // escolhe a etapa de teste pelo índice certo
-    const idx = await cel.evaluate(async (id) => { const r = await window.supabaseClient.rpc('camera_etapas', { p_empresa: sessionStorage.getItem('empresa_id') }); return r.data.findIndex((x) => x.id === id); }, etapa);
-    assert.ok(idx >= 0, 'montagem de teste aparece na lista');
-    await cel.click(`.cm-etapa[data-i="${idx}"]`);
     await cel.waitForSelector('#cmPermissao:not([hidden])');
     await cel.screenshot({ path: path.join(saida, '02-permissao.png') });
     await cel.click('#cmComecar');
     await cel.waitForSelector('#cmAoVivo:not([hidden])', { timeout: 20000 });
-    console.log('ok 1 - celular: escolheu a montagem, deu a permissão e está ao vivo', i);
+    console.log('ok 1 - celular: abriu, ligou a câmera (sem escolher montagem) e está ao vivo');
 
     // ---- painel
     const ctxPc = await browser.newContext({ viewport: { width: 1500, height: 900 } });
@@ -59,7 +51,7 @@ const saida = path.join(root, 'outputs', 'cameras'); fs.mkdirSync(saida, { recur
     const pc = await ctxPc.newPage(); pc.on('pageerror', (e) => erros.push('painel: ' + e.message));
     await pc.goto(BASE + 'Modulos/Logistica/Cameras/cameras.html');
     await pc.waitForSelector('#camHost .plc-quadro[data-cam]', { timeout: 40000 });
-    await pc.waitForFunction(() => [...document.querySelectorAll('.plc-quadro video')].some((v) => v.videoWidth > 0 && !v.paused), null, { timeout: 45000 }).catch(async (e) => { await pc.screenshot({ path: path.join(saida, 'debug-painel.png') }); console.log('DEBUG estados', await pc.$$eval('.plc-quadro', (l) => l.map((q) => q.dataset.estado + ' ' + q.innerText.slice(0, 120)))); const sg = await admin.from('logistica_camera_sinais').select('id,de,para,tipo,criado_em').eq('empresa_id', empresa).order('id'); console.log('DEBUG sinais', JSON.stringify(sg.data?.map((x) => [x.id, x.de.slice(0, 6), x.para.slice(0, 6), x.tipo]))); console.log('DEBUG rpc', JSON.stringify(await pc.evaluate(async () => { const id = document.querySelector('.plc-quadro[data-cam]').dataset.cam; const r = await window.supabaseClient.rpc('camera_sinal', { p_camera: id, p_de: 'x1', p_para: 'cam', p_tipo: 'pedido', p_dados: null }); return [id, r.error]; }))); console.log('DEBUG erros', erros, await cel.textContent('#cmAssistindo')); throw e; });
+    await pc.waitForFunction(() => [...document.querySelectorAll('.plc-quadro video')].some((v) => v.videoWidth > 0 && !v.paused), null, { timeout: 45000 }).catch(async (e) => { await pc.screenshot({ path: path.join(saida, 'debug-painel.png') }); console.log('DEBUG estados', await pc.$$eval('.plc-quadro', (l) => l.map((q) => q.dataset.estado + ' ' + q.innerText.slice(0, 120)))); const sg = await admin.from('logistica_camera_sinais').select('id,de,para,tipo,criado_em').eq('empresa_id', empresa).order('id'); console.log('DEBUG sinais', JSON.stringify(sg.data?.map((x) => [x.id, x.de.slice(0, 6), x.para.slice(0, 6), x.tipo]))); console.log('DEBUG rpc', JSON.stringify(await pc.evaluate(async () => { const id = document.querySelector('.plc-quadro[data-cam]').dataset.cam; const r = await window.supabaseClient.rpc('camera_sinal', { p_camera: id, p_de: 'x1', p_para: 'cam', p_tipo: 'pedido', p_dados: null }); return [id, r.error]; }))); console.log('DEBUG video', JSON.stringify(await pc.$$eval('.plc-quadro video', (l) => l.map((v) => ({ src: !!v.srcObject, tracks: v.srcObject?.getTracks().map((x) => x.kind + ':' + x.readyState + ':' + x.muted), rs: v.readyState, paused: v.paused, w: v.videoWidth, conectado: document.contains(v) }))))); console.log('DEBUG erros', erros, await cel.textContent('#cmAssistindo')); throw e; });
     await pc.waitForTimeout(1500);
     await pc.screenshot({ path: path.join(saida, '03-painel.png') });
     console.log('ok 2 - painel recebe o vídeo do celular ao vivo');
@@ -79,7 +71,7 @@ const saida = path.join(root, 'outputs', 'cameras'); fs.mkdirSync(saida, { recur
 
     // encerra no celular
     await cel.click('#cmEncerrar'); await cel.click('#cmConfirmar button[value="sim"]');
-    await cel.waitForSelector('#cmLista:not([hidden])', { timeout: 15000 });
+    await cel.waitForSelector('#cmPermissao:not([hidden])', { timeout: 15000 });
     await pc.waitForSelector('.plc-quadro[data-estado="off"]', { timeout: 30000 });
     await pc.screenshot({ path: path.join(saida, '06-encerrada.png') });
     console.log('ok 5 - encerrar no celular tira a câmera do ar no painel');

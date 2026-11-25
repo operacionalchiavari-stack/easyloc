@@ -110,7 +110,7 @@
       (est === "falhou" ? '<div class="plc-msg">Não foi possível conectar com este celular.<small>A rede do celular pode estar bloqueando a conexão direta. Tentando de novo…</small></div>' : "") +
       (est === "off" ? '<div class="plc-msg"><b>' + (c.status === "encerrada" ? "Transmissão encerrada" : "Sem sinal") + '</b><small>' + (c.status === "encerrada" ? "" : "O celular parou de transmitir (saiu do app, bloqueou a tela ou ficou sem internet).") + "</small></div>" : "") +
       '<div class="plc-base">' + avatar(c.cliente, c.cliente_foto) +
-      '<div><b>' + esc(c.cliente || c.titulo) + '</b><small>' + esc([c.numero ? "Pedido " + c.numero : "", c.tipo === "desmontagem" ? "Desmontagem" : "Montagem", c.local].filter(Boolean).join(" · ")) +
+      '<div><b>' + esc(c.cliente || c.titulo) + '</b><small>' + esc([c.numero ? "Pedido " + c.numero : "", c.tipo ? (c.tipo === "desmontagem" ? "Desmontagem" : "Montagem") : "", c.local].filter(Boolean).join(" · ") || "Câmera da equipe") +
       "</small><small>Filmando: " + esc(c.usuario_nome) + "</small></div></div>";
   }
 

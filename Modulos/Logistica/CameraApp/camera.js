@@ -1,6 +1,6 @@
 /* Câmera ao vivo (nov/2026) — o celular da equipe transmite a montagem.
-   1) lista as montagens/desmontagens de ontem, hoje e amanhã (RPC camera_etapas: a pessoa escalada vê as dela;
-      Supervisor de Montagem e Logística veem todas); 2) tela de permissão; 3) ao vivo.
+   Abriu, liga (pedido do usuário: sem escolher montagem). 1) tela "Ligar a câmera" (permissão); 2) ao vivo. O banco liga a
+   câmera sozinho a uma montagem de hoje em que a pessoa está escalada, só para mostrar o cliente no mosaico (camera_iniciar).
    Cada pessoa que assiste no Painel Logístico pede uma conexão ("pedido"); o celular cria uma conexão WebRTC só para
    ela, manda a oferta e troca os candidatos ICE pelo banco (logistica_camera_sinais, Realtime + consulta a cada 3 s).
    A tela fica acesa (Wake Lock) e a câmera volta sozinha se o celular a desligar ao sair e voltar para o app. */
@@ -10,11 +10,11 @@
   const sb = window.supabaseClient;
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const APP = "../../../app.html#inicio";
-  const s = { empresa: null, etapas: [], etapa: null, cam: null, stream: null, pcs: new Map(), filas: new Map(), canal: null,
+  const s = { empresa: null, info: null, cam: null, stream: null, pcs: new Map(), filas: new Map(), canal: null,
     vistos: new Set(), ultimo: 0, ping: null, poll: null, relogio: null, inicio: 0, wake: null, facing: "environment", som: false, encerrando: false };
 
   function tela(id) {
-    ["cmLista", "cmPermissao", "cmAoVivo"].forEach((x) => ($(x).hidden = x !== id));
+    ["cmPermissao", "cmAoVivo"].forEach((x) => ($(x).hidden = x !== id));
     document.body.classList.toggle("cm-modo-vivo", id === "cmAoVivo");
     window.AppCarregamento?.pronto();
   }
@@ -44,30 +44,9 @@
     }
     if (!empresa) throw Error("Seu usuário não está vinculado a uma empresa.");
     s.empresa = empresa;
-    await carregarEtapas();
-  }
-
-  async function carregarEtapas() {
-    mensagem("");
-    try { s.etapas = await rpc("camera_etapas", { p_empresa: s.empresa }); }
-    catch (e) { $("cmEtapas").innerHTML = '<p class="cm-vazio">' + esc(e.message) + "</p>"; tela("cmLista"); return; }
-    $("cmEtapas").innerHTML = s.etapas.length ? s.etapas.map((e, i) =>
-      '<button type="button" class="cm-etapa cm-' + esc(e.tipo) + '" data-i="' + i + '">' +
-      '<span class="cm-etapa-faixa"><b>' + esc(e.hora || "--:--") + "</b><small>" + esc(dia(e.data)) + "</small><small>" + esc(e.tipo === "desmontagem" ? "Desmontagem" : "Montagem") + "</small></span>" +
-      '<span class="cm-etapa-corpo">' + avatar(e.cliente, e.cliente_foto) +
-      '<span class="cm-etapa-texto"><b>' + esc(e.cliente || e.nome || "Montagem") + "</b><small>" + (e.numero ? "Pedido " + esc(e.numero) + " · " : "") + esc(e.local || "") + "</small>" +
-      (e.ao_vivo ? '<i class="cm-selo-vivo">● No ar</i>' : e.escalado ? '<i class="cm-selo">Você está escalado</i>' : "") + "</span></span></button>").join("")
-      : '<p class="cm-vazio">Nenhuma montagem ou desmontagem para ontem, hoje ou amanhã.</p>';
-    tela("cmLista");
-  }
-
-  function escolher(e) {
-    s.etapa = e;
-    $("cmEvento").innerHTML = avatar(e.cliente, e.cliente_foto) + '<div><small>' + esc((e.tipo === "desmontagem" ? "Desmontagem" : "Montagem") + " · " + dia(e.data) + (e.hora ? " às " + e.hora : "")) +
-      "</small><b>" + esc(e.cliente || e.nome || "") + "</b><span>" + (e.numero ? "Pedido " + esc(e.numero) + " · " : "") + esc(e.local || "") + "</span></div>";
     tela("cmPermissao");
-    history.pushState({ cm: "permissao" }, "");
   }
+
 
   // ---------------------------------------------------------------- câmera
   async function abrirCamera() {
@@ -87,15 +66,17 @@
     s.som = $("cmSom").checked;
     try {
       s.stream = await abrirCamera();
-    } catch (e) { mensagem(erroCamera(e)); btn.disabled = false; btn.textContent = "Permitir e começar a transmitir"; return; }
+    } catch (e) { mensagem(erroCamera(e)); btn.disabled = false; btn.textContent = "Ligar a câmera"; return; }
     try {
-      const r = await rpc("camera_iniciar", { p_empresa: s.empresa, p_etapa: s.etapa.id, p_aparelho: navigator.userAgent.slice(0, 120) });
-      s.cam = r.id;
-    } catch (e) { pararStream(); mensagem(e.message); btn.disabled = false; btn.textContent = "Permitir e começar a transmitir"; return; }
-    btn.disabled = false; btn.textContent = "Permitir e começar a transmitir";
+      const r = await rpc("camera_iniciar", { p_empresa: s.empresa, p_aparelho: navigator.userAgent.slice(0, 120) });
+      s.cam = r.id; s.info = r;
+    } catch (e) { pararStream(); mensagem(e.message); btn.disabled = false; btn.textContent = "Ligar a câmera"; return; }
+    btn.disabled = false; btn.textContent = "Ligar a câmera";
     $("cmVideo").srcObject = s.stream;
-    $("cmInfo").innerHTML = "<b>" + esc(s.etapa.cliente || "") + "</b><span>" + (s.etapa.numero ? "Pedido " + esc(s.etapa.numero) + " · " : "") + esc(s.etapa.local || "") + "</span>";
-    pintarMicro(); tela("cmAoVivo"); history.replaceState({ cm: "vivo" }, "");
+    const i = s.info || {};
+    $("cmInfo").innerHTML = i.cliente ? "<b>" + esc(i.cliente) + "</b><span>" + (i.numero ? "Pedido " + esc(i.numero) + " · " : "") + esc(i.local || "") + "</span>"
+      : "<b>" + esc(i.titulo || "Câmera ao vivo") + "</b>";
+    pintarMicro(); tela("cmAoVivo"); history.pushState({ cm: "vivo" }, ""); // o voltar do celular pergunta antes de encerrar
     s.inicio = Date.now(); s.vistos = new Set(); s.ultimo = 0;
     clearInterval(s.relogio); s.relogio = setInterval(pintarTempo, 1000); pintarTempo();
     await manterTelaAcesa();
@@ -171,7 +152,10 @@
     s.stream.getTracks().forEach((t) => pc.addTrack(t, s.stream));
     pc.onicecandidate = (e) => { if (e.candidate) enviar(quem, "ice", e.candidate.toJSON()); };
     pc.onconnectionstatechange = () => {
+      clearTimeout(pc._caiu);
       if (["failed", "closed"].includes(pc.connectionState)) fechar(quem);
+      // quem fechou a tela sem avisar (página recarregada, internet caiu): solta em 8 s para não contar à toa
+      else if (pc.connectionState === "disconnected") pc._caiu = setTimeout(() => { if (s.pcs.get(quem) === pc && pc.connectionState !== "connected") fechar(quem); }, 8000);
       pintarAssistindo();
     };
     const oferta = await pc.createOffer();
@@ -242,28 +226,23 @@
     try { await s.wake?.release(); } catch (e) { /* já solto */ } s.wake = null;
     if (id) await sb.rpc("camera_encerrar", { p_camera: id });
     s.encerrando = false;
-    await carregarEtapas();
+    tela("cmPermissao");
     mensagem("Transmissão encerrada.", true);
   }
 
   // ---------------------------------------------------------------- eventos
-  $("cmEtapas").addEventListener("click", (e) => { const b = e.target.closest("[data-i]"); if (b) escolher(s.etapas[+b.dataset.i]); });
   $("cmComecar").addEventListener("click", comecar);
-  $("cmCancelar").addEventListener("click", () => history.back());
   $("cmTrocar").addEventListener("click", trocarCamera);
   $("cmMicro").addEventListener("click", alternarSom);
   $("cmEncerrar").addEventListener("click", () => encerrar(false));
-  $("cmAtualizar").addEventListener("click", () => { if (!s.cam) carregarEtapas(); });
   $("cmVoltar").addEventListener("click", () => {
     if (s.cam) return encerrar(false);
-    if (!$("cmPermissao").hidden) return history.back();
     location.href = APP;
   });
   window.addEventListener("popstate", () => {
     if (s.cam) { history.pushState({ cm: "vivo" }, ""); encerrar(false); return; } // o voltar do celular não derruba sem perguntar
-    if (!$("cmPermissao").hidden) { tela("cmLista"); mensagem(""); }
   });
   window.addEventListener("pagehide", () => { if (s.cam) disparar(sb.rpc("camera_encerrar", { p_camera: s.cam })); });
 
-  iniciar().catch((e) => { $("cmEtapas").innerHTML = '<p class="cm-vazio">' + esc(e.message) + "</p>"; tela("cmLista"); });
+  iniciar().catch((e) => { mensagem(e.message); tela("cmPermissao"); $("cmComecar").disabled = true; });
 })();
