@@ -53,7 +53,7 @@ public final class CameraStreamService extends Service {
  static volatile EglBase egl;
  static volatile VideoTrack videoTrack;
  private PeerConnectionFactory factory;
- private CameraVideoCapturer capturer;
+ private VideoCapturer capturer;
  private SurfaceTextureHelper helper;
  private VideoSource videoSource;
  private AudioSource audioSource;
@@ -152,33 +152,13 @@ public final class CameraStreamService extends Service {
  private void abrirCamera(){
   try{
    if(capturer!=null){try{capturer.stopCapture();}catch(Exception ignored){}capturer.dispose();capturer=null;}
-   Camera2Enumerator en=new Camera2Enumerator(this);
-   String escolhida=null;for(String n:en.getDeviceNames())if(en.isBackFacing(n)){escolhida=n;break;}
-   if(escolhida==null&&en.getDeviceNames().length>0)escolhida=en.getDeviceNames()[0];
-   if(escolhida==null){cameraIndisponivel("Este celular não tem câmera disponível.");return;}
-   capturer=en.createCapturer(escolhida,new CameraVideoCapturer.CameraEventsHandler(){
-    @Override public void onCameraError(String e){exec.execute(()->cameraIndisponivel("Erro na câmera"));}
-    @Override public void onCameraDisconnected(){exec.execute(()->cameraIndisponivel("Outro app usou a câmera"));}
-    @Override public void onCameraFreezed(String e){exec.execute(()->cameraIndisponivel("A câmera travou"));}
-    @Override public void onCameraOpening(String n){}
-    @Override public void onFirstFrameAvailable(){exec.execute(()->{cameraFalhou=false;falhasCamera=0;atualizarEstado();});}
-    @Override public void onCameraClosed(){}
+   // Câmera lida direto em memória (Camera2 + ImageReader), sem a conversão da placa de vídeo: no Galaxy A57 essa
+   // conversão devolvia quadros pretos (o "Ver a câmera" desenhava a textura e mostrava; a transmissão saía preta).
+   capturer=new CameraMemoria(this,new CameraMemoria.Eventos(){
+    @Override public void erro(String motivo){exec.execute(()->cameraIndisponivel(motivo));}
+    @Override public void primeiroQuadro(){exec.execute(()->{cameraFalhou=false;falhasCamera=0;atualizarEstado();});}
    });
-   // Galaxy A57: o quadro em textura chegava preto na transmissão (Camera1 derrubava a câmera). Converte cada quadro
-   // para a memória aqui, na hora da captura (onde a medição de brilho provou que sai com imagem), antes do codificador.
-   final CapturerObserver destino=videoSource.getCapturerObserver();
-   CapturerObserver memoria=new CapturerObserver(){
-    @Override public void onCapturerStarted(boolean ok){destino.onCapturerStarted(ok);}
-    @Override public void onCapturerStopped(){destino.onCapturerStopped();}
-    @Override public void onFrameCaptured(VideoFrame f){
-     VideoFrame.I420Buffer b=null;
-     try{b=f.getBuffer().toI420();}catch(Exception ignored){}
-     if(b==null){destino.onFrameCaptured(f);return;}
-     VideoFrame n=new VideoFrame(b,f.getRotation(),f.getTimestampNs());
-     try{destino.onFrameCaptured(n);}finally{n.release();}
-    }
-   };
-   capturer.initialize(helper,getApplicationContext(),memoria);
+   capturer.initialize(helper,getApplicationContext(),videoSource.getCapturerObserver());
    if(!pausada)capturer.startCapture(capW,capH,capFps);
   }catch(Exception e){cameraIndisponivel("Não foi possível abrir a câmera.");}
  }
