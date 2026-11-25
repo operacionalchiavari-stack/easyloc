@@ -123,7 +123,9 @@ public final class CameraStreamService extends Service {
    PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions.builder(getApplicationContext()).createInitializationOptions());
    // Galaxy A57 (Exynos): VP8 por hardware mandava imagem preta. Automático = hardware com H.264 na frente (preferirCodec);
    // compatibilidade (Parâmetros › Qualidade) = VP8 pelo processador, funciona em qualquer aparelho.
-   compatibilidade="compatibilidade".equals(config.optString("codificador","automatico"));
+   // Exynos (Samsung): o codificador do chip manda imagem preta tanto em VP8 quanto em H.264 (Galaxy A57, 25/11/2026);
+   // nesses aparelhos o modo automático já usa o processador.
+   compatibilidade="compatibilidade".equals(config.optString("codificador","automatico"))||codificadorExynos();
    VideoEncoderFactory codificador=compatibilidade?new SoftwareVideoEncoderFactory():new DefaultVideoEncoderFactory(egl.getEglBaseContext(),false,false);
    PeerConnectionFactory.Builder b=PeerConnectionFactory.builder()
     .setVideoEncoderFactory(codificador)
@@ -269,6 +271,16 @@ public final class CameraStreamService extends Service {
    }
   },new MediaConstraints());
   aplicarQualidade();
+ }
+ static boolean codificadorExynos(){
+  try{
+   for(android.media.MediaCodecInfo i:new android.media.MediaCodecList(android.media.MediaCodecList.REGULAR_CODECS).getCodecInfos()){
+    if(!i.isEncoder())continue;
+    for(String tipo:i.getSupportedTypes())
+     if(("video/avc".equalsIgnoreCase(tipo)||"video/x-vnd.on2.vp8".equalsIgnoreCase(tipo))&&i.getName().toLowerCase(Locale.ROOT).contains("exynos"))return true;
+   }
+  }catch(Exception ignored){}
+  return false;
  }
  /** Põe os formatos do codec escolhido (e os rtx deles) no começo da linha m=video: quem assiste usa o primeiro que entende. */
  static String preferirCodec(String sdp,String codec){
