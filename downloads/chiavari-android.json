@@ -1,11 +1,11 @@
 {
   "ready": false,
-  "versionCode": 8,
-  "versionName": "1.1.5",
+  "versionCode": 9,
+  "versionName": "1.1.6",
   "apkUrl": "downloads/chiavari.apk",
   "notificationsReady": false,
   "message": "Baixe o aplicativo Chiavari e entre com a mesma conta do sistema. As notificações do aplicativo ainda estão sendo finalizadas.",
   "downloadReady": true,
-  "sha256": "b0e212dd136de8f123f0d591b74e5379681b99291a77a7d054314a3f4b0d5739",
+  "sha256": "da410b03bce20e56a8f38a6bb530e1bc62f8622bedd3bc04f9b8addb62de4851",
   "tamanho": "20 MB"
 }
