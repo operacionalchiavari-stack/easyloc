@@ -108,10 +108,10 @@ final class CameraMemoria implements VideoCapturer {
    if (rotacao != 0) {
     try {
      boolean deitada = rotacao == 90 || rotacao == 270;
-     JavaI420Buffer r = JavaI420Buffer.allocate(deitada ? h : w, deitada ? w : h);
+     JavaI420Buffer girada = JavaI420Buffer.allocate(deitada ? h : w, deitada ? w : h);
      YuvHelper.I420Rotate(b.getDataY(), b.getStrideY(), b.getDataU(), b.getStrideU(), b.getDataV(), b.getStrideV(),
-      r.getDataY(), r.getStrideY(), r.getDataU(), r.getStrideU(), r.getDataV(), r.getStrideV(), w, h, rotacao);
-     b.release(); saida = r; rot = 0;
+      girada.getDataY(), girada.getStrideY(), girada.getDataU(), girada.getStrideU(), girada.getDataV(), girada.getStrideV(), w, h, rotacao);
+     b.release(); saida = girada; rot = 0;
     } catch (Throwable e) { saida = b; rot = rotacao; }
    }
    VideoFrame f = new VideoFrame(saida, rot, System.nanoTime());
