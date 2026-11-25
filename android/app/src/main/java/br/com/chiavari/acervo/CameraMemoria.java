@@ -102,7 +102,19 @@ final class CameraMemoria implements VideoCapturer {
    copiar(p[0], w, h, b.getDataY(), b.getStrideY());
    copiar(p[1], (w + 1) / 2, (h + 1) / 2, b.getDataU(), b.getStrideU());
    copiar(p[2], (w + 1) / 2, (h + 1) / 2, b.getDataV(), b.getStrideV());
-   VideoFrame f = new VideoFrame(b, rotacao, System.nanoTime());
+   // Gira aqui (imagem já em pé) em vez de mandar o aviso de rotação: em alguns navegadores com placa de vídeo
+   // (Edge no notebook) o vídeo com esse aviso aparecia preto, enquanto o do navegador do celular (já em pé) aparecia.
+   VideoFrame.I420Buffer saida = b; int rot = rotacao;
+   if (rotacao != 0) {
+    try {
+     boolean deitada = rotacao == 90 || rotacao == 270;
+     JavaI420Buffer r = JavaI420Buffer.allocate(deitada ? h : w, deitada ? w : h);
+     YuvHelper.I420Rotate(b.getDataY(), b.getStrideY(), b.getDataU(), b.getStrideU(), b.getDataV(), b.getStrideV(),
+      r.getDataY(), r.getStrideY(), r.getDataU(), r.getStrideU(), r.getDataV(), r.getStrideV(), w, h, rotacao);
+     b.release(); saida = r; rot = 0;
+    } catch (Throwable e) { saida = b; rot = rotacao; }
+   }
+   VideoFrame f = new VideoFrame(saida, rot, System.nanoTime());
    try { observer.onFrameCaptured(f); } finally { f.release(); }
    if (!primeiro) { primeiro = true; eventos.primeiroQuadro(); }
   } catch (Exception ignored) {
