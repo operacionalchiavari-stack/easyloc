@@ -60,19 +60,19 @@ const saida = path.join(root, 'outputs', 'cameras'); fs.mkdirSync(saida, { recur
     console.log('ok 3 - celular mostra:', await cel.textContent('#cmAssistindo'));
     assert.ok((await pc.title()).startsWith('(1)'), 'título mostra quantas câmeras estão no ar');
 
-    // muda o mosaico e amplia
-    await pc.click('[data-layout="9"]'); await pc.waitForTimeout(800);
-    assert.equal(await pc.$$eval('.plc-mural > .plc-quadro', (l) => l.length), 9);
-    assert.ok(await pc.$$eval('.plc-quadro video', (l) => l.some((v) => v.videoWidth > 0)), 'vídeo continua depois de trocar o mosaico');
-    await pc.dblclick('.plc-quadro[data-cam]'); await pc.waitForTimeout(800);
-    assert.equal(await pc.$$eval('.plc-mural > .plc-quadro', (l) => l.length), 1);
-    await pc.screenshot({ path: path.join(saida, '05-ampliada.png') });
-    console.log('ok 4 - mosaico de 9 e câmera ampliada');
-
+    // vertical / horizontal: a imagem muda de formato e continua grande
+    const tamanho = () => pc.$eval('.plc-quadro[data-cam] .plc-img', (e) => { const r = e.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height) }; });
+    const hz = await tamanho(); assert.ok(hz.w > hz.h && hz.w > 700, 'horizontal grande: ' + JSON.stringify(hz));
+    await pc.click('[data-formato="vertical"]'); await pc.waitForTimeout(500);
+    const vt = await tamanho(); assert.ok(vt.h > vt.w && vt.h > 500, 'vertical grande: ' + JSON.stringify(vt));
+    assert.ok(await pc.$$eval('.plc-quadro video', (l) => l.some((v) => v.videoWidth > 0 && !v.paused)), 'vídeo continua depois de trocar o formato');
+    await pc.screenshot({ path: path.join(saida, '05-vertical.png') });
+    await pc.click('[data-formato="horizontal"]'); await pc.waitForTimeout(300);
+    console.log('ok 4 - horizontal', hz, 'e vertical', vt);
     // encerra no celular
     await cel.click('#cmEncerrar'); await cel.click('#cmConfirmar button[value="sim"]');
     await cel.waitForSelector('#cmPermissao:not([hidden])', { timeout: 15000 });
-    await pc.waitForSelector('.plc-quadro[data-estado="off"]', { timeout: 30000 });
+    await pc.waitForSelector('#plcEncerradas:not([hidden])', { timeout: 30000 });
     await pc.screenshot({ path: path.join(saida, '06-encerrada.png') });
     console.log('ok 5 - encerrar no celular tira a câmera do ar no painel');
 

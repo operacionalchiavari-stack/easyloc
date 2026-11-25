@@ -1,61 +1,66 @@
-/* Logística › Câmeras ao vivo (nov/2026): mosaico de câmeras, visual de central de segurança */
-.cam-page{padding:0 clamp(14px,2vw,28px) 24px}
-#camHost{padding:6px 0 0}
+/* Logística › Câmeras ao vivo (nov/2026): tela clara, onde prevalece a imagem. O tamanho de cada câmera é calculado em
+   cameras.js (grade()/medir()): o maior que cabe na tela, em Horizontal (16:9) ou Vertical (9:16). */
+.cam-page{padding:0 clamp(14px,2vw,28px) 18px}
+#camHost{padding:4px 0 0}
 .plc-erro{padding:24px;border-radius:14px;background:#fff;color:#b42318}
-.plc{background:#0e1013;border-radius:16px;padding:12px;color:#e5e7eb;font-family:Inter,system-ui,sans-serif}
-.plc:fullscreen{border-radius:0;display:flex;flex-direction:column;padding:10px}
-.plc:fullscreen .plc-mural{flex:1;aspect-ratio:auto;min-height:0}
-.plc:fullscreen .plc-dica{display:none}
-.plc-barra{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:2px 4px 12px}
-.plc-resumo{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14px}
-.plc-resumo b{color:#fff;font-weight:600}
-.plc-resumo small{color:#9ca3af;font-size:12.5px}
-.plc-ponto{width:9px;height:9px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 0 rgba(239,68,68,.6);animation:plc-pulso 1.6s infinite}
-@keyframes plc-pulso{70%{box-shadow:0 0 0 8px rgba(239,68,68,0)}100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}}
-.plc-acoes{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.plc-layouts{display:flex;gap:4px;padding:3px;border-radius:10px;background:#1b1e23}
-.plc-layouts button,.plc-pag button,.plc-btn{border:0;background:transparent;color:#cbd5e1;border-radius:8px;cursor:pointer}
-.plc-layouts button{width:34px;height:30px;display:grid;place-items:center}
-.plc-layouts svg{width:18px;height:18px;fill:currentColor}
-.plc-layouts button[aria-pressed="true"]{background:#374151;color:#fff}
-.plc-layouts button:hover,.plc-pag button:hover,.plc-btn:hover{background:#2a2f36;color:#fff}
-.plc-pag{display:flex;align-items:center;gap:4px;font-size:13px;color:#cbd5e1}
-.plc-pag button{width:30px;height:30px;font-size:18px}
-.plc-btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;font-size:13px;font-weight:500;background:#1b1e23}
-.plc-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+.plc{font-family:Inter,system-ui,sans-serif;color:#1f2328}
+.plc [hidden]{display:none!important}
+.plc:fullscreen{background:#f3f5f6;padding:14px 18px;overflow:auto}
 
-.plc-mural{--plc-col:2;display:grid;grid-template-columns:repeat(var(--plc-col),minmax(0,1fr));gap:6px;aspect-ratio:16/9;max-height:calc(100vh - 230px);min-height:320px;margin:0 auto}
-.plc-quadro{position:relative;min-height:0;overflow:hidden;border-radius:8px;background:#05070a;outline:1px solid #22262c}
-.plc-quadro video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#05070a}
-.plc-vazio{display:grid;place-items:center;color:#4b5563;font-size:13px;background:repeating-linear-gradient(135deg,#0a0c0f 0 12px,#0c0f13 12px 24px)}
+.plc-barra{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+.plc-resumo{display:flex;align-items:center;gap:9px;font-size:14px;color:#4b5563}
+.plc-resumo b{color:#1f2328;font-weight:600}
+.plc-ponto{width:9px;height:9px;border-radius:50%;background:#e5484d;box-shadow:0 0 0 0 rgba(229,72,77,.5);animation:plc-pulso 1.6s infinite}
+@keyframes plc-pulso{70%{box-shadow:0 0 0 8px rgba(229,72,77,0)}100%{box-shadow:0 0 0 0 rgba(229,72,77,0)}}
+.plc-acoes{display:flex;align-items:center;gap:10px}
+.plc-formato{display:flex;gap:2px;padding:3px;border-radius:12px;background:#fff;box-shadow:0 0 0 1px #e3e7ec}
+.plc-formato button,.plc-btn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 13px;border:0;border-radius:9px;
+  background:transparent;color:#4b5563;font:500 13px Inter,system-ui,sans-serif;cursor:pointer}
+.plc-formato button[aria-pressed="true"]{background:var(--el-button-primary-bg,#123f86);color:#fff}
+.plc-formato svg,.plc-btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.plc-btn{background:#fff;box-shadow:0 0 0 1px #e3e7ec}
+.plc-formato button:not([aria-pressed="true"]):hover,.plc-btn:hover{background:#f1f4f8;color:#1f2328}
+
+/* mosaico: as colunas e a largura vêm do JS */
+.plc-mural{display:grid;gap:16px;justify-content:center;align-content:start}
+.plc-quadro{display:flex;flex-direction:column;background:#fff;border-radius:16px;overflow:hidden;
+  box-shadow:0 1px 2px rgba(15,23,42,.06),0 0 0 1px rgba(15,23,42,.06),0 10px 28px rgba(15,23,42,.07)}
+.plc-img{position:relative;aspect-ratio:16/9;background:#e9ecf0;overflow:hidden}
+.plc-mural[data-formato="vertical"] .plc-img{aspect-ratio:9/16}
+.plc-img video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#e9ecf0}
 .plc-sobre{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
 .plc-sobre button{pointer-events:auto}
-.plc-topo{display:flex;align-items:center;gap:8px;padding:8px 8px 18px;background:linear-gradient(rgba(0,0,0,.65),transparent)}
-.plc-vivo{display:inline-flex;align-items:center;gap:6px;padding:3px 7px;border-radius:4px;background:#dc2626;color:#fff;font-size:11px;font-weight:700;letter-spacing:.06em}
-.plc-vivo i{width:6px;height:6px;border-radius:50%;background:#fff;animation:plc-pisca 1.2s infinite}
-@keyframes plc-pisca{50%{opacity:.25}}
-.plc-con{padding:3px 7px;border-radius:4px;background:#374151;color:#e5e7eb;font-size:11px;font-weight:600}
-.plc-off{padding:3px 7px;border-radius:4px;background:#1f2937;color:#9ca3af;font-size:11px;font-weight:600}
-.plc-rel{color:#e5e7eb;font-size:12px;font-variant-numeric:tabular-nums;text-shadow:0 1px 3px #000}
-.plc-ferr{margin-left:auto;display:flex;gap:4px;opacity:0;transition:opacity .15s}
+.plc-topo{display:flex;align-items:center;gap:8px;padding:10px}
+.plc-vivo,.plc-con{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:600;
+  background:rgba(255,255,255,.92);color:#1f2328;box-shadow:0 1px 4px rgba(15,23,42,.15);backdrop-filter:blur(6px)}
+.plc-vivo i{width:7px;height:7px;border-radius:50%;background:#e5484d;animation:plc-pisca 1.3s infinite}
+@keyframes plc-pisca{50%{opacity:.3}}
+.plc-con{color:#6b7280}
+.plc-ferr{margin-left:auto;display:flex;gap:6px;opacity:0;transition:opacity .15s}
 .plc-quadro:hover .plc-ferr,.plc-quadro:focus-within .plc-ferr{opacity:1}
-.plc-ferr button{width:30px;height:30px;border:0;border-radius:7px;background:rgba(17,24,39,.75);color:#fff;font-size:14px;cursor:pointer}
-.plc-ferr button:hover{background:rgba(55,65,81,.95)}
-.plc-msg{align-self:center;max-width:80%;text-align:center;color:#d1d5db;font-size:13px;line-height:1.4}
-.plc-msg b{display:block;color:#fff;font-weight:600;font-size:14px}
-.plc-msg small{display:block;color:#9ca3af;font-size:12px;margin-top:3px}
-.plc-quadro[data-estado="conectando"]::after{content:"";position:absolute;left:50%;top:50%;width:28px;height:28px;margin:-14px;border-radius:50%;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;animation:plc-gira .9s linear infinite}
+.plc-ferr button{width:34px;height:34px;border:0;border-radius:50%;background:rgba(255,255,255,.92);color:#1f2328;font-size:15px;cursor:pointer;
+  box-shadow:0 1px 4px rgba(15,23,42,.15)}
+.plc-ferr button:hover{background:#fff}
+.plc-quadro[data-estado="conectando"] .plc-img::after{content:"";position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px;border-radius:50%;
+  border:3px solid rgba(18,63,134,.15);border-top-color:var(--el-button-primary-bg,#123f86);animation:plc-gira .9s linear infinite}
 @keyframes plc-gira{to{transform:rotate(360deg)}}
-.plc-base{display:flex;align-items:center;gap:9px;padding:22px 10px 9px;background:linear-gradient(transparent,rgba(0,0,0,.75))}
-.plc-base div{display:flex;flex-direction:column;min-width:0}
-.plc-base b{color:#fff;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.plc-base small{color:#d1d5db;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.plc-av{position:relative;flex:0 0 32px;width:32px;height:32px;border-radius:50%;background:#374151;color:#fff;display:grid;place-items:center;font-size:13px;font-weight:600;overflow:hidden}
+.plc-msg{align-self:center;margin-bottom:40%;padding:10px 14px;max-width:80%;border-radius:12px;background:rgba(255,255,255,.95);text-align:center;font-size:13px;color:#4b5563}
+.plc-msg b{display:block;color:#1f2328;font-weight:600}
+.plc-msg small{display:block;margin-top:2px;font-size:12px}
+
+.plc-leg{display:flex;align-items:center;gap:10px;height:58px;padding:0 14px;min-width:0}
+.plc-leg div{display:flex;flex-direction:column;min-width:0}
+.plc-leg b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plc-leg small{font-size:12px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plc-av{position:relative;flex:0 0 34px;width:34px;height:34px;border-radius:50%;background:#eef1f5;color:#4b5563;display:grid;place-items:center;font-size:13px;font-weight:600;overflow:hidden}
 .plc-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-/* mosaico grande: menos texto em cada quadro */
-.plc-mural[style*="--plc-col: 4"] .plc-base small:last-child,.plc-mural[style*="--plc-col: 3"] .plc-base small:last-child{display:none}
-.plc-mural[style*="--plc-col: 4"] .plc-msg small{display:none}
-.plc-dica{margin:10px 4px 0;color:#9ca3af;font-size:12.5px}
-.plc-dica b{color:#e5e7eb;font-weight:600}
-@media (prefers-reduced-motion:reduce){.plc-ponto,.plc-vivo i,.plc-quadro::after{animation:none}}
-.plc [hidden]{display:none!important}
+
+.plc-nada{grid-column:1/-1;justify-self:center;width:min(520px,100%);margin-top:6vh;padding:40px 28px;text-align:center;background:#fff;border-radius:20px;
+  box-shadow:0 0 0 1px rgba(15,23,42,.06),0 10px 28px rgba(15,23,42,.06)}
+.plc-nada-icone{display:inline-grid;place-items:center;width:64px;height:64px;border-radius:50%;background:#eef2f7;color:var(--el-button-primary-bg,#123f86)}
+.plc-nada-icone svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linejoin:round}
+.plc-nada h2{margin:14px 0 6px;font:600 18px Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;color:#1f2328}
+.plc-nada p{margin:0;color:#6b7280;font-size:14px;line-height:1.5}
+.plc-encerradas{margin-top:14px;font-size:12.5px;color:#6b7280;text-align:center}
+.plc-encerradas b{font-weight:600;color:#4b5563}
+@media (prefers-reduced-motion:reduce){.plc-ponto,.plc-vivo i,.plc-img::after{animation:none}}

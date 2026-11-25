@@ -1,15 +1,17 @@
-/* Logística › Câmeras ao vivo (nov/2026; era uma aba do Painel Logístico): central de câmeras das montagens, no jeito de um sistema de segurança.
-   Mosaico 1/4/9/16; cada quadro é uma câmera de celular transmitindo pelo app (Modulos/Logistica/CameraApp).
+/* Logística › Câmeras ao vivo (nov/2026; era uma aba do Painel Logístico): as câmeras de celular que a equipe liga pelo app
+   (Modulos/Logistica/CameraApp). Tela clara, onde prevalece a imagem: só as câmeras no ar, cada uma do maior tamanho que
+   cabe na tela (calculado em grade()), em Horizontal (16:9) ou Vertical (9:16), escolha lembrada no navegador.
    Cada quadro abre a sua própria conexão WebRTC: pede ("pedido") pelo banco, recebe a oferta do celular, responde e
    troca os candidatos ICE (logistica_camera_sinais; Realtime filtrado por de=cam + consulta a cada 3 s).
-   Sai da aba = desliga tudo (não gasta a internet do celular à toa). */
+   Fechar a tela = desliga tudo (não gasta a internet do celular à toa). */
 (function () {
   "use strict";
   const $ = (id) => document.getElementById(id);
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const sb = () => window.supabaseClient;
-  const S = { empresa: null, host: null, cameras: [], layout: Number(localStorage.getItem("pl_cam_layout") || 4), pagina: 0, foco: null,
-    quadros: new Map(), canal: null, canalCam: null, vistos: new Set(), ultimo: 0, poll: null, lista: null, ativo: false, pronto: false };
+  const S = { empresa: null, host: null, cameras: [], formato: localStorage.getItem("cam_formato") === "vertical" ? "vertical" : "horizontal", foco: null,
+    quadros: new Map(), canal: null, canalCam: null, vistos: new Set(), ultimo: 0, poll: null, lista: null, ativo: false, redim: null };
+  const LEGENDA = 58, GAP = 16; // altura da legenda embaixo de cada imagem e espaço entre as câmeras
 
   const hora = (iso) => iso ? new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
   function duracao(iso) {
@@ -19,6 +21,12 @@
   }
   const avatar = (nome, url) => '<span class="plc-av">' + esc(String(nome || "?").trim().charAt(0).toUpperCase()) +
     (/^https?:/i.test(url || "") ? '<img src="' + esc(url) + '" alt="" onerror="this.remove()">' : "") + "</span>";
+  const ICONE = {
+    horizontal: '<svg viewBox="0 0 24 24"><rect x="3" y="6.5" width="18" height="11" rx="2"/></svg>',
+    vertical: '<svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2"/></svg>',
+    tela: '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+    camera: '<svg viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L17 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/></svg>',
+  };
 
   // ------------------------------------------------------------ tela
   function montar() {
@@ -27,19 +35,22 @@
       '<div class="plc-barra">' +
       '<div class="plc-resumo" id="plcResumo">Carregando câmeras…</div>' +
       '<div class="plc-acoes">' +
-      '<div class="plc-layouts" role="group" aria-label="Quantidade de câmeras na tela">' +
-      [1, 4, 9, 16].map((n) => '<button type="button" data-layout="' + n + '" aria-label="' + n + (n === 1 ? " câmera" : " câmeras") + '">' + iconeLayout(n) + "</button>").join("") +
-      "</div>" +
-      '<div class="plc-pag" id="plcPag" hidden><button type="button" data-pag="-1" aria-label="Página anterior">‹</button><span id="plcPagTxt"></span><button type="button" data-pag="1" aria-label="Próxima página">›</button></div>' +
-      '<button type="button" class="plc-btn" id="plcTela" aria-label="Tela cheia"><svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>Tela cheia</button>' +
+      '<div class="plc-formato" role="group" aria-label="Formato da imagem">' +
+      '<button type="button" data-formato="horizontal">' + ICONE.horizontal + 'Horizontal</button>' +
+      '<button type="button" data-formato="vertical">' + ICONE.vertical + 'Vertical</button></div>' +
+      '<button type="button" class="plc-btn" id="plcTela">' + ICONE.tela + 'Tela cheia</button>' +
       "</div></div>" +
       '<div class="plc-mural" id="plcMural"></div>' +
-      '<p class="plc-dica">Clique duas vezes numa câmera para ampliar. A equipe liga a câmera pelo app do celular › <b>Câmera ao vivo</b>.</p>' +
+      '<div class="plc-encerradas" id="plcEncerradas" hidden></div>' +
       "</div>";
-    S.host.querySelector(".plc-layouts").addEventListener("click", (e) => { const b = e.target.closest("[data-layout]"); if (b) { S.foco = null; S.layout = +b.dataset.layout; S.pagina = 0; localStorage.setItem("pl_cam_layout", S.layout); desenhar(); } });
-    $("plcPag").addEventListener("click", (e) => { const b = e.target.closest("[data-pag]"); if (b) { S.pagina += +b.dataset.pag; desenhar(); } });
+    S.host.querySelector(".plc-formato").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-formato]"); if (!b) return;
+      S.formato = b.dataset.formato; localStorage.setItem("cam_formato", S.formato); desenhar();
+    });
     $("plcTela").addEventListener("click", () => { const el = S.host.querySelector(".plc"); document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen?.(); });
-    $("plcMural").addEventListener("dblclick", (e) => { const q = e.target.closest("[data-cam]"); if (q) focar(q.dataset.cam); });
+    document.addEventListener("fullscreenchange", () => setTimeout(medir, 60));
+    window.addEventListener("resize", () => { clearTimeout(S.redim); S.redim = setTimeout(medir, 80); });
+    $("plcMural").addEventListener("dblclick", (e) => { const q = e.target.closest("[data-cam]"); if (q && !e.target.closest("button")) focar(q.dataset.cam); });
     $("plcMural").addEventListener("click", (e) => {
       const b = e.target.closest("[data-acao]"); if (!b) return;
       const id = b.closest("[data-cam]")?.dataset.cam;
@@ -50,68 +61,90 @@
     });
     document.addEventListener("keydown", (e) => { if (e.key === "Escape" && S.foco && S.ativo && !document.fullscreenElement) { S.foco = null; desenhar(); } });
   }
-  function iconeLayout(n) {
-    const k = Math.sqrt(n), t = 18 / k, r = [];
-    for (let i = 0; i < k; i++) for (let j = 0; j < k; j++) r.push('<rect x="' + (3 + j * t + .8) + '" y="' + (3 + i * t + .8) + '" width="' + (t - 1.6) + '" height="' + (t - 1.6) + '" rx=".8"/>');
-    return '<svg viewBox="0 0 24 24">' + r.join("") + "</svg>";
-  }
   function focar(id) { S.foco = S.foco === id ? null : id; desenhar(); }
 
-  function visiveis() {
-    if (S.foco) { const c = S.cameras.find((x) => x.id === S.foco); if (c) return { lista: [c], vagas: 1 }; S.foco = null; }
-    const n = S.layout, total = Math.max(1, Math.ceil(S.cameras.length / n));
-    S.pagina = Math.min(Math.max(0, S.pagina), total - 1);
-    $("plcPag").hidden = total <= 1;
-    $("plcPagTxt").textContent = (S.pagina + 1) + " de " + total;
-    return { lista: S.cameras.slice(S.pagina * n, S.pagina * n + n), vagas: n };
+  // Quantas colunas deixam cada imagem maior: testa de 1 até n colunas e fica com a que dá a imagem mais larga que cabe
+  // na largura e na altura disponíveis (a legenda fica embaixo de cada imagem).
+  function grade(n, W, H, proporcao) {
+    let melhor = { cols: 1, larg: 0 };
+    for (let cols = 1; cols <= Math.max(1, n); cols++) {
+      const linhas = Math.ceil(n / cols);
+      const pelaLargura = (W - GAP * (cols - 1)) / cols;
+      const pelaAltura = ((H - GAP * (linhas - 1)) / linhas - LEGENDA) * proporcao;
+      const larg = Math.floor(Math.min(pelaLargura, pelaAltura));
+      if (larg > melhor.larg) melhor = { cols, larg };
+    }
+    return melhor;
+  }
+  function medir() {
+    const mural = $("plcMural"); if (!mural) return;
+    const n = mural.querySelectorAll("[data-cam]").length;
+    if (!n) { mural.style.gridTemplateColumns = ""; return; }
+    const proporcao = S.formato === "vertical" ? 9 / 16 : 16 / 9;
+    const topo = mural.getBoundingClientRect().top;
+    const W = mural.clientWidth, H = Math.max(320, window.innerHeight - topo - (document.fullscreenElement ? 16 : 28));
+    const g = grade(n, W, H, proporcao);
+    mural.style.gridTemplateColumns = "repeat(" + g.cols + ", " + Math.max(180, g.larg) + "px)";
   }
 
   function desenhar() {
-    S.host.querySelectorAll("[data-layout]").forEach((b) => b.setAttribute("aria-pressed", String(!S.foco && +b.dataset.layout === S.layout)));
-    const { lista, vagas } = visiveis();
+    S.host.querySelectorAll("[data-formato]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.formato === S.formato)));
+    const noAr = S.cameras.filter((c) => c.no_ar);
+    let lista = noAr;
+    if (S.foco) { const c = noAr.find((x) => x.id === S.foco); if (c) lista = [c]; else S.foco = null; }
     const mural = $("plcMural");
-    mural.style.setProperty("--plc-col", Math.sqrt(vagas));
-    // quadros que saíram da tela: desconecta
-    const ids = new Set(lista.filter((c) => c.no_ar).map((c) => c.id));
+    mural.dataset.formato = S.formato;
+    const ids = new Set(lista.map((c) => c.id));
     [...S.quadros.keys()].forEach((id) => { if (!ids.has(id)) desligar(id); });
-    // reaproveita os <video> já conectados
     const existentes = new Map([...mural.querySelectorAll("[data-cam]")].map((el) => [el.dataset.cam, el]));
-    const frag = [];
-    for (let i = 0; i < vagas; i++) {
-      const c = lista[i];
-      if (!c) { frag.push(vazio()); continue; }
+    const frag = lista.map((c) => {
       let el = existentes.get(c.id);
-      if (!el) { el = document.createElement("div"); el.className = "plc-quadro"; el.dataset.cam = c.id; el.innerHTML = '<video autoplay muted playsinline></video><div class="plc-sobre"></div>'; }
+      if (!el) {
+        el = document.createElement("article"); el.className = "plc-quadro"; el.dataset.cam = c.id;
+        el.innerHTML = '<div class="plc-img"><video autoplay muted playsinline></video><div class="plc-sobre"></div></div><div class="plc-leg"></div>';
+      }
       pintarQuadro(el, c);
-      frag.push(el);
+      return el;
+    });
+    if (!frag.length) {
+      let v = mural.querySelector(".plc-nada");
+      if (!v) {
+        v = document.createElement("div"); v.className = "plc-nada";
+        v.innerHTML = '<span class="plc-nada-icone">' + ICONE.camera + '</span><h2>Nenhuma câmera ligada agora</h2>' +
+          '<p>Quando alguém da equipe tocar em <b>Câmera ao vivo</b> no app do celular, a imagem aparece aqui sozinha.</p>';
+      }
+      frag.push(v);
     }
     // só remonta se mudou (tirar um <video> da página pausa o vídeo); depois garante que todos estão tocando
     const atuais = [...mural.children];
     if (atuais.length !== frag.length || atuais.some((el, i) => el !== frag[i])) mural.replaceChildren(...frag);
     mural.querySelectorAll("video").forEach((v) => { if (v.srcObject && v.paused) v.play().catch(() => {}); });
-    lista.forEach((c) => { if (c.no_ar && S.ativo) ligar(c.id); });
+    medir();
+    if (S.ativo) lista.forEach((c) => ligar(c.id));
+    // as que já saíram do ar ficam só numa linha discreta embaixo
+    const fora = S.cameras.filter((c) => !c.no_ar);
+    $("plcEncerradas").hidden = !fora.length;
+    $("plcEncerradas").innerHTML = fora.length ? "<b>Saíram do ar há pouco:</b> " + fora.slice(0, 8).map((c) =>
+      esc(c.cliente || c.titulo) + " <small>(" + esc(c.status === "encerrada" ? "encerrada às " + hora(c.encerrada_em) : "sem sinal desde " + hora(c.visto_em)) + ")</small>").join(" · ") : "";
   }
-  function vazio() { const d = document.createElement("div"); d.className = "plc-quadro plc-vazio"; d.innerHTML = '<span>Sem câmera</span>'; return d; }
 
   function pintarQuadro(el, c) {
     const q = S.quadros.get(c.id);
-    const est = !c.no_ar ? "off" : q?.estado || "conectando";
+    const est = q?.estado || "conectando";
     el.dataset.estado = est;
-    const status = est === "ok" ? '<span class="plc-vivo"><i></i>AO VIVO</span>'
-      : est === "off" ? '<span class="plc-off">' + (c.status === "encerrada" ? "Encerrada " + hora(c.encerrada_em) : "Sem sinal desde " + hora(c.visto_em)) + "</span>"
-      : '<span class="plc-con">Conectando…</span>';
+    const status = est === "ok" ? '<span class="plc-vivo"><i></i>Ao vivo · ' + esc(duracao(c.iniciada_em)) + "</span>" : '<span class="plc-con">Conectando…</span>';
     el.querySelector(".plc-sobre").innerHTML =
-      '<div class="plc-topo">' + status + '<span class="plc-rel">' + (c.no_ar ? esc(duracao(c.iniciada_em)) : "") + "</span>" +
+      '<div class="plc-topo">' + status +
       '<span class="plc-ferr">' +
-      (est === "ok" && q?.temSom ? '<button type="button" data-acao="som" aria-label="Ouvir o som" title="Ouvir o som">' + (q.ouvindo ? "🔊" : "🔇") + "</button>" : "") +
-      (est === "ok" ? '<button type="button" data-acao="foto" aria-label="Salvar foto" title="Salvar uma foto">📷</button>' : "") +
-      (c.no_ar && est !== "ok" ? '<button type="button" data-acao="recon" aria-label="Tentar de novo" title="Tentar de novo">↻</button>' : "") +
-      '<button type="button" data-acao="ampliar" aria-label="Ampliar" title="Ampliar">' + (S.foco === c.id ? "⤡" : "⤢") + "</button></span></div>" +
-      (est === "falhou" ? '<div class="plc-msg">Não foi possível conectar com este celular.<small>A rede do celular pode estar bloqueando a conexão direta. Tentando de novo…</small></div>' : "") +
-      (est === "off" ? '<div class="plc-msg"><b>' + (c.status === "encerrada" ? "Transmissão encerrada" : "Sem sinal") + '</b><small>' + (c.status === "encerrada" ? "" : "O celular parou de transmitir (saiu do app, bloqueou a tela ou ficou sem internet).") + "</small></div>" : "") +
-      '<div class="plc-base">' + avatar(c.cliente, c.cliente_foto) +
-      '<div><b>' + esc(c.cliente || c.titulo) + '</b><small>' + esc([c.numero ? "Pedido " + c.numero : "", c.tipo ? (c.tipo === "desmontagem" ? "Desmontagem" : "Montagem") : "", c.local].filter(Boolean).join(" · ") || "Câmera da equipe") +
-      "</small><small>Filmando: " + esc(c.usuario_nome) + "</small></div></div>";
+      (est === "ok" && q?.temSom ? '<button type="button" data-acao="som" title="' + (q.ouvindo ? "Silenciar" : "Ouvir o som") + '">' + (q.ouvindo ? "🔊" : "🔇") + "</button>" : "") +
+      (est === "ok" ? '<button type="button" data-acao="foto" title="Salvar uma foto">📷</button>' : "") +
+      (est !== "ok" ? '<button type="button" data-acao="recon" title="Tentar de novo">↻</button>' : "") +
+      '<button type="button" data-acao="ampliar" title="' + (S.foco === c.id ? "Voltar para todas" : "Ampliar") + '">' + (S.foco === c.id ? "⤡" : "⤢") + "</button></span></div>" +
+      (est === "falhou" ? '<div class="plc-msg"><b>Não foi possível conectar</b><small>A rede do celular pode estar bloqueando a conexão. Tentando de novo…</small></div>' : "");
+    el.querySelector(".plc-leg").innerHTML = avatar(c.cliente || c.usuario_nome, c.cliente_foto) +
+      "<div><b>" + esc(c.cliente || c.titulo) + "</b><small>" +
+      esc([c.numero ? "Pedido " + c.numero : "", c.tipo ? (c.tipo === "desmontagem" ? "Desmontagem" : "Montagem") : "", c.local, "Filmando: " + c.usuario_nome].filter(Boolean).join(" · ")) +
+      "</small></div>";
   }
 
   // ------------------------------------------------------------ conexão (um quadro = uma conexão)
@@ -207,8 +240,8 @@
     marcarAba(noAr);
     if (!S.host) return;
     $("plcResumo").innerHTML = noAr
-      ? '<span class="plc-ponto"></span><b>' + noAr + (noAr === 1 ? " câmera ao vivo" : " câmeras ao vivo") + "</b>" + (S.cameras.length > noAr ? '<small>' + (S.cameras.length - noAr) + " encerrada(s) nas últimas horas</small>" : "")
-      : "<b>Nenhuma câmera ao vivo agora</b><small>Quando a equipe ligar a câmera no app, ela aparece aqui sozinha.</small>";
+      ? '<span class="plc-ponto"></span><b>' + noAr + (noAr === 1 ? " câmera ao vivo" : " câmeras ao vivo") + "</b>" 
+      : "<b>Nenhuma câmera ao vivo agora</b>";
     if (S.ativo) desenhar();
   }
   function marcarAba(n) { document.title = (n ? "(" + n + ") " : "") + "Câmeras ao vivo · Logística"; }
