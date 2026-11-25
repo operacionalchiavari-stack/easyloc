@@ -342,6 +342,8 @@
     finally{ botao.disabled = false; botao.innerHTML = original; }
   });
   $("apSair").addEventListener("click", async () => {
+    // sair da conta encerra a câmera ao vivo do app Android (nunca fica transmitindo sem ninguém logado)
+    try{ window.AcervoAndroid?.postMessage(JSON.stringify({ action: "camera:stop" })); }catch(e){}
     ["montadorToken", "montadorBonusToken"].forEach((k) => { try{ const t = localStorage.getItem(k); if(t){ sb.rpc("app_sair", { p_token: t }).catch(() => {}); } localStorage.removeItem(k); localStorage.removeItem(k + "Conta"); }catch(e){} });
     try{ localStorage.removeItem("montadorPasta"); }catch(e){}
     ["login_ok", "empresa_id", "usuario_nome"].forEach((k) => sessionStorage.removeItem(k));

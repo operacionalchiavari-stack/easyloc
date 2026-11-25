@@ -30,7 +30,7 @@ const saida = path.join(root, 'outputs', 'cameras'); fs.mkdirSync(saida, { recur
     const cli = createClient(url, 'sb_publishable_tlm-v5vvX9jgChODJmDCtw_JqMxLtpZ', { auth: { persistSession: false, autoRefreshToken: false } });
     const sessao = ok(await cli.auth.signInWithPassword({ email: u.email, password: senha })).session;
 
-    browser = await chromium.launch({ channel: 'msedge', args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'] });
+    browser = await chromium.launch({ channel: 'msedge', args: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', '--disable-renderer-backgrounding', '--disable-background-timer-throttling', '--disable-backgrounding-occluded-windows'] });
     const prep = async (ctx) => ctx.addInitScript(([s, e]) => { try { localStorage.setItem('easyloc-auth', JSON.stringify(s)); localStorage.setItem('acervo_ultima_empresa', e); sessionStorage.setItem('empresa_id', e); sessionStorage.setItem('login_ok', '1'); } catch (x) {} }, [sessao, empresa]);
     const erros = [];
 

@@ -11,7 +11,7 @@
   const sb = () => window.supabaseClient;
   const S = { empresa: null, host: null, cameras: [], formato: localStorage.getItem("cam_formato") === "vertical" ? "vertical" : "horizontal", foco: null,
     quadros: new Map(), canal: null, canalCam: null, vistos: new Set(), ultimo: 0, poll: null, lista: null, ativo: false, redim: null };
-  const LEGENDA = 58, GAP = 16; // altura da legenda embaixo de cada imagem e espaço entre as câmeras
+  const LEGENDA = 78, GAP = 16; // altura da legenda embaixo de cada imagem e espaço entre as câmeras
 
   const hora = (iso) => iso ? new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "";
   function duracao(iso) {
@@ -38,8 +38,10 @@
       '<div class="plc-formato" role="group" aria-label="Formato da imagem">' +
       '<button type="button" data-formato="horizontal">' + ICONE.horizontal + 'Horizontal</button>' +
       '<button type="button" data-formato="vertical">' + ICONE.vertical + 'Vertical</button></div>' +
+      '<button type="button" class="plc-btn" id="plcQualidade" hidden>Qualidade</button>' +
       '<button type="button" class="plc-btn" id="plcTela">' + ICONE.tela + 'Tela cheia</button>' +
       "</div></div>" +
+      '<div class="plc-alertas" id="plcAlertas" hidden></div>' +
       '<div class="plc-mural" id="plcMural"></div>' +
       '<div class="plc-encerradas" id="plcEncerradas" hidden></div>' +
       "</div>";
@@ -47,6 +49,7 @@
       const b = e.target.closest("[data-formato]"); if (!b) return;
       S.formato = b.dataset.formato; localStorage.setItem("cam_formato", S.formato); desenhar();
     });
+    $("plcQualidade").addEventListener("click", abrirQualidade);
     $("plcTela").addEventListener("click", () => { const el = S.host.querySelector(".plc"); document.fullscreenElement ? document.exitFullscreen() : el.requestFullscreen?.(); });
     document.addEventListener("fullscreenchange", () => setTimeout(medir, 60));
     window.addEventListener("resize", () => { clearTimeout(S.redim); S.redim = setTimeout(medir, 80); });
@@ -89,9 +92,10 @@
 
   function desenhar() {
     S.host.querySelectorAll("[data-formato]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.formato === S.formato)));
-    const noAr = S.cameras.filter((c) => c.no_ar);
+    const noAr = S.cameras.filter((c) => c.no_ar || semConexao(c));
     let lista = noAr;
     if (S.foco) { const c = noAr.find((x) => x.id === S.foco); if (c) lista = [c]; else S.foco = null; }
+    pintarAlertas();
     const mural = $("plcMural");
     mural.dataset.formato = S.formato;
     const ids = new Set(lista.map((c) => c.id));
@@ -120,31 +124,108 @@
     if (atuais.length !== frag.length || atuais.some((el, i) => el !== frag[i])) mural.replaceChildren(...frag);
     mural.querySelectorAll("video").forEach((v) => { if (v.srcObject && v.paused) v.play().catch(() => {}); });
     medir();
-    if (S.ativo) lista.forEach((c) => ligar(c.id));
+    if (S.ativo) lista.forEach((c) => { if (c.no_ar) ligar(c.id); });
     // as que já saíram do ar ficam só numa linha discreta embaixo
-    const fora = S.cameras.filter((c) => !c.no_ar);
+    const fora = S.cameras.filter((c) => !c.no_ar && !semConexao(c));
     $("plcEncerradas").hidden = !fora.length;
     $("plcEncerradas").innerHTML = fora.length ? "<b>Saíram do ar há pouco:</b> " + fora.slice(0, 8).map((c) =>
       esc(c.cliente || c.titulo) + " <small>(" + esc(c.status === "encerrada" ? "encerrada às " + hora(c.encerrada_em) : "sem sinal desde " + hora(c.visto_em)) + ")</small>").join(" · ") : "";
   }
 
+  const ROTULO = { ao_vivo: "Ao vivo", conectando: "Conectando", reconectando: "Reconectando", instavel: "Conexão instável",
+    camera_indisponivel: "Câmera indisponível", pausada: "Pausada para foto", sem_conexao: "Sem conexão", encerrada: "Transmissão encerrada" };
+  const semConexao = (c) => !c.no_ar && c.status === "ao_vivo" && Date.now() - new Date(c.visto_em) < 30 * 60000;
+  // estado mostrado: o do aparelho (app Android manda no batimento) + o desta tela (a conexão de vídeo com o celular)
+  function estadoDe(c, q) {
+    if (!c.no_ar) return "sem_conexao";
+    const e = c.origem === "android" ? c.estado : null;
+    if (["camera_indisponivel", "pausada", "reconectando", "sem_conexao"].includes(e)) return e;
+    if (q?.estado === "ok") return e === "instavel" ? "instavel" : "ao_vivo";
+    if (q?.estado === "falhou") return "reconectando";
+    return "conectando";
+  }
+  function telemetria(c) {
+    const t = c.telemetria || {}, p = [];
+    if (c.origem === "android") {
+      if (t.bateria >= 0) p.push("Bateria " + t.bateria + "%" + (t.carregando ? " carregando" : ""));
+      if (t.temperatura != null) p.push(String(t.temperatura).replace(".", ",") + " °C");
+      if (t.rede) p.push(({ wifi: "Wi-Fi", celular: "Rede móvel", cabo: "Cabo", sem: "Sem rede" }[t.rede] || t.rede) + (t.rede_qualidade && t.rede_qualidade !== "sem" ? " " + t.rede_qualidade : ""));
+      if (t.resolucao) p.push(t.resolucao.replace("x", "×") + (t.fps ? " · " + t.fps + " fps" : ""));
+      if (t.tela_ligada === false) p.push("tela apagada"); else if (t.tela_ligada) p.push("tela ligada");
+    } else p.push("Pelo navegador");
+    const s = Math.max(0, Math.round((Date.now() - new Date(c.visto_em)) / 1000));
+    p.push("sinal há " + (s < 60 ? s + " s" : Math.round(s / 60) + " min"));
+    return p.join(" · ");
+  }
+
   function pintarQuadro(el, c) {
     const q = S.quadros.get(c.id);
-    const est = q?.estado || "conectando";
-    el.dataset.estado = est;
-    const status = est === "ok" ? '<span class="plc-vivo"><i></i>Ao vivo · ' + esc(duracao(c.iniciada_em)) + "</span>" : '<span class="plc-con">Conectando…</span>';
+    const est = estadoDe(c, q);
+    el.dataset.estado = q?.estado || "conectando";
+    el.dataset.situacao = est;
+    const status = est === "ao_vivo" ? '<span class="plc-vivo"><i></i>Ao vivo · ' + esc(duracao(c.iniciada_em)) + "</span>"
+      : '<span class="plc-con plc-' + est + '">' + esc(ROTULO[est] || "Conectando") + "</span>";
+    const motivo = (c.telemetria || {}).motivo;
+    const aviso = est === "sem_conexao" ? ["Sem conexão desde " + hora(c.visto_em), "O celular parou de enviar sinal (sem internet, app fechado ou encerrado pelo Android)."]
+      : est === "camera_indisponivel" ? ["Câmera indisponível", motivo || "A câmera do celular está sendo reaberta."]
+      : est === "pausada" ? ["Pausada para foto", "Volta sozinha quando a foto terminar."]
+      : q?.estado === "falhou" ? ["Não foi possível conectar", "A rede do celular pode estar bloqueando a conexão. Tentando de novo…"] : null;
     el.querySelector(".plc-sobre").innerHTML =
       '<div class="plc-topo">' + status +
       '<span class="plc-ferr">' +
-      (est === "ok" && q?.temSom ? '<button type="button" data-acao="som" title="' + (q.ouvindo ? "Silenciar" : "Ouvir o som") + '">' + (q.ouvindo ? "🔊" : "🔇") + "</button>" : "") +
-      (est === "ok" ? '<button type="button" data-acao="foto" title="Salvar uma foto">📷</button>' : "") +
-      (est !== "ok" ? '<button type="button" data-acao="recon" title="Tentar de novo">↻</button>' : "") +
+      (q?.estado === "ok" && q?.temSom ? '<button type="button" data-acao="som" title="' + (q.ouvindo ? "Silenciar" : "Ouvir o som") + '">' + (q.ouvindo ? "🔊" : "🔇") + "</button>" : "") +
+      (q?.estado === "ok" ? '<button type="button" data-acao="foto" title="Salvar uma foto">📷</button>' : "") +
+      (c.no_ar && q?.estado !== "ok" ? '<button type="button" data-acao="recon" title="Tentar de novo">↻</button>' : "") +
       '<button type="button" data-acao="ampliar" title="' + (S.foco === c.id ? "Voltar para todas" : "Ampliar") + '">' + (S.foco === c.id ? "⤡" : "⤢") + "</button></span></div>" +
-      (est === "falhou" ? '<div class="plc-msg"><b>Não foi possível conectar</b><small>A rede do celular pode estar bloqueando a conexão. Tentando de novo…</small></div>' : "");
+      (aviso ? '<div class="plc-msg"><b>' + esc(aviso[0]) + "</b><small>" + esc(aviso[1]) + "</small></div>" : "");
+    el.classList.toggle("plc-coberto", !!aviso && est !== "instavel");
     el.querySelector(".plc-leg").innerHTML = avatar(c.cliente || c.usuario_nome, c.cliente_foto) +
       "<div><b>" + esc(c.cliente || c.titulo) + "</b><small>" +
-      esc([c.numero ? "Pedido " + c.numero : "", c.tipo ? (c.tipo === "desmontagem" ? "Desmontagem" : "Montagem") : "", c.local, "Filmando: " + c.usuario_nome].filter(Boolean).join(" · ")) +
-      "</small></div>";
+      esc([c.numero ? "Pedido " + c.numero : "", c.tipo ? (c.tipo === "desmontagem" ? "Desmontagem" : "Montagem") : "", c.local, c.usuario_nome, "desde " + hora(c.iniciada_em)].filter(Boolean).join(" · ")) +
+      '</small><small class="plc-tel">' + esc(telemetria(c)) + "</small></div>";
+  }
+
+  // Alertas: bateria, calor, perda de conexão e interrupção
+  function pintarAlertas() {
+    const a = [];
+    S.cameras.forEach((c) => {
+      const t = c.telemetria || {}, nome = c.cliente || c.titulo;
+      if (c.no_ar && t.bateria >= 0 && !t.carregando && t.bateria < 10) a.push(["grave", nome + ": bateria em " + t.bateria + "%"]);
+      else if (c.no_ar && t.bateria >= 0 && !t.carregando && t.bateria < 20) a.push(["", nome + ": bateria em " + t.bateria + "%"]);
+      if (c.no_ar && (t.temperatura >= 42 || t.termico >= 3)) a.push(["grave", nome + ": celular quente" + (t.temperatura != null ? " (" + String(t.temperatura).replace(".", ",") + " °C)" : "") + ", qualidade reduzida"]);
+      if (semConexao(c)) a.push(["grave", nome + ": sem conexão desde " + hora(c.visto_em)]);
+      if (c.status === "encerrada" && ["android", "erro"].includes(c.motivo_fim) && Date.now() - new Date(c.encerrada_em) < 30 * 60000)
+        a.push(["grave", nome + ": transmissão interrompida às " + hora(c.encerrada_em)]);
+    });
+    const box = $("plcAlertas");
+    box.hidden = !a.length;
+    box.innerHTML = a.map(([g, txt]) => '<span class="plc-alerta' + (g ? " grave" : "") + '">' + esc(txt) + "</span>").join("");
+  }
+
+  // Qualidade da transmissão (app Android): só quem edita o planejamento logístico
+  async function carregarQualidade() {
+    const r = await sb().rpc("camera_config", { p_empresa: S.empresa });
+    if (!r.error) { S.config = r.data; $("plcQualidade").hidden = !r.data.pode_editar; }
+  }
+  async function abrirQualidade() {
+    const c = S.config || {};
+    let d = $("plcQualidadeDlg");
+    if (!d) { d = document.createElement("dialog"); d.id = "plcQualidadeDlg"; d.className = "plc-dlg"; document.body.appendChild(d); }
+    const op = (v, lista) => lista.map(([k, n]) => '<option value="' + k + '"' + (String(k) === String(v) ? " selected" : "") + ">" + n + "</option>").join("");
+    d.innerHTML = '<form method="dialog"><h2>Qualidade da transmissão</h2><p>Vale para o app Android. Menos qualidade gasta menos bateria e internet.</p>' +
+      '<label>Resolução<select name="resolucao">' + op(c.resolucao || "480p", [["360p", "360p (econômica)"], ["480p", "480p (padrão)"], ["720p", "720p (mais nítida)"]]) + "</select></label>" +
+      '<label>Quadros por segundo<select name="fps">' + op(c.fps || 15, [[10, "10"], [15, "15 (padrão)"], [20, "20"], [30, "30"]]) + "</select></label>" +
+      '<label>Limite de internet por pessoa assistindo<select name="bitrate_max">' + op(c.bitrate_max || 900, [[400, "0,4 Mbps"], [600, "0,6 Mbps"], [900, "0,9 Mbps (padrão)"], [1500, "1,5 Mbps"], [2500, "2,5 Mbps"]]) + "</select></label>" +
+      '<label class="plc-chk"><input type="checkbox" name="som_permitido"' + (c.som_permitido !== false ? " checked" : "") + "> Permitir enviar o som</label>" +
+      '<p class="plc-dlg-erro" hidden></p><div class="plc-dlg-acoes"><button value="cancelar" class="plc-btn">Cancelar</button><button value="salvar" class="plc-btn plc-btn-pri">Salvar</button></div></form>';
+    d.showModal();
+    d.querySelector('[value="salvar"]').onclick = async (e) => {
+      e.preventDefault();
+      const f = d.querySelector("form");
+      const r = await sb().rpc("camera_config_salvar", { p_empresa: S.empresa, p_config: { resolucao: f.resolucao.value, fps: +f.fps.value, bitrate_max: +f.bitrate_max.value, som_permitido: f.som_permitido.checked } });
+      if (r.error) { const x = d.querySelector(".plc-dlg-erro"); x.hidden = false; x.textContent = r.error.message; return; }
+      S.config = r.data; d.close();
+    };
   }
 
   // ------------------------------------------------------------ conexão (um quadro = uma conexão)
@@ -166,7 +247,13 @@
     pc.onicecandidate = (e) => { if (e.candidate) sinal(camId, me, "ice", e.candidate.toJSON()); };
     pc.onconnectionstatechange = () => {
       const st = pc.connectionState;
-      if (st === "connected") { q.estado = "ok"; clearTimeout(q.timer); }
+      if (st === "connected") {
+        q.estado = "ok"; clearTimeout(q.timer);
+        // conectou mas não chegou nenhum quadro em 8 s: refaz a conexão (nunca fica uma imagem vazia como "ao vivo")
+        clearTimeout(q.semImagem);
+        q.semImagem = setTimeout(() => { const v = q.el.querySelector("video"); const c = S.cameras.find((x) => x.id === camId);
+          if (S.quadros.get(camId) === q && (!v || !v.videoWidth) && !["camera_indisponivel", "pausada"].includes(c?.estado)) reconectar(camId); }, 8000);
+      }
       else if (st === "failed") { q.estado = "falhou"; agendar(camId, 6000); }
       else if (st === "disconnected") { agendar(camId, 8000); }
       atualizar(camId);
@@ -183,7 +270,7 @@
   function reconectar(camId) { desligar(camId, true); ligar(camId); }
   function desligar(camId, manterQuadro) {
     const q = S.quadros.get(camId); if (!q) return;
-    clearTimeout(q.timer); clearTimeout(q.retry);
+    clearTimeout(q.timer); clearTimeout(q.retry); clearTimeout(q.semImagem);
     sinal(camId, q.me, "sair", null);
     try { q.pc.close(); } catch (e) { /* já fechada */ }
     const v = q.el?.querySelector("video"); if (v && !manterQuadro) v.srcObject = null;
@@ -258,6 +345,7 @@
         .subscribe();
     }
     clearInterval(S.poll); S.poll = setInterval(buscarSinais, 3000);
+    carregarQualidade();
     await carregar();
   }
   function pausar() {

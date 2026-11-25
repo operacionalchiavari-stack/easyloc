@@ -64,3 +64,24 @@
 .plc-encerradas{margin-top:14px;font-size:12.5px;color:#6b7280;text-align:center}
 .plc-encerradas b{font-weight:600;color:#4b5563}
 @media (prefers-reduced-motion:reduce){.plc-ponto,.plc-vivo i,.plc-img::after{animation:none}}
+
+/* App Android: estado do aparelho, telemetria, alertas e qualidade (nov/2026) */
+.plc-leg{height:78px}
+.plc-leg small.plc-tel{color:#8a919c;font-size:11.5px}
+.plc-quadro.plc-coberto video{filter:grayscale(1) brightness(.55)}
+.plc-con.plc-camera_indisponivel,.plc-con.plc-sem_conexao{color:#b42318}
+.plc-con.plc-reconectando,.plc-con.plc-instavel,.plc-con.plc-pausada{color:#92400e}
+.plc-alertas{display:flex;flex-wrap:wrap;gap:6px 14px;margin:-4px 0 14px;font-size:13px;color:#92400e}
+.plc-alerta{display:inline-flex;align-items:center;gap:7px}
+.plc-alerta::before{content:"";width:7px;height:7px;border-radius:50%;background:#d97706}
+.plc-alerta.grave{color:#b42318}.plc-alerta.grave::before{background:#e5484d}
+.plc-dlg{border:0;border-radius:16px;padding:22px;width:min(420px,92vw);box-shadow:0 20px 60px rgba(15,23,42,.25);font-family:Inter,system-ui,sans-serif}
+.plc-dlg::backdrop{background:rgba(15,23,42,.35)}
+.plc-dlg h2{margin:0 0 4px;font:600 18px Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important}
+.plc-dlg p{margin:0 0 14px;color:#6b7280;font-size:13px}
+.plc-dlg label{display:flex;flex-direction:column;gap:5px;margin:0 0 12px;font-size:13px;font-weight:500;color:#374151}
+.plc-dlg select{height:38px;border:1px solid #dfe4ea;border-radius:10px;padding:0 10px;font:inherit;background:#fff}
+.plc-dlg .plc-chk{flex-direction:row;align-items:center;gap:8px}
+.plc-dlg-acoes{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+.plc-btn-pri{background:var(--el-button-primary-bg,#123f86)!important;color:#fff!important}
+.plc-dlg-erro{color:#b42318!important}

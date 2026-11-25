@@ -86,3 +86,15 @@ body.cm-modo-vivo .cm-mensagem{position:fixed;left:12px;right:12px;top:calc(env(
 .cm-folha::backdrop{background:rgba(0,0,0,.5)}
 .cm-folha h2{margin:0 0 6px;font-size:19px}.cm-folha p{margin:0 0 16px;color:var(--cm-cinza)}
 .cm-acoes{display:grid;grid-template-columns:1fr 1fr;gap:10px}.cm-acoes .cm-botao+.cm-botao{margin-top:0}
+
+/* App Android: transmissão nativa (camera-nativo.js) */
+body.cm-nativo-ativo #cmPermissao{display:none!important}
+.cm-nativo-cartao{display:flex;flex-direction:column;align-items:center}
+.cm-nativo-selo{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#fdecea;color:var(--cm-vermelho);font-weight:800;font-size:13px;letter-spacing:.04em;text-transform:uppercase}
+.cm-nativo-selo i{width:9px;height:9px;border-radius:50%;background:var(--cm-vermelho);animation:cm-pisca 1.2s infinite}
+.cm-nativo-selo.alerta{background:#fef3c7;color:#92400e}.cm-nativo-selo.alerta i{background:#d97706}
+.cm-nativo-tempo{margin:14px 0 4px;font-size:40px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.cm-nativo-titulo{margin:0;font-size:16px;font-weight:700}
+.cm-nativo-quem{margin:4px 0 14px;color:var(--cm-cinza);font-size:14px}
+.cm-nativo-detalhe{margin:-6px 0 14px;padding:8px 12px;border-radius:10px;background:#fef3c7;color:#92400e;font-size:13px}
+.cm-nativo-cartao .cm-dicas{width:100%}

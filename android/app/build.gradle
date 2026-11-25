@@ -6,7 +6,7 @@ android {
  def firebase = firebaseFile.exists() ? new groovy.json.JsonSlurper().parse(firebaseFile) : null
  def firebaseClient = firebase?.client?.find { it.client_info.android_client_info.package_name == 'br.com.chiavari.acervo' }
  defaultConfig {
-  applicationId 'br.com.chiavari.acervo'; minSdk 26; targetSdk 35; versionCode 2; versionName '1.0.0'
+  applicationId 'br.com.chiavari.acervo'; minSdk 26; targetSdk 35; versionCode 3; versionName '1.1.0'
   buildConfigField 'boolean', 'FIREBASE_CONFIGURED', firebaseClient ? 'true' : 'false'
   buildConfigField 'String', 'FIREBASE_APP_ID', groovy.json.JsonOutput.toJson(firebaseClient?.client_info?.mobilesdk_app_id ?: '')
   buildConfigField 'String', 'FIREBASE_API_KEY', groovy.json.JsonOutput.toJson(firebaseClient?.api_key?.getAt(0)?.current_key ?: '')
@@ -36,4 +36,6 @@ dependencies {
  implementation 'androidx.webkit:webkit:1.12.1'
  implementation 'com.google.android.gms:play-services-location:21.3.0'
  implementation 'com.google.firebase:firebase-messaging:24.1.0'
+ // Câmera ao vivo nativa: WebRTC (captura, codificação por hardware e transmissão)
+ implementation 'io.github.webrtc-sdk:android:125.6422.07'
 }
