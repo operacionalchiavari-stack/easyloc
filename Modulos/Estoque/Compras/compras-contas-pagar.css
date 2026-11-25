@@ -1,0 +1,12 @@
+[data-pv-panel="contas-pagar"]{min-width:0}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page.compras-visao-ampla{padding-inline:0!important;max-width:none!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page.compras-visao-ampla .compras-main{box-sizing:border-box;width:100%;max-width:none!important;margin-inline:0;padding-inline:16px!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #purchasePayablesList>.fin-bloco{padding:12px!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page [data-pv-panel="contas-pagar"]{padding-inline:0!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-search-box.hidden{display:none!important}
+[data-pv-panel="contas-pagar"] .fin-tabela{min-width:1000px}
+.cp-detalhes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:20px 0}
+.cp-detalhes dt{font-size:12px;color:#6b6b6b}
+.cp-detalhes dd{margin:4px 0 0;font-weight:600;overflow-wrap:anywhere}
+.cp-texto{white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:600px){.cp-detalhes{grid-template-columns:1fr}}

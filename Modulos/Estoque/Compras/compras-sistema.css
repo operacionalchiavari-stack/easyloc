@@ -171,14 +171,26 @@ html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-order-section-title{font:6
 html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-proposal-items-list .pv-quote-item,
 html:root:is(#cp#cp#cp#cp,html) body.compras-page .pv-proposal-item{border-radius:14px!important;border-color:var(--cs-line)!important}
 
-/* ---------- Topo: título no centro exato e mais perto do menu ---------- */
+/* ---------- Topo: título e abas na mesma linha ---------- */
 html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main > header.compras-header{
-  display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)!important;align-items:center!important;
-  gap:24px!important;padding:6px 0 14px!important;margin:0!important;position:relative;
+  display:flex!important;flex-direction:column;align-items:stretch!important;
+  gap:14px!important;padding:0!important;margin:0!important;position:relative;min-width:0;
 }
-html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main > header.compras-header > .pv-tabs-tools{grid-column:1;justify-self:start;margin:0!important}
-html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main > header.compras-header > h1{grid-column:2;justify-self:center;margin:0!important;padding:0!important;text-align:center!important}
-html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main > header.compras-header > .compras-header-actions{grid-column:3;justify-self:end}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-navigation-row{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;justify-content:flex-start;gap:26px;min-width:0;width:100%}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-navigation-row > h1{flex:0 0 auto;position:static!important;transform:none!important;width:auto!important;margin:0!important;padding:16px 0 0!important;text-align:left!important;white-space:nowrap}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-navigation-row > .pv-tabs{flex:1 1 auto;min-width:0;flex-wrap:nowrap;overflow-x:auto;gap:22px;padding:16px 14px 0 0!important;scrollbar-width:thin}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-navigation-row .pv-tab{flex:0 0 auto;white-space:nowrap}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-toolbar{display:flex;align-items:center;gap:16px;min-width:0}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-toolbar > .pv-tabs-tools{flex:1;min-width:0;margin:0!important}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-toolbar > #ordersStatusFilter{width:auto;max-width:100%}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-toolbar > .compras-header-actions:not(:has(button:not([hidden]))),
+html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-toolbar:not(:has(.pv-search-box:not(.hidden),#ordersStatusFilter:not(.hidden),.compras-header-actions button:not([hidden]))){display:none!important}
+@media(max-width:700px){
+  html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-navigation-row{gap:16px}
+  html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-navigation-row > h1{font-size:24px!important}
+  html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-toolbar{flex-wrap:wrap}
+  html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-toolbar > .pv-tabs-tools{flex-basis:100%}
+}
 
 /* ---------- Necessidades operacionais: pedido, cliente e item a personalizar ---------- */
 html:root:is(#cp#cp#cp#cp,html) body.compras-page .cs-pedido-num{display:inline-block;margin:0;padding:2px 9px;border-radius:999px;background:#fbeceb;color:#c4302b;font:700 12px/1.4 Inter,system-ui,sans-serif;letter-spacing:0}
@@ -227,3 +239,16 @@ html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main .pv-panel #needs
 html:root:is(#cp#cp#cp#cp,html) body.compras-page .compras-main .pv-panel #needsAvulsaTable td:nth-child(3){min-width:200px!important;max-width:300px!important}
 html:root:is(#cp#cp#cp#cp,html) body.compras-page :is(#needsAvulsaTable,#needsOpTable) :is(th,td).pv-request-qty{width:1%!important;min-width:0!important;white-space:nowrap;padding-left:8px!important;padding-right:14px!important;text-align:center!important}
 html:root:is(#cp#cp#cp#cp,html) body.compras-page #needsAvulsaTable :is(th,td):first-child{width:1%;white-space:nowrap}
+/* 22/11/2026: necessidades operacionais — foto do item personalizado do tamanho da O.S (96px) e clicável */
+html:root:is(#cp#cp#cp#cp#cp,html) body.compras-page .cs-item-foto.cs-item-foto-op{flex:0 0 96px;width:96px;height:96px;border-radius:10px;cursor:zoom-in}
+/* 22/11/2026: visor de fotos (compras-fotos.js) — a foto aparece inteira, no centro, sem barra de rolagem */
+.cs-visor{border:0;padding:0;margin:0;background:transparent;width:100vw;height:100vh;max-width:none;max-height:none;overflow:hidden;display:none;align-items:center;justify-content:center}
+.cs-visor[open]{display:flex}
+.cs-visor::backdrop{background:rgba(10,12,16,.82)}
+.cs-visor>img{display:block;max-width:86vw;max-height:84vh;width:auto;height:auto;object-fit:contain;border-radius:12px;background:#fff;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+.cs-visor .cs-visor-fechar{position:fixed;top:18px;right:22px;width:44px;height:44px;border:0;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:26px;line-height:1;cursor:pointer}
+.cs-visor .cs-visor-seta{position:fixed;top:50%;transform:translateY(-50%);width:52px;height:52px;border:0;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:34px;line-height:1;cursor:pointer}
+.cs-visor .cs-visor-seta[hidden]{display:none}
+.cs-visor .is-ant{left:24px}.cs-visor .is-prox{right:24px}
+.cs-visor .cs-visor-fechar:hover,.cs-visor .cs-visor-seta:hover{background:rgba(255,255,255,.28)}
+.cs-visor .cs-visor-cont{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);color:#fff;font-size:14px}

@@ -6,6 +6,8 @@
 (function () {
   "use strict";
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  const fotosAgentes = document.currentScript?.src ? new URL("../../assets/agentes/", document.currentScript.src) : new URL("/assets/agentes/", location.href);
+  const fotoAgente = () => { const id = ({compra:"carla",manutencao:"marcos",separacao:"miguel",montagem:"montagem",ideia:"ideia"})[S.cfg.tipo]; return id ? '<img data-ia-foto width="512" height="512" loading="eager" src="' + new URL(id + ".jpg", fotosAgentes).href + '" alt="" decoding="sync">' : esc(S.cfg.icone || "✦"); };
   const ICONE = {
     mic: '<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
     clipe: '<svg viewBox="0 0 24 24"><path d="M21 12.5 12.6 21a5 5 0 0 1-7.1-7.1l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4l7.8-7.8"/></svg>',
@@ -17,7 +19,7 @@
   const chave = () => "solic_chat:" + S.cfg.tipo + ":" + (S.ctx?.empresa_id || "") + ":" + (S.ctx?.usuario_id || "") + (S.cfg.chave ? ":" + S.cfg.chave : "");
   const primeiroNome = () => String(S.ctx?.usuario_nome || "").trim().split(/\s+/)[0] || "";
 
-  function guardar() { if(S.cfg.persistir===false)return;try { sessionStorage.setItem(chave(), JSON.stringify({ msgs: S.msgs, resumo: S.resumo })); } catch (_) {} }
+  function guardar() { if(S.cfg.persistir===false)return;try { sessionStorage.setItem(chave(), JSON.stringify({ msgs: S.msgs.filter(m=>!m.provisorio), resumo: S.resumo })); } catch (_) {} }
   function recuperar() {
     try { const d = JSON.parse(sessionStorage.getItem(chave()) || "null"); if (d && Array.isArray(d.msgs) && d.msgs.length) { S.msgs = d.msgs; S.resumo = d.resumo || null; return true; } } catch (_) {}
     return false;
@@ -29,8 +31,8 @@
     d.className = host ? "as-dialog as-inline" : "as-dialog";
     d.setAttribute("aria-label", S.cfg.titulo);
     d.innerHTML =
-      '<div class="as-topo"><span class="as-avatar" aria-hidden="true">' + esc(S.cfg.icone || "✦") + '</span><div><strong>' + esc(S.cfg.assistente) + '</strong><small>' + esc(S.cfg.titulo) + '</small></div>' +
-      '<div class="as-topo-acoes"><button type="button" class="as-link" data-as="recomecar">Começar de novo</button>' + (host ? "" : '<button type="button" class="as-fechar" data-as="fechar" aria-label="Fechar">×</button>') + '</div></div>' +
+      '<header class="as-topo ia-topo"><span class="as-avatar ia-topo-foto" aria-hidden="true">' + fotoAgente() + '</span><div class="ia-topo-texto"><strong>' + esc(S.cfg.assistente) + '</strong><small><i class="ia-topo-dot" aria-hidden="true"></i><span>' + esc(S.cfg.titulo) + '</span></small></div>' +
+      '<div class="as-topo-acoes ia-topo-acoes"><button type="button" class="as-link ia-topo-btn" data-as="recomecar" title="Começar de novo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg><span>Começar de novo</span></button>' + (host ? "" : '<button type="button" class="as-fechar ia-topo-btn is-icone" data-as="fechar" aria-label="Fechar">×</button>') + '</div></header>' +
       '<div class="as-msgs" aria-live="polite"></div>' +
       '<div class="as-gravando" hidden><span class="as-rec"></span>Gravando <b data-as="tempo">0:00</b><button type="button" class="as-link" data-as="cancelar-rec">Cancelar</button></div>' +
       '<form class="as-campo"><button type="button" class="as-icone" data-as="clipe" title="Enviar um arquivo de áudio" aria-label="Enviar um arquivo de áudio">' + ICONE.clipe + '</button>' +
@@ -47,7 +49,7 @@
     if(S.cfg.acoesHtml){const barra=document.createElement('div');barra.className='as-contexto';barra.innerHTML=S.cfg.acoesHtml;$('.as-msgs').before(barra);barra.addEventListener('click',e=>S.cfg.acao?.(e,d));barra.addEventListener('change',e=>S.cfg.acao?.(e,d));}
     if(S.cfg.anexos===false)$('[data-as="foto"]').hidden=true;
     const texto = $("textarea");
-    $("form").addEventListener("submit", (e) => { e.preventDefault(); const v = texto.value; texto.value = ""; texto.style.height = ""; enviarTexto(v); });
+    $("form").addEventListener("submit", (e) => { e.preventDefault(); const v = texto.value; if(!v.trim()||S.enviando||S.gravador||S.cfg.somenteLeitura)return;texto.value = ""; texto.style.height = ""; enviarTexto(v); });
     texto.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("form").requestSubmit(); } });
     texto.addEventListener("input", () => { texto.style.height = "auto"; texto.style.height = Math.min(texto.scrollHeight, 150) + "px"; });
     d.addEventListener("click", (e) => {
@@ -77,9 +79,9 @@
     if (m.tipo === "resumo") {
       return '<div class="as-resumo' + (m.enviado ? " enviado" : "") + '"><span class="as-eyebrow">Confira o resumo</span>' + S.cfg.resumoHtml(m.resumo, esc) +
         fotosHtml(todasFotos(), "Fotos anexadas") +
-        (m.enviado ? '<p class="as-ok">✓ Registrada</p>' : '<footer><button type="button" class="as-link" data-as="ajustar">Quero ajustar</button><button type="button" class="btn btn-primary" data-as="aprovar">Está certo, registrar</button></footer>') + "</div>";
+        (m.enviado ? '<p class="as-ok">✓ Registrada</p>' : '<footer><button type="button" class="as-link" data-as="ajustar">Quero ajustar</button><button type="button" class="btn btn-primary" data-as="aprovar">'+esc(S.cfg.rotuloConfirmacao||'Está certo, registrar')+'</button></footer>') + "</div>";
     }
-    if (m.tipo === "ok") return '<div class="as-msg ia as-msg-ok"><p>' + esc(m.texto) + '</p><div class="as-ok-acoes">' + (S.cfg.verLista ? '<button type="button" class="as-link" data-as="ver-lista">Ver minhas solicitações</button>' : "") + '<button type="button" class="as-link" data-as="nova">Fazer outra solicitação</button></div></div>';
+    if (m.tipo === "ok") return '<div class="as-msg ia as-msg-ok"><p>' + esc(m.texto) + '</p><div class="as-ok-acoes">' + (S.cfg.verLista ? '<button type="button" class="as-link" data-as="ver-lista">Ver minhas solicitações</button>' : "") + '<button type="button" class="as-link" data-as="nova">'+esc(S.cfg.rotuloNova||'Fazer outra solicitação')+'</button></div></div>';
     return '<div class="as-msg ' + (m.papel === "ia" ? "ia" : "pessoa") + (m.erro ? " erro" : "") + '">' + (m.autor?'<small class="as-autor">'+esc(m.autor)+'</small>':'') + (m.audio ? '<span class="as-audio">🎙 Áudio</span>' : "") + fotosHtml(m.fotos) + (m.texto ? "<p>" + esc(m.texto) + "</p>" : "") + (m.autor&&m.em?'<small class="as-data">'+esc(new Date(m.em).toLocaleString('pt-BR'))+'</small>':'') + "</div>";
   }
   function pintar(digitando) {
@@ -92,7 +94,7 @@
   }
 
   async function chamar(corpo) {
-    const { data, error } = await window.supabaseClient.functions.invoke("solicitacao-assistente", { body: { empresa_id: S.ctx.empresa_id, tipo: S.cfg.tipo, ...(S.cfg.dados||{}), ...corpo } });
+    const { data, error } = await window.supabaseClient.functions.invoke(S.cfg.funcao || "solicitacao-assistente", { body: { empresa_id: S.ctx.empresa_id, tipo: S.cfg.tipo, ...(S.cfg.dados||{}), ...corpo } });
     if (error) {
       let msg = "";
       try { msg = (await error.context?.json?.())?.erro || ""; } catch (_) {}
@@ -105,27 +107,32 @@
   async function enviarTexto(texto, audio, fotos) {
     texto = String(texto || "").trim();
     if ((!texto && !fotos?.length) || S.enviando || S.cfg.somenteLeitura) return;
+    const dlg=S.dlg;
     if(["separacao","montagem"].includes(S.cfg.tipo)){S.resumo=null;S.msgs=S.msgs.filter(m=>m.tipo!=="resumo"||m.enviado);}
     S.msgs.push({ papel: "pessoa", em:new Date().toISOString(), texto, audio: !!audio, ...(fotos?.length ? { fotos } : {}) });
     S.enviando = true; guardar(); pintar(true);
     try {
-      if(S.cfg.enviarMensagem){const msgs=await S.cfg.enviarMensagem(texto);if(msgs)S.msgs=msgs;return;}
+      if(S.cfg.enviarMensagem){const msgs=await S.cfg.enviarMensagem(texto);if(S.dlg===dlg&&msgs)S.msgs=msgs;return;}
       const historico = S.msgs.filter((m) => !m.tipo && !m.erro && !m.provisorio).map((m) => ({ papel: m.papel, texto: m.texto, ...(m.fotos ? { fotos: m.fotos } : {}) }));
       const r = await chamar({ acao: "conversar", mensagens: historico });
+      if(S.dlg!==dlg)return;
       S.msgs.push({ papel: "ia", em:new Date().toISOString(), texto: r.resposta });
       if (r.pronto && r.resumo) { S.resumo = r.resumo; S.msgs.push({ tipo: "resumo", resumo: r.resumo }); }
     } catch (e) {
+      if(S.dlg!==dlg)return;
       if(S.cfg.enviarMensagem){S.msgs.pop();$('textarea').value=texto;aviso('Não foi possível enviar a mensagem: '+e.message);return;}
       S.msgs.push({ papel: "ia", texto: "Não consegui responder agora (" + e.message + "). Pode mandar de novo?", erro: true });
-    } finally { S.enviando = false; guardar(); pintar(false); $("textarea").focus(); }
+    } finally { if(S.dlg===dlg){S.enviando = false; guardar(); pintar(false);if($("textarea").getClientRects().length)$("textarea").focus();} }
   }
 
   async function aprovar() {
     if (!S.resumo || S.enviando) return;
+    const dlg=S.dlg;
     S.enviando = true; pintar(false);
     const botao = S.dlg.querySelector('[data-as="aprovar"]'); if (botao) { botao.disabled = true; botao.textContent = "Registrando…"; }
     try {
       const msg = await S.cfg.confirmar(S.resumo, todasFotos(), {mensagens:S.msgs.filter(m=>!m.tipo&&!m.erro&&!m.provisorio).map(m=>({papel:m.papel,texto:m.texto||"",em:m.em||null}))});
+      if(S.dlg!==dlg)return;
       const ultimo = [...S.msgs].reverse().find((m) => m.tipo === "resumo"); if (ultimo) ultimo.enviado = true;
       S.msgs.push({ tipo: "ok", texto: msg || "Pronto! Sua solicitação foi registrada." });
       S.resumo = null;
@@ -133,6 +140,7 @@
       S.enviando = false; pintar(false);
       return;
     } catch (e) {
+      if(S.dlg!==dlg)return;
       S.msgs.push({ papel: "ia", texto: "Não consegui registrar agora (" + (e.message || e) + "). Tente de novo.", erro: true });
     }
     S.enviando = false; guardar(); pintar(false);
@@ -148,18 +156,21 @@
   /* ---------- áudio ---------- */
   async function gravar() {
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { aviso("Este navegador não grava áudio. Grave no celular e use o clipe para enviar o arquivo."); return; }
-    let stream;
+    const dlg=S.dlg;let stream;
     try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); }
-    catch (_) { aviso("Permita o uso do microfone para gravar."); return; }
+    catch (_) { if(S.dlg===dlg)aviso("Permita o uso do microfone para gravar."); return; }
+    if(S.dlg!==dlg){stream.getTracks().forEach(t=>t.stop());return;}
     const tipo = ["audio/webm;codecs=opus", "audio/ogg;codecs=opus", "audio/mp4"].find((t) => MediaRecorder.isTypeSupported?.(t)) || "";
     const mr = new MediaRecorder(stream, { ...(tipo ? { mimeType: tipo } : {}), audioBitsPerSecond: 32000 });
     S.pedacos = []; S.cancelada = false; S.gravador = mr; S.inicio = Date.now();
-    mr.ondataavailable = (e) => { if (e.data?.size) S.pedacos.push(e.data); };
+    const pedacos=S.pedacos;
+    mr.ondataavailable = (e) => { if (e.data?.size) pedacos.push(e.data); };
     mr.onstop = () => {
       stream.getTracks().forEach((t) => t.stop());
+      if(S.dlg!==dlg)return;
       clearInterval(S.relogio); S.gravador = null;
       if (S.dlg) { $(".as-gravando").hidden = true; $('[data-as="mic"]').classList.remove("gravando"); pintar(false); }
-      const blob = new Blob(S.pedacos, { type: mr.mimeType || "audio/webm" });
+      const blob = new Blob(pedacos, { type: mr.mimeType || "audio/webm" });
       if (!S.cancelada) transcrever(blob);
     };
     mr.start(1000);
@@ -170,15 +181,19 @@
   function parar() { if (S.gravador && S.gravador.state !== "inactive") S.gravador.stop(); }
 
   async function transcrever(blob) {
+    const dlg=S.dlg;
     if (!blob || blob.size < 800) { aviso("O áudio ficou curto demais. Fale um pouco mais."); return; }
     if (blob.size > 12 * 1024 * 1024) { aviso("O áudio é grande demais. Mande em partes de até 3 minutos."); return; }
     S.enviando = true; S.msgs.push({ papel: "pessoa", texto: "…", audio: true, provisorio: true }); pintar(true);
     try {
       const dataUrl = await new Promise((ok, erro) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = erro; fr.readAsDataURL(blob); });
+      if(S.dlg!==dlg)return;
       const r = await chamar({ acao: "transcrever", audio: String(dataUrl).replace(/^data:([^;,]+)[^,]*,/, (m, t) => "data:" + (t.startsWith("audio/") ? t : "audio/webm") + ";base64,") });
+      if(S.dlg!==dlg)return;
       S.msgs = S.msgs.filter((m) => !m.provisorio); S.enviando = false;
       await enviarTexto(r.texto, true);
     } catch (e) {
+      if(S.dlg!==dlg)return;
       S.msgs = S.msgs.filter((m) => !m.provisorio); S.enviando = false;
       aviso("Não consegui entender o áudio (" + e.message + "). Pode mandar de novo ou escrever?");
     }
@@ -199,6 +214,7 @@
   }
   async function enviarFotos(arquivos) {
     if (S.enviando) return;
+    const dlg=S.dlg;
     if (todasFotos().length + arquivos.length > 12) { aviso("Dá para mandar até 12 fotos por solicitação."); return; }
     const imagens = arquivos.filter((f) => /^image\//.test(f.type));
     if (!imagens.length) { aviso("Envie uma foto (JPG, PNG ou WebP)."); return; }
@@ -207,8 +223,10 @@
     try {
       let uid = S.ctx.usuario_id;
       if (!uid) { const r = await sb.auth.getUser(); uid = r?.data?.user?.id; }
+      if(S.dlg!==dlg)return;
       for (const f of imagens.slice(0, 4)) {
         const blob = await paraJpeg(f);
+        if(S.dlg!==dlg)return;
         const caminho = S.ctx.empresa_id + "/" + uid + "/" + (crypto.randomUUID?.() || Date.now() + "-" + Math.random().toString(36).slice(2)) + ".jpg";
         if(S.cfg.enviarFoto){urls.push(await S.cfg.enviarFoto(blob,caminho));continue;}
         const { error } = await sb.storage.from("solicitacoes-evidencias").upload(caminho, blob, { contentType: "image/jpeg", upsert: false });
@@ -216,9 +234,11 @@
         urls.push(sb.storage.from("solicitacoes-evidencias").getPublicUrl(caminho).data.publicUrl);
       }
     } catch (e) {
+      if(S.dlg!==dlg)return;
       S.msgs = S.msgs.filter((m) => !m.provisorio); S.enviando = false;
       aviso("Não consegui enviar a foto (" + (e.message || e) + "). Tente de novo."); return;
     }
+    if(S.dlg!==dlg)return;
     S.msgs = S.msgs.filter((m) => !m.provisorio); S.enviando = false;
     const t = $("textarea"); const legenda = t.value; t.value = ""; t.style.height = "";
     await enviarTexto(legenda, false, urls);
@@ -227,6 +247,15 @@
 
   function fechar() { if (S.dlg?.open) S.dlg.close(); }
 
+  function desmontar(host){
+    if(!S.dlg||(host&&!host.contains(S.dlg)))return;
+    guardar();
+    if(S.gravador){S.cancelada=true;parar();}
+    S.gravador=null;
+    clearInterval(S.relogio);
+    const antigo=S.dlg;S.dlg=null;antigo.remove();
+  }
+
   async function abrir(cfg, host) {
     if(S.dlg?.open)S.dlg.close();
     S.cfg = cfg; S.ctx=null; S.resumo=null; S.msgs=[]; S.enviando=false;
@@ -234,12 +263,13 @@
     if (!S.ctx?.empresa_id) { window.alerta?.("Não foi possível identificar a empresa.", cfg.titulo, "erro"); return; }
     montar(host);
     if(cfg.mensagens)S.msgs=cfg.mensagens;
-    else if (!recuperar()) S.msgs = [{ papel: "ia", texto: cfg.saudacao(primeiroNome()) }];
+    else if (!recuperar()) S.msgs = cfg.mensagensIniciais?.length ? cfg.mensagensIniciais : [{ papel: "ia", texto: cfg.saudacao(primeiroNome()) }];
+    if(cfg.placeholder)$("textarea").placeholder=cfg.placeholder;
     pintar(false);
     if (!host) { S.dlg.showModal(); $("textarea").focus(); }
     return S.dlg;
   }
   /* Nov/2026: na tela (duas colunas, como a Ideia Premiada) a conversa fica sempre aberta dentro de `host`. */
   const montarNaTela = (host, cfg) => abrir(cfg, host);
-  window.EasyLocAssistenteSolicitacao = { abrir, montarNaTela, fechar, atualizarMensagens:(dlg,msgs,somenteLeitura)=>{if(S.dlg!==dlg||S.enviando||S.gravador)return;const log=$('.as-msgs'),fim=log.scrollHeight-log.scrollTop-log.clientHeight<60,scroll=log.scrollTop;S.msgs=msgs;S.cfg.somenteLeitura=somenteLeitura;pintar(false);if(!fim)log.scrollTop=scroll;}, focar: () => S.dlg?.querySelector("textarea")?.focus() };
+  window.EasyLocAssistenteSolicitacao = { abrir, montarNaTela, fechar, desmontar, atualizarMensagens:(dlg,msgs,somenteLeitura)=>{if(S.dlg!==dlg||S.enviando||S.gravador)return;const log=$('.as-msgs'),fim=log.scrollHeight-log.scrollTop-log.clientHeight<60,scroll=log.scrollTop;S.msgs=msgs;S.cfg.somenteLeitura=somenteLeitura;pintar(false);if(!fim)log.scrollTop=scroll;}, focar: () => S.dlg?.querySelector("textarea")?.focus() };
 })();

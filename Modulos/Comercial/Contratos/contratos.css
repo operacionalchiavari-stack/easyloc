@@ -518,3 +518,7 @@ html:root #main-content #contratosPage #contratoNovoModelo {
 .contratos-regras-card textarea{width:100%;box-sizing:border-box;min-height:360px;resize:vertical;padding:12px 14px;border:1px solid #dfe4ea;border-radius:12px;font:400 14px/1.6 Inter,system-ui,sans-serif;color:#1f2020;background:#fff}
 .contratos-regras-rodape{display:flex;align-items:center;justify-content:flex-end;gap:14px;margin-top:12px}
 .contratos-regras-rodape span{font-size:13px;color:#4f4f4f}
+/* 22/11/2026: Regras do pedido com o mesmo editor do contrato (negrito, itálico e cores ao selecionar) */
+.contratos-regras-wrap{min-height:380px;margin-bottom:14px}
+.contratos-regras-editor{min-height:380px}
+.contratos-rich-editor.contratos-regras-editor:empty::before{content:attr(data-placeholder);color:#9aa3ad}

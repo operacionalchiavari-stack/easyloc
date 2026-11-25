@@ -115,7 +115,7 @@
         escalaWrap && (titulo(escalaPessoas, 'Pessoas que não podem trabalhar juntas'), escalaWrap),
         titulo(appMont, 'App do Montador: etapas que aparecem')
       ]),
-      grupo('Frete, montagem e Uber', [frete, mont, titulo(uber, 'Valores do Uber por km')]),
+      grupo('Frete, montagem e Uber', [frete, mont, titulo(uber, 'Valores do Uber por km'), fretePeriodo]),
       grupo('Motivos', motivos.map(m => titulo(m, m.querySelector('h3')?.textContent || 'Motivos')))
     ];
     // Cards de cada aba antiga que não reconhecemos (novos no futuro) vão para o fim, sem se perder.

@@ -479,3 +479,7 @@ html:root .pl-page #plModuloAbas#plModuloAbas .pl-alerta-aba{position:absolute;t
 html:root .pl-page #plModuloAbas#plModuloAbas .pl-alerta-aba::after{content:"";position:absolute;inset:-2px;border:2px solid #e60012;border-radius:50%;pointer-events:none;animation:pl-alerta-aba-anel 1.45s ease-out infinite}
 @keyframes pl-alerta-aba-anel{0%{transform:scale(.8);opacity:.9}70%,100%{transform:scale(1.7);opacity:0}}
 @media(prefers-reduced-motion:reduce){html:root .pl-page #plModuloAbas#plModuloAbas .pl-alerta-aba::after{animation:none!important}}
+/* Entrega e Coleta: conteúdo mais perto das abas de cima (21/11/2026). */
+html:root #plModuloEntregas#plModuloEntregas{padding-top:6px!important}
+html:root #plModuloEntregas#plModuloEntregas #ecPedidos{padding-top:0}
+html:root #plModuloEntregas#plModuloEntregas .ec-layout{margin-top:0}

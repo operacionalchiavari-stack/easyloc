@@ -1,4 +1,4 @@
-// Cora · assistente do estoque (18/11/2026; nome trocado de "Vera" em 19/11), na Gestão do acervo. Especialista em
+// Miguel · assistente de estoque, acervo e separação. Especialista em
 // garantir que todo material esteja pronto e em condições no dia de cada evento. Lê, COM O LOGIN DE QUEM PERGUNTA
 // (mesmas permissões da tela), as próximas saídas, as divergências de contagem, os problemas da separação, as peças
 // danificadas/ordens de serviço e o inventário, e responde com análise e soluções. Não grava nada.
@@ -10,6 +10,8 @@
 import { comUsoIA } from "../_shared/ia-uso.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
+import { NOME_ESTOQUE, IDENTIDADE_ESTOQUE } from "../_shared/estoque-identidade.mjs";
+import { instrucoesEmpresa } from "../_shared/ia-config.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": Deno.env.get("APP_ORIGIN") ?? "*",
@@ -17,7 +19,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 const MODELO = Deno.env.get("ESTOQUE_ASSISTENTE_MODEL") || "gpt-4.1";
-const NOME = Deno.env.get("ESTOQUE_ASSISTENTE_NOME") || "Cora";
+const NOME = NOME_ESTOQUE;
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 const n = (v: unknown) => Number(v) || 0;
 const hojeISO = () => new Date(Date.now() - 3 * 3600e3).toISOString().slice(0, 10);
@@ -123,12 +125,13 @@ async function contexto(usuario: any, empresa: string, dias: number) {
   return { texto, reg, ctx };
 }
 
-const SISTEMA = (nome: string, dados: string) => `Você é ${NOME}, a especialista em estoque da Chiavari (locação de móveis para eventos). Sua responsabilidade é
+const SISTEMA = (nome: string, dados: string) => `${IDENTIDADE_ESTOQUE}
+Você é ${NOME}, o especialista em estoque da Chiavari (locação de móveis para eventos). Sua responsabilidade é
 garantir que TODO o material esteja pronto e em condições no momento de cada evento: quantidade suficiente, peças fora de
 manutenção, contagens resolvidas, proteção (capas/caixas) suficiente e nada esquecido.
 Quem pergunta: ${nome || "alguém da equipe do estoque"}.
 
-Como responder (português do Brasil, direto e prático, como uma gerente de estoque experiente):
+Como responder (português do Brasil, direto e prático, como um gerente de estoque experiente):
 - Comece pela conclusão. Depois os fatos que a sustentam (item, pedido, dia, quantidade). Termine com "O que eu faria" em passos.
 - Use listas curtas e **negrito** só no essencial. Datas em dd/mm. Nunca invente número: use só os DADOS abaixo.
 - Se algo não estiver nos dados, diga que não tem a informação.
@@ -197,7 +200,8 @@ async function conversar(quem: any, body: any) {
   const dias = Math.min(365, Math.max(7, n(body?.dias) || 90));
   const { texto, reg, ctx } = await contexto(quem.usuario, String(body.empresa_id), dias);
   const mensagens = lista.map((m: any) => ({ role: m?.papel === "ia" ? "assistant" : "user", content: String(m?.texto || "").slice(0, 6000) })).filter((m: any) => m.content.trim());
-  const r: any = await chamarIA(SISTEMA(quem.nome, texto) + "\n\n" + FORMATO_CHAT, mensagens);
+  const diretrizes = await instrucoesEmpresa(String(body.empresa_id), "separacao") + "\n" + IDENTIDADE_ESTOQUE;
+  const r: any = await chamarIA(SISTEMA(quem.nome, texto) + diretrizes + "\nNesta operação você apenas consulta e analisa os dados. Requisitos de apuração de dano e revisão de envio só se aplicam ao fluxo de registro de ocorrência; não peça fotos para responder consultas do estoque.\n" + FORMATO_CHAT, mensagens);
   if (r.erro) return json({ erro: r.erro }, r.status);
   const resposta = String(r.dados?.resposta || "").trim() || "Não consegui montar a resposta. Pode perguntar de outro jeito?";
   return json({ resposta, itens: resolverItens(r.dados?.itens, reg, ctx, 3) });
@@ -208,7 +212,8 @@ async function relatorio(quem: any, body: any) {
   if (!pedido) return json({ erro: "Escolha o relatório." }, 400);
   const dias = Math.min(365, Math.max(7, n(body?.dias) || 90));
   const { texto, reg, ctx } = await contexto(quem.usuario, String(body.empresa_id), dias);
-  const r: any = await chamarIA(SISTEMA(quem.nome, texto) + "\n\n" + FORMATO_REL, [{ role: "user", content: pedido }]);
+  const diretrizes = await instrucoesEmpresa(String(body.empresa_id), "separacao") + "\n" + IDENTIDADE_ESTOQUE;
+  const r: any = await chamarIA(SISTEMA(quem.nome, texto) + diretrizes + "\nNesta operação gere um relatório dos dados disponíveis, sem abrir apuração ou exigir fotos do usuário.\n" + FORMATO_REL, [{ role: "user", content: pedido }]);
   if (r.erro) return json({ erro: r.erro }, r.status);
   const d = r.dados || {};
   const secoes = (Array.isArray(d.secoes) ? d.secoes : []).slice(0, 6).map((s: any) => ({ titulo: String(s?.titulo || "").slice(0, 120), texto: String(s?.texto || "").slice(0, 800), itens: resolverItens(s?.itens, reg, ctx, 0) }));

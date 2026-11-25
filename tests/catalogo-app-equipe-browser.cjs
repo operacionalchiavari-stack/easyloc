@@ -14,6 +14,7 @@ const PNG = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
     await page.route("https://fixture/**", (r) => r.fulfill({ contentType: "image/png", body: PNG }));
     await page.addInitScript(() => { try { localStorage.clear(); } catch {} });
     await page.addInitScript(installMock, { staff: true });
+    await page.addInitScript(()=>{ window.supabaseClient.auth.onAuthStateChange=()=>({data:{subscription:{unsubscribe(){}}}}); });
     await page.goto("http://127.0.0.1:" + server.address().port + "/Modulos/Comercial/Catalogo/catalogo-app.html?app=1");
     await page.waitForSelector(".cat-card");
     assert.ok(await page.evaluate(() => document.body.classList.contains("catalogo-equipe")), "modo equipe");

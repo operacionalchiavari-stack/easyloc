@@ -487,7 +487,7 @@ async function danosMes(ctx: any, mes: string) {
     let ciencia: any = { status: "legado", equipe: "" };
     if (equipe) ciencia = !c || c.assinatura !== assinatura ? { status: "pendente", equipe, assinatura }
       : { status: c.status, equipe, assinatura, nome: c.confirmado_nome, em: c.confirmado_em, justificativa: c.justificativa, podeRevisar: ctx.podeAdmin };
-    saida.push({ ...base, ciencia, os: "", item: it.descricao_total || it.produto || "", setor: "", fluxo: "", dano: equipe ? equipe[0].toUpperCase() + equipe.slice(1) : "Evento",
+    saida.push({ ...base, ciencia, os: "", item: it.descricao_total || it.produto || "", setor: "", fluxo: "", dano: equipe ? equipe[0].toUpperCase() + equipe.slice(1) : (r.origem === "avulsa" ? "Depósito" : "Evento"),
       local: equipe || (r.pedido_id ? "evento" : "interno"), reposicaoTotal: r2(num(it.valor_reposicao) * q), data: dataBR(String(r.criado_em).slice(0, 10)) });
   }
   return saida;

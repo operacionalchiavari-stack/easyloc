@@ -26,9 +26,9 @@
     expedicao: "Modulos/Logistica/Expedicao/expedicao.html",
     montador: "Modulos/Chiavari/Cronograma/montador.html",
     freteiros: "Modulos/Chiavari/Fretes/freteiros.html",
-    concFretes: "Modulos/Chiavari/Fretes/conciliacao.html",
+    concFretes: "Modulos/Logistica/PainelLogistico/painel-logistico.html?aba=freteiros",
     uber: "Modulos/Chiavari/Uber/index.html",
-    free: "Modulos/Chiavari/Cronograma/equipe-free.html",
+    free: "Modulos/Logistica/cadastro-prestadores.html?tipo=free",
     acervo: "Modulos/Estoque/Acervo/acervo.html",
     os: "Modulos/Chiavari/CentralMetas/itens-danificados.html",
     capas: "Modulos/Estoque/CapasProtecao/capas.html",
@@ -137,7 +137,7 @@
       nos: [
         { tipo: "duplo", juntar: "Os dois viram contas a pagar e custo do evento", itens: [
           { setor: "logistica", titulo: "Fretes", tela: T.concFretes,
-            faz: ["Transportadora informa o valor no Cadastro de Fretes", "Logística concilia sistema × transportadora e fecha"] },
+            faz: ["Freteiro lança os fretes às cegas no App do Freteiro e envia o relatório", "O sistema confere; a Logística resolve as divergências e vai para Fechamentos de parceiros"] },
           { setor: "logistica", titulo: "Corridas de Uber", tela: T.uber,
             faz: ["Depois do check-out a logística confere o valor", "Fecha as corridas de cada motorista"] },
         ] },
@@ -169,7 +169,7 @@
     { titulo: "Pessoas e acesso", setor: "comercial", itens: [
       { texto: "Cada pessoa é cadastrada em Cadastro de Funcionários: login, permissões, equipe, líder e PIN do App", tela: T.funcionarios },
       { texto: "O menu mostra só o que a pessoa tem permissão de abrir" },
-      { texto: "Freelancers entram pela Equipe Free; motoristas e freteiros se cadastram nos apps deles", tela: T.free },
+      { texto: "Freelancers, motoristas e freteiros se cadastram nos apps; a Logística aprova os free em Cadastros › Free. Com as datas confirmadas pelo Comercial, a vaga do free escalado vai sozinha para o app", tela: T.free },
     ] },
   ];
 

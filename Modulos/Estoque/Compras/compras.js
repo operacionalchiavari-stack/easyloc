@@ -74,6 +74,7 @@
     renderNeeds();
     renderQuotations();
     renderOrders();
+    window.dispatchEvent(new Event("compras-contas-atualizar"));
     lucide.createIcons();
   }
 
@@ -146,6 +147,9 @@
   }
 
   function selectTab(tab) {
+    document.body.classList.toggle("compras-visao-ampla", ["contas-pagar", "gerencial"].includes(tab));
+    document.querySelector(".pv-search-box")?.classList.toggle("hidden", ["contas-pagar", "gerencial"].includes(tab));
+    window.dispatchEvent(new CustomEvent("compras-aba", {detail:tab}));
     document.querySelectorAll(".pv-tab").forEach((b) => b.classList.toggle("active", b.dataset.pvTab === tab));
     $("ordersStatusFilter").classList.toggle("hidden", tab !== "orders");
     document.querySelectorAll(".pv-panel").forEach((p) => p.classList.toggle("hidden", p.dataset.pvPanel !== tab));
@@ -212,7 +216,7 @@
     filteredNeeds().forEach((n) => {
       if (bought.has(n.status)) return;
       if (n.origem === "manutencao") servicos.push(n);
-      else (["solicitacao", "estoque_minimo", "cartela"].includes(n.origem) ? avulsa : op).push(n);
+      else (["solicitacao", "estoque_minimo"].includes(n.origem) ? avulsa : op).push(n); // 22/11/2026: tinta/tecido da cartela de um pedido é necessidade operacional
     });
     return { op, avulsa, servicos };
   }
@@ -259,8 +263,10 @@
     return [...new Set(ops.map((o) => o?.op_numero).filter(Boolean))];
   }
   function opNeedRowHtml(n) {
-    if(!n.material_id)return avulsaNeedRowHtml(n);
-    const { pendingApproval, selected, pcpTag } = needRowState(n);
+    if(!n.material_id&&n.origem!=="cartela")return avulsaNeedRowHtml(n);
+    const { awaitingLink, pendingApproval, selected, pcpTag } = needRowState(n);
+    // 22/11/2026: tinta/tecido escolhido na cartela que ainda não existe no Almoxarifado: vincular aqui mesmo
+    const linkIcon = !n.material_id ? `<button type="button" class="pv-link-material-icon" data-link-material="${esc(n.id)}" title="Vincular ou cadastrar o material no Almoxarifado" aria-label="Vincular material"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2"/></svg></button>` : "";
     if (n.origem === "ferramental") {
       const fromProgrammer = n.tool_details?.fonte === "programador_cnc";
       const orders = toolNeedOrders(n);
@@ -281,11 +287,11 @@
     return `<tr ${needRowAttrs(n, pendingApproval, selected)}>
         ${opPedidoCell(n)}
         ${needQtyCell(n)}
-        <td><strong>${esc(n.material_nome)}</strong>${companyChip(n)}${n.entrega_direta_endereco ? `<small class="pv-direct-delivery" title="${esc(n.entrega_direta_endereco)}"><i data-lucide="truck"></i> Entregar direto no terceirizado: ${esc(n.entrega_direta_endereco)}</small>` : ""}</td>
+        <td>${linkIcon}<strong>${esc(n.material_nome)}</strong>${n.origem === "cartela" ? `<span class="cs-origem">${esc("Escolhido na cartela" + (n.cartela_nome ? " · " + n.cartela_nome : ""))}</span>` : ""}${companyChip(n)}${n.entrega_direta_endereco ? `<small class="pv-direct-delivery" title="${esc(n.entrega_direta_endereco)}"><i data-lucide="truck"></i> Entregar direto no terceirizado: ${esc(n.entrega_direta_endereco)}</small>` : ""}</td>
         ${opItemCell(n)}
         <td>${esc(n.etapa_nome || n.setor_nome || "—")}</td>
         ${needDateCell(n)}
-        ${needStatusCell(false, n.status, pcpTag)}
+        ${needStatusCell(awaitingLink, n.status, pcpTag)}
       </tr>`;
   }
 
@@ -300,11 +306,16 @@
     const itens = [...new Set(op.map((n) => n.item_id).filter(Boolean))].filter((x) => !state.opInfo.itens.has(x));
     try {
       if (numeros.length) {
-        const { data: peds } = await sb.from("separacoes_pedidos").select("id,numero_pedido,cliente_nome,cliente_id,local_nome").eq("empresa_id", emp).in("numero_pedido", numeros);
+        const { data: peds } = await sb.from("separacoes_pedidos").select("id,numero_pedido,cliente_nome,cliente_id,local_nome,ambientes:observacoes->projeto_comercial->dados->ambientes").eq("empresa_id", emp).in("numero_pedido", numeros);
         const ids = [...new Set((peds || []).map((p) => p.cliente_id).filter(Boolean))];
         const { data: cli } = ids.length ? await sb.from("clientes_empresas").select("id,catalogo_logo_url").in("id", ids) : { data: [] };
         const foto = new Map((cli || []).map((c) => [c.id, c.catalogo_logo_url]));
-        (peds || []).forEach((p) => state.opInfo.pedidos.set(String(p.numero_pedido), { ...p, foto: foto.get(p.cliente_id) || "" }));
+        (peds || []).forEach((p) => {
+          // 22/11/2026: foto do item personalizado gravada no pedido (a mesma que a Ordem de produção mostra)
+          const pers = [];
+          (Array.isArray(p.ambientes) ? p.ambientes : []).forEach((a) => (Array.isArray(a?.itens) ? a.itens : []).forEach((it) => { if (it?.personalizacao_foto) pers.push({ item_id: String(it.item_id || ""), nome: it.personalizacao_nome || "", foto: it.personalizacao_foto }); }));
+          state.opInfo.pedidos.set(String(p.numero_pedido), { ...p, ambientes: undefined, pers, foto: foto.get(p.cliente_id) || "" });
+        });
       }
       if (itens.length) {
         const { data: its } = await sb.from("itens").select("id,produto,descricao_total,foto_url").in("id", itens);
@@ -324,9 +335,11 @@
   }
   function opItemCell(n) {
     const i = state.opInfo.itens.get(n.item_id) || {};
-    const nome = n.item_nome || i.produto || i.descricao_total, foto = n.item_foto || i.foto_url;
+    const pers = (state.opInfo.pedidos.get(String(n.order_number || ""))?.pers || []).filter((x) => x.item_id === String(n.item_id || ""));
+    const fotoPers = (pers.find((x) => n.personalizacao_nome && x.nome === n.personalizacao_nome) || pers[0])?.foto;
+    const nome = n.item_nome || i.produto || i.descricao_total, foto = fotoPers || n.item_foto || i.foto_url;
     if (!nome) return `<td><span class="subtext">—</span></td>`;
-    return `<td><span class="cs-com-foto"><span class="cs-item-foto">${foto ? `<img src="${esc(foto)}" alt="" loading="lazy">` : ""}</span><span class="cs-com-foto-txt"><strong>${esc(nome)}</strong>${n.personalizacao_nome ? `<small>${esc(n.personalizacao_nome)}</small>` : ""}</span></span></td>`;
+    return `<td><span class="cs-com-foto"><span class="cs-item-foto cs-item-foto-op" data-cs-foto="${esc(foto || "")}" title="${foto ? "Ver a foto" : ""}">${foto ? `<img src="${esc(foto)}" alt="" loading="lazy">` : ""}</span><span class="cs-com-foto-txt"><strong>${esc(nome)}</strong>${n.personalizacao_nome ? `<small>${esc(n.personalizacao_nome)}</small>` : ""}</span></span></td>`;
   }
 
   function avulsaNeedRowHtml(n) {

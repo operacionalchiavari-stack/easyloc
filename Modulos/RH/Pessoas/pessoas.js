@@ -31,7 +31,7 @@
   const CHECK_ADMISSAO = ["Exame admissional (ASO)", "Documentos pessoais recebidos (RG, CPF, comprovante de residência, foto)", "Contrato de trabalho assinado", "Registro na carteira / eSocial", "Dados bancários / PIX cadastrados", "Uniforme entregue", "Integração realizada", "Acesso ao sistema e senha operacional", "Inclusão nos benefícios"];
 
   const S = {
-    sb: null, emp: null, aba: "cadastro", podeEditar: false,
+    sb: null, emp: null, aba: "cadastro", vencimentosAba: "vencidos", examesAba: "exames", beneficioSelecionado: null, movimentacaoSelecionada: null, podeEditar: false,
     pessoas: [], docs: [], exames: [], examesCad: [], treinos: [], turmas: [], benef: [], adesoes: [], ferias: [], checks: [],
     ficha: null, fichaAba: "dados", filtro: { busca: "", setor: "", situacao: "ativos" }, ocorr: null, ocorrErro: ""
   };
@@ -178,9 +178,10 @@
   function fechar() { if ($("rhModal").open) $("rhModal").close(); }
   function campos(raiz) { const o = {}; raiz.querySelectorAll("[name]").forEach((el) => { if (el.type === "checkbox" && el.dataset.lista) { (o[el.name] ||= []); if (el.checked) o[el.name].push(el.value); } else o[el.name] = el.type === "checkbox" ? el.checked : el.type === "file" ? el.files?.[0] || null : el.value; }); return o; }
   function erroModal(msg) { let e = $("rhModalCorpo").querySelector(".fin-erro"); if (!e) { e = document.createElement("p"); e.className = "fin-erro"; $("rhModalCorpo").appendChild(e); } e.textContent = msg; }
+  function notificarDisponibilidade() { try { localStorage.setItem('rh-disponibilidade-atualizada', String(Date.now())); } catch (_) {} }
   async function executar(fn, ok) {
     const bt = $("rhModalRodape").querySelectorAll("button"); bt.forEach((b) => (b.disabled = true));
-    try { await fn(); fechar(); if (ok) avisar(ok, "Gestão de Pessoas", "sucesso"); await recarregar(); }
+    try { await fn(); fechar(); if (ok) avisar(ok, "Gestão de Pessoas", "sucesso"); await recarregar(); notificarDisponibilidade(); }
     catch (e) { console.error(e); erroModal(e.message || String(e)); }
     finally { bt.forEach((b) => (b.disabled = false)); }
   }
@@ -268,7 +269,7 @@
     const f = quadros[chaveQuadro()]; if (!f) return;
     if (CRESCE[chaveQuadro()]) { crescerQuadro(f); return; }
     // A página não rola com uma aba embutida aberta (html.rh-com-quadro): só o quadro rola, uma barra só.
-    f.style.height = Math.max(320, window.innerHeight - f.getBoundingClientRect().top - window.scrollY - 6) + "px";
+    f.style.height = Math.max(S.aba === "sofia" ? 160 : 320, window.innerHeight - f.getBoundingClientRect().top - window.scrollY - 6) + "px";
   }
   window.addEventListener("resize", ajustarQuadro);
   function pintarEmbutida(query) {
@@ -277,17 +278,43 @@
     let f = quadros[chave];
     const url = botao.dataset.embutida + (query || "");
     // O quadro só aparece depois de carregar e de esconder o que não é desta aba (sem piscar a tela original).
-    if (!f) { f = quadros[chave] = document.createElement("iframe"); f.className = "rh-embutida"; f.title = botao.textContent.trim(); f.style.visibility = "hidden"; f.addEventListener("load", () => { f.style.visibility = ""; }); f.src = url; if (S.aba === "cadastro") f.addEventListener("load", prepararCadastro); if (S.aba === "controle") f.addEventListener("load", prepararControle); if (S.aba === "ideias") f.addEventListener("load", () => prepararIdeias(f)); if (CRESCE[S.aba]) f.addEventListener("load", () => prepararCrescer(f)); $("rhEmbutidas").append(f); }
+    if (!f) {
+      f = quadros[chave] = document.createElement("iframe");
+      f.className = "rh-embutida"; f.title = botao.textContent.trim(); f.style.visibility = "hidden";
+      f.addEventListener("load", () => { f.style.visibility = ""; });
+      if (S.aba === "sofia") {
+        f.classList.add("rh-sofia");
+        f.allow = "microphone 'self'";
+        f.addEventListener("load", () => prepararSofia(f));
+      }
+      f.src = url;
+      if (S.aba === "cadastro") f.addEventListener("load", prepararCadastro);
+      if (S.aba === "controle") f.addEventListener("load", prepararControle);
+      if (S.aba === "ideias") f.addEventListener("load", () => prepararIdeias(f));
+      if (CRESCE[S.aba]) f.addEventListener("load", () => prepararCrescer(f));
+      $("rhEmbutidas").append(f);
+    }
     else if (query) f.src = url;
+    else if (S.aba === 'cadastro') f.contentWindow?.FuncionariosTabela?.atualizar().catch(()=>{});
     Object.entries(quadros).forEach(([k, q]) => { q.hidden = k !== chave; });
     $("rhConteudo").hidden = true;
     document.documentElement.classList.toggle("rh-com-quadro", !CRESCE[chave]); window.scrollTo(0, 0);
     syncTopo(); ajustarQuadro();
   }
+  function prepararSofia(f) {
+    // A navegação entre agentes fica no app; aqui a pessoa continua nas abas do RH.
+    const voltar = f.contentDocument?.getElementById("agVoltar");
+    if (voltar) { voltar.hidden = true; voltar.style.setProperty("display", "none", "important"); }
+  }
   $("rhBuscaFunc").addEventListener("input", () => { const b = docCadastro()?.getElementById("funcBusca"); if (b) { b.value = $("rhBuscaFunc").value; b.dispatchEvent(new Event("input", { bubbles: true })); } });
-  // Botões da linha do título (nov/2026): as mesmas ações que ficavam na barra de cada aba.
-  document.querySelectorAll("[data-topo-acao]").forEach((b) => b.addEventListener("click", () => ({ "novo-exame": () => exameModal(null), "novo-beneficio": () => beneficioModal(), "coletiva": () => coletivaModal(), "programar-ferias": () => feriasModal(null, null), "desligar-escolher": () => desligarEscolher(), "admissao": () => novaAdmissao() })[b.dataset.topoAcao]()));
+  // Ações da aba na faixa entre a navegação e o conteúdo.
+  const botoesMovimentacoes = [...document.querySelectorAll('[data-topo-aba="movimentacoes"]')];
+  const botoesExames = [...document.querySelectorAll('[data-topo-aba="vencimentos"]')];
+  const botaoNovoBeneficio = document.querySelector('[data-topo-acao="novo-beneficio"]');
+  const botaoFeriasColetivas = document.querySelector('[data-topo-acao="coletiva"]');
+  document.querySelectorAll("[data-topo-acao]").forEach((b) => b.addEventListener("click", () => ({ "novo-exame": () => exameModal(null), "novo-cad-exame": () => cadastroModal('rh_exames_cadastro'), "novo-cad-treino": () => cadastroModal('rh_treinamentos'), "novo-beneficio": () => beneficioModal(), "coletiva": () => coletivaModal(), "programar-ferias": () => feriasModal(null, null), "desligar-escolher": () => desligarEscolher(), "admissao": () => novaAdmissao(), "jornada": () => window.RHFolgas.regra(), "ausencia": () => window.RHFolgas.ausencia() })[b.dataset.topoAcao]()));
   $("rhNovoFunc").addEventListener("click", () => docCadastro()?.getElementById("newFuncionarioBtn")?.click());
+  $("rhColunasFunc").addEventListener("click", () => docCadastro()?.getElementById('funcColunasBtn')?.click());
   // Aba Funcionários: o topo do cadastro (título, pesquisa, botão) some e a pesquisa e o botão usam os do topo desta página.
   const docCadastro = () => { try { return quadros.cadastro?.contentDocument || null; } catch (_) { return null; } };
   function prepararCadastro() {
@@ -297,25 +324,18 @@
     if (busca && $("rhBuscaFunc").value !== busca.value) { busca.value = $("rhBuscaFunc").value; busca.dispatchEvent(new Event("input", { bubbles: true })); }
     const bt = d.getElementById("newFuncionarioBtn");
     if (bt && !bt._rhObs) { bt._rhObs = new MutationObserver(syncTopo); bt._rhObs.observe(bt, { attributes: true }); }
+    const lista = d.getElementById('funcionariosView');
+    if (lista && !lista._rhObs) { lista._rhObs = new MutationObserver(syncTopo); lista._rhObs.observe(lista, {attributes:true,attributeFilter:['hidden']}); }
     syncTopo(); setTimeout(syncTopo, 1500);
   }
-  // Aba Ocorrências (Controle RH, nov/2026): o título "Recursos Humanos", a barra de filtros e os botões do Controle RH somem;
-  // a pesquisa, "Painel" e "+ Nova ocorrência" ficam na linha do título desta página. Os filtros de tipo e mês saíram.
+  // Ocorrências: pesquisa e registro ficam no cabeçalho da tabela, dentro do quadro.
   const quadroControle = () => { try { return quadros.controle?.contentWindow || null; } catch (_) { return null; } };
   function prepararControle() {
     const w = quadroControle(), d = w?.document; if (!d) return;
     if (!d.getElementById("rhEmbutidoEstilo")) { const st = d.createElement("style"); st.id = "rhEmbutidoEstilo"; st.textContent = "html:root:is(#rhe#rhe#rhe#rhe#rhe#rhe,html) body .rh-titulo, html:root:is(#rhe#rhe#rhe#rhe#rhe#rhe,html) body .container > .topo, html:root:is(#rhe#rhe#rhe#rhe#rhe#rhe,html) body .rh-cartao-cabecalho{display:none!important}html:root:is(#rhe#rhe#rhe#rhe#rhe#rhe,html) body .container{padding-left:0!important;padding-right:0!important;margin-left:0!important;margin-right:0!important;max-width:none!important;padding-top:0!important}html,body{background:transparent!important}"; d.head.append(st); }
     ["filtroTipo", "filtroMes"].forEach((id) => { const el = d.getElementById(id); if (el) el.value = ""; });
-    buscarControle();
-  }
-  function buscarControle() {
-    const w = quadroControle(), b = w?.document?.getElementById("pesquisa"); if (!b) return;
-    b.value = $("rhBuscaOcor").value;
     try { if (typeof w.filtrarTabela === "function") w.filtrarTabela(); } catch (_) {}
   }
-  $("rhBuscaOcor").addEventListener("input", buscarControle);
-  $("rhOcorPainel").addEventListener("click", () => { try { quadroControle()?.PainelRH?.abrir(); } catch (e) { avisar(e.message, "Ocorrências", "erro"); } });
-  $("rhOcorNova").addEventListener("click", () => { try { quadroControle()?.abrirModalSenhaRH("ocorrencia"); } catch (e) { avisar(e.message, "Ocorrências", "erro"); } });
   // Aba Ideia Premiada (nov/2026): sem o cabeçalho de boas-vindas ("Uma empresa melhor começa com você"…) só aqui dentro;
   // aberta sozinha (Início/link), a tela continua igual.
   function prepararIdeias(f) {
@@ -323,26 +343,19 @@
     const st = d.createElement("style"); st.id = "rhEmbutidoEstilo";
     st.textContent = "html:root:is(#rhe#rhe#rhe#rhe#rhe#rhe,html) body .ideia-heading, html:root:is(#rhe#rhe#rhe#rhe#rhe#rhe,html) body .ideia-tabs, html:root:is(#rhe#rhe#rhe#rhe#rhe#rhe,html) body .ideia-list-tools{display:none!important}html,body{background:transparent!important}";
     d.head.append(st);
-    filtrarIdeias();
   }
-  // Pesquisa e status da Ideia Premiada na linha do título (a barra da tela de dentro, com "Ideias recebidas" e "Recarregar", some).
-  function filtrarIdeias() {
-    let d; try { d = quadros.ideias?.contentDocument; } catch (_) { return; } if (!d) return;
-    const b = d.getElementById("buscaIdeias"), st = d.getElementById("statusIdeias");
-    if (b) { b.value = $("rhBuscaIdeia").value; b.dispatchEvent(new Event("input", { bubbles: true })); }
-    if (st) { st.value = $("rhStatusIdeia").value; st.dispatchEvent(new Event("change", { bubbles: true })); }
-  }
-  $("rhBuscaIdeia").addEventListener("input", filtrarIdeias);
-  $("rhStatusIdeia").addEventListener("change", filtrarIdeias);
   function syncTopo() {
     const naAba = S.aba === "cadastro", d = docCadastro(), bt = d?.getElementById("newFuncionarioBtn");
     document.querySelector(".rh-topo-busca").hidden = !naAba;
-    const naControle = S.aba === "controle";
-    document.querySelector(".rh-topo-busca-ocor").hidden = !naControle;
-    document.querySelector(".rh-topo-busca-ideia").hidden = S.aba !== "ideias";
-    $("rhOcorPainel").hidden = !naControle; $("rhOcorNova").hidden = !naControle;
-    document.querySelectorAll("[data-topo-aba]").forEach((b) => { b.hidden = !(S.aba === b.dataset.topoAba && S.podeEditar && !S.ficha); });
+    $("rhFolgasFiltros").hidden = S.aba !== 'folgas' || !!S.ficha;
+    document.querySelectorAll("[data-topo-aba]").forEach((b) => { b.hidden = !(S.aba === b.dataset.topoAba && S.podeEditar && !S.ficha && (!b.dataset.topoExames || b.dataset.topoExames === S.examesAba)); });
     $("rhNovoFunc").hidden = !naAba || !bt || bt.hidden || bt.disabled || d.defaultView.getComputedStyle(bt).display === "none";
+    $("rhColunasFunc").hidden = !naAba || !d?.getElementById('funcColunasBtn') || d.getElementById('funcionariosView').hidden;
+    const semAdm = S.pessoas.filter((p) => situacao(p) !== 'desligado' && ['clt', 'aprendiz'].includes(contrato(p)) && !p.data_admissao).length;
+    $("rhAlertaAdmissao").hidden = S.aba !== 'ferias' || !!S.ficha || !semAdm;
+    $("rhAlertaAdmissao").textContent = semAdm + ' pessoa(s) CLT sem data de admissão: as férias delas não são calculadas. Complete em Editar dados.';
+    $("rhFerramentas").hidden = !$("rhFerramentas").querySelector('.rh-topo-busca:not([hidden]), .rh-topo-acoes>button:not([hidden]), #rhAlertaAdmissao:not([hidden]), #rhFolgasFiltros:not([hidden])');
+    requestAnimationFrame(ajustarQuadro);
   }
   function abrirEmbutida(aba, query) { S.aba = aba; S.ficha = null; window.scrollTo(0, 0); pintar(query); }
   function pintar(query) {
@@ -351,6 +364,8 @@
     if (document.querySelector('#rhAbas [data-aba="' + S.aba + '"]')?.dataset.embutida) return pintarEmbutida(query);
     Object.values(quadros).forEach((q) => { q.hidden = true; }); $("rhConteudo").hidden = false; document.documentElement.classList.remove("rh-com-quadro"); syncTopo();
     if (S.aba === "pessoas" && S.ficha && pessoa(S.ficha)) return pintarFicha();
+    if (S.aba === 'folgas') return window.RHFolgas.montar({host:$("rhConteudo"),filtros:$("rhFolgasFiltros"),sb:S.sb,empresa:S.emp,pessoas:S.pessoas.filter(p=>situacao(p)!=='desligado'),editar:S.podeEditar,foto:fotoHtml});
+    if (S.aba === 'desempenho') return window.RHDesempenho.montar({host:$("rhConteudo"),sb:S.sb,empresa:S.emp,pessoas:S.pessoas,editar:S.podeEditar,foto:fotoHtml});
     ({ pessoas: pintarPessoas, vencimentos: pintarVencimentos, beneficios: pintarBeneficios, ferias: pintarFerias, movimentacoes: pintarMovimentacoes })[S.aba]();
   }
   const card = (rot, val, sub, cls = "") => '<div class="fin-card ' + cls + '"><span>' + esc(rot) + "</span><strong>" + val + "</strong><small>" + esc(sub) + "</small></div>";
@@ -716,17 +731,34 @@
       S.exames.filter((e) => e.funcionario_id === p.id && e.validade).sort((a, b) => String(b.data_realizacao).localeCompare(String(a.data_realizacao))).forEach((e) => { const k = "e" + (e.exame_cadastro_id || norm(e.nome)); if (vistos.has(k)) return; vistos.add(k); itens.push({ p, oque: e.nome, d: dias(hoje(), e.validade), validade: e.validade }); });
       S.docs.filter((d) => d.funcionario_id === p.id && d.validade).sort((a, b) => String(b.emissao || "").localeCompare(String(a.emissao || ""))).forEach((d) => { const k = "d" + (d.treinamento_id || norm(d.nome)); if (vistos.has(k)) return; vistos.add(k); itens.push({ p, oque: d.nome, d: dias(hoje(), d.validade), validade: d.validade }); });
     });
-    const faixas = [["Vencidos", (x) => x.d != null && x.d < 0, "verm"], ["Faltando (obrigatório)", (x) => x.falta, "verm"], ["Vencem em até 30 dias", (x) => x.d != null && x.d >= 0 && x.d <= 30, "amar"], ["Em 31 a 60 dias", (x) => x.d > 30 && x.d <= 60, "azul"], ["Em 61 a 90 dias", (x) => x.d > 60 && x.d <= 90, ""]];
-    const ed = S.podeEditar;
+    const faixas = [
+      ["vencidos", "Vencidos", (x) => x.d != null && x.d < 0, "verm", "Nenhum item vencido."],
+      ["obrigatorios", "Obrigatórios", (x) => x.falta, "verm", "Nenhum exame ou treinamento obrigatório faltando."],
+      ["ate30", "Até 30 dias", (x) => x.d != null && x.d >= 0 && x.d <= 30, "amar", "Nenhum item vence nos próximos 30 dias."],
+      ["mais30", "31 dias ou mais", (x) => x.d > 30, "azul", "Nenhum item vence a partir de 31 dias."]
+    ].map(([id, rotulo, filtrar, classe, vazio]) => ({ id, rotulo, classe, vazio, lista: itens.filter(filtrar).sort((a, b) => (a.d ?? -9999) - (b.d ?? -9999)) }));
+    const examesRealizados = [...S.exames].sort((a, b) => String(b.data_realizacao || '').localeCompare(String(a.data_realizacao || '')));
+    const historicoExames = examesRealizados.length ? '<div class="fin-rolar"><table class="fin-tabela rh-exames-historico"><thead><tr><th>Funcionário</th><th>Exame</th><th>Realizado em</th><th>Validade</th><th>Resultado</th><th>Arquivo</th></tr></thead><tbody>' + examesRealizados.map((e) => {
+      const p = pessoa(e.funcionario_id), z = prazo(e.validade);
+      return '<tr><td>' + (p ? '<button type="button" class="rh-vencimento-pessoa" data-pessoa="' + esc(p.id) + '" data-ir-aba="exames">' + fotoHtml(p) + '<span class="rh-vencimento-nome"><strong>' + esc(p.nome) + '</strong><small>' + esc(p.setor || '') + '</small></span></button>' : 'Funcionário não encontrado') + '</td><td><b>' + esc(e.nome) + '</b>' + (e.clinica ? '<br><small>' + esc(e.clinica) + '</small>' : '') + '</td><td>' + dataBr(e.data_realizacao) + '</td><td>' + (z ? '<span class="rh-selo ' + (z.nivel || 'verde') + '">' + dataBr(e.validade) + '</span>' : 'Sem vencimento') + '</td><td>' + esc(RESULTADOS[e.resultado] || '-') + '</td><td>' + arquivoHtml(e.arquivo_path) + '</td></tr>';
+    }).join('') + '</tbody></table></div>' : '<div class="fin-vazio">Nenhum exame realizado registrado.</div>';
+    const abasDireita = [
+      ['exames', 'Exames', '<h3>Exames</h3>' + listaCadastro(S.examesCad, 'rh_exames_cadastro')],
+      ['treinamentos', 'Treinamentos', '<h3>Treinamentos</h3>' + listaCadastro(S.treinos, 'rh_treinamentos')],
+      ['turmas', 'Turmas realizadas', '<h3>Turmas realizadas</h3>' + (S.turmas.length ? '<div class="fin-rolar"><table class="fin-tabela"><tbody>' + S.turmas.map((t) => '<tr><td>' + dataBr(t.data) + '</td><td><b>' + esc(nomeTreino(t.treinamento_id)) + '</b><br><small>' + S.docs.filter((d) => d.turma_id === t.id).length + ' participante(s)' + (t.instrutor ? ' · ' + esc(t.instrutor) : '') + '</small></td><td class="num">' + arquivoHtml(t.arquivo_path) + '</td></tr>').join('') + '</tbody></table></div>' : '<div class="fin-vazio">Nenhuma turma ainda.</div>')],
+      ['realizados', 'Exames realizados', '<h3>Exames realizados</h3>' + historicoExames]
+    ];
     $("rhConteudo").innerHTML =
-      // Nov/2026: "+ Registrar exame" fica na linha do título (#rhTopoExame); "Registrar treinamento realizado" saiu.
-      '<div class="fin-grade"><section class="fin-bloco"><h3>Vencimentos e pendências</h3>' +
-      (faixas.map(([rot, f, cls]) => { const l = itens.filter(f).sort((a, b) => (a.d ?? -9999) - (b.d ?? -9999)); return l.length ? '<h4 class="rh-grupo-titulo">' + rot + " <span>" + l.length + '</span></h4><table class="fin-tabela"><tbody>' + l.map((x) => '<tr><td><button type="button" class="rh-arquivo" data-pessoa="' + x.p.id + '">' + esc(x.p.nome) + "</button><br><small>" + esc(x.p.setor || "") + "</small></td><td>" + esc(x.oque) + '</td><td class="num"><span class="rh-selo ' + cls + '">' + (x.falta ? "Não feito" : dataBr(x.validade)) + "</span></td></tr>").join("") + "</tbody></table>" : ""; }).join("") || '<div class="fin-vazio">Nada vencendo nos próximos 90 dias.</div>') +
-      "</section><div>" +
-      '<section class="fin-bloco"><h3>Exames ' + (ed ? '<button class="fin-btn peq" data-acao="novo-cad-exame">+ Exame</button>' : "") + "</h3>" + listaCadastro(S.examesCad, "rh_exames_cadastro") + "</section>" +
-      '<section class="fin-bloco"><h3>Treinamentos ' + (ed ? '<button class="fin-btn peq" data-acao="novo-cad-treino">+ Treinamento</button>' : "") + "</h3>" + listaCadastro(S.treinos, "rh_treinamentos") + "</section>" +
-      '<section class="fin-bloco"><h3>Turmas realizadas</h3>' + (S.turmas.length ? '<table class="fin-tabela"><tbody>' + S.turmas.slice(0, 15).map((t) => "<tr><td>" + dataBr(t.data) + "</td><td><b>" + esc(nomeTreino(t.treinamento_id)) + "</b><br><small>" + S.docs.filter((d) => d.turma_id === t.id).length + " participante(s)" + (t.instrutor ? " · " + esc(t.instrutor) : "") + '</small></td><td class="num">' + arquivoHtml(t.arquivo_path) + "</td></tr>").join("") + "</tbody></table>" : '<div class="fin-vazio">Nenhuma turma ainda.</div>') + "</section>" +
-      "</div></div>";
+      // Os botões acompanham as abas da coluna de exames e treinamentos.
+      '<div class="fin-grade"><section class="fin-bloco rh-vencimentos"><nav class="rh-vencimento-abas" role="tablist" aria-label="Vencimentos e pendências">' +
+      faixas.map((f) => '<button type="button" role="tab" id="rh-vencimento-aba-' + f.id + '" data-vencimento-aba="' + f.id + '" aria-controls="rh-vencimento-painel-' + f.id + '" aria-selected="' + (S.vencimentosAba === f.id) + '" tabindex="' + (S.vencimentosAba === f.id ? "0" : "-1") + '"' + (S.vencimentosAba === f.id ? ' class="ativa"' : "") + '>' + f.rotulo + '<span class="rh-vencimento-conta">' + f.lista.length + '</span></button>').join("") + '</nav>' +
+      faixas.map((f) => '<div role="tabpanel" id="rh-vencimento-painel-' + f.id + '" aria-labelledby="rh-vencimento-aba-' + f.id + '" tabindex="0"' + (S.vencimentosAba === f.id ? "" : " hidden") + '>' +
+        (f.lista.length ? '<div class="fin-rolar"><table class="fin-tabela rh-vencimento-tabela"><thead><tr><th>Funcionário</th><th>Pendência</th><th class="num">Validade</th></tr></thead><tbody>' + f.lista.map((x) => '<tr><td><button type="button" class="rh-vencimento-pessoa" data-pessoa="' + esc(x.p.id) + '">' + fotoHtml(x.p) + '<span class="rh-vencimento-nome"><strong>' + esc(x.p.nome) + '</strong><small>' + esc(x.p.setor || "") + '</small></span></button></td><td>' + esc(x.oque) + '</td><td class="num"><span class="rh-selo ' + f.classe + '">' + (x.falta ? "Não feito" : dataBr(x.validade)) + '</span></td></tr>').join("") + '</tbody></table></div>' : '<div class="fin-vazio">' + f.vazio + '</div>') + '</div>').join("") +
+      '</section><section class="fin-bloco rh-exames-lateral"><header class="rh-exames-topo"><nav class="rh-vencimento-abas" role="tablist" aria-label="Cadastros e histórico de exames e treinamentos">' +
+      abasDireita.map(([id, rotulo]) => '<button type="button" role="tab" id="rh-exames-aba-' + id + '" data-exames-aba="' + id + '" aria-controls="rh-exames-painel-' + id + '" aria-selected="' + (S.examesAba === id) + '" tabindex="' + (S.examesAba === id ? '0' : '-1') + '"' + (S.examesAba === id ? ' class="ativa"' : '') + '>' + rotulo + '</button>').join('') + '</nav><div class="rh-exames-acoes" id="rhExamesAcoes" role="group" aria-label="Ações de exames e treinamentos"></div></header>' +
+      abasDireita.map(([id, , conteudo]) => '<section class="rh-exames-painel" role="tabpanel" id="rh-exames-painel-' + id + '" aria-labelledby="rh-exames-aba-' + id + '" tabindex="0"' + (S.examesAba === id ? '' : ' hidden') + '>' + conteudo + '</section>').join('') + '</section></div>';
+    botoesExames.forEach(b => $("rhExamesAcoes").append(b));
+    syncTopo();
   }
   function listaCadastro(lista, tabela) {
     if (!lista.length) return '<div class="fin-vazio">Nada cadastrado.</div>';
@@ -741,17 +773,31 @@
   }
   function pintarBeneficios() {
     const ativos = S.pessoas.filter((p) => situacao(p) !== "desligado").sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
-    // Nov/2026: benefícios lado a lado (duas colunas), um cartão por benefício.
-    $("rhConteudo").innerHTML =
-      (S.benef.length ? '<div class="rh-2col rh-benef">' + S.benef.map((b) => {
-        const rs = ativos.map((p) => ({ p, r: beneficioPara(b, p) })).filter((x) => x.r.aplica);
-        const tem = rs.filter((x) => x.r.tem).length, logo = rs.filter((x) => !x.r.tem && x.r.comeca > hoje() && dias(hoje(), x.r.comeca) <= 30).length;
-        return '<section class="fin-bloco"' + (b.ativo ? "" : ' style="opacity:.6"') + '><h3><span>' + esc(b.nome) + ' <small>' + esc(resumoBeneficio(b)) + "</small></span>" + (S.podeEditar ? '<button class="fin-btn peq claro" data-editar-beneficio="' + b.id + '">Editar</button>' : "") + "</h3>" +
-          (b.descricao ? '<p class="fin-info">' + esc(b.descricao) + "</p>" : "") +
-          '<div class="rh-pessoa-selos" style="margin:8px 0"><span class="rh-selo verde">' + tem + " com o benefício</span>" + (logo ? '<span class="rh-selo amar">' + logo + " começam em até 30 dias</span>" : "") + "</div>" +
-          '<details><summary style="cursor:pointer;font-size:13px;color:#8a6c48;font-weight:600">Ver pessoas (' + rs.length + ")</summary>" +
-          '<div class="fin-rolar"><table class="fin-tabela"><tbody>' + rs.map(({ p, r }) => '<tr><td><button type="button" class="rh-arquivo" data-pessoa="' + p.id + '">' + esc(p.nome) + "</button></td><td>" + esc(CONTRATOS[contrato(p)]) + '</td><td><span class="rh-selo ' + (r.nivel || "") + '">' + esc(r.texto) + '</span></td><td class="num">' + (S.podeEditar && b.adesao === "quem_aderir" ? '<button class="fin-btn peq ' + (r.aderiu ? "claro" : "") + '" data-adesao="' + b.id + '" data-pessoa-adesao="' + p.id + '">' + (r.aderiu ? "Tirar adesão" : "Marcar adesão") + "</button>" : "") + "</td></tr>").join("") + "</tbody></table></div></details></section>";
-      }).join("") + "</div>" : '<div class="fin-vazio">Nenhum benefício cadastrado. Ex.: vale-alimentação, plano de saúde, cesta básica, seguro de vida.</div>');
+    if (!S.benef.length) {
+      S.beneficioSelecionado = null;
+      $("rhConteudo").innerHTML = '<section class="fin-bloco"><header class="rh-benef-cabecalho"><h3>Benefícios</h3><div class="rh-benef-acoes" id="rhBeneficioAcoes"></div></header><div class="fin-vazio">Nenhum benefício cadastrado. Ex.: vale-alimentação, plano de saúde, cesta básica, seguro de vida.</div></section>';
+      $("rhBeneficioAcoes").append(botaoNovoBeneficio);
+      syncTopo();
+      return;
+    }
+    const beneficios = S.benef.map((b) => {
+      const pessoas = ativos.map((p) => ({ p, r: beneficioPara(b, p) })).filter((x) => x.r.aplica);
+      return { b, pessoas, integrantes: pessoas.filter((x) => x.r.tem), demais: pessoas.filter((x) => !x.r.tem) };
+    });
+    const selecionado = beneficios.find(({ b }) => b.id === S.beneficioSelecionado) || beneficios.find(({ b }) => b.ativo) || beneficios[0];
+    S.beneficioSelecionado = selecionado.b.id;
+    const { b, integrantes, demais } = selecionado;
+    const tabela = (lista) => '<div class="fin-rolar"><table class="fin-tabela rh-beneficio-tabela"><thead><tr><th>Funcionário</th><th>Contrato</th><th>Situação</th>' + (S.podeEditar && b.adesao === "quem_aderir" ? '<th class="num">Adesão</th>' : '') + '</tr></thead><tbody>' + lista.map(({ p, r }) =>
+      '<tr><td><button type="button" class="rh-beneficio-pessoa" data-pessoa="' + esc(p.id) + '">' + fotoHtml(p) + '<span><strong>' + esc(p.nome) + '</strong><small>' + esc(p.setor || '') + '</small></span></button></td><td>' + esc(CONTRATOS[contrato(p)]) + '</td><td><span class="rh-selo ' + (r.nivel || '') + '">' + esc(r.texto) + '</span></td>' +
+      (S.podeEditar && b.adesao === "quem_aderir" ? '<td class="num"><button class="fin-btn peq ' + (r.aderiu ? 'claro' : '') + '" data-adesao="' + esc(b.id) + '" data-pessoa-adesao="' + esc(p.id) + '">' + (r.aderiu ? 'Tirar adesão' : 'Marcar adesão') + '</button></td>' : '') + '</tr>').join('') + '</tbody></table></div>';
+    $("rhConteudo").innerHTML = '<div class="rh-benef-layout"><section class="fin-bloco rh-benef-lista" aria-labelledby="rhBeneficiosTitulo"><h3 id="rhBeneficiosTitulo">Benefícios</h3><div class="rh-benef-opcoes">' +
+      beneficios.map(({ b: item, integrantes: membros }) => '<button type="button" class="rh-benef-opcao' + (item.id === b.id ? ' selecionado' : '') + '" data-beneficio-selecionar="' + esc(item.id) + '" aria-pressed="' + (item.id === b.id) + '" aria-controls="rhBeneficioIntegrantes"><strong>' + esc(item.nome) + '</strong><small>' + esc(resumoBeneficio(item)) + '</small><span class="rh-pessoa-selos"><span class="rh-selo' + (item.ativo ? ' verde' : '') + '">' + (item.ativo ? membros.length + ' integrante(s)' : 'Inativo') + '</span></span></button>').join('') +
+      '</div></section><section class="fin-bloco rh-benef-integrantes" id="rhBeneficioIntegrantes" aria-labelledby="rhBeneficioTitulo"><header class="rh-benef-cabecalho"><h3 id="rhBeneficioTitulo">Integrantes <span class="rh-conta">' + integrantes.length + '</span></h3><div class="rh-benef-acoes" id="rhBeneficioAcoes">' + (S.podeEditar ? '<button class="fin-btn peq claro" data-editar-beneficio="' + esc(b.id) + '">Editar benefício</button>' : '') + '</div></header><p class="rh-benef-nome">' + esc(b.nome) + '</p>' +
+      (b.descricao ? '<p class="fin-info">' + esc(b.descricao) + '</p>' : '') +
+      (integrantes.length ? tabela(integrantes) : '<div class="fin-vazio">' + (b.ativo ? 'Nenhum integrante com este benefício no momento.' : 'Este benefício está inativo.') + '</div>') +
+      (demais.length ? '<h4 class="rh-benef-outros">Elegíveis e em carência <span class="rh-conta">' + demais.length + '</span></h4>' + tabela(demais) : '') + '</section></div>';
+    $("rhBeneficioAcoes").append(botaoNovoBeneficio);
+    syncTopo();
   }
   function beneficioModal(item) {
     const b = item || { ativo: true, tipos_contrato: ["clt"], adesao: "todos", cobranca: "empresa", meses_carencia: 0 };
@@ -790,16 +836,14 @@
     ativos.forEach((p) => { const fe = feriasStatus(p); fe?.pendentes.forEach((x) => precisa.push({ p, x })); });
     precisa.sort((a, b) => a.x.limite.localeCompare(b.x.limite));
     const hj = hoje(), proximas = S.ferias.filter((f) => f.status !== "cancelada" && f.fim >= hj).sort((a, b) => a.inicio.localeCompare(b.inicio));
-    const agora = proximas.filter((f) => f.inicio <= hj).length, venc = precisa.filter((y) => y.x.vencida).length;
-    const semAdm = ativos.filter((p) => ["clt", "aprendiz"].includes(contrato(p)) && !p.data_admissao).length;
     $("rhConteudo").innerHTML =
-      '<section class="fin-cards rh-cards-linha">' + card("Em férias agora", agora, "pessoas") + card("Programadas", proximas.length - agora, "próximas saídas") + card("A tirar", precisa.length, "períodos com saldo") + card("Vencidas", venc, "passaram do prazo", venc ? "is-vermelho" : "") + "</section>" +
-      (semAdm ? '<p class="fin-aviso">' + semAdm + " pessoa(s) CLT sem data de admissão: as férias delas não são calculadas. Complete em Editar dados.</p>" : "") +
       '<div class="rh-2col">' +
-      '<section class="fin-bloco"><h3>Quem precisa tirar</h3>' + (precisa.length ? '<div class="fin-rolar"><table class="fin-tabela rh-tab-ferias"><thead><tr><th>Pessoa</th><th>Período aquisitivo</th><th class="num">Saldo</th><th>Tirar até</th><th></th></tr></thead><tbody>' +
+      '<section class="fin-bloco"><header class="rh-ferias-cabecalho"><h3>Quem precisa tirar</h3><div id="rhFeriasAcoes"></div></header>' + (precisa.length ? '<div class="fin-rolar"><table class="fin-tabela rh-tab-ferias"><thead><tr><th>Pessoa</th><th>Período aquisitivo</th><th class="num">Saldo</th><th>Tirar até</th><th></th></tr></thead><tbody>' +
         precisa.map(({ p, x }) => '<tr><td><button type="button" class="rh-arquivo" data-pessoa="' + p.id + '" data-ir-aba="ferias">' + esc(p.nome) + "</button><br><small>" + esc(p.setor || "") + "</small></td><td>" + dataBr(x.inicio) + "<br><small>a " + dataBr(x.fimAq) + '</small></td><td class="num"><b>' + x.saldo + " dias</b></td><td>" + dataBr(x.limite) + (x.vencida ? '<br><span class="rh-selo verm">Vencida</span>' : dias(hj, x.limite) <= 60 ? '<br><span class="rh-selo amar">Faltam ' + dias(hj, x.limite) + " dias</span>" : "") + '</td><td class="num">' + (S.podeEditar ? '<button class="fin-btn peq" data-acao="programar-ferias" data-pessoa-ferias="' + p.id + '" data-periodo="' + x.inicio + '">Programar</button>' : "") + "</td></tr>").join("") +
         "</tbody></table></div>" : '<div class="fin-vazio">Ninguém com férias a tirar.</div>') + "</section>" +
       '<section class="fin-bloco"><h3>Programadas e em andamento <span class="rh-conta">' + proximas.length + "</span></h3>" + listaFeriasCompacta(proximas) + "</section></div>";
+    $("rhFeriasAcoes").append(botaoFeriasColetivas);
+    syncTopo();
   }
   function feriasModal(pId, periodo) {
     modal("Programar férias",
@@ -869,49 +913,69 @@
     if (acao === "cancelar" && !(await confirmar("Cancelar as férias de " + (pessoa(f.funcionario_id)?.nome || "") + " (" + dataBr(f.inicio) + ")?", "Cancelar férias"))) return;
     try {
       await gravar(S.sb.from("rh_ferias").update(acao === "aprovar" ? { status: "aprovada", aprovado_em: new Date().toISOString(), aprovado_por: window.__CONTEXT?.usuario_id || null } : { status: "cancelada" }).eq("id", id).eq("empresa_id", S.emp));
-      await recarregar();
+      await recarregar(); notificarDisponibilidade();
     } catch (e) { avisar(e.message, "Férias", "erro"); }
   }
 
   // ---------------------------------------------------------------- admissão e desligamento
+  const checksSalvando = new Set();
   function pintarMovimentacoes() {
-    const abertos = S.checks.filter((c) => !c.concluido_em), feitos = S.checks.filter((c) => c.concluido_em).slice(0, 12);
+    const abertos = S.checks.filter((c) => !c.concluido_em), feitos = S.checks.filter((c) => c.concluido_em).sort((a,b)=>String(b.concluido_em).localeCompare(String(a.concluido_em))).slice(0, 12);
     const recentes = S.pessoas.filter((p) => situacao(p) !== "desligado" && p.data_admissao && dias(p.data_admissao, hoje()) <= 120 && dias(p.data_admissao, hoje()) >= -60 && !S.checks.some((c) => c.funcionario_id === p.id && c.tipo === "admissao"));
-    const ed = S.podeEditar;
-    const abAdm = abertos.filter((c) => c.tipo === "admissao"), abDes = abertos.filter((c) => c.tipo !== "admissao");
-    // Nov/2026: duas colunas, admissões à esquerda e desligamentos à direita; concluídos embaixo.
-    $("rhConteudo").innerHTML =
-      '<div class="rh-2col">' +
-      '<section class="rh-col"><h3 class="rh-col-titulo">Admissões <span class="rh-conta">' + (abAdm.length + recentes.length) + "</span></h3>" +
-      (recentes.length ? '<section class="fin-bloco"><h3>Sem checklist</h3><table class="fin-tabela"><tbody>' + recentes.map((p) => '<tr><td><button type="button" class="rh-arquivo" data-pessoa="' + p.id + '">' + esc(p.nome) + "</button><br><small>" + esc([p.cargo, p.setor].filter(Boolean).join(" · ")) + "</small></td><td>Admissão " + dataBr(p.data_admissao) + '</td><td class="num">' + (ed ? '<button class="fin-btn peq" data-iniciar-check="' + p.id + '">Iniciar checklist</button>' : "") + "</td></tr>").join("") + "</tbody></table></section>" : "") +
-      (abAdm.length ? '<div class="rh-col-lista">' + abAdm.map(checklistHtml).join("") + "</div>" : (recentes.length ? "" : '<div class="fin-vazio">Nenhuma admissão em andamento.</div>')) +
-      "</section>" +
-      '<section class="rh-col"><h3 class="rh-col-titulo">Desligamentos <span class="rh-conta">' + abDes.length + "</span></h3>" +
-      (abDes.length ? '<div class="rh-col-lista">' + abDes.map(checklistHtml).join("") + "</div>" : '<div class="fin-vazio">Nenhum desligamento em andamento.</div>') +
-      "</section></div>" +
-      (feitos.length ? '<h4 class="rh-grupo-titulo">Concluídos recentemente</h4><section class="fin-bloco"><table class="fin-tabela"><tbody>' + feitos.map((c) => { const p = pessoa(c.funcionario_id); return "<tr><td><b>" + esc(p?.nome || "-") + "</b></td><td>" + (c.tipo === "admissao" ? "Admissão" : "Desligamento") + "</td><td>Concluído em " + dataBr(c.concluido_em) + "</td></tr>"; }).join("") + "</tbody></table></section>" : "");
+    const entrada = c => ({chave:'check:'+c.id,c,p:pessoa(c.funcionario_id),tipo:c.tipo});
+    const andamento = [...abertos.map(entrada),...recentes.map(p=>({chave:'novo:'+p.id,p,tipo:'admissao'}))], concluidos=feitos.map(entrada), todos=[...andamento,...concluidos];
+    if(S.movimentacaoSelecionada?.startsWith('novo:')&&!todos.some(x=>x.chave===S.movimentacaoSelecionada)) {
+      const id=S.movimentacaoSelecionada.slice(5), iniciado=todos.find(x=>x.p?.id===id&&x.tipo==='admissao');
+      if(iniciado)S.movimentacaoSelecionada=iniciado.chave;
+    }
+    if(!todos.some(x=>x.chave===S.movimentacaoSelecionada))S.movimentacaoSelecionada=todos[0]?.chave||null;
+    const selecionada=todos.find(x=>x.chave===S.movimentacaoSelecionada);
+    const lista = entradas => entradas.map(x=>{
+      const it=x.c?.itens||[], prontos=it.filter(i=>i.feito).length, adm=x.tipo==='admissao';
+      return '<button type="button" class="rh-mov-pessoa '+(adm?'admissao':'desligamento')+'" data-movimentacao="'+esc(x.chave)+'" aria-pressed="'+(x.chave===S.movimentacaoSelecionada)+'" aria-controls="rhMovChecklist">'+(x.p?fotoHtml(x.p):'')+'<span class="rh-mov-pessoa-info"><strong>'+esc(x.p?.nome||'Funcionário não encontrado')+'</strong><small>'+esc([x.p?.cargo,x.p?.setor].filter(Boolean).join(' · '))+'</small><span class="rh-mov-pessoa-status"><span class="rh-selo '+(adm?'verde':'verm')+'">'+(adm?'Admissão':'Desligamento')+'</span><small>'+(x.c?.concluido_em?'Concluído em '+dataBr(x.c.concluido_em):x.c?prontos+' de '+it.length+' concluídos':'Sem checklist')+'</small></span></span></button>';
+    }).join('');
+    let detalhe='<p class="fin-vazio">Nenhuma admissão ou desligamento para acompanhar.</p>';
+    if(selecionada?.c)detalhe=checklistHtml(selecionada.c);
+    else if(selecionada) detalhe='<div class="rh-mov-check-topo">'+fotoHtml(selecionada.p)+'<div><span class="rh-selo verde">Admissão</span><h3>'+esc(selecionada.p.nome)+'</h3><p>'+esc([selecionada.p.cargo,selecionada.p.setor].filter(Boolean).join(' · '))+'</p></div></div><p class="fin-info">Admissão em '+dataBr(selecionada.p.data_admissao)+'. O checklist ainda não foi iniciado.</p>'+(S.podeEditar?'<button type="button" class="fin-btn verde" data-iniciar-check="'+esc(selecionada.p.id)+'">Iniciar checklist</button>':'');
+    $("rhConteudo").innerHTML='<div class="rh-movimentacoes"><section class="fin-bloco rh-mov-lista" aria-labelledby="rhMovPessoasTitulo"><header class="rh-mov-cabecalho"><h3 id="rhMovPessoasTitulo">Concluídos</h3><div class="rh-mov-acoes" id="rhMovAcoes"></div></header><nav aria-label="Admissões e desligamentos">'+(andamento.length?'<h4 class="rh-mov-grupo">Em andamento <span>'+andamento.length+'</span></h4>'+lista(andamento):'<p class="fin-vazio">Nenhuma movimentação em andamento.</p>')+(concluidos.length?'<h4 class="rh-mov-grupo">Concluídos recentemente</h4>'+lista(concluidos):'')+'</nav></section><section class="fin-bloco rh-mov-checklist" id="rhMovChecklist" aria-label="Checklist da pessoa selecionada">'+detalhe+'</section></div>';
+    botoesMovimentacoes.forEach(b=>{b.hidden=!S.podeEditar;$("rhMovAcoes").append(b);});
+    syncTopo();
   }
   function checklistHtml(c) {
     const p = pessoa(c.funcionario_id), it = c.itens || [], feitos = it.filter((x) => x.feito).length;
-    return '<article class="fin-conta"><h4>' + (c.tipo === "admissao" ? '<span class="rh-selo verde">Admissão</span> ' : '<span class="rh-selo verm">Desligamento</span> ') + esc(p?.nome || "-") + "</h4>" +
-      '<div class="linha">' + esc([p?.cargo, p?.setor].filter(Boolean).join(" · ")) + (c.tipo === "admissao" && p?.data_admissao ? " · admissão " + dataBr(p.data_admissao) : "") + (c.tipo === "desligamento" && ficha(p).desligamento_data ? " · desligado em " + dataBr(ficha(p).desligamento_data) : "") + "</div>" +
-      '<div class="rh-barra"><i style="width:' + (it.length ? Math.round((feitos / it.length) * 100) : 0) + '%"></i></div><div class="linha">' + feitos + " de " + it.length + "</div>" +
-      '<ul class="rh-check">' + it.map((x, i) => '<li class="' + (x.feito ? "feito" : "") + '"><input type="checkbox" data-check="' + c.id + '" data-i="' + i + '"' + (x.feito ? " checked" : "") + (S.podeEditar ? "" : " disabled") + "><span>" + esc(x.texto) + "</span></li>").join("") + "</ul>" +
-      (S.podeEditar ? '<div style="display:flex;gap:6px;flex-wrap:wrap"><button class="fin-btn peq ' + (feitos === it.length ? "verde" : "claro") + '" data-concluir-check="' + c.id + '">Concluir</button><button class="fin-btn peq claro" data-pessoa="' + c.funcionario_id + '">Abrir ficha</button></div>' : "") + "</article>";
+    return '<article><div class="rh-mov-check-topo">'+(p?fotoHtml(p):'')+'<div>'+(c.tipo === 'admissao'?'<span class="rh-selo verde">Admissão</span>':'<span class="rh-selo verm">Desligamento</span>')+'<h3>'+esc(p?.nome||'Funcionário não encontrado')+'</h3><p>'+esc([p?.cargo,p?.setor].filter(Boolean).join(' · '))+'</p></div></div>'+
+      '<p class="rh-mov-data">'+(c.concluido_em?'Concluído em '+dataBr(c.concluido_em):c.tipo==='admissao'&&p?.data_admissao?'Admissão em '+dataBr(p.data_admissao):c.tipo==='desligamento'&&ficha(p).desligamento_data?'Desligamento em '+dataBr(ficha(p).desligamento_data):'Checklist em andamento')+'</p>'+
+      '<div class="rh-mov-progresso"><span>'+feitos+' de '+it.length+' itens concluídos</span><strong>'+(it.length?Math.round(feitos/it.length*100):0)+'%</strong></div><div class="rh-barra"><i style="width:'+(it.length?Math.round(feitos/it.length*100):0)+'%"></i></div>'+
+      '<ul class="rh-check">'+it.map((x,i)=>'<li class="'+(x.feito?'feito':'')+'"><label><input type="checkbox" data-check="'+esc(c.id)+'" data-i="'+i+'"'+(x.feito?' checked':'')+(!S.podeEditar||c.concluido_em||checksSalvando.has(c.id)?' disabled':'')+'><span>'+esc(x.texto)+'</span></label></li>').join('')+'</ul>'+
+      (!it.length?'<p class="fin-vazio">Este checklist não tem itens.</p>':'')+'<div class="rh-mov-check-acoes">'+(S.podeEditar&&!c.concluido_em?'<button type="button" class="fin-btn peq '+(feitos===it.length?'verde':'claro')+'" data-concluir-check="'+esc(c.id)+'"'+(checksSalvando.has(c.id)?' disabled':'')+'>Concluir checklist</button>':'')+(p?'<button type="button" class="fin-btn peq claro" data-pessoa="'+esc(p.id)+'">Abrir ficha</button>':'')+'</div></article>';
   }
   async function marcarItem(id, i, marcado) {
-    const c = S.checks.find((x) => x.id === id); if (!c) return;
+    const c = S.checks.find((x) => x.id === id); if (!c || !S.podeEditar || c.concluido_em || checksSalvando.has(id) || !c.itens?.[i]) return;
+    const foco=document.activeElement, restaurar=foco?.dataset?.check===id&&Number(foco.dataset.i)===i;
+    checksSalvando.add(id);
+    document.querySelectorAll('[data-check],[data-concluir-check]').forEach(el=>{if(el.dataset.check===id||el.dataset.concluirCheck===id)el.disabled=true;});
     const itens = (c.itens || []).map((x, k) => (k === i ? { ...x, feito: marcado, em: marcado ? new Date().toISOString() : null } : x));
-    try { await gravar(S.sb.from("rh_checklists").update({ itens }).eq("id", id).eq("empresa_id", S.emp)); c.itens = itens; pintarMovimentacoes(); }
-    catch (e) { avisar(e.message, "Checklist", "erro"); pintarMovimentacoes(); }
+    try { await gravar(S.sb.from("rh_checklists").update({ itens }).eq("id", id).eq("empresa_id", S.emp)); c.itens = itens; }
+    catch (e) { avisar(e.message, "Checklist", "erro"); }
+    finally {
+      checksSalvando.delete(id);
+      if(S.aba==='movimentacoes'&&!S.ficha){
+        const focar=restaurar&&S.movimentacaoSelecionada==='check:'+id&&(document.activeElement===document.body||document.activeElement===foco);
+        pintarMovimentacoes();
+        if(focar)[...document.querySelectorAll('[data-check]')].find(el=>el.dataset.check===id&&Number(el.dataset.i)===i)?.focus({preventScroll:true});
+      }
+    }
   }
   async function concluirCheck(id) {
-    const c = S.checks.find((x) => x.id === id), falta = (c.itens || []).filter((x) => !x.feito).length;
+    const c = S.checks.find((x) => x.id === id); if(!c||!S.podeEditar||c.concluido_em||checksSalvando.has(id))return;
+    const falta = (c.itens || []).filter((x) => !x.feito).length;
     if (falta && !(await confirmar("Ainda falta" + (falta > 1 ? "m " + falta + " itens" : " 1 item") + ". Concluir mesmo assim?", "Concluir checklist"))) return;
     try { await gravar(S.sb.from("rh_checklists").update({ concluido_em: new Date().toISOString() }).eq("id", id).eq("empresa_id", S.emp)); await recarregar(); }
     catch (e) { avisar(e.message, "Checklist", "erro"); }
   }
   async function iniciarCheck(pId) {
+    if(!S.podeEditar)return;
+    S.movimentacaoSelecionada='novo:'+pId;
     try { await gravar(S.sb.from("rh_checklists").insert({ empresa_id: S.emp, funcionario_id: pId, tipo: "admissao", itens: opcoesDe("check_admissao", CHECK_ADMISSAO).map((t) => ({ texto: t, feito: false })) })); await recarregar(); }
     catch (e) { avisar(e.message, "Checklist", "erro"); }
   }
@@ -937,10 +1001,40 @@
     $("rhModalRodape").addEventListener("click", (e) => { const b = e.target.closest("[data-bt]"); if (b) botoes[Number(b.dataset.bt)]?.acao(); });
     $("rhModal").addEventListener("click", (e) => { if (e.target.closest("[data-fechar]")) fechar(); });
     $("rhConteudo").addEventListener("change", (e) => { const cx = e.target.closest("[data-check]"); if (cx) marcarItem(cx.dataset.check, Number(cx.dataset.i), cx.checked); });
+    $("rhConteudo").addEventListener("keydown", (e) => {
+      const aba = e.target.closest("[data-vencimento-aba],[data-exames-aba]");
+      if (!aba || !["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) return;
+      e.preventDefault();
+      const abas = [...aba.parentElement.querySelectorAll('[role="tab"]')], i = abas.indexOf(aba);
+      const alvo = abas[e.key === "Home" ? 0 : e.key === "End" ? abas.length - 1 : (i + (e.key === "ArrowRight" ? 1 : -1) + abas.length) % abas.length];
+      alvo.click(); alvo.focus();
+    });
     $("rhConteudo").addEventListener("click", (e) => {
       const b = e.target.closest("button,[data-pessoa]"); if (!b || b.matches("[data-check]")) return;
       const d = b.dataset, p = S.ficha ? pessoa(S.ficha) : null;
+      if(d.movimentacao){
+        S.movimentacaoSelecionada=d.movimentacao;pintarMovimentacoes();
+        [...document.querySelectorAll('[data-movimentacao]')].find(el=>el.dataset.movimentacao===S.movimentacaoSelecionada)?.focus({preventScroll:true});
+        return;
+      }
+      if (d.vencimentoAba || d.examesAba) {
+        const atributo = d.vencimentoAba ? 'vencimentoAba' : 'examesAba', estado = d.vencimentoAba ? 'vencimentosAba' : 'examesAba';
+        S[estado] = d[atributo];
+        b.closest('[role="tablist"]').querySelectorAll('[role="tab"]').forEach((aba) => {
+          const ativa = aba.dataset[atributo] === S[estado];
+          aba.classList.toggle("ativa", ativa); aba.setAttribute("aria-selected", String(ativa)); aba.tabIndex = ativa ? 0 : -1;
+          $(aba.getAttribute("aria-controls")).hidden = !ativa;
+        });
+        syncTopo();
+        return;
+      }
       if (d.arquivo) return abrirArquivo(d.arquivo);
+      if (d.beneficioSelecionar) {
+        S.beneficioSelecionado = d.beneficioSelecionar;
+        pintarBeneficios();
+        [...document.querySelectorAll("[data-beneficio-selecionar]")].find((el) => el.dataset.beneficioSelecionar === S.beneficioSelecionado)?.focus({ preventScroll: true });
+        return;
+      }
       if (d.subaba) { S.fichaAba = d.subaba; return pintarFicha(); }
       if (d.pessoa && !d.acao) return abrirFicha(d.pessoa, d.irAba);
       if (d.apagar) return apagar(d.apagar, d.id);
@@ -982,6 +1076,8 @@
     S.podeEditar = !!window.EasyLocPermissions?.hasPermission?.("rh.colaboradores.editar", false);
     // Aba de outra tela só aparece para quem pode abrir aquela tela (a própria tela confere de novo).
     document.querySelectorAll("#rhAbas [data-embutida]").forEach((b) => {
+      // A Sofia usa as permissões de RH de cada pessoa nas consultas do servidor.
+      if (b.dataset.aba === "sofia") return;
       try { if (window.EasyLocPermissions?.canNavigate && !window.EasyLocPermissions.canNavigate(b.dataset.embutida)) b.hidden = true; } catch (_) {}
     });
     const q = new URLSearchParams(location.search);

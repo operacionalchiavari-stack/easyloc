@@ -87,7 +87,7 @@ const RENDERS = [
     await frame().evaluate(() => window.abrirPedidoComercialPedido());
     const d = cat.locator('.cpj-aba-pedido'); await d.waitFor({ timeout: 10000 });
     const r = await d.evaluate((el) => ({ sol: el.querySelector('.cpj-order-requester strong')?.textContent,
-      foto: el.querySelector('.cpj-order-requester img')?.getAttribute('src'), info: el.querySelector('.cpj-order-event-info')?.innerText,
+      foto: el.querySelector('.cpj-order-requester img')?.getAttribute('src'), info: el.querySelector('.cpj-order-event-info')?.innerText.replace(/\s+/g,' '),
       amb: [...el.querySelectorAll('.cpj-order-environment th')].map((t) => t.textContent), botoes: [...el.querySelectorAll('.cpj-aba-pedido-acoes button')].map((b) => b.textContent) }));
     assert.equal(r.sol, 'Lis Baêtas'); assert.equal(r.foto, 'https://fixture/lis.png');
     assert.ok(r.info.includes('11/11/2026 a 13/11/2026') && r.info.includes('Vale dos Desejos'), r.info);
@@ -111,6 +111,18 @@ const RENDERS = [
     await d.locator('[data-pedido-pdf]').click();
     await frame().waitForFunction(() => [...document.querySelectorAll('iframe')].some((f) => f.title === 'Impressão do documento' && f.contentDocument?.querySelector('.cpj-order-paper')), null, { timeout: 10000 });
     console.log('ok 3 - Gerar PDF monta o documento de impressão');
+    // O atalho da Helena reutiliza o documento comercial, com financeiro e parcelas atuais.
+    const papelEsperado=await d.locator('.cpj-order-paper').innerHTML();
+    await frame().evaluate(()=>document.getElementById('catalogAssistenteBotao').click());
+    const documento=cat.locator('[data-cas-documento]');await documento.waitFor();assert.ok(await documento.isEnabled());
+    await documento.click();const previa=cat.locator('dialog.cpj-order-preview[open]');await previa.waitFor();
+    assert.ok(await previa.evaluate(el=>el.matches(':modal')),'documento abre sobre a conversa');
+    assert.match(await previa.locator('.cpj-order-kind').innerText(),/2178/);assert.match(await previa.locator('.cpj-order-requester').innerText(),/Lis Baêtas/);
+    assert.match(await previa.locator('.cpj-order-financeiro').innerText(),/1\.000,00/);assert.match(await previa.locator('.cpj-order-pagamentos').innerText(),/PIX/);
+    assert.equal(await previa.locator('.cpj-order-paper').innerHTML(),papelEsperado,'mesmo documento mostrado na aba Pedido da web');
+    assert.ok(await frame().evaluate(()=>document.body.classList.contains('assistente-aberta')),'a conversa permanece aberta');
+    await previa.locator('[data-pedido-fechar]').click();assert.ok(await cat.locator('[data-cas-input]').isVisible());
+    console.log('ok - Helena abre o pedido com número, cliente, financeiro e parcelas, sem sair da conversa');
     assert.deepEqual(errors, [], errors.join('\n'));
     await context.close();
   }

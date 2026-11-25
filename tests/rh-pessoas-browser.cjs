@@ -11,7 +11,7 @@ const mock = `(() => {
     rh_documentos: [{ id: "d1", empresa_id: "e1", funcionario_id: "p1", categoria: "cnh", nome: "CNH", emissao: "2020-01-01", validade: "2025-01-01" }],
     rh_exames: [], rh_exames_cadastro: [{ id: "c1", empresa_id: "e1", nome: "ASO periódico", tipo: "periodico", validade_meses: 12, setores_obrigatorios: [], ativo: true }],
     rh_treinamentos: [{ id: "t1", empresa_id: "e1", nome: "NR-35 Trabalho em altura", categoria: "nr", validade_meses: 24, setores_obrigatorios: ["Montagem"], ativo: true }],
-    rh_turmas: [], rh_beneficios: [{ id: "b1", empresa_id: "e1", nome: "Plano de saúde", meses_carencia: 3, tipos_contrato: ["clt"], adesao: "quem_aderir", cobranca: "dividido", ativo: true }],
+    rh_turmas: [], rh_beneficios: [{ id: "b1", empresa_id: "e1", nome: "Plano de saúde", meses_carencia: 3, tipos_contrato: ["clt"], adesao: "quem_aderir", cobranca: "dividido", ativo: true }, { id: "b2", empresa_id: "e1", nome: "Vale-alimentação", meses_carencia: 0, tipos_contrato: ["clt"], adesao: "todos", cobranca: "empresa", ativo: true }],
     rh_beneficio_adesoes: [], rh_ferias: [], rh_checklists: [],
     // nov/2026: o Controle RH saiu da planilha (era /api/gs) para esta tabela
     controle_rh_ocorrencias: [{ id: "o1", empresa_id: "e1", funcionario_id: "p1", funcionario_nome: "Ana Souza", tipo: "Falta", data_ocorrencia: "2026-10-10", observacao: "Sem aviso", responsavel: "Lia", registrado_em: "2026-10-10T12:00:00Z" }, { id: "o2", empresa_id: "e1", funcionario_id: null, funcionario_nome: "Bruno Lima", tipo: "Atraso", data_ocorrencia: "2026-10-11", registrado_em: "2026-10-11T12:00:00Z" }]
@@ -70,6 +70,7 @@ const mock = `(() => {
   await page.addInitScript(() => { sessionStorage.setItem("login_ok", "1"); sessionStorage.setItem("empresa_id", "e1"); });
   await page.route("**/*", (r) => {
     const u = r.request().url();
+    if (u.includes("/sem-foto/e1/p1.jpg")) return r.fulfill({ contentType: "image/svg+xml", body: '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="48" height="48" fill="#ddd0e9"/><circle cx="24" cy="18" r="9" fill="#805090"/><path d="M8 48v-9a16 16 0 0 1 32 0v9" fill="#805090"/></svg>' });
     if (u.includes("operacao-sem-motor.js")) {
       const pes = (i) => ({ idInscricao: "i" + i, idFree: "f" + i, nome: "Free " + i, cpf: "•", telefone: "", pix: "", nota: 4, checkinEm: "", checkoutEm: "", via: "qr", distancia: 40, presencaPor: "", fotoUniforme: "", uniforme: null, pagamento: null,
         calc: { fase: "CONCLUIDO", minutos: 600, horas: "10h", atrasoMin: 0, diaria: 150, extraMin: 0, extraTexto: "", extraValor: 0, total: 150, situacao: "PAGAR", motivos: [] }, miniatura: "" });
@@ -139,32 +140,110 @@ const mock = `(() => {
   console.log("ok 5 - ocorrências lidas do Controle RH pelo nome");
 
   await page.click('[data-aba="vencimentos"]');
-  await page.waitForFunction(() => /Bruno Lima[\s\S]*NR-35/.test(document.getElementById("rhConteudo").textContent));
+  await page.waitForSelector('.rh-vencimento-abas');
+  assert.equal(await page.locator('.rh-vencimentos [role="tab"]').count(), 4);
+  assert.equal(await page.locator('.rh-vencimentos [role="tabpanel"]:visible').count(), 1);
+  assert.match(await page.textContent('#rh-vencimento-painel-vencidos'), /Ana Souza[\s\S]*CNH/);
+  assert.equal(await page.textContent('[data-vencimento-aba="vencidos"] .rh-vencimento-conta'), "1");
+  await page.waitForFunction(() => document.querySelector('#rh-vencimento-painel-vencidos .rh-foto img')?.naturalWidth > 0);
+  await page.click('[data-vencimento-aba="obrigatorios"]');
+  assert.ok(await page.locator('#rh-vencimento-painel-vencidos').isHidden());
+  assert.match(await page.textContent('#rh-vencimento-painel-obrigatorios'), /Bruno Lima[\s\S]*NR-35/);
+  await page.waitForFunction(() => [...document.querySelectorAll('#rh-vencimento-painel-obrigatorios [data-pessoa="p2"] .rh-foto')].every(f => !f.querySelector('img') && f.textContent === 'BL'));
+  for (const aba of ['ate30']) {
+    await page.click('[data-vencimento-aba="' + aba + '"]');
+    assert.equal(await page.locator('.rh-vencimentos [role="tabpanel"]:visible').count(), 1);
+    assert.match(await page.textContent('#rh-vencimento-painel-' + aba), /Nenhum item vence/);
+  }
+  await page.click('[data-vencimento-aba="mais30"]');
+  assert.match(await page.textContent('#rh-vencimento-painel-mais30'), /Ana Souza[\s\S]*ASO periódico/, 'inclui exame com validade de 12 meses, além dos antigos 90 dias');
+  assert.equal(await page.locator('[data-vencimento-aba="ate60"], [data-vencimento-aba="ate90"]').count(), 0);
+  await page.keyboard.press('Home');
+  assert.equal(await page.getAttribute('[data-vencimento-aba="vencidos"]', 'aria-selected'), 'true');
+  await page.keyboard.press('ArrowRight');
+  assert.equal(await page.getAttribute('[data-vencimento-aba="obrigatorios"]', 'aria-selected'), 'true');
+  assert.equal(await page.locator('.rh-exames-lateral [role="tab"]').count(), 4);
+  for (const aba of ['exames', 'treinamentos', 'turmas', 'realizados']) {
+    await page.click('[data-exames-aba="' + aba + '"]');
+    assert.equal(await page.locator('.rh-exames-lateral [role="tabpanel"]:visible').count(), 1);
+    assert.ok(await page.locator('#rh-exames-painel-' + aba).isVisible());
+    assert.equal(await page.getAttribute('[data-vencimento-aba="obrigatorios"]', 'aria-selected'), 'true', 'as abas de cada coluna são independentes');
+  }
+  assert.match(await page.textContent('#rh-exames-painel-realizados'), /Ana Souza[\s\S]*ASO periódico/);
+  await page.keyboard.press('Home');
+  assert.equal(await page.getAttribute('[data-exames-aba="exames"]', 'aria-selected'), 'true');
+  await page.click('[data-topo-acao="novo-cad-exame"]');
+  assert.match(await page.textContent('#rhModalTitulo'), /exame/i);
+  await page.click('#rhModal [data-fechar]');
+  await page.click('[data-exames-aba="treinamentos"]');
+  await page.click('[data-topo-acao="novo-cad-treino"]');
+  assert.match(await page.textContent('#rhModalTitulo'), /treinamento/i);
+  await page.click('#rhModal [data-fechar]');
+  await page.click('[data-exames-aba="realizados"]');
+  await page.locator('#rh-exames-painel-realizados [data-pessoa="p1"]').click();
+  await page.waitForSelector('#rhFichaCorpo [data-acao="novo-exame"]');
+  await page.click('[data-acao="voltar-lista"]');
+  assert.ok(await page.locator('#rh-exames-painel-realizados').isVisible(), 'mantém a aba do histórico ao voltar da ficha');
+  await page.click('[data-exames-aba="exames"]');
   assert.equal(await page.locator('#rhConteudo [data-acao="nova-turma"], #rhConteudo [data-acao="novo-exame"]').count(), 0, "sem a barra de botões");
-  assert.ok(await page.locator('#rhTopoExame').isVisible(), "+ Registrar exame na linha do título");
+  assert.ok(await page.locator('.rh-exames-topo #rhTopoExame').isVisible(), "+ Registrar exame junto às abas da coluna direita");
+  assert.ok(await page.locator('#rhFerramentas').isHidden(), 'sem faixa vazia acima das colunas');
+  assert.ok(await page.evaluate(() => {
+    const aba = document.querySelector('[data-exames-aba="exames"]').getBoundingClientRect();
+    return [...document.querySelectorAll('.rh-exames-acoes button:not([hidden]), .rh-exames-topo [role="tab"]')].every(b => {
+      const r = b.getBoundingClientRect(); return r.top < aba.bottom && r.bottom > aba.top;
+    });
+  }), 'ações e abas na mesma linha');
   await page.click('#rhTopoExame');
   await page.waitForFunction(() => document.getElementById("rhModal").open && /Registrar exame/.test(document.getElementById("rhModalTitulo").textContent));
   await page.click('#rhModal [data-fechar]');
-  if (process.env.SHOTV) { await page.waitForTimeout(600); await page.screenshot({ path: process.env.SHOTV, fullPage: true }); }
+  if (process.env.SHOTV) {
+    await page.screenshot({ path: process.env.SHOTV, fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.screenshot({ path: process.env.SHOTV.replace(/\.png$/, '-mobile.png'), fullPage: true });
+    assert.ok(await page.locator('.rh-vencimentos').evaluate(el => el.scrollWidth <= el.clientWidth + 1), 'painel cabe no celular');
+    await page.setViewportSize({ width: 1400, height: 900 });
+  }
   await page.click('[data-aba="beneficios"]');
   assert.ok(await page.locator('#rhTopoExame').isHidden(), "botão só em Exames e treinamentos");
   console.log("ok 6 - Exames e treinamentos: + Registrar exame na linha do título, sem Registrar treinamento realizado");
 
   await page.click('[data-aba="beneficios"]');
-  await page.waitForSelector("details summary");
-  assert.ok(await page.locator('[data-topo-acao="novo-beneficio"]').isVisible(), "+ Novo benefício na linha do título");
-  await page.click("details summary");
-  assert.match(await page.textContent("#rhConteudo"), /Começa em/);
+  await page.waitForSelector(".rh-benef-layout");
+  assert.ok(await page.locator('.rh-benef-acoes [data-topo-acao="novo-beneficio"]').isVisible(), "+ Novo benefício junto de Editar benefício");
+  assert.equal(await page.locator('.rh-benef-opcao').count(), 2);
+  assert.equal(await page.getAttribute('[data-beneficio-selecionar="b1"]', 'aria-pressed'), 'true');
+  const colunas = await page.locator('.rh-benef-layout>.fin-bloco').evaluateAll(els => els.map(el => { const r = el.getBoundingClientRect(); return { x:r.x, y:r.y, right:r.right }; }));
+  assert.ok(colunas[0].right < colunas[1].x && colunas[0].y === colunas[1].y, 'benefícios à esquerda e integrantes à direita');
+  assert.match(await page.textContent('#rhBeneficioIntegrantes'), /Nenhum integrante[\s\S]*Começa em/);
+  await page.click('[data-beneficio-selecionar="b2"]');
+  assert.equal(await page.textContent('.rh-benef-nome'), 'Vale-alimentação');
+  assert.equal(await page.locator('#rhBeneficioIntegrantes [data-adesao]').count(), 0, 'benefício automático não tem adesão manual');
+  assert.equal(await page.locator('#rhBeneficioIntegrantes .rh-beneficio-pessoa').count(), 3);
+  await page.click('[data-editar-beneficio="b2"]');
+  assert.equal(await page.inputValue('#rhModalCorpo [name="nome"]'), 'Vale-alimentação');
+  await page.click('#rhModal [data-fechar]');
+  await page.click('[data-beneficio-selecionar="b1"]');
   await page.locator('[data-adesao="b1"][data-pessoa-adesao="p1"]').click();
   await page.waitForFunction(() => window.__rpc.some((r) => r.n === "insert:rh_beneficio_adesoes"));
-  console.log("ok 7 - benefício com carência e adesão");
-  if (process.env.SHOTB) { await page.waitForTimeout(600); await page.screenshot({ path: process.env.SHOTB, fullPage: true }); }
+  await page.waitForFunction(() => document.querySelector('#rhBeneficioTitulo .rh-conta')?.textContent === '1');
+  assert.equal(await page.textContent('.rh-benef-nome'), 'Plano de saúde', 'mantém o benefício selecionado após alterar adesão');
+  assert.ok(await page.locator('[data-adesao="b1"][data-pessoa-adesao="p1"]').isVisible());
+  console.log("ok 7 - benefícios e integrantes em duas colunas, seleção, carência, edição e adesão");
+  if (process.env.SHOTB) {
+    await page.screenshot({ path: process.env.SHOTB, fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.ok(await page.locator('.rh-benef-layout').evaluate(el => el.scrollWidth <= el.clientWidth + 1), 'benefícios cabem no celular');
+    await page.screenshot({ path: process.env.SHOTB.replace(/\.png$/, '-mobile.png'), fullPage: true });
+    await page.setViewportSize({ width: 1400, height: 900 });
+  }
 
   await page.click('[data-aba="ferias"]');
   await page.waitForSelector('[data-topo-acao="coletiva"]:not([hidden])');
-  assert.ok(await page.locator('[data-topo-acao="programar-ferias"]').isVisible(), "+ Programar férias na linha do título");
+  assert.equal(await page.locator('[data-topo-acao="programar-ferias"]').count(), 0, 'sem o botão geral de programar férias');
+  assert.ok(await page.locator('.rh-ferias-cabecalho [data-topo-acao="coletiva"]').isVisible(), 'Férias coletivas junto de Quem precisa tirar');
   assert.equal(await page.locator('#rhConteudo [data-acao="coletiva"]').count(), 0);
-  { const alt = await page.$$eval('.rh-cards-linha .fin-card', (l) => l.map((x) => Math.round(x.getBoundingClientRect().height))); assert.ok(alt.length === 4 && alt.every((h) => h <= 50), "cards baixos: " + alt); }
+  assert.equal(await page.locator('#rhConteudo .rh-cards-linha').count(), 0, 'sem os indicadores no topo de Férias');
   assert.match(await page.textContent("#rhConteudo"), /Ana Souza[\s\S]*Vencida/, "Ana (3 anos) tem período vencido");
   await page.locator('[data-acao="programar-ferias"][data-pessoa-ferias="p1"]').first().click();
   await page.fill('#rhModalCorpo [name="dias"]', "40");
@@ -182,6 +261,7 @@ const mock = `(() => {
   if (process.env.SHOTF) { await page.waitForTimeout(800); await page.screenshot({ path: process.env.SHOTF, fullPage: true }); }
 
   await page.click('[data-aba="movimentacoes"]');
+  await page.click('[data-movimentacao="novo:p3"]');
   await page.waitForSelector('[data-iniciar-check="p3"]');
   await page.click('[data-iniciar-check="p3"]');
   await page.waitForSelector('[data-check]');
@@ -195,7 +275,7 @@ const mock = `(() => {
   assert.equal(await page.locator('#rhModalCorpo [name="motivo_lista"]').count(), 1, "motivo vem de Parâmetros");
   await modalOk("Registrar desligamento");
   await page.waitForFunction(() => window.__rpc.some((r) => r.n === "rh_status" && r.a.p_status === "desligado" && r.a.p_funcionario === "p2"));
-  await page.waitForFunction(() => /Desligamento/.test(document.getElementById("rhConteudo").textContent) && document.querySelectorAll(".fin-conta").length >= 2);
+  await page.waitForFunction(() => document.querySelector('.rh-mov-pessoa.desligamento') && document.querySelectorAll('[data-movimentacao]').length >= 2);
   console.log("ok 9 - checklist de admissão e desligamento");
   if (process.env.SHOTM) { await page.waitForTimeout(800); await page.screenshot({ path: process.env.SHOTM, fullPage: true }); }
 
@@ -217,18 +297,18 @@ const mock = `(() => {
   await page.click('[data-aba="controle"]');
   assert.match(await page.getAttribute('iframe.rh-embutida:not([hidden])', 'src'), /ControleRH\/rh\.html/);
   assert.equal((await page.textContent('[data-aba="controle"]')).trim(), "Ocorrências");
-  assert.ok(await page.locator('#rhOcorPainel').isVisible() && await page.locator('#rhOcorNova').isVisible() && await page.locator('#rhBuscaOcor').isVisible(), "Painel, + Nova ocorrência e pesquisa na linha do título");
+  { const q=page.frameLocator('iframe.rh-embutida:not([hidden])');await q.locator('#rhNovaOcorrencia').waitFor();assert.ok(await q.locator('#pesquisa').isVisible(), "pesquisa e registro no cabeçalho da tabela");assert.equal(await q.locator('[onclick="PainelRH.abrir()"]').count(),0); }
   assert.ok(await page.locator('#rhBuscaFunc').isHidden() && await page.locator('#rhNovoFunc').isHidden());
   if (process.env.SHOT3) { await page.waitForTimeout(2500); await page.screenshot({ path: process.env.SHOT3 }); }
   assert.equal(await page.locator('iframe.rh-embutida').count(), 2);
   await page.click('[data-aba="ideias"]');
   assert.match(await page.getAttribute('iframe.rh-embutida:not([hidden])', 'src'), /ideia-premiada.html/);
   await page.waitForFunction(() => { const d = document.querySelector('iframe.rh-embutida:not([hidden])')?.contentDocument; const h = d?.querySelector('.ideia-heading'); const t = d?.querySelector('.ideia-tabs'); return h && t && d.defaultView.getComputedStyle(h).display === 'none' && d.defaultView.getComputedStyle(t).display === 'none'; }, null, { timeout: 15000 });
-  assert.ok(await page.locator('#rhBuscaIdeia').isVisible() && await page.locator('#rhStatusIdeia').isHidden(), "pesquisa da Ideia Premiada na linha do título; o filtro de situação virou as abas da coluna (nov/2026)");
+  assert.equal(await page.locator('#rhBuscaIdeia').count(), 0, "sem pesquisa acima das ideias");
+  assert.ok(await page.locator('#rhFerramentas').isHidden(), "sem faixa vazia entre as abas e as ideias");
   await page.waitForFunction(() => { const d = document.querySelector('iframe.rh-embutida:not([hidden])').contentDocument; return d.defaultView.getComputedStyle(d.querySelector('.ideia-list-tools')).display === 'none'; });
   { const d = await page.evaluate(() => { const doc = document.querySelector('iframe.rh-embutida:not([hidden])').contentDocument; return [doc.documentElement.classList.contains('ideia-embutida'), doc.defaultView.getComputedStyle(doc.getElementById('painelEnviar')).display]; }); assert.deepStrictEqual(d, [true, 'none'], 'tela da equipe nunca aparece dentro da aba'); }
-  await page.click('#rhBuscaIdeia'); await page.fill('#rhBuscaIdeia', 'teste');
-  assert.equal(await page.evaluate(() => document.querySelector('iframe.rh-embutida:not([hidden])').contentDocument.getElementById('buscaIdeias').value), 'teste');
+  assert.ok(await page.evaluate(() => { const d = document.querySelector('iframe.rh-embutida:not([hidden])').contentDocument; const r = d.getElementById('ideiaPremiada').getBoundingClientRect(); return r.left < 2 && Math.abs(r.right - d.documentElement.clientWidth) < 2 && getComputedStyle(d.getElementById('ideiaPremiada')).paddingLeft === '0px'; }), "HTML interno ocupa a largura do iframe");
   if (process.env.SHOT5) { await page.waitForTimeout(1500); await page.screenshot({ path: process.env.SHOT5 }); }
   await page.click('[data-aba="ferias"]');
   assert.ok(await page.locator('#rhConteudo').isVisible() && (await page.locator('iframe.rh-embutida:not([hidden])').count()) === 0);

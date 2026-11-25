@@ -87,7 +87,7 @@
   }
 
   const SITUACAO = { pago: ["Pago", "ok"], vencido: ["Vencido", "venc"], parcial: ["Pago em parte", "parc"], aberto: ["Em aberto", "aberto"] };
-  const MODULO = "../Comercial/Catalogo/projeto-apresentacao.mjs?v=20261118-fixo";
+  const MODULO = "../Comercial/Catalogo/projeto-apresentacao.mjs?v=20261122-regras-formatadas";
   let docMod = null;
 
   function marca() {

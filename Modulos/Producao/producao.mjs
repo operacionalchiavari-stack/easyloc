@@ -36,10 +36,14 @@ function otimizar(v,w=1400){const u=url(v);if(!u||!u.includes('/storage/v1/objec
 const galerias=new Map();
 // Só uma foto: a do item personalizado (3D do ambiente no projeto do pedido); sem ela, a foto do item (pedido do usuário, 18/11).
 function imagensDoItem(t){
- const r=(t.renders||[]).find(x=>url(x.url));
- if(r)return [{src:url(r.url),rotulo:`Item personalizado · ${t.origem.ambiente||'projeto'}`,tipo:'projeto'}];
+ // 22/11/2026: primeiro a foto do item personalizado gravada no pedido (origem.personalizacao_foto). A renderização do
+ // ambiente pode mostrar outros móveis (ex.: mesa de bolo com a estante), então fica só como último recurso.
+ const p=url(t.origem?.personalizacao_foto);
+ if(p)return [{src:p,rotulo:`Item personalizado${t.origem?.personalizacao_nome?' · '+t.origem.personalizacao_nome:''}`,tipo:'projeto'}];
  const f=url(t.foto)||url((t.fotos||[]).find(x=>!/^(galeria|detalhe)/.test(x.slot||''))?.url);
- return f?[{src:f,rotulo:'Foto do item',tipo:'item'}]:[];
+ if(f)return [{src:f,rotulo:'Foto do item',tipo:'item'}];
+ const r=(t.renders||[]).find(x=>url(x.url));
+ return r?[{src:url(r.url),rotulo:`Ambiente · ${t.origem.ambiente||'projeto'}`,tipo:'projeto'}]:[];
 }
 function amostra(c){
  if(c?.foto_url&&url(c.foto_url))return `<img src="${esc(otimizar(c.foto_url,400))}" alt="" loading="lazy">`;
@@ -165,6 +169,9 @@ function pintar(){
  const resultado=renderizarFila(dados.itens,{executar:dados.executar,setor,situacao:$('#situacao').value,busca:$('#busca').value.trim()});
  $('#contagem').textContent=`${resultado.total} pedido(s)`;
  $('#ordens').innerHTML=resultado.html;
+ // 22/11/2026: foto do decorador no cartão, igual à Triagem e à Expedição (js/ui/decorador-cards.js)
+ const pedidosFila=[...new Map((dados.itens||[]).map(t=>[String(t.pedido_id),{id:t.pedido_id,cliente_nome:t.pedido?.cliente||'',cliente_id:t.pedido?.cliente_id||null}])).values()];
+ window.pintarFotosDecoradores?.({sb,empresa,pedidos:pedidosFila});
 }
 // 16/11/2026: o "← Voltar" fica antes da foto do cliente, na linha do pedido (cópia do link do topo, que some)
 let voltarTopo=null;

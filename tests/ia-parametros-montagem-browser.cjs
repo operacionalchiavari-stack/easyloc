@@ -10,7 +10,7 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
    const resumo={montagem:'Montagem nos lounges 1 e 2',acessos:'Portão lateral, sem escadas',desmontagem:'Retirar depois das 22h pela lateral',cuidados:'Tampo de vidro e parafusos guardados na caixa azul',ocorrencias:'Equipe não identificou danos',melhorias:'Levar carrinho menor para a passagem',pendencias:'Confirmar horário de liberação com o local',pendencias_obrigatorias:[]};
    window.supabaseClient={from:t=>{const q={select:()=>q,eq:()=>q,order:()=>q,then:fn=>fn({data:t==='ia_agentes'?[agente]:cfg})};return q;},storage:{from:()=>({createSignedUrl:async()=>({data:{signedUrl:'https://foto.test/foto.jpg'}})})},
     rpc:async(n,a)=>{chamadas.push({n,a});if(n==='ia_agente_salvar'){const r={agente:a.p_agente,comportamento:a.p_comportamento,coletar:a.p_coletar,indispensavel:a.p_indispensavel,limites:a.p_limites,atualizado_em:'2026-11-08T20:00:00Z'};cfg=[r];return {data:r};}
-     if(n==='mont_assistente_contexto')return {data:{empresa_id:'e1',usuario_id:'u1',nome:'João',etapa:a.p_etapa==='m1'?'montagem':'desmontagem',pedido:'14',local:'Vale dos Desejos',relatos:relato?[relato]:[]}};
+     if(n==='mont_assistente_contexto')return {data:{empresa_id:'e1',usuario_id:'u1',nome:'João',etapa:a.p_etapa.startsWith('m')?'montagem':'desmontagem',pedido:'14',local:'Vale dos Desejos',relatos:relato?[relato]:[]}};
      if(n==='mont_assistente_salvar'){relato={etapa_id:'m1',resumo:a.p_resumo,conversa:a.p_conversa,fotos:a.p_fotos,autor:'João',atualizado_em:'2026-11-08T20:10:00Z'};return {data:relato};}throw Error(n);},
     functions:{invoke:async()=>({data:{resposta:'Confira o relato para a próxima equipe.',pronto:true,resumo}})}};
    window.alerta=()=>{};
@@ -21,10 +21,21 @@ const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=r
   await page.screenshot({path:'.tmp/ia-parametros-'+width+'.png',fullPage:true});await page.locator('#parametros').evaluate(e=>e.remove());
   await page.addScriptTag({path:'js/ui/assistente-solicitacao.js'});await page.addScriptTag({path:'js/ui/montagem-assistente.js'});
   await page.evaluate(()=>MontagemAssistente.montar({id:'m1',operacao:'montagem'},'token-app'));
-  await page.locator('[data-chat-montagem]').click();await page.locator('textarea').fill('Acesso lateral, lounges montados, tampo de vidro exige cuidado.');await page.locator('.as-campo').evaluate(f=>f.requestSubmit());await page.locator('[data-as=aprovar]').waitFor();assert.equal(await page.evaluate(()=>relato),null);
-  await page.locator('[data-as=aprovar]').click();await page.waitForFunction(()=>!!relato);assert.equal(await page.evaluate(()=>relato.conversa.some(m=>m.papel==='pessoa')),true);await page.locator('[data-as=fechar]').click();
+  await page.locator('#etapaAssistenteIa textarea').fill('Tudo foi entregue em perfeitas condições, o decorador elogiou, sem dificuldades no acesso lateral.');await page.locator('.as-campo').evaluate(f=>f.requestSubmit());await page.locator('[data-as=aprovar]').waitFor();assert.equal(await page.evaluate(()=>relato),null);
+  await page.locator('[data-as=aprovar]').click();await page.waitForFunction(()=>!!relato);assert.equal(await page.evaluate(()=>relato.conversa.some(m=>m.papel==='pessoa')),true);
+  await page.evaluate(()=>{supabaseClient.functions.invoke=async()=>new Promise(resolve=>{window.responderEventoAnterior=()=>resolve({data:{resposta:'RESPOSTA DO EVENTO ANTERIOR',pronto:false}});});});
+  await page.evaluate(()=>MontagemAssistente.montar({id:'m2',operacao:'montagem'},'token-app'));
+  await page.locator('textarea').fill('Mensagem sobre o segundo evento');await page.locator('.as-campo').evaluate(f=>f.requestSubmit());
+  await page.waitForFunction(()=>typeof responderEventoAnterior==='function');
+  await page.locator('textarea').fill('Rascunho preservado');await page.locator('textarea').press('Enter');assert.equal(await page.locator('textarea').inputValue(),'Rascunho preservado');
+  await page.evaluate(()=>MontagemAssistente.montar({id:'m3',operacao:'montagem'},'token-app'));
+  await page.evaluate(async()=>{responderEventoAnterior();await new Promise(r=>setTimeout(r,50));});
+  assert.equal(await page.getByText('RESPOSTA DO EVENTO ANTERIOR',{exact:true}).count(),0,'resposta atrasada não entra em outro evento');
+  assert.ok(await page.locator('.as-enviar').isEnabled());
+  await page.evaluate(()=>MontagemAssistente.montar({id:'m2',operacao:'montagem'},'token-app'));
+  assert.ok(await page.getByText('Mensagem sobre o segundo evento',{exact:true}).isVisible(),'histórico da conversa é recuperado por evento');
   await page.evaluate(()=>MontagemAssistente.montar({id:'d1',operacao:'desmontagem'},'token-app'));
-  assert.match(await page.locator('#etapaAssistenteIa').innerText(),/caixa azul/);assert.equal(await page.locator('[data-chat-montagem]').count(),0);
+  assert.match(await page.locator('#etapaAssistenteIa').innerText(),/caixa azul/);assert.equal(await page.locator('[data-chat-montagem]').count(),0);assert.ok(await page.locator('textarea').isDisabled());
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert.deepEqual(erros,[]);await page.screenshot({path:'.tmp/ia-desmontagem-'+width+'.png',fullPage:true});await page.close();
  }
  console.log('OK - parâmetros, personalização, revisão do relato e consulta na desmontagem, desktop e celular.');

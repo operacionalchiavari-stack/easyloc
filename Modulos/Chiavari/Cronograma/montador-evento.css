@@ -260,3 +260,46 @@ html body .etapa-colunas .pessoa-nome small{font-size:12px!important;margin-top:
 html body .etapa-colunas .pessoa-responsavel{background:transparent!important}
 html body .etapa-colunas .evento-sem-transporte{font-size:13.5px;color:#6b655c}
 html body .etapa-colunas>*{width:100%;box-sizing:border-box}
+
+/* ===== 21/11/2026: aba Equipe mais compacta =====
+   Linha do Voltar com etapa · cliente · número do pedido (uma linha só); sem o bloco de título e data;
+   Equipe | Caminhões | Uber em abas, cada uma com o seu QR code fixo na tela. */
+.chiavari-equipe-app .evento-navegacao{margin:0 0 6px;min-height:40px;gap:8px;flex-wrap:nowrap}
+.chiavari-equipe-app #etapaEtiquetas{justify-content:flex-start;gap:6px;flex-wrap:nowrap;overflow:hidden}
+.chiavari-equipe-app #etapaEtiquetas .tipo{flex:none;font-size:10px;padding:5px 8px}
+.chiavari-equipe-app #etapaEtiquetas .nav-cliente{flex:1 1 auto;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:14px;font-weight:700;color:var(--ink,#251e19)}
+.chiavari-equipe-app #etapaEtiquetas .pedido{flex:none;max-width:none;padding:4px 9px;border-radius:999px;background:#fdeceb;border:1px solid #f3c9c6;color:#c4302b;font-size:12px;font-weight:700}
+#etapaResumo{display:none!important}
+.eq-abas{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin:0 0 10px;padding:4px;border-radius:14px;background:#efece6}
+.eq-abas button{min-height:38px;margin:0;padding:6px 8px;border:0;border-radius:10px;background:transparent;color:#6b625a;font:700 13px/1.2 inherit;cursor:pointer}
+.eq-abas button.ativa{background:#fff;color:var(--ink,#251e19);box-shadow:0 1px 3px #251e191f}
+#etapaColunas[data-eq] #eqAbas{grid-column:1/-1}
+#etapaColunas[data-eq="equipe"] :is(#etapaEquipe .evento-caminhoes,#etapaUber,#etapaFrete){display:none!important}
+#etapaColunas[data-eq="caminhoes"] :is(#etapaEquipe .evento-equipe,#etapaUber){display:none!important}
+#etapaColunas[data-eq="uber"] :is(#etapaEquipe,#etapaFrete){display:none!important}
+#etapaColunas[data-eq]{display:block!important}
+#etapaColunas[data-eq] .secao{margin:0 0 10px;padding:14px}
+#etapaColunas[data-eq] .secao-titulo{margin-bottom:8px}
+#etapaColunas[data-eq] .secao-titulo h2{font-size:17px}
+#etapaColunas[data-eq] .pessoas .pessoa{padding:6px 0}
+.eq-qr-caixa{display:grid;grid-template-columns:132px minmax(0,1fr);gap:12px;align-items:center;margin-top:12px;padding:10px;border:1px solid var(--line,#e6e0d6);border-radius:14px;background:#fff}
+.eq-qr-img{width:132px;height:132px;display:grid;place-items:center;background:#fff}
+.eq-qr-img:empty::before{content:"";width:30px;height:30px;border:3px solid #e6e0d6;border-top-color:#8a7a66;border-radius:50%;animation:eqGira 1s linear infinite}
+.eq-qr-img canvas{display:none!important}
+.eq-qr-img img{display:block!important;width:132px!important;height:132px!important}
+.eq-qr-lado{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0}
+.eq-qr-lado strong{font-size:14px}
+.eq-qr-lado small{color:var(--muted,#7a7066);font-size:12px;line-height:1.35}
+.eq-qr-lado .qr-codigo{margin:2px 0;font-size:22px;letter-spacing:.18em;font-weight:800}
+.eq-qr-lado .btn{margin-top:2px}
+@keyframes eqGira{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.eq-qr-img:empty::before{animation:none}}
+/* 21/11/2026 (ajuste): etapa com a cor do cartão da lista, foto do cliente antes do nome e a foto da equipe só na aba Equipe. */
+.chiavari-equipe-app #etapaEtiquetas .nav-etapa{border:0!important;font-weight:800;letter-spacing:.04em}
+.chiavari-equipe-app #etapaEtiquetas .etapa-cliente-foto{position:relative;display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;margin:0;border-radius:50%;overflow:hidden;background:#efece6;color:#6b625a;font:700 12px/1 Manrope,Inter,sans-serif}
+.chiavari-equipe-app #etapaEtiquetas .etapa-cliente-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#etapaAba_equipe:has(#etapaColunas[data-eq="caminhoes"],#etapaColunas[data-eq="uber"]) #etapaFotoEquipe{display:none!important}
+html body.chiavari-equipe-app #etapaEtiquetas .tipo.nav-etapa,html body .chiavari-equipe-app #etapaEtiquetas .tipo.nav-etapa,html body #etapaEtiquetas .tipo.nav-etapa{background:var(--nav-etapa,#2563eb)!important;color:#fff!important;border:0!important}
+#telaEtapa #etapaEtiquetas .tipo.nav-etapa{background:var(--nav-etapa,#2563eb)!important;color:#fff!important;border:0!important}
+/* 21/11/2026: a barra "0 de 2 concluídas" saiu da tela (o elemento continua, escondido, para o cálculo do progresso). */
+#telaEtapa #regProgresso{display:none!important}

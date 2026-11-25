@@ -1175,3 +1175,5 @@ html:root:is(#pz#pz#pz#pz,html) #tbodyPersonalizacoes .pers-etapas-cel{display:f
 html:root:is(#pz#pz#pz#pz,html) #tbodyPersonalizacoes .pers-etapas-cel b{font-weight:500;color:#1f2020}
 html:root:is(#pz#pz#pz#pz,html) #tbodyPersonalizacoes .pers-etapas-cel small{font-size:12px;color:#6b6b6b}
 html:root:is(#pz#pz#pz#pz,html) #tbodyPersonalizacoes .pers-etapas-cel.is-vazio{color:#b42318;font-size:12.5px}
+/* 22/11/2026: antecedência da personalização */
+html:root:is(#pz#pz#pz#pz,html) .pz-ajuda-dias{display:block;margin-top:4px;font-size:12px;color:#6b6b6b;line-height:1.4}

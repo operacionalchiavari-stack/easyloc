@@ -7386,3 +7386,8 @@ html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas .pedido-cf-campo in
 html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas .pedido-cf-pessoa,html:is(#pc-ct,html) .pedido-screen .pedido-contrato-colunas .pedido-cf-campo{width:100%!important;max-width:none!important;min-width:0}
 html:is(#pc-ct#pc-ct#pc-ct#pc-ct,html) body .pedido-screen .pedido-contrato-colunas .pedido-cf-campo :is(input,textarea,select){width:100%!important;max-width:none!important;min-width:0!important;box-sizing:border-box!important}
 html:is(#pc-ct#pc-ct#pc-ct#pc-ct,html) body .pedido-screen .pedido-contrato-colunas .pedido-cf-grade{display:flex!important;flex-direction:column;gap:12px}
+/* 22/11/2026: na busca de cliente dos dados do pedido, foto maior; "Cadastrar novo cliente" com um círculo verde e o "+" */
+html:root:is(#pcli#pcli#pcli#pcli,html) .cliente-busca-retrato{flex:0 0 54px!important;width:54px!important;height:54px!important;font-size:18px!important}
+html:root:is(#pcli#pcli#pcli#pcli,html) .cliente-busca-retrato img{width:100%!important;height:100%!important;object-fit:cover}
+html:root:is(#pcli#pcli#pcli#pcli,html) .autocomplete-item{gap:14px!important;padding-top:8px!important;padding-bottom:8px!important}
+html:root:is(#pcli#pcli#pcli#pcli,html) .cliente-novo-icone{flex:0 0 54px!important;width:54px!important;height:54px!important;border:0!important;background:#2e9b5b!important;color:#fff!important;font-size:30px!important;font-weight:400!important;line-height:1!important;box-shadow:0 2px 6px rgba(46,155,91,.35)}

@@ -1,3 +1,4 @@
+@import url("../../../styles/agentes-avatares.css?v=20261121-retratos");
 /* Assistente comercial do catálogo (out/2026). Botão no canto inferior direito; a conversa abre em TELA CHEIA, no estilo
    WhatsApp (pedido do usuário: "quero que ocupe a tela inteira... para ficar uma conversa mais bonita"). Minimizar volta
    ao catálogo; o botão reabre. Em tela larga, à direita, o resumo do pedido em andamento. */
@@ -30,6 +31,14 @@ html.cas-trava-rolagem,html.cas-trava-rolagem body{overflow:hidden}
 .cas-icon,.cas-head-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;background:transparent;color:#fff;cursor:pointer}
 .cas-icon{width:40px;height:40px;border-radius:50%}
 .cas-head-btn{height:40px;padding:0 16px;border:1px solid rgba(255,255,255,.28);border-radius:999px;font:600 .8rem "Manrope",sans-serif;letter-spacing:.03em}
+.cas-head-btn:disabled{opacity:.4;cursor:default}
+.cas-head-btn[aria-busy="true"]{cursor:progress}
+/* O documento usa o mesmo papel/PDF da web; ações ficam acessíveis enquanto a folha rola. */
+dialog.cpj-modal.cpj-order-preview.cpj-order-helena{padding:0;max-height:calc(100dvh - 32px);overflow:hidden}
+dialog.cpj-order-preview.cpj-order-helena .cpj-modal-form{display:flex;flex-direction:column;box-sizing:border-box;max-height:calc(100dvh - 32px);gap:16px}
+dialog.cpj-order-preview.cpj-order-helena .cpj-modal-form>header{flex:none}
+dialog.cpj-order-preview.cpj-order-helena .cpj-modal-body{min-height:0;overflow:auto;overscroll-behavior:contain;display:block}
+dialog.cpj-order-preview.cpj-order-helena .cpj-modal-form>footer{position:static;flex:none;margin:0;padding:12px 0 0}
 .cas-icon:hover,.cas-icon:focus-visible,.cas-head-btn:hover,.cas-head-btn:focus-visible{background:rgba(255,255,255,.14);outline:none}
 .cas-icon svg,.cas-head-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .cas-voltar{margin-left:-8px}
@@ -179,7 +188,7 @@ html.cas-trava-rolagem,html.cas-trava-rolagem body{overflow:hidden}
   .cas-panel.mostra-pedido .cas-lado h3,.cas-panel.mostra-pedido .cas-lado-vazio strong{padding-right:44px}
 }
 @keyframes cas-gaveta{from{transform:translateX(100%)}to{transform:none}}
-@media(max-width:760px){.cas-pedido-btn{max-width:40vw;padding:0 10px}.cas-head>.cas-avatar{display:none}}
+@media(max-width:760px){.cas-pedido-btn{max-width:40vw;padding:0 10px}.cas-head>.cas-avatar{display:grid}}
 @media(prefers-reduced-motion:reduce){.cas-pedido-btn.tem-novidade .cas-pedido-novo,.cas-lado-ambs li.mudou{animation:none}}
 
 /* Ligação com a Helena (voz em tempo real) ------------------------------------------------------------------------ */
@@ -417,3 +426,14 @@ html.catalogo-comercial-pedido .cas-head .cas-pedido-btn b{background:var(--colo
   .cas-head-copy small{font-size:.88rem}
 }
 .cas-boasvindas .cas-avatar.is-xl{width:132px;height:132px;font-size:3.6rem}
+
+/* 22/11/2026 — Todos os chats de IA iguais, sem fundo bege (pedido do usuário): fundo branco, resposta da IA num cinza suave
+   e a sua mensagem num azul suave, os dois com texto escuro. Vale para Helena, Clara, Luísa, Miguel, Carla, Marcos, Sofia,
+   assistentes do app e do App do Freteiro. Mudar aqui muda em todos (o mesmo bloco está em ia-chat-topo.css,
+   catalogo-assistente.css, app-agente.css e freteiro-lancamentos.css). */
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.ch-tela,.ch-msgs,.cas-msgs,.cas-conversa,.ag-msgs,section.as-dialog,dialog.as-dialog,.ideia-chat,.cora-chat,.as-dialog>.as-msgs,.ideia-chat-msgs,.cora-msgs,.fl-luisa,.fl-msgs){background:#fff!important;background-image:none!important;border-color:#e6e9ee!important}
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.ch-bubble,.cas-bubble,.ag-msg.ia .ag-balao,.as-msg,.ideia-msg,.cora-balao,.fl-msg.ia){background:#f1f3f6!important;color:#1f2328!important;box-shadow:none!important;border:0!important}
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.is-eu .ch-bubble,.is-eu .cas-bubble,.ag-msg.eu .ag-balao,.as-msg.pessoa,.ideia-msg.pessoa,.cora-msg.eu .cora-balao,.fl-msg.eu){background:#e3ecf9!important;color:#1f2a3a!important}
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.ag-msg.eu .ag-balao time){color:#6b7a90!important}
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.as-campo,.ideia-chat-campo,.cora-campo,.cora-dica,.as-rodape,.ch-form,.ag-campo){background:#fff!important;border-color:#e6e9ee!important}
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.as-msg.erro){background:#fff4f3!important;color:#8a2a22!important}

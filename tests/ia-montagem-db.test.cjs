@@ -27,6 +27,11 @@ test('agentes por empresa, revisão concorrente e relato acessível à desmontag
  await assert.rejects(configurar(null,out),/permissão/);
  const cfg=(await configurar()).rows[0].r;await assert.rejects(configurar(),/outra pessoa/);assert.equal((await configurar(cfg.atualizado_em)).rows[0].r.coletar,'Acesso e ferramentas');
  const limiteCfg=(await db.query('select * from ia_agentes_config where empresa_id=$1',[emp])).rows[0];assert.match(limiteCfg.limites,/escala/);const editado=(await db.query('select ia_agente_salvar($1,$2,$3,$4,$5,$6,$7) r',[emp,'montagem','Seja objetiva','Acessos','Cuidados',limiteCfg.atualizado_em,'Nao prometer troca sem consultar o responsavel'])).rows[0].r;assert.match(editado.limites,/Nao prometer/);assert.equal((await configurar(editado.atualizado_em)).rows[0].r.limites,editado.limites);
+ const customAntes=(await db.query('select * from ia_agentes_config where empresa_id=$1',[emp])).rows[0];
+ await db.exec(fs.readFileSync('supabase/migrations/20261121000300_auxiliar_logistica.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20261121000400_luisa_logistica.sql','utf8'));
+ const identidade=(await db.query("select * from ia_agentes where chave='montagem'")).rows[0];assert.equal(identidade.nome,'Luísa · Logística');assert.match(identidade.coletar,/decorador/);
+ assert.deepEqual((await db.query('select * from ia_agentes_config where empresa_id=$1',[emp])).rows[0],customAntes,'mantém configurações próprias da empresa');
  await db.exec("set test.editar='nao'");await assert.rejects(configurar(cfg.atualizado_em),/permissão/);await db.exec("set test.editar='sim'");
  const resumo=Object.fromEntries(['montagem','acessos','desmontagem','cuidados','ocorrencias','melhorias','pendencias'].map(k=>[k,'Informação revisada da equipe']));resumo.pendencias_obrigatorias=[];
  const conversa=[{papel:'pessoa',texto:'Usar portão lateral na desmontagem'}];

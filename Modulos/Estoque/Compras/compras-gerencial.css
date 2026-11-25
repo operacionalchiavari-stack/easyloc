@@ -1,0 +1,58 @@
+/* Mesma leitura do Comercial: quadro de dados à esquerda, gráfico à direita. */
+#purchaseManager{min-width:0;color:#1f2020}
+#purchaseManager .cg-ferramentas{display:flex;gap:8px;flex-wrap:nowrap;margin-left:auto}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #purchaseManager .cg-filtros{display:flex;gap:10px;align-items:flex-end;flex-wrap:nowrap;padding:14px;margin-bottom:18px;background:#fff;border:1px solid #e3e7ec;border-radius:14px}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #purchaseManager .cg-filtros label{display:flex;flex-direction:column;gap:6px;font:600 12px Inter,sans-serif;letter-spacing:0;text-transform:none;margin:0}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #purchaseManager .cg-filtros :is(input,select){height:40px;min-height:40px;border:1px solid #dfe4ea;border-radius:9px;padding:0 10px;background:#fff;color:#1f2020;font:14px Inter,sans-serif;max-width:100%;box-sizing:border-box}
+#purchaseManager .cg-filtros label:has(input){flex:0 0 140px;min-width:0}
+#purchaseManager .cg-filtros input{width:140px}
+#purchaseManager .cg-filtros label:has(select){flex:1 1 190px;min-width:160px;max-width:280px}
+#purchaseManager .cg-atalhos{display:flex;gap:6px;flex-wrap:nowrap}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #purchaseManager .cg-filtros button{white-space:nowrap}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #purchaseManager .cg-atalhos button{min-height:32px;padding:6px 10px;border:1px solid #dfe4ea;border-radius:999px;background:#fff;color:#4f4f4f;font:500 12px Inter,sans-serif;cursor:pointer;text-transform:none;letter-spacing:0}
+#purchaseManager .cg-status{font-size:12px;color:#6b6b6b;line-height:1.5;margin:12px 0}
+#purchaseManager .cg-status:empty{display:none}
+#purchaseManager .cg-quadro{background:#fff;border:1px solid #e3e7ec;border-radius:16px;overflow:hidden;margin:0 0 18px;box-shadow:0 2px 6px #1f20200b}
+#purchaseManager .cg-quadro>header{background:#fafbfc;padding:16px 20px;border-bottom:1px solid #eef1f4}
+#purchaseManager .cg-quadro h3{font:600 16px Inter,system-ui,sans-serif;letter-spacing:0;text-transform:none;margin:0 0 6px}
+#purchaseManager .cg-quadro>header p{font-size:12px;color:#6b6b6b;margin:0;line-height:1.5;max-width:100ch}
+#purchaseManager .cg-corpo{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)}
+#purchaseManager .cg-dados,#purchaseManager .cg-grafico{min-width:0;padding:18px 20px}
+#purchaseManager .cg-grafico{border-left:1px solid #eef1f4;background:#fff}
+#purchaseManager .cg-grafico h4{font:600 13px Inter,system-ui,sans-serif;letter-spacing:0;text-transform:none;margin:0 0 18px}
+#purchaseManager .cg-rolar{overflow-x:auto;max-width:100%}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #purchaseManager .cg-tabela{border-collapse:collapse;width:100%;min-width:0;table-layout:auto;font:13px/1.4 Inter,system-ui,sans-serif;border:0}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #purchaseManager .cg-tabela :is(th,td){padding:10px 8px!important;text-align:right;font:inherit;white-space:normal!important;overflow-wrap:anywhere;border:0;border-bottom:1px solid #eef1f4}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #purchaseManager .cg-tabela :is(th,td):first-child{text-align:left;min-width:110px}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #purchaseManager .cg-tabela thead th{font-size:10px;text-transform:uppercase;letter-spacing:.035em;color:#6b6b6b;vertical-align:bottom;background:#fff}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #purchaseManager .cg-tabela tbody th{font-weight:500}
+#purchaseManager .cg-rosca{display:flex;flex-wrap:wrap;gap:20px;align-items:center;justify-content:center}
+#purchaseManager .cg-rosca svg{display:block;flex:0 0 180px;width:180px;max-width:100%;overflow:visible}
+#purchaseManager .cg-rosca-rot{font:11px Inter,sans-serif;fill:#6b6b6b}
+#purchaseManager .cg-rosca-valor{font:600 14px Inter,sans-serif;fill:#1f2020}
+#purchaseManager .cg-legenda{list-style:none;padding:0;margin:0;flex:1 1 210px;min-width:0;display:grid;gap:10px}
+#purchaseManager .cg-legenda li{display:grid;grid-template-columns:9px minmax(0,1fr) auto auto;gap:8px;align-items:center;font-size:12px}
+#purchaseManager .cg-legenda i{height:9px;width:9px;border-radius:50%}
+#purchaseManager .cg-legenda li>span{overflow-wrap:anywhere}
+#purchaseManager .cg-legenda b{font-weight:600;white-space:nowrap}
+#purchaseManager .cg-legenda small{color:#6b6b6b;font-size:11px}
+#purchaseManager .cg-barras{display:grid;gap:16px}
+#purchaseManager .cg-barras>div{display:grid;grid-template-columns:55px minmax(0,1fr) auto;gap:12px;align-items:center;font-size:12px}
+#purchaseManager .cg-trilho{height:14px;border-radius:4px;background:#eef1f4;overflow:hidden}
+#purchaseManager .cg-trilho i{display:block;height:100%;background:#2a78d6;border-radius:4px}
+html:root:is(#cp#cp#cp#cp,html) body.compras-page #purchaseManager .cg-link{display:inline;min-height:0;padding:0;border:0;border-radius:0;background:none;color:#245a91;font:inherit;text-align:inherit;text-transform:none;letter-spacing:0;text-decoration:underline;box-shadow:none;cursor:pointer;white-space:normal}
+#purchaseManager .cg-nota{font-size:12px;color:#6b6b6b;line-height:1.5;margin:16px 0 0}
+#purchaseManager .cg-vazio{padding:24px 10px;color:#6b6b6b;font-size:13px;text-align:center}
+#purchaseManager .cg-aviso{background:#fffbeb;border:1px solid #f4e5ae;border-radius:10px;padding:12px 14px;font-size:13px;color:#755d28}
+#purchaseManager .cg-mais{margin-top:12px;font-size:13px}
+#purchaseManager .cg-mais summary{cursor:pointer;color:#245a91;padding:8px}
+.cg-modal .fin-modal-caixa{width:min(900px,calc(100vw - 32px))}
+.cg-modal .cg-tabela{width:100%;border-collapse:collapse;font-size:13px}
+.cg-modal .cg-tabela :is(th,td){padding:10px;border-bottom:1px solid #eef1f4;text-align:left}
+.cg-modal .cg-link{color:#245a91;text-decoration:underline}
+@media print{#purchaseManager details.cg-mais{display:block!important}#purchaseManager details.cg-mais summary{display:none!important}}
+@media(max-width:1350px){html:root:is(#cp#cp#cp#cp,html) body.compras-page #purchaseManager .cg-filtros{flex-wrap:wrap}}
+@media(max-width:1150px){#purchaseManager .cg-corpo{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}#purchaseManager .cg-dados,#purchaseManager .cg-grafico{padding:14px}}
+@media(max-width:900px){#purchaseManager .cg-corpo{grid-template-columns:1fr}#purchaseManager .cg-grafico{border-left:0;border-top:1px solid #eef1f4}#purchaseManager .cg-ferramentas{width:100%;flex-wrap:wrap;margin-left:0}#purchaseManager .cg-filtros label:has(select){max-width:none}#purchaseManager .cg-atalhos{margin-left:0}}
+@media(max-width:500px){#purchaseManager .cg-filtros label:has(input){flex:1 1 120px;min-width:0}#purchaseManager .cg-filtros input{width:100%}#purchaseManager .cg-atalhos{flex-wrap:wrap}#purchaseManager .cg-filtros label:has(select){flex-basis:100%}#purchaseManager .cg-tabela{min-width:500px!important}#purchaseManager .cg-quadro>header{padding:14px}#purchaseManager .cg-legenda li{gap:6px}#purchaseManager .cg-barras>div{grid-template-columns:50px minmax(0,1fr) auto;gap:8px}}
+@media print{body.compras-page>*{display:none!important}body.compras-page>.compras-main{display:block!important;padding:0!important;width:100%!important;max-width:none!important}.compras-main>*{display:none!important}.compras-main>[data-pv-panel="gerencial"]{display:block!important}#purchaseManager .cg-filtros,#purchaseManager .cg-ferramentas,#purchaseManager .cg-mais,#purchaseManager .cg-status{display:none!important}#purchaseManager .cg-quadro{break-inside:avoid;box-shadow:none}#purchaseManager .cg-corpo{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}#purchaseManager .cg-rosca svg{width:130px;flex-basis:130px}#purchaseManager .cg-rolar{overflow:visible}#purchaseManager .cg-tabela{min-width:0!important}#purchaseManager{-webkit-print-color-adjust:exact;print-color-adjust:exact}}

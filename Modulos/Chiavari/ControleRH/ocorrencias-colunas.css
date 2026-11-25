@@ -1,0 +1,30 @@
+.rh-ocorrencias-layout{display:grid;grid-template-columns:minmax(270px,320px) minmax(0,1fr);gap:18px;align-items:start}
+.rh-ocorrencias-layout>*{min-width:0}
+.rh-ocorrencias-pessoas{padding:20px;background:#fff;border:1px solid var(--borda-card,#e3e7ec);border-radius:18px;box-shadow:var(--sombra-card,0 2px 8px #27344412)}
+.rh-ocorrencias-pessoas>h2{margin:0 0 16px;font-size:17px;font-weight:600;color:#263344}
+#rhOcorFuncionarios{display:grid;gap:8px;max-height:calc(100vh - 160px);overflow-y:auto;padding:2px}
+.rh-ocor-pessoa{display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:0;border-radius:11px;background:#f4f7f5;color:#263344;font:inherit;text-align:left;cursor:pointer}
+.rh-ocor-pessoa[aria-pressed=true]{box-shadow:inset 0 0 0 2px #729b80}
+.rh-ocor-pessoa:focus-visible{outline:2px solid #657b6e;outline-offset:2px}
+.rh-ocor-pessoa-info{display:grid;gap:4px;flex:1;min-width:0}
+.rh-ocor-pessoa-info strong{font-size:13px;line-height:1.4;overflow-wrap:anywhere}
+.rh-ocor-pessoa-info small{font-size:11px;line-height:1.4;color:#738293;overflow-wrap:anywhere}
+.rh-ocor-todos{padding:14px 12px;margin-bottom:5px}
+.rh-ocor-conta{flex:none;min-width:22px;padding:3px 6px;border-radius:20px;background:#e5ece7;font-size:11px;text-align:center;color:#526b5b}
+.rh-ocor-foto{position:relative;display:grid;place-items:center;flex:none;width:38px;height:38px;border-radius:50%;overflow:hidden;background:#e8edf1;color:#657282;font-size:12px}
+.rh-ocor-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.rh-ocorrencias-cabecalho{display:flex;align-items:center;flex-wrap:wrap;gap:10px 16px;padding:20px;border-bottom:1px solid #e5e9ee}
+.rh-ocorrencias-cabecalho h2{margin:0;font-size:18px;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
+.rh-ocorrencias-cabecalho p{flex-basis:100%;margin:0;color:#738293;font-size:12px;line-height:1.5}
+.rh-ocorrencias-busca{flex:1 1 200px;max-width:300px;min-width:0}
+.rh-ocorrencias-busca input{width:100%;min-width:0;min-height:38px;padding:9px 12px;border:1px solid #dfe5ec;border-radius:12px;background:#fff;font:13px Inter,system-ui,sans-serif}
+.rh-ocorrencias-acoes{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-left:auto;min-width:0}
+#rhNovaOcorrencia{white-space:nowrap}
+.rh-ocorrencias-cabecalho #rhContagem{font-size:11px;white-space:nowrap;padding:5px 8px;border-radius:20px;background:#edf3ef;color:#526b5b}
+.rh-ocorrencias-rolar{max-width:100%;overflow-x:auto}
+#rhOcorTabela table{min-width:1200px}
+#rhOcorTabela td{overflow-wrap:anywhere;vertical-align:top}
+#rhOcorTabela td:nth-child(6){min-width:180px;max-width:320px}
+.rh-ocor-vazio{padding:22px 12px;color:#738293;font-size:13px;line-height:1.5;text-align:center}
+.rh-ocor-vazio[hidden]{display:none!important}
+@media(max-width:800px){.rh-ocorrencias-layout{grid-template-columns:minmax(0,1fr)}#rhOcorFuncionarios{max-height:300px}.rh-ocorrencias-cabecalho{align-items:start;flex-wrap:wrap}.rh-ocorrencias-pessoas,.rh-ocorrencias-cabecalho{padding:16px}.container>.topo>div:last-child{flex-wrap:wrap;width:100%;margin-left:0!important}.container>.topo .filtros{min-width:0;width:100%}.container>.topo .filtros input,.container>.topo .filtros select{min-width:0;flex:1 1 150px}}

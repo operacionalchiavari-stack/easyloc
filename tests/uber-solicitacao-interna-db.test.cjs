@@ -1,0 +1,66 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),{PGlite}=require('@electric-sql/pglite');
+const read=n=>fs.readFileSync('supabase/migrations/'+n,'utf8'),base=read('20261029000700_uber_banco.sql'),fluxo=read('20261123001300_uber_solicitacao_fluxo.sql');
+function fn(src,n){const i=src.indexOf('create or replace function public.'+n+'(');assert.ok(i>=0,n);const a=src.indexOf('as $$',i);return src.slice(i,src.indexOf('$$;',a+5)+3);}
+const id=n=>'40000000-0000-0000-0000-'+String(n).padStart(12,'0'),emp=id(1),out=id(2),mot=id(3),ped=id(4),et=id(5);
+test('Uber exige pedido ou solicitação do supervisor, com motorista, aceite, QR e fechamento protegidos',async()=>{
+ const db=new PGlite();try{
+ await db.exec(`create role anon;create role authenticated;create schema auth;
+ create function auth.uid() returns uuid language sql as $$select '${id(90)}'::uuid$$;
+ create function operacao_pode(uuid,text) returns boolean language sql as $$select coalesce(current_setting('test.editar',true),'')='sim'$$;
+ create function logistica_servicos_autorizar(uuid,boolean default false) returns void language plpgsql as $$begin if not operacao_pode($1,'editar') then raise exception 'Sem permissao';end if;end $$;
+ create function logistica_anuncio_datas_liberadas(uuid,uuid,uuid) returns boolean language sql as $$select coalesce(current_setting('test.datas',true),'')='sim'$$;
+ create function logistica_nome_usuario(uuid) returns text language sql as $$select 'Supervisor'::text$$;
+ create function uber_valor_trecho(uuid,numeric) returns numeric language sql as $$select 40::numeric$$;
+ create table empresas(id uuid primary key);insert into empresas values('${emp}'),('${out}');
+ create table operacao_etapas(id uuid primary key,empresa_id uuid,pedido_id uuid,nome text);
+ create table separacoes_pedidos(id uuid primary key,empresa_id uuid,numero_pedido text,cliente_nome text);
+ insert into separacoes_pedidos values('${ped}','${emp}','18','Bruna'),('${id(6)}','${out}','99','Outro');
+ insert into operacao_etapas values('${et}','${emp}','${ped}','Montagem');
+ create table logistica_fechamentos(id uuid primary key default gen_random_uuid(),empresa_id uuid,tipo text,numero int,motorista_id uuid,beneficiario text,total numeric,vencimento date,obs text,criado_por_nome text,pagar_id uuid,status text,criado_em timestamptz default now());
+ create table fin_pagar(id uuid primary key default gen_random_uuid(),empresa_id uuid,origem text,origem_id uuid,fornecedor_nome text,documento text,descricao text,emissao date,competencia date,vencimento date,valor numeric,parcela int,parcelas int,forma text,categoria_id uuid,observacoes text,criado_por uuid,status text);
+ create table fin_custos_evento(empresa_id uuid,pedido_id uuid,categoria text,descricao text,valor numeric,pagar_id uuid,fechamento_id uuid,criado_por uuid);
+ create table fin_resultados_revisados(pedido_id uuid);
+ create function fin_semear(uuid) returns void language plpgsql as $$begin end $$;
+ create function fin_categoria(uuid,text) returns uuid language sql as $$select null::uuid$$;
+ create table app_sessoes(token text,empresa_id uuid,motorista_id uuid);
+ create function app_sessao(text,text) returns app_sessoes language sql as $$select s from app_sessoes s where token=$1$$;`);
+ for(const n of ['uber_motoristas','uber_vagas','uber_corridas']){let sql=base.match(new RegExp('create table if not exists public\\.'+n+' \\([\\s\\S]*?\\n\\);'))[0];sql=sql.replace("encode(extensions.gen_random_bytes(32), 'hex')","'test-secret'");await db.exec(sql);}
+ await db.exec(`insert into uber_motoristas(id,empresa_id,nome,telefone,senha_hash) values('${mot}','${emp}','Carlos','1','x'),('${id(7)}','${emp}','Joao','2','x'),('${id(8)}','${out}','Outro','3','x');
+ insert into app_sessoes values('carlos','${emp}','${mot}'),('joao','${emp}','${id(7)}');
+ insert into uber_vagas(id,empresa_id,etapa_id,ponto_encontro,destino,data) values('${id(50)}','${emp}','${et}','Galpao','Evento',current_date);
+ insert into uber_corridas(id,empresa_id,vaga_id,motorista_id,status,valor_final,conferido_em) values('${id(51)}','${emp}','${id(50)}','${mot}','concluida',40,now());`);
+ await db.exec(read('20261123001200_uber_solicitacao_interna.sql'));
+ await db.exec(fn(base,'uber_motorista'));
+ for(const n of ['uber_vaga_json','uber_corrida_json','uber_app','uber_aceitar','uber_fechar','uber_controle','uber_divergencias_identificar'])await db.exec(fn(fluxo,n));
+ await db.exec(fluxo);
+ await db.exec(`alter table separacoes_pedidos add column cliente_id uuid,add column local_nome text;create table clientes_empresas(id uuid,catalogo_logo_url text);create function app_distancia_m(numeric,numeric,numeric,numeric) returns numeric language sql as $$select null::numeric$$;`);
+ await db.exec(fn(base,'uber_vaga_cancelar'));await db.exec(fn(base,'uber_presenca'));
+ await db.exec("create function uber_codigo_qr(uuid,bigint) returns text language sql as $$select '123456'::text$$;");
+ const insert=async(p=null,e=null)=>(await db.query("insert into uber_vagas(empresa_id,pedido_id,etapa_id,ponto_encontro,destino,data,valor) values($1,$2,$3,'Galpao','Evento',current_date,40) returning id",[emp,p,e])).rows[0].id;
+ await assert.rejects(()=>insert(),/precisa de pedido/);await assert.rejects(()=>insert(id(6)),/precisa de pedido/);await assert.rejects(()=>insert(id(6),et),/corresponde/);
+ const normal=await insert(null,et);assert.equal((await db.query('select pedido_id from uber_vagas where id=$1',[normal])).rows[0].pedido_id,ped);
+ const solicitar=async(m=mot)=>(await db.query('select logistica_uber_solicitacao_salvar($1,$2) id',[emp,{motorista_id:m,data:new Date().toISOString().slice(0,10),hora:'00:00',origem:'Galpao',destino:'Oficina',motivo:'Buscar material',km:15,ida_volta:true}])).rows[0].id;
+ await assert.rejects(()=>solicitar(),/permissao/);await db.exec("set test.editar='sim'");await assert.rejects(()=>solicitar(id(8)),/motorista ativo/);
+ const interna=await solicitar();assert.equal(Number((await db.query('select valor from uber_vagas where id=$1',[interna])).rows[0].valor),80);
+ const anunciados=(await db.query("select logistica_anunciados($1,'uber',current_date-1,current_date+1) r",[emp])).rows[0].r;assert.equal(anunciados.find(v=>v.id===interna).solicitacao_interna,true);
+ const app=async(t)=>(await db.query('select uber_app($1) r',[t])).rows[0].r;
+ assert.deepEqual((await app('carlos')).disponiveis.map(v=>v.id),[interna]);assert.deepEqual((await app('joao')).disponiveis,[]);
+ await assert.rejects(()=>db.query('select uber_aceitar($1,$2)',['joao',interna]),/outro motorista/);
+ await assert.rejects(()=>db.query('select uber_aceitar($1,$2)',['carlos',normal]),/confirmadas/);
+ await db.query('select uber_aceitar($1,$2)',['carlos',interna]);let corrida=(await db.query('select * from uber_corridas where vaga_id=$1',[interna])).rows[0];
+ assert.equal((await app('carlos')).minhas.find(c=>c.id===corrida.id).vaga.solicitacao_interna,true);
+ await db.query("select uber_presenca('carlos',$1,'123456','{}')",[corrida.id]);await db.query("update uber_corridas set checkin_em=now()-interval '11 minutes' where id=$1",[corrida.id]);await db.query("select uber_presenca('carlos',$1,'123456','{}')",[corrida.id]);
+ await db.query('update uber_corridas set valor_final=80,conferido_em=now() where id=$1',[corrida.id]);
+ const enriched=(await db.query('select uber_divergencias_identificar($1,$2) r',[emp,[{origem:'uber',referencia:corrida.id,chave:'k',versao:'v'}]])).rows[0].r[0];assert.equal(enriched.solicitacao_id,interna);assert.equal(enriched.versao,'v');
+ const fechar=async(ids)=>(await db.query('select uber_fechar($1,$2,current_date) r',[emp,ids])).rows[0].r;
+ const fech=await fechar([corrida.id]);assert.equal(fech.total,80);assert.ok(fech.pagar_id);assert.equal((await db.query('select count(*) n from fin_custos_evento')).rows[0].n,0,'solicitacao interna nao inventa pedido para custo');
+ await assert.rejects(()=>fechar([id(51)]),/Vincule a corrida/);assert.equal((await db.query('select count(*) n from logistica_fechamentos')).rows[0].n,1,'fechamento invalido desfeito');
+ await assert.rejects(()=>db.query("insert into fin_pagar(empresa_id,origem,origem_id) values($1,'uber',$2)",[emp,id(99)]),/precisa de corridas/);
+ await db.query("update uber_corridas set obs_logistica='Regularizar',status='cancelada' where id=$1",[id(51)]);
+ const cancelada=await solicitar();await db.query('select uber_vaga_cancelar($1,$2)',[emp,cancelada]);await assert.rejects(()=>db.query("select uber_aceitar('carlos',$1)",[cancelada]),/disponível/);
+ await db.exec("set test.datas='sim'");assert.ok((await app('joao')).disponiveis.some(v=>v.id===normal));await db.query("select uber_aceitar('joao',$1)",[normal]);
+ await db.query("update uber_corridas set status='concluida',valor_final=40,conferido_em=now() where vaga_id=$1",[normal]);assert.equal((await fechar([(await db.query('select id from uber_corridas where vaga_id=$1',[normal])).rows[0].id])).total,40);
+ assert.equal((await db.query("select has_function_privilege('anon','logistica_uber_solicitacao_salvar(uuid,jsonb)','execute') p")).rows[0].p,false);
+ assert.equal((await db.query("select has_function_privilege('authenticated','uber_vinculo_validar(uuid,uuid,uuid)','execute') p")).rows[0].p,false);
+ }finally{await db.close();}
+});

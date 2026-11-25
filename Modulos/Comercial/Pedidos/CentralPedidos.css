@@ -1063,6 +1063,12 @@ html body .central-fluxo li>span:last-child{word-break:normal !important;overflo
 .central-confirmar-dialog dl div{border:1px solid #e3e7ec;border-radius:12px;padding:10px 12px;background:#f7f9fb}
 .central-confirmar-dialog dt{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#6b6b6b}
 .central-confirmar-dialog dd{margin:2px 0 0;font:600 15px Inter,system-ui,sans-serif;color:#1f2020}
+.central-confirmar-datas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;min-width:0}
+.central-confirmar-dialog label.central-confirmar-data{min-width:0;padding:10px;background:#f7f9fb;border:1px solid #e3e7ec;border-radius:12px;gap:6px}
+.central-confirmar-data>span{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#6b6b6b}
+.central-confirmar-dialog input[type="date"]{display:block;width:100%;min-width:0;box-sizing:border-box;padding:6px 3px;border:1px solid #dfe4ea;border-radius:6px;background:#fff;color:#1f2020;font:500 14px Inter,system-ui,sans-serif}
+.central-confirmar-dialog input[type="date"]:focus-visible{outline:2px solid #80539c;outline-offset:2px}
+@media(max-width:560px){.central-confirmar-datas{grid-template-columns:minmax(0,1fr)}.central-confirmar-dialog{max-height:calc(100dvh - 24px);overflow-y:auto}.central-confirmar-dialog form{padding:18px}.central-confirmar-dialog footer .btn{max-width:100%;white-space:normal}}
 .central-confirmar-dialog label{display:grid;gap:4px;font-size:12px;color:#4f4f4f}
 .central-confirmar-dialog textarea{width:100%;box-sizing:border-box;padding:8px 10px;border:1px solid #dfe4ea;border-radius:10px;font:400 14px Inter,system-ui,sans-serif;resize:vertical}
 .central-confirmar-dialog footer{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -1087,3 +1093,5 @@ html:root:is(#cp-conf#cp-conf#cp-conf,html) .central-confirmar-btn:hover{backgro
 html:root:is(#cp-conf#cp-conf#cp-conf,html) .central-confirmar-btn:focus-visible{outline:2px solid #123f86;outline-offset:2px}
 
 .central-finance-retry{border:1px solid #d6dce3;background:#fff;color:#334155;border-radius:5px;padding:3px 7px;font:inherit;font-size:11px;cursor:pointer}.central-finance-retry:disabled{opacity:.6;cursor:wait}.central-finance-indicator.unavailable .central-finance-label{white-space:normal;color:#64748b}
+/* 22/11/2026: foto do cliente maior sem aumentar a linha (a margem negativa absorve a diferença) */
+html:root:is(#cp-foto#cp-foto#cp-foto,html) .central-cliente-foto{flex-basis:46px;width:46px;height:46px;margin:-6px 0;font-size:14px}

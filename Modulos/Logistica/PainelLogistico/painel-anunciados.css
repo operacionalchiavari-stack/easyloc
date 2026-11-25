@@ -1,0 +1,121 @@
+/* Fretes, Free e Uber anunciados: mesmo formato nas três abas (agrupado por pedido, como o A receber do Financeiro). */
+.pla{padding:10px 0 32px;font-family:Inter,Arial,sans-serif;color:#1f2020}
+.pla-barra{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin:0 0 14px}
+.pla-abas{display:flex;gap:6px}
+html:root:is(#pla#pla#pla,html) .pla-abas button{position:relative;min-height:38px;padding:8px 18px;border:1px solid #dfe4ea;border-radius:999px;background:#fff;color:#4f4f4f;font:500 13px Inter,Arial,sans-serif;text-transform:none;letter-spacing:0;box-shadow:none;cursor:pointer}
+html:root:is(#pla#pla#pla,html) .pla-abas button[aria-selected="true"]{background:var(--el-button-primary-bg,#123f86);border-color:var(--el-button-primary-bg,#123f86);color:#fff}
+html:root:is(#pla#pla#pla#pla#pla#pla,html) .pla-abas b{position:absolute;top:-8px;right:-16px;color:#fff;min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border-radius:999px;background:#e60012;color:#fff;font:700 11px/20px Inter,Arial,sans-serif;animation:pla-pulso 1.15s ease-in-out infinite}
+.pla-abas b[hidden]{display:none}
+@keyframes pla-pulso{50%{box-shadow:0 0 0 5px #e6001226}}
+@media(prefers-reduced-motion:reduce){.pla-abas b{animation:none}}
+html:root:is(#pla#pla#pla,html) .pla-busca{flex:0 1 380px;min-height:40px;padding:8px 14px;border:1px solid #dfe4ea;border-radius:10px;background:#fff;font:400 14px Inter,Arial,sans-serif;box-sizing:border-box}
+
+.pla-grupo{margin:0 0 16px;border:1px solid #e3e7ec;border-radius:16px;background:#fff;box-shadow:0 0 8px rgba(15,23,42,.12),0 0 2px rgba(15,23,42,.1);overflow:hidden}
+.pla-cab{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid #eef1f5}
+html:root:is(#pla#pla#pla,html) .pla-pedido{display:inline-flex;align-items:center;min-width:44px;justify-content:center;padding:4px 12px;border:1px solid #f3c4c0;border-radius:999px;background:#fdecea;color:#c4302b;font:700 14px Inter,Arial,sans-serif;cursor:pointer;box-shadow:none;text-transform:none;letter-spacing:0}
+.pla-pedido.is-sem{cursor:default;background:#eef1f5;border-color:#e3e7ec;color:#6b6b6b;font-weight:500}
+.pla-foto{width:34px;height:34px;flex:0 0 34px;border-radius:50%;object-fit:cover;background:#eef1f5}
+.pla-foto.is-cliente{width:44px;height:44px;flex-basis:44px}
+.pla-ini{display:inline-flex;align-items:center;justify-content:center;color:#4f4f4f;font:600 12px Inter,Arial,sans-serif}
+.pla-ini.is-vazia{background:#fdf6dd;color:#a07a14}
+.pla-cli{display:flex;flex-direction:column;min-width:0;flex:1 1 200px}
+.pla-cli strong{font-size:17px;font-weight:600}
+.pla-cli small{font-size:12.5px;color:#6b6b6b}
+.pla-chip{padding:4px 12px;border-radius:999px;font:500 12.5px Inter,Arial,sans-serif;border:1px solid}
+.pla-chip.is-ok{background:#eaf6ef;border-color:#bfe3cc;color:#276743}
+.pla-chip.is-pend{background:#fdf6dd;border-color:#f0dc9b;color:#8b671d}
+.pla-total{margin-left:auto;font-size:13px;color:#6b6b6b}
+.pla-total b{margin-left:8px;font-size:18px;color:#1f2020}
+
+.pla-tabela-caixa{overflow-x:auto}
+.pla-tabela{width:100%;min-width:1080px;table-layout:fixed;border-collapse:collapse;font-size:13.5px}
+html:root:is(#pla#pla#pla,html) .pla-tabela thead th{padding:10px 14px;background:#fff;color:#4f4f4f;font:600 11px Inter,Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;text-align:left;border-bottom:1px solid #eef1f5;white-space:nowrap}
+html:root:is(#pla#pla#pla,html) .pla-tabela td{padding:12px 14px;border-bottom:1px solid #f1f3f6;vertical-align:middle;font-weight:400;color:#1f2020}
+.pla-tabela tr[data-primeira] td{border-top:1px solid #e3e7ec}
+.pla-tabela tbody tr:first-child td{border-top:0}
+.pla-tabela td small{display:block;margin-top:3px;font-size:12px;color:#6b6b6b}
+.pla-tabela td b{font-weight:600}
+.pla-etapa{background:#fafbfc}
+.pla-etapa strong{font-weight:600}
+.pla-ponto{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pla-pessoa{display:flex;align-items:center;gap:10px;min-width:0}
+.pla-pessoa>div{min-width:0}.pla-pessoa strong,.pla-pessoa small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pla-pessoa strong{font-weight:500}
+.pla-aberta td:not(.pla-etapa){background:#fffbea}
+.pla-num{text-align:right;white-space:nowrap}
+.pla-traco{color:#a0a6ad}
+.pla-tag{display:inline-block;padding:3px 10px;border-radius:999px;font:500 12px Inter,Arial,sans-serif;white-space:nowrap}
+.pla-tag.is-verde{background:#eaf6ef;color:#276743}
+.pla-tag.is-amarelo{background:#fdf2c8;color:#8b671d}
+.pla-tag.is-vermelho{background:#fdecea;color:#b42318}
+.pla-tag.is-cinza{background:#eef1f5;color:#4f4f4f}
+html:root:is(#pla#pla#pla,html) .pla-btn-qr{display:block;margin-top:6px;padding:4px 10px;border:1px solid #c8d3e3;border-radius:8px;background:#fff;color:#123f86;font:500 12px Inter,Arial,sans-serif;cursor:pointer;box-shadow:none;text-transform:none;letter-spacing:0}
+html:root:is(#pla#pla#pla,html) .pla-link{display:block;margin-top:4px;padding:0;border:0;background:none;color:#123f86;font:500 12px Inter,Arial,sans-serif;text-decoration:underline;cursor:pointer;box-shadow:none;text-transform:none;letter-spacing:0}
+
+html:root body dialog.pla-dialogo{width:min(420px,calc(100vw - 28px));padding:20px 22px;border:1px solid #e3e7ec;border-radius:16px;background:#fff;color:#1f2020;box-shadow:0 20px 65px #152b4633;text-align:center;font-family:Inter,Arial,sans-serif}
+.pla-dialogo::backdrop{background:#152b4666}
+.pla-dialogo header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pla-dialogo h2{margin:0;font:600 18px Inter,Arial,sans-serif;text-align:left}
+html:root:is(#pla#pla#pla#pla,html) body .pla-dialogo [data-fechar]{min-height:0;width:auto;border:0;background:none;font-size:26px;line-height:1;cursor:pointer;color:#4f4f4f;box-shadow:none;padding:0 4px}
+.pla-dlg-sub{margin:8px 0;font-size:13px;color:#6b6b6b}
+.pla-qr-img{display:flex;justify-content:center;margin:12px 0}
+.pla-qr-cod{font:600 28px/1 Inter,Arial,sans-serif;letter-spacing:.2em}
+html:root body dialog.pla-dialogo.pla-mapa{width:min(820px,calc(100vw - 28px))}
+.pla-mapa iframe{width:100%;height:min(480px,60vh);border:0;border-radius:12px;margin:12px 0}
+.pla-mapa a{color:#123f86;font-size:13px}
+html:root:is(#pla#pla#pla#pla,html) .pls-vazio .pla-link{display:block;margin:10px auto 0;font-size:13.5px}
+
+.frete-param-passos{margin:6px 0 10px;padding-left:20px;font-size:13.5px;line-height:1.55}.frete-param-passos li{margin:3px 0}
+.frete-param-galpao{font-size:13px}
+.frete-param-aviso{padding:8px 12px;border-radius:8px;background:#fdecea;color:#b42318;font-size:13px}
+
+/* Janela de escolher caminhão: próprio ou terceirizado (22/11). */
+.pl-escolha-vinculo{display:inline-block;margin:2px auto 4px;padding:2px 9px;border-radius:999px;font:600 11px Inter,Arial,sans-serif;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pl-escolha-vinculo.is-proprio{background:#eaf0fa;color:#123f86}
+.pl-escolha-vinculo.is-terceiro{background:#f4eefb;color:#6d4fc2}
+
+/* Divergências (tabela comum: js/logistica/divergencias-tabela.js) — 22/11. */
+.dvt-tabela td small{display:block}
+.dvt-titulo{display:block;font-weight:600;color:#1f2020}
+.dvt-expl{margin-top:3px;font-size:13px!important;color:#3a3f45!important;line-height:1.45}
+.dvt-lados{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.dvt-lado{padding:7px 10px;border-radius:8px;font-size:12.5px;line-height:1.4}
+.dvt-lado b{font-weight:600;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em}
+.dvt-lado span{color:#6b6b6b;font-size:11.5px}
+.dvt-lado p{margin:3px 0 0;white-space:pre-wrap}
+.dvt-lado.is-parceiro{background:#fff7e6;color:#5f4410}
+.dvt-lado.is-supervisor{background:#eaf0fa;color:#123f86}
+.dvt-lado.is-vazio{background:#f5f6f8;color:#8a9099}
+.dvt-tabela .pla-btn-qr{display:inline-block;margin:2px 4px 2px 0}
+.pla-tag.dvt-serv-frete{background:#eaf0fa;color:#123f86}
+.pla-tag.dvt-serv-free{background:#eaf6ef;color:#276743}
+.pla-tag.dvt-serv-uber{background:#f4eefb;color:#6d4fc2}
+@media(max-width:900px){.dvt-lados{grid-template-columns:1fr}}
+
+/* Frete avulso (23/11) */
+.pla-barra-dir{display:flex;align-items:center;gap:10px;flex:0 1 560px;justify-content:flex-end}
+html:root:is(#pla#pla#pla#pla,html) .pla-novo{min-height:40px;padding:8px 16px;border:0;border-radius:10px;background:var(--el-button-primary-bg,#123f86);color:#fff;font:600 13px Inter,Arial,sans-serif;cursor:pointer;white-space:nowrap;box-shadow:none;text-transform:none;letter-spacing:0}
+html:root:is(#pla#pla#pla#pla,html) .pla-novo.is-perigo{background:#c4302b}
+html:root:is(#pla#pla#pla#pla,html) .pla-sec{min-height:40px;padding:8px 16px;border:1px solid #dfe4ea;border-radius:10px;background:#fff;color:#1f2020;font:500 13px Inter,Arial,sans-serif;cursor:pointer;box-shadow:none;text-transform:none;letter-spacing:0}
+html:root:is(#pla#pla#pla#pla,html) .pla-pedido.is-avulso{background:#efe9fb;border-color:#d9ccf3;color:#5b3fa6;font-weight:600}
+.pla-av-pessoa{display:inline-flex;align-items:center;gap:8px}
+.pla-sit{display:inline-block;padding:3px 10px;border-radius:999px;font:500 12px Inter,Arial,sans-serif}
+.pla-sit.is-pend{background:#fdf6dd;color:#8b671d}.pla-sit.is-ok{background:#eaf6ef;color:#276743}.pla-sit.is-erro{background:#fdecea;color:#b42318}.pla-sit.is-cancel{background:#eef1f5;color:#6b6b6b}
+.pla-av-cancel td{opacity:.6}
+html:root:is(#pla#pla#pla#pla,html) .pla-link.is-perigo{color:#b42318}
+html:root body dialog.pla-dialogo.pla-av-form{width:min(480px,calc(100vw - 28px));text-align:left}
+.pla-av-form label{display:flex;flex-direction:column;gap:4px;margin:10px 0 0;font:500 12.5px Inter,Arial,sans-serif;color:#4f4f4f}
+html:root:is(#pla#pla#pla#pla,html) .pla-av-form input,html:root:is(#pla#pla#pla#pla,html) .pla-av-form select{min-height:40px;padding:8px 12px;border:1px solid #dfe4ea;border-radius:10px;font:400 14px Inter,Arial,sans-serif;background:#fff;color:#1f2020;box-sizing:border-box;width:100%}
+.pla-dlg-acoes{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.pla-av-form .pla-dlg-sub{text-align:left}
+.pla-av-form label.pla-check{flex-direction:row;align-items:center;gap:8px}
+html:root:is(#pla#pla#pla#pla,html) .pla-av-form input[type=checkbox]{width:18px;min-height:18px;height:18px;padding:0}
+
+.pla-tabela-frete{min-width:1500px}
+.pla-carga+.pla-carga{margin-top:8px}
+.pla-substituicao{margin-bottom:7px}
+.pla-tabela-frete .pla-caminhao strong,.pla-tabela-frete .pla-caminhao small{white-space:normal;overflow-wrap:anywhere}
+.pla-tabela-frete .pla-valor-nota,.pla-motivo{white-space:normal;overflow-wrap:anywhere}
+.pla-valores-conferencia{display:flex;gap:24px;margin-top:14px;font-size:12px;color:#6b6b6b}
+.pla-valores-conferencia b{display:block;margin-top:4px;color:#1f2020;font-size:16px}
+.pla-av-form textarea{box-sizing:border-box;width:100%;padding:10px 12px;border:1px solid #dfe4ea;border-radius:10px;font:400 14px Inter,Arial,sans-serif;resize:vertical}

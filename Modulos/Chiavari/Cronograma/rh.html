@@ -7,7 +7,9 @@
 <script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
   <script src="../gas-cliente.js?v=20261120-sem-servidor" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261120-bonus-supabase"></script>
+  <link rel="stylesheet" href="../../Logistica/PainelLogistico/painel-anunciados.css?v=20261122-dois-lados">
+  <script src="../../../js/logistica/divergencias-tabela.js?v=20261122-dois-lados"></script>
+  <script src="../operacao-sem-motor.js?v=20261122-divergencias"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -260,6 +262,12 @@
   .pg-abas button span:empty{ display:none; }
   .pg-abas button span{ display:inline-block; min-width:18px; margin-left:5px; padding:2px 6px; border-radius:999px; background:#eef1f4; color:#4f4f4f; font-size:11px; letter-spacing:0; }
   .pg-abas button[data-filtro="apagar"] span{ background:#e60012; color:#fff; }
+  .pg-abas button[data-filtro="divergencias"] span{ background:#e60012; color:#fff; }
+  .div-sub{ display:flex; gap:8px; margin:4px 0 8px; }
+  .div-sub button{ border:1px solid #dfe4ea; background:#fff; border-radius:999px; padding:6px 14px; font:500 12.5px Inter,sans-serif; cursor:pointer; color:#4f4f4f; }
+  .div-sub button.ativo{ background:#123f86; border-color:#123f86; color:#fff; }
+  .div-nota{ margin:0 0 12px; font-size:13px; color:#6b6b6b; }
+  .div-trava{ width:22px; height:22px; border-radius:50%; border:0; background:#e60012; color:#fff; font:700 12px Inter,sans-serif; cursor:pointer; padding:0; }
   .pg-agrupar{ display:inline-flex; gap:4px; padding:3px; margin-bottom:6px; border:1px solid #e3e7ec; border-radius:10px; background:#fff; }
   .pg-agrupar button{ width:34px; height:30px; display:grid; place-items:center; border:0; border-radius:7px; background:none; color:#6b6b6b; cursor:pointer; }
   .pg-agrupar button:hover{ background:#f3f5f6; color:#1f2020; }
@@ -349,6 +357,7 @@
     <nav class="pg-barra">
       <div class="el-tabs pg-abas" role="tablist" aria-label="Situação">
         <button type="button" role="tab" aria-selected="true" data-filtro="apagar" class="ativo" onclick="trocarFiltro('apagar')">A pagar <span data-conta="apagar"></span></button>
+        <button type="button" role="tab" aria-selected="false" data-filtro="divergencias" onclick="trocarFiltro('divergencias')">Divergências <span data-conta="divergencias"></span></button>
         <button type="button" role="tab" aria-selected="false" data-filtro="financeiro" onclick="trocarFiltro('financeiro')">No financeiro <span data-conta="financeiro"></span></button>
         <button type="button" role="tab" aria-selected="false" data-filtro="pagos" onclick="trocarFiltro('pagos')">Pagos <span data-conta="pagos"></span></button>
       </div>
@@ -372,7 +381,7 @@
      ESTADO E APOIO
   ========================================================= */
   const CHAVE = "rhToken";
-  const estado = { token: lerToken(), ciclo: "tudo", dados: null, aba: "eventos", filtro: "apagar", envio: {} };
+  const estado = { token: lerToken(), ciclo: "tudo", dados: null, aba: "eventos", filtro: "apagar", envio: {}, div: { abertas: [], resolvidas: [] }, divAba: "abertas" };
   const SITUACAO = { PAGAR: "Pagar", REVISAR: "Revisar", NAO_PAGAR: "Não pagar", PAGO: "Pago", EM_ANDAMENTO: "Em andamento", FINANCEIRO: "No financeiro" };
   const UNIFORME = { OK: "✅ Ok", INCOMPLETO: "⚠️ Incompleto", SEM: "❌ Sem uniforme" };
 
@@ -437,6 +446,7 @@
 
   function carregar(){
     if(!estado.token){ return entrarAuto(); }
+    carregarDivergencias();
     return chamar("RH_carregarCiclo", estado.token, "tudo").then(aplicar).catch(function(e){
       if(!estado.dados){ semAcesso(msg(e)); }
       tratar(e);
@@ -464,6 +474,8 @@
   function trocarFiltro(f){
     estado.filtro = f;
     document.querySelectorAll("[data-filtro]").forEach(function(b){ const on = b.dataset.filtro === f; b.classList.toggle("ativo", on); b.setAttribute("aria-selected", on ? "true" : "false"); });
+    const ag = document.querySelector(".pg-agrupar"); if(ag){ ag.style.visibility = f === "divergencias" ? "hidden" : ""; }
+    if(f === "divergencias"){ carregarDivergencias(); }
     render();
   }
   // A pagar: o mais antigo primeiro (o que vence antes); pagos e todos: o mais recente primeiro.
@@ -476,7 +488,7 @@
   /* Nov/2026: enviar ao Contas a Pagar. Marca-se em "A pagar" e envia: o Financeiro recebe uma conta por freelancer. */
   function pessoaPorInscricao(id){ let r = null; (estado.dados.eventos || []).forEach(function(ev){ (ev.pessoas || []).forEach(function(p){ if(p.idInscricao === id){ r = { ev: ev, p: p }; } }); }); return r; }
   function marcadosEnvio(){
-    return Object.keys(estado.envio).map(pessoaPorInscricao).filter(function(x){ return x && (x.p.calc.situacao === "PAGAR" || x.p.calc.situacao === "REVISAR") && x.p.calc.total > 0; });
+    const trava = divAbertasSet(); return Object.keys(estado.envio).map(pessoaPorInscricao).filter(function(x){ return x && !trava[x.p.idInscricao] && (x.p.calc.situacao === "PAGAR" || x.p.calc.situacao === "REVISAR") && x.p.calc.total > 0; });
   }
   function pintarBarraEnvio(){
     let barra = document.getElementById("barraEnvio");
@@ -571,9 +583,29 @@
     [["apagar"], ["financeiro"], ["pagos"]].forEach(function(f){ const el = document.querySelector('[data-conta="' + f[0] + '"]'); if(el){ const n = todas.filter(function(x){ return passaFiltro(x.p, f[0]); }).length; el.textContent = n ? String(n) : ""; } });
   }
 
+  /* Nov/2026: divergências dos free. Quem decide é a Logística (Painel Logístico › Divergências); o free explica pelo app.
+     Aqui o RH vê as duas justificativas, e a diária com divergência aberta não vai ao financeiro. */
+  function divAbertasSet(){ const s = {}; (estado.div.abertas || []).forEach(function(x){ if(x.referencia){ s[x.referencia] = true; } }); return s; }
+  function carregarDivergencias(){
+    return chamar("RH_divergencias").then(function(d){
+      estado.div = d || { abertas: [], resolvidas: [] };
+      const n = (estado.div.abertas || []).length, el = document.querySelector('[data-conta="divergencias"]');
+      if(el){ el.textContent = n ? String(n) : ""; }
+      if(window.DivergenciasTabela && d && d.empresa){ window.DivergenciasTabela.lerFotos(d.empresa, (d.abertas || []).concat(d.resolvidas || [])).then(function(){ if(estado.filtro === "divergencias"){ render(); } }); }
+      if(estado.dados){ render(); }
+    }).catch(function(){});
+  }
+  function htmlDivergencias(){
+    const aba = estado.divAba, lista = aba === "abertas" ? (estado.div.abertas || []) : (estado.div.resolvidas || []);
+    return '<div class="div-sub"><button type="button" class="' + (aba === "abertas" ? "ativo" : "") + '" onclick="estado.divAba=\'abertas\';render()">Aguardando decisão (' + (estado.div.abertas || []).length + ')</button>' +
+      '<button type="button" class="' + (aba === "resolvidas" ? "ativo" : "") + '" onclick="estado.divAba=\'resolvidas\';render()">Decididas · 30 dias (' + (estado.div.resolvidas || []).length + ')</button></div>' +
+      '<p class="div-nota">Quem decide é o supervisor da Logística (Painel Logístico › Divergências). O free explica pelo App do Free. A diária com divergência aberta só pode ir ao financeiro depois da decisão.</p>' +
+      (lista.length && window.DivergenciasTabela ? window.DivergenciasTabela.html(lista, { resolvidas: aba === "resolvidas" }) : '<div class="vazio"><strong>' + (aba === "abertas" ? "Nenhuma divergência aguardando decisão" : "Nenhuma divergência decidida nos últimos 30 dias") + '</strong></div>');
+  }
   function render(){
     setTimeout(pintarBarraEnvio, 0);
     const area = document.getElementById("conteudo");
+    if(estado.filtro === "divergencias"){ area.innerHTML = htmlDivergencias(); return; }
     if(!eventosFiltrados().length){
       area.innerHTML = '<div class="vazio"><strong>' + (estado.filtro === "apagar" ? "Nada a pagar" : estado.filtro === "pagos" ? "Nenhum pagamento feito" : "Nenhuma vaga de free") + '</strong>' + (estado.filtro === "apagar" ? "Tudo em dia." : "") + '</div>';
       return;
@@ -720,10 +752,11 @@
         const pag = p.pagamento || {};
         const pago = c.situacao === "PAGO";
         const editavel = !pago && (c.situacao === "PAGAR" || c.situacao === "REVISAR" || pag.naoPagar);
-        const enviavel = estado.filtro === "apagar" && (c.situacao === "PAGAR" || c.situacao === "REVISAR") && c.total > 0;
+        const travada = !!divAbertasSet()[p.idInscricao];
+        const enviavel = estado.filtro === "apagar" && (c.situacao === "PAGAR" || c.situacao === "REVISAR") && c.total > 0 && !travada;
         const fin = p.financeiro;
         return '<tr' + (enviavel && estado.envio[p.idInscricao] ? ' class="marcada"' : "") + '>' +
-          (estado.filtro === "apagar" ? '<td class="td-sel" data-label="">' + (enviavel ? '<input type="checkbox" class="sel-envio" data-envio="' + esc(p.idInscricao) + '"' + (estado.envio[p.idInscricao] ? " checked" : "") + ' aria-label="Enviar ao Contas a Pagar">' : "") + '</td>' : "") +
+          (estado.filtro === "apagar" ? '<td class="td-sel" data-label="">' + (travada ? '<button type="button" class="div-trava" title="Divergência aberta: a Logística precisa decidir antes do pagamento" onclick="trocarFiltro(\'divergencias\')">!</button>' : enviavel ? '<input type="checkbox" class="sel-envio" data-envio="' + esc(p.idInscricao) + '"' + (estado.envio[p.idInscricao] ? " checked" : "") + ' aria-label="Enviar ao Contas a Pagar">' : "") + '</td>' : "") +
           '<td data-label="Free"><div class="pessoa">' + fotoCadastro(p) + '<div><b><button class="link" type="button" onclick="abrirFicha(\'' + esc(p.idFree) + '\')">' + esc(p.nome) + '</button></b><small>' + esc(p.cpf) + ' <span class="nota">★ ' + Number(p.nota).toFixed(1).replace(".", ",") + '</span></small></div></div></td>' +
           '<td data-label="Check-in"><span class="hora">' + (hora(p.checkinEm) || "—") + '</span><span class="sub">' + esc(p.via || "") + '</span></td>' +
           '<td data-label="Local do check-in">' + localCheckinHtml(p) + '</td>' +

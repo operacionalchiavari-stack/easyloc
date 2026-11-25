@@ -1,3 +1,4 @@
+@import url("./agentes-avatares.css?v=20261121-retratos");
 /* App de celular do sistema (nov/2026): faixa grafite com a logo em branco (como o login do sistema), móveis do
    acervo flutuando no login e, depois de entrar, dois cartões grandes (Triagem e Montagem). */
 :root{ --ap-tinta:#2b2622; --ap-suave:#77716a; --ap-linha:#e6e1d8; --ap-dourado:#8b6a45; --ap-grafite:#5a5a55; --ap-fundo:#ffffff; color-scheme:light; }

@@ -1,9 +1,10 @@
+@import url("./agentes-avatares.css?v=20261121-retratos");
 /* Conversa com os agentes de IA no app (20/11/2026): o mesmo visual para todos (Clara, Cora, Carla, Marcos, Ideia
    Premiada em Modulos/Gestao/AgentesApp/agente.html e a Helena no catálogo, pelo bloco do fim deste arquivo).
    Fundo branco, tela cheia, faixa de cima com ← / foto e nome / ações, balões como um chat comum. */
 :root{ --ag-tinta:#2b2622; --ag-suave:#6b655c; --ag-mudo:#8f897f; --ag-linha:#ece8e1; --ag-ia:#f2f0ec; --ag-eu:#2b2622; }
 html:has(body.ag-pagina),body.ag-pagina{ margin:0; height:100%; background:#fff; color:var(--ag-tinta); font-family:Manrope,system-ui,sans-serif; -webkit-tap-highlight-color:transparent; }
-body.ag-pagina{ display:flex; flex-direction:column; height:100dvh; overflow:hidden; overscroll-behavior:none; }
+body.ag-pagina{ display:flex; flex-direction:column; height:100vh; height:100dvh; overflow:hidden; overscroll-behavior:none; }
 body.ag-pagina *{ box-sizing:border-box; }
 .ag-icone{ flex:none; width:44px; height:44px; border:0; border-radius:12px; background:transparent; color:var(--ag-tinta); display:grid; place-items:center; padding:0; cursor:pointer; }
 .ag-icone:active{ background:#f2f0ec; }
@@ -21,7 +22,8 @@ body.ag-pagina *{ box-sizing:border-box; }
 .ag-avatar.grande{ width:72px; height:72px; font-size:30px; box-shadow:0 10px 28px -14px var(--ag-cor,#2b2622); }
 
 /* mensagens */
-.ag-msgs{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px 12px 10px; display:flex; flex-direction:column; gap:10px; }
+.ag-msgs{ flex:1; min-height:0; min-width:0; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px 12px 10px; display:flex; flex-direction:column; gap:10px; }
+.ag-msgs>*{ flex-shrink:0; }
 .ag-msg{ display:flex; align-items:flex-end; gap:8px; max-width:100%; animation:agEntra .22s ease both; }
 .ag-msg.eu{ justify-content:flex-end; }
 .ag-msg.ia .ag-avatar{ width:28px; height:28px; font-size:12px; }
@@ -137,6 +139,22 @@ body.ag-gravando .ag-campo-linha{ display:none; }
 .ag-zoom[hidden]{ display:none; }
 .ag-zoom img{ max-width:100%; max-height:100%; object-fit:contain; }
 .ag-erro{ margin:auto; padding:24px; text-align:center; color:var(--ag-suave); }
+/* Sofia: conversa à esquerda e relatórios prontos à direita, como nos chats dos módulos. */
+.ag-rel-corpo{ display:flex; flex:1; min-width:0; min-height:0; }
+.ag-rel-conversa{ display:flex; flex:1; flex-direction:column; min-width:0; min-height:0; }
+.ag-rel-lado{ display:flex; flex:none; flex-direction:column; width:clamp(300px,32vw,420px); min-height:0; padding:24px; border-left:1px solid var(--ag-linha); background:#fff; }
+.ag-rel-lado .ag-rel-kicker{ color:var(--app-destaque,#9b793f); }
+.ag-rel-lado h2{ margin:6px 0 0; color:var(--ag-tinta); font:700 21px/1.2 Manrope,system-ui,sans-serif; }
+.ag-rel-intro{ margin:10px 0 18px; color:var(--ag-suave); font:500 13px/1.5 Manrope,system-ui,sans-serif; }
+.ag-rel-lista{ display:flex; flex:1; flex-direction:column; gap:8px; min-height:0; overflow-y:auto; padding:2px 3px 4px; }
+.ag-rel-atalho{ flex:none; display:flex; flex-direction:column; gap:4px; width:100%; padding:12px 14px; border:1px solid var(--ag-linha); border-radius:12px; background:#fff; color:var(--ag-tinta); text-align:left; cursor:pointer; font:inherit; }
+.ag-rel-atalho b{ font-size:14px; }
+.ag-rel-atalho small{ color:var(--ag-suave); font-size:12px; line-height:1.4; }
+.ag-rel-atalho:is(:hover,:focus-visible){ border-color:var(--app-destaque,#b18a5a); background:#faf7f2; }
+.ag-rel-atalho:focus-visible{ outline:2px solid var(--app-destaque,#b18a5a); outline-offset:1px; }
+.ag-rel-atalho:disabled{ opacity:.5; cursor:wait; }
+.ag-rel-nova{ flex:none; margin-top:16px; }
+@media(max-width:900px){ .ag-rel-lado{ display:none; } }
 @media(prefers-reduced-motion:reduce){ .ag-msg,.ag-digitando i,.ag-rec i{ animation:none } .ag-sheet section{ transition:none } }
 
 /* ===== Helena como agente do app (catalogo-app.html?app=1&agente=helena, body.catalogo-equipe-helena) =====
@@ -203,3 +221,14 @@ html body.catalogo-equipe-helena .cas-msg.is-eu .cas-bubble *{ color:inherit!imp
 /* os botões continuam grafite (o --ag-eu só mudou o balão) */
 .ag-redondo,.ag-btn{ background:#2b2622; }
 html body.catalogo-equipe-helena .cas-send{ background:#2b2622!important; }
+
+/* 22/11/2026 — Todos os chats de IA iguais, sem fundo bege (pedido do usuário): fundo branco, resposta da IA num cinza suave
+   e a sua mensagem num azul suave, os dois com texto escuro. Vale para Helena, Clara, Luísa, Miguel, Carla, Marcos, Sofia,
+   assistentes do app e do App do Freteiro. Mudar aqui muda em todos (o mesmo bloco está em ia-chat-topo.css,
+   catalogo-assistente.css, app-agente.css e freteiro-lancamentos.css). */
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.ch-tela,.ch-msgs,.cas-msgs,.cas-conversa,.ag-msgs,section.as-dialog,dialog.as-dialog,.ideia-chat,.cora-chat,.as-dialog>.as-msgs,.ideia-chat-msgs,.cora-msgs,.fl-luisa,.fl-msgs){background:#fff!important;background-image:none!important;border-color:#e6e9ee!important}
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.ch-bubble,.cas-bubble,.ag-msg.ia .ag-balao,.as-msg,.ideia-msg,.cora-balao,.fl-msg.ia){background:#f1f3f6!important;color:#1f2328!important;box-shadow:none!important;border:0!important}
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.is-eu .ch-bubble,.is-eu .cas-bubble,.ag-msg.eu .ag-balao,.as-msg.pessoa,.ideia-msg.pessoa,.cora-msg.eu .cora-balao,.fl-msg.eu){background:#e3ecf9!important;color:#1f2a3a!important}
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.ag-msg.eu .ag-balao time){color:#6b7a90!important}
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.as-campo,.ideia-chat-campo,.cora-campo,.cora-dica,.as-rodape,.ch-form,.ag-campo){background:#fff!important;border-color:#e6e9ee!important}
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.as-msg.erro){background:#fff4f3!important;color:#8a2a22!important}

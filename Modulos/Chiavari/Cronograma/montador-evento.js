@@ -62,7 +62,7 @@
   atual={id:e.id,lista:[],itens:{},carregado:false,enviado:false,carregandoFoto:0};
   conferencia.innerHTML=passoHtml('conferencia',2,'Conferência dos itens','',
    '<p class="entrega-bloqueio" id="entregaBloqueio" hidden>A lista libera quando o evento começar: check-in da equipe ou foto da equipe (aba Equipe).</p><div id="entregaItens" aria-live="polite"><p class="entrega-carregando">Carregando os itens do pedido…</p></div>'+
-   '<p class="entrega-resumo" id="entregaResumo" role="status"></p><button type="button" class="btn" id="entregaSalvar" disabled>Salvar conferência</button>', '✓ Conferência enviada');
+   '<div class="entrega-rodape"><p class="entrega-resumo" id="entregaResumo" role="status"></p><button type="button" class="btn" id="entregaSalvar" disabled>Salvar conferência</button></div>', '✓ Conferência enviada');
   el('entregaSalvar').addEventListener('click',salvar);
   acesso();carregar(e.id);
  }
@@ -100,18 +100,17 @@
    const salvo=atual.itens[it.chave];
    const linha=document.createElement('article');linha.className='entrega-item';linha.dataset.chave=it.chave;
    const foto=imagem(it.foto);
-   linha.innerHTML='<div class="entrega-item-topo">'+(foto?'<button type="button" class="entrega-foto" aria-label="Ampliar foto de '+esc(it.nome)+'"><img src="'+esc(foto)+'" alt="'+esc(it.nome)+'" loading="lazy"></button>':'<div class="entrega-foto sem-foto">Sem foto</div>')+
-    '<div><h3 title="'+esc(it.nome)+'">'+esc(it.nome)+'</h3><p class="entrega-previsto">Previsto: <b>'+esc(it.esperado)+'</b></p></div></div>'+
+   const partes=String(it.nome||'').match(/^(.*?)\s+(\(L\).*)$/);
+   const nome=partes?partes[1]:it.nome,medidas=partes?partes[2]:typeof it.dimensoes==='string'?it.dimensoes:'';
+   linha.innerHTML='<div class="entrega-item-topo">'+(foto?'<button type="button" class="entrega-foto" aria-label="Ampliar foto de '+esc(it.nome)+'"><img src="'+esc(foto)+'" alt="'+esc(it.nome)+'" loading="lazy"></button>':'<div class="entrega-foto sem-foto">Foto não cadastrada</div>')+
+    '<div class="entrega-identidade"><h3 title="'+esc(it.nome)+'">'+esc(nome)+'</h3>'+(medidas?'<p class="entrega-medidas">'+esc(medidas)+'</p>':'')+'</div></div>'+
     '<fieldset data-evento-dados>'+
-    /* 20/11/2026: botões grandes de − / + e "Todos" (sem precisar do teclado); "Danificados" só aparece depois de
-       "Teve dano". Os campos de número continuam (dá para digitar) e são a fonte do que é salvo. */
     '<div class="entrega-quantidades">'+
-     '<div class="ei-linha"><label class="ei-rotulo" for="entregue-'+i+'">Entregues</label><div class="ei-passo"><button type="button" data-passo="-1" data-alvo="entregue" aria-label="Menos um entregue">−</button><input id="entregue-'+i+'" class="input" data-entregue type="number" min="0" max="'+esc(it.esperado)+'" step="1" inputmode="numeric" placeholder="–"><button type="button" data-passo="1" data-alvo="entregue" aria-label="Mais um entregue">+</button></div>'+
-     '<button type="button" class="ei-tudo" data-tudo>Todos ('+esc(it.esperado)+')</button></div>'+
+     '<p class="entrega-previsto">Previsto <b>'+esc(it.esperado)+'</b></p>'+
+     '<label class="entrega-no-local" for="entregue-'+i+'"><span>No local</span><input id="entregue-'+i+'" class="input" data-entregue aria-label="Quantidade no local de '+esc(nome)+'" type="number" min="0" max="'+esc(it.esperado)+'" step="1" inputmode="numeric" placeholder="–"></label>'+
+     '<button type="button" class="ei-abrir-dano" data-abrir-dano><span>Reportar dano</span></button>'+
      '<div class="ei-linha ei-linha-dano"><label class="ei-rotulo" for="dano-'+i+'">Danificados</label><div class="ei-passo ei-passo-dano"><button type="button" data-passo="-1" data-alvo="dano" aria-label="Menos um danificado">−</button><input id="dano-'+i+'" class="input" data-dano type="number" min="0" step="1" inputmode="numeric" value="0"><button type="button" data-passo="1" data-alvo="dano" aria-label="Mais um danificado">+</button></div></div>'+
-     '<button type="button" class="ei-abrir-dano" data-abrir-dano>'+I.alerta+'<span>Teve dano</span></button>'+
     '</div>'+
-    '<p class="entrega-confirmado" hidden></p>'+
     '<div class="entrega-dano" hidden><label for="obs-'+i+'">O que aconteceu?<textarea class="input" id="obs-'+i+'" maxlength="1000" placeholder="Descreva o dano" data-obs></textarea></label>'+
     '<label class="entrega-anexo">'+I.camera+'<span>Foto do dano (opcional)</span><input type="file" accept="image/*" capture="environment" hidden></label><img class="entrega-foto-dano" alt="Foto do dano" hidden></div></fieldset>';
    const chaveGrupo=(it.pedido_numero||'')+':'+(it.ambiente_id||'legado');
@@ -119,9 +118,9 @@
     const grupo=document.createElement('section');grupo.className='entrega-ambiente';
     grupo.dataset.ordem=it.ambiente_ordem??2147483647;grupo.dataset.pedido=it.pedido_numero||'';
     const titulo=document.createElement('h3');titulo.textContent=(it.ambiente||'Itens do pedido')+(it.pedido_numero?' · Pedido #'+it.pedido_numero:'');
-    grupo.append(titulo);grupos.set(chaveGrupo,grupo);
+    const grade=document.createElement('div');grade.className='entrega-grade';grupo.append(titulo,grade);grupos.set(chaveGrupo,grupo);
    }
-   grupos.get(chaveGrupo).append(linha);
+   grupos.get(chaveGrupo).querySelector('.entrega-grade').append(linha);
    if(salvo){linha.querySelector('[data-entregue]').value=salvo.entregue;linha.querySelector('[data-dano]').value=salvo.danificados;linha.querySelector('[data-obs]').value=salvo.observacao||'';}
    if(foto)linha.querySelector('button.entrega-foto').addEventListener('click',()=>abrirFolha('<h3>'+esc(it.nome)+'</h3><img class="foto-free-ampliada" src="'+esc(foto)+'" alt="'+esc(it.nome)+'"><button class="btn btn-claro" type="button" onclick="fecharFolha()">Fechar foto</button>'));
    linha.querySelectorAll('input[type=number],textarea').forEach(c=>c.addEventListener('input',()=>{guardar(linha,it);resumo();}));
@@ -132,13 +131,12 @@
     campo.value=String(Math.max(0,Math.min(max,atualV+Number(b.dataset.passo))));campo.dispatchEvent(new Event('input',{bubbles:true}));
     try{navigator.vibrate?.(8);}catch(_){}
    }));
-   linha.querySelector('[data-tudo]').addEventListener('click',()=>{const c=linha.querySelector('[data-entregue]');c.value=String(it.esperado);c.dispatchEvent(new Event('input',{bubbles:true}));try{navigator.vibrate?.(12);}catch(_){}});
    linha.querySelector('[data-abrir-dano]').addEventListener('click',()=>{linha.classList.add('dano-aberto');linha.querySelector('[data-dano]').focus();});
    linha.querySelector('input[type=file]').addEventListener('change',e=>fotoDano(e,linha,it));
    if(salvo?.foto)mostrarFotoDano(linha,salvo.foto);
    pintarItem(linha,it);linha.querySelector('fieldset').disabled=atual.enviado||!ativo();
   });
-  [...grupos.values()].sort((a,b)=>a.dataset.pedido.localeCompare(b.dataset.pedido)||Number(a.dataset.ordem)-Number(b.dataset.ordem)).forEach(g=>box.append(g));
+  [...grupos.values()].sort((a,b)=>a.dataset.pedido.localeCompare(b.dataset.pedido)||Number(a.dataset.ordem)-Number(b.dataset.ordem)).forEach(g=>box.append(...g.querySelectorAll('.entrega-item')));
   resumo();
  }
  function guardar(linha,it){
@@ -152,15 +150,11 @@
  }
  function valido(it,d){return !!d&&Number.isInteger(d.entregue)&&d.entregue>=0&&d.entregue<=Number(it.esperado)&&Number.isInteger(d.danificados)&&d.danificados>=0&&d.danificados<=d.entregue&&(!d.danificados||!!d.observacao);}
  function pintarItem(linha,it){
-  const d=atual.itens[it.chave];const perfeito=valido(it,d)&&d.entregue===Number(it.esperado)&&!d.danificados;
-  linha.querySelector('.entrega-quantidades').hidden=perfeito&&atual.enviado;
-  const confirmado=linha.querySelector('.entrega-confirmado');confirmado.hidden=!perfeito||!atual.enviado;
-  confirmado.textContent=d?.entregue+' entregues · sem danos';
+  const d=atual.itens[it.chave];
   linha.querySelector('.entrega-dano').hidden=!(d?.danificados>0);
   if(d?.danificados>0)linha.classList.add('dano-aberto');
-  const tudo=linha.querySelector('[data-tudo]');if(tudo)tudo.classList.toggle('ativo',d?.entregue===Number(it.esperado));
-  linha.classList.toggle('com-dano',d?.danificados>0);
-  linha.classList.toggle('conferido',valido(it,d));
+  linha.querySelector('[data-entregue]').setAttribute('aria-invalid',String(d?.entregue!=null&&(!Number.isInteger(d.entregue)||d.entregue<0||d.entregue>Number(it.esperado))));
+  linha.querySelector('[data-dano]').setAttribute('aria-invalid',String(d?.danificados>0&&(!Number.isInteger(d.danificados)||d.danificados>d.entregue)));
  }
  async function fotoDano(ev,linha,it){
   const file=ev.target.files[0];if(!file)return;
@@ -173,8 +167,8 @@
  function mostrarFotoDano(linha,foto){const img=linha.querySelector('.entrega-foto-dano');img.src=foto;img.hidden=false;}
  function resumo(){
   if(!atual||!el('entregaResumo'))return;
-  const revisados=atual.lista.filter(it=>valido(it,atual.itens[it.chave])).length;
-  el('entregaResumo').textContent=atual.enviado?'Conferência salva.':revisados+' de '+atual.lista.length+' itens conferidos.';
+  el('entregaResumo').textContent=atual.enviado?'Conferência salva.':'';
+  el('entregaResumo').hidden=!atual.enviado;
   el('entregaSalvar').disabled=!ativo()||!atual.carregado||atual.enviado||atual.carregandoFoto>0;
  }
  async function salvar(){

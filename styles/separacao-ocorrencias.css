@@ -250,3 +250,10 @@ html:root:is(#so#so#so#so#so#so,html) .so-pedidos-lista .so-pedido-numero{color:
 /* (16/11/2026) sem a borda preta no selecionado: fundo cinza-claro e contorno fino, igual aos outros cartões */
 html:root:is(#so#so#so#so#so#so,html) .so-pedidos .so-pedidos-lista button[aria-pressed=true]{background:#fff;border:2px solid #c4302b;padding:11px;box-shadow:none}
 html:root:is(#so#so#so#so#so#so,html) .so-pedidos .so-produtos-lista>button[aria-pressed=true]{background:#fff;border-color:#c4302b;box-shadow:inset 0 0 0 1px #c4302b}
+/* 21/11/2026: janelas de ação (Encaminhar ao Comercial / Enviar solução) com a fonte comum do sistema — o tema punha o rótulo em caixa alta, o título em serifa e os botões em marrom/vermelho. */
+html:root:is(#so#so#so#so#so#so,html) .so-dialog :is(h2,h3,label,textarea,p,button){font-family:Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important}
+html:root:is(#so#so#so#so#so#so,html) .so-dialog>header h2{font-size:18px!important;font-weight:600!important;color:#243449!important}
+html:root:is(#so#so#so#so#so#so,html) .so-dialog label{font-size:13px!important;font-weight:500!important;color:#4a5a6c!important}
+html:root:is(#so#so#so#so#so#so,html) .so-dialog textarea{font-size:14px!important;border:1px solid #ced8e4!important;box-shadow:none!important}
+html:root:is(#so#so#so#so#so#so,html) .so-dialog>header>button{background:#fff!important;color:#5b6b7d!important;border:1px solid #d6dee8!important;width:34px!important;height:34px!important;min-height:0!important;padding:0!important;font-size:18px!important;font-weight:400!important}
+html:root:is(#so#so#so#so#so#so,html) .so-dialog [type=submit]{background:var(--el-button-primary-bg,#123f86)!important;color:#fff!important;border:0!important;font-size:13px!important;font-weight:600!important;padding:9px 18px!important}

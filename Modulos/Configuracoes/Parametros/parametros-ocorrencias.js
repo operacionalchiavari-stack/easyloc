@@ -38,6 +38,7 @@
    ['envio_reprovado','Item enviado após reprovação','Item carregado depois de reprovado na inspeção, sem nova aprovação.'],
    ['revisao_sem_registro','Envio sem revisão registrada','Item carregado sem inspeção aprovada registrada antes da saída.']]],
   ['Acervo e materiais',[
+   ['sobra','Sobra de materiais','Materiais excedentes identificados no retorno do evento.'],
    ['falta','Falta','Peça que não voltou do evento.'],
    ['avaria','Avaria','Peça que voltou danificada.'],
    ['avaria_entrega','Avaria identificada na entrega','Móvel danificado confirmado na conferência da entrega.'],
@@ -108,5 +109,6 @@
    }catch(err){s.textContent='Não foi possível salvar: '+err.message;window.alerta?.(s.textContent,'Parâmetros','erro');}
   });
   atualizar();
+  await window.carregarParametrosDesempenho?.(root,empresa);
  };
 })();

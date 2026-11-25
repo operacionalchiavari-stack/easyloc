@@ -14,3 +14,22 @@
 .fr-dialog label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:#4f4f4f}
 .fr-dialog textarea{padding:8px 10px;border:1px solid #dfe4ea;border-radius:10px;font:14px Inter,sans-serif;resize:vertical}
 .fr-dialog-acoes{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+
+/* 21/11/2026: divergências do relatório dos freteiros */
+.fd-lista{display:grid;gap:14px}
+.fd-card{padding:16px 18px;border:1px solid #f1cfcb;border-radius:16px;background:#fff;box-shadow:0 0 8px rgba(15,23,42,.08)}
+.fd-card header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.fd-card header strong{display:block;font-size:16px}.fd-card header small{display:block;margin-top:2px;color:#6b6b6b;font-size:12.5px}
+.fd-cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fd-col{padding:12px 14px;border-radius:12px;background:#f7f9fb;font-size:13.5px}
+.fd-col p{margin:4px 0 0;color:#4f4f4f}.fd-col strong{display:block;font-size:14px}
+.fd-col.fd-vazio{background:#fff6f5;color:#8a2a22}
+.fd-rot{display:block;margin-bottom:4px;color:#6b6b6b;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.fd-valor{display:block;margin-top:8px;font-size:18px}
+.fd-obs{font-style:italic}
+.fd-exp{margin-top:12px;padding:12px 14px;border-radius:12px;background:#fdf6dd;font-size:14px}
+.fd-exp p{margin:2px 0 0}.fd-sem{color:#8a6a00}
+.fd-acoes{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;justify-content:flex-end}
+.fd-sub{margin:22px 0 8px;font-size:15px}
+.fr-dialog input{display:block;width:100%;margin-top:4px;padding:9px 12px;border:1px solid #d5dde6;border-radius:10px;font:inherit;box-sizing:border-box}
+@media(max-width:760px){.fd-cols{grid-template-columns:1fr}}

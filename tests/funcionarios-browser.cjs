@@ -45,10 +45,11 @@ const catalog = [
    window.google={maps:{places:{Autocomplete:class{constructor(input,opcoes){window.__places={input:input.id,opcoes};window.__autocomplete=this;}addListener(nome,fn){this.listener=fn;}getPlace(){return {formatted_address:'Rua das Flores, 120 - Centro, Rio de Janeiro - RJ, Brasil'};}}}}};
   },{catalog});
   await page.goto(`http://127.0.0.1:${server.address().port}/Modulos/RH/CadastroFuncionarios/cadastro-funcionarios.html`);
-  await page.locator('#funcTotal').filter({hasText:'1'}).waitFor();
+  await page.locator('[data-funcionario-id=employee]').waitFor();
+  assert.equal(await page.locator('.compact-summary').count(),0,'sem os indicadores Total, Ativos, Inativos e Administradores');
   assert.equal(await page.locator('.table-group-row').textContent(),'Comercial1');
   await page.screenshot({path:path.join(os.tmpdir(),'chiavari-funcionarios-lista.png')});
-  await page.locator('#funcBusca').click();await page.locator('#funcBusca').fill('ninguemencontrado');assert.equal(await page.locator('[data-funcionario-id=employee]').count(),0);assert.equal(await page.locator('#funcTotal').innerText(),'1');
+  await page.locator('#funcBusca').click();await page.locator('#funcBusca').fill('ninguemencontrado');assert.equal(await page.locator('[data-funcionario-id=employee]').count(),0);
   await page.locator('#funcBusca').fill('ana');assert.equal(await page.locator('[data-funcionario-id=employee]').count(),1);await page.locator('#funcBusca').fill('');
   await page.locator('#newFuncionarioBtn').click();
   assert.equal(await page.locator('#funcionariosView').isVisible(),false);assert.equal(await page.locator('#funcionarioFormCard').getAttribute('role'),null);assert.equal(await page.locator('#funcionarioFormCard').evaluate(el=>getComputedStyle(el).position),'static');

@@ -7,7 +7,8 @@
 <script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
   <script src="../gas-cliente.js?v=20261120-sem-servidor" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261120-bonus-supabase"></script>
+  <script src="../../../js/logistica/divergencias-tabela.js?v=20261122-dois-lados"></script>
+  <script src="../operacao-sem-motor.js?v=20261122-divergencias"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
@@ -182,6 +183,14 @@
     .chip.ok{ background:var(--ok-soft); color:var(--ok-forte); }
     .chip.aviso{ background:var(--aviso-soft); color:var(--aviso); }
     .chip.erro{ background:var(--erro-soft); color:var(--erro); }
+    .contador.alerta{ background:#e60012 !important; color:#fff !important; }
+    .div-titulo{ font-weight:700; margin-top:6px; }
+    .div-frase{ margin:4px 0 10px; color:var(--texto-suave, #555); font-size:14px; line-height:1.45; }
+    .div-lado{ padding:10px 12px; border-radius:12px; background:#fff7e6; margin-top:8px; }
+    .div-lado small{ display:block; font-size:11px; text-transform:uppercase; letter-spacing:.05em; opacity:.75; }
+    .div-lado p{ margin:4px 0 0; white-space:pre-wrap; }
+    .div-lado.decisao{ background:#eaf0fa; }
+    .div-texto{ width:100%; box-sizing:border-box; padding:10px 12px; border:1px solid #d8dde3; border-radius:12px; font:inherit; margin:4px 0 8px; }
     .chip svg{ width:13px; height:13px; }
 
     .vaga-data{ font-family:var(--serif); font-size:26px; font-weight:600; line-height:1.1; }
@@ -422,6 +431,7 @@
     <nav class="abas">
       <button class="aba ativa" id="abaVagas" type="button" onclick="trocarAba('vagas')">Vagas abertas <span class="contador" id="contVagas">0</span></button>
       <button class="aba" id="abaMinhas" type="button" onclick="trocarAba('minhas')">Minhas vagas <span class="contador" id="contMinhas">0</span></button>
+      <button class="aba" id="abaDiv" type="button" onclick="trocarAba('div')">Divergências <span class="contador zero" id="contDiv">0</span></button>
     </nav>
 
     <main id="conteudo"></main>
@@ -450,6 +460,7 @@
     miniatura: null,
     ocupado: false,
     qrPendente: null,
+    desempenho: null,
     abaEscolhida: false
   };
 
@@ -621,29 +632,19 @@
   }
 
   function abrirNota(){
-    const p = (estado.dados && estado.dados.perfil && estado.dados.perfil.pontuacao) || null;
+    const p = estado.desempenho;
     if(!p){ return; }
 
     const historico = (p.historico || []).map(function(h){
-      return '<div><span>' + esc(h.motivo) + '<br><small style="color:var(--muted)">' + esc(h.titulo) + '</small></span>' +
-        '<span class="' + (h.delta < 0 ? "menos" : "mais") + '">' + (h.delta > 0 ? "+" : "") + String(h.delta).replace(".", ",").replace("-", "−") + '</span></div>';
+      return '<div><span>' + esc(h.motivo) + '<br><small style="color:var(--muted)">' + esc(h.observacao || new Date(h.data).toLocaleDateString("pt-BR")) + '</small></span>' +
+        '<span class="menos">−' + formatarNota(h.pontos) + '</span></div>';
     }).join("");
 
     abrirFolha(
-      '<div class="nota-grande"><strong>' + formatarNota(p.nota) + '</strong>' + estrelasHtml(p.nota) + '</div>' +
-      '<div class="nota-resumo">' +
-        '<div><strong>' + p.trabalhos + '</strong><small>trabalhos</small></div>' +
-        '<div><strong>' + p.cancelamentos + '</strong><small>cancelamentos</small></div>' +
-        '<div><strong>' + p.faltas + '</strong><small>faltas</small></div>' +
-      '</div>' +
+      '<div class="nota-grande"><strong>' + formatarNota(p.nota) + '</strong><small>de 10</small></div>' +
       '<ul class="regras">' +
-        '<li>Todo mundo começa com <strong>5 estrelas</strong>.</li>' +
-        '<li>Trabalho concluído: <strong>+0,2</strong> (recupera nota)</li>' +
-        '<li>Cancelar com antecedência: <strong>−0,15</strong></li>' +
-        '<li>Cancelar com menos de 24h: <strong>−0,5</strong></li>' +
-        '<li>Chegar mais de 15 min atrasado: <strong>−0,3</strong></li>' +
-        '<li>Esquecer o check-out: <strong>−0,2</strong></li>' +
-        '<li>Faltar sem avisar: <strong>−1</strong></li>' +
+        '<li>A nota começa em <strong>10</strong>.</li>' +
+        '<li>As ocorrências registradas pela Logística ou pela Luísa descontam os pesos definidos pela empresa.</li>' +
       '</ul>' +
       (historico ? '<div class="historico">' + historico + '</div>' : "") +
       '<div class="acoes"><button class="btn" type="button" onclick="fecharFolha()">Fechar</button></div>'
@@ -835,6 +836,7 @@
     const botao = document.getElementById("btnAtualizar");
     if(manual){ botao.classList.add("girando"); }
 
+    chamar("FREE_appDivergencias", estado.token).then(function(d){ estado.div = d || []; if(estado.dados){ renderizar(); } }).catch(function(){});
     return chamar("FREE_appCarregar", estado.token)
       .then(function(dados){
         aplicarDados(dados);
@@ -874,11 +876,17 @@
 
     document.getElementById("avisoPix").style.display = perfil.pix ? "none" : "flex";
 
-    const nota = perfil.pontuacao;
+    const nota = estado.desempenho;
     const botaoNota = document.getElementById("appNota");
     if(nota){
       botaoNota.style.display = "";
       botaoNota.innerHTML = "★ " + formatarNota(nota.nota) + " · ver minha nota";
+    }
+
+    if(estado.token && !estado.desempenho){
+      window.supabaseClient.rpc('logistica_desempenho_app',{p_token:estado.token,p_tipo:'free'}).then(function(r){
+        if(!r.error){ estado.desempenho=r.data; aplicarDados(estado.dados); }
+      });
     }
 
     if(!document.getElementById("telaApp").classList.contains("ativa")){
@@ -936,6 +944,9 @@
 
     document.getElementById("abaVagas").classList.toggle("ativa", estado.aba === "vagas");
     document.getElementById("abaMinhas").classList.toggle("ativa", estado.aba === "minhas");
+    document.getElementById("abaDiv").classList.toggle("ativa", estado.aba === "div");
+    const nDiv = (estado.div || []).filter(function(d){ return !d.resolvida && !d.explicacao; }).length, cd = document.getElementById("contDiv");
+    cd.textContent = nDiv; cd.classList.toggle("zero", !nDiv); cd.classList.toggle("alerta", !!nDiv);
 
     const cv = document.getElementById("contVagas");
     const disponiveis = vagas.filter(function(v){ return v.restantes > 0; }).length;
@@ -948,6 +959,7 @@
 
     const conteudo = document.getElementById("conteudo");
 
+    if(estado.aba === "div"){ conteudo.innerHTML = htmlDivergencias(); return; }
     if(estado.aba === "vagas"){
       conteudo.innerHTML = vagas.length
         ? '<div class="lista">' + vagas.map(cartaoVaga).join("") + '</div>'
@@ -965,6 +977,42 @@
       html += '<div class="secao-titulo">Histórico</div><div class="lista">' + historico.map(cartaoVaga).join("") + '</div>';
     }
     conteudo.innerHTML = html || vazio(ICONES.calendario, "Você ainda não confirmou nenhuma vaga", "Escolha uma vaga na aba Vagas abertas.");
+  }
+
+  /* Nov/2026: divergências (falta de check-in/check-out, ajuste na diária…). O free explica; a Logística decide. */
+  function htmlDivergencias(){
+    const lista = estado.div || [];
+    if(!lista.length){ return vazio(ICONES.check, "Nenhuma divergência", "Quando algo do seu trabalho não bater (check-in, check-out, valor), aparece aqui para você explicar."); }
+    const abertas = lista.filter(function(d){ return !d.resolvida; }), feitas = lista.filter(function(d){ return d.resolvida; });
+    return (abertas.length ? '<div class="secao-titulo">Aguardando decisão</div><div class="lista">' + abertas.map(cartaoDiv).join("") + '</div>' : "") +
+      (feitas.length ? '<div class="secao-titulo">Decididas</div><div class="lista">' + feitas.map(cartaoDiv).join("") + '</div>' : "");
+  }
+  function cartaoDiv(d){
+    const frase = window.DivergenciasTabela ? window.DivergenciasTabela.explicar(d) : (d.titulo || "");
+    const k = esc(d.chave);
+    const sua = d.explicacao
+      ? '<div class="div-lado"><small>Sua explicação</small><p>' + esc(d.explicacao) + '</p>' + (!d.resolvida ? '<button class="btn btn-texto" type="button" onclick="editarDiv(\'' + k + '\')">Mudar explicação</button>' : "") + '</div>'
+      : (!d.resolvida ? '<button class="btn" type="button" onclick="editarDiv(\'' + k + '\')">Explicar o que aconteceu</button>' : '<div class="div-lado"><small>Sua explicação</small><p>Você não explicou.</p></div>');
+    const dec = d.resolvida ? '<div class="div-lado decisao"><small>Decisão da Logística' + (d.tratado_por ? ' · ' + esc(d.tratado_por) : "") + '</small><p>' + esc(d.motivo || "Sem justificativa") + '</p></div>' : "";
+    return '<article class="vaga' + (d.resolvida ? " inativa" : "") + '"><div class="vaga-topo"><span class="chip">' + esc(d.local || "Montagem") + '</span>' +
+      (d.resolvida ? '<span class="chip ok">' + ICONES.check + 'Decidida</span>' : '<span class="chip aviso">Aguardando decisão</span>') + '</div>' +
+      '<div class="vaga-data">' + esc(d.data ? dataLonga(String(d.data).slice(0, 10)) : "") + '</div>' +
+      '<div class="div-titulo">' + esc(d.titulo || "") + '</div><p class="div-frase">' + esc(frase) + '</p>' +
+      '<div class="div-acao" id="divAcao-' + k.replace(/[^a-z0-9]/gi, "_") + '">' + sua + '</div>' + dec + '</article>';
+  }
+  function editarDiv(chave){
+    const d = (estado.div || []).find(function(x){ return x.chave === chave; }); if(!d){ return; }
+    const el = document.getElementById("divAcao-" + chave.replace(/[^a-z0-9]/gi, "_"));
+    el.innerHTML = '<textarea class="div-texto" rows="4" maxlength="2000" placeholder="Conte o que aconteceu (ex.: esqueci o check-out, o celular descarregou…)">' + esc(d.explicacao || "") + '</textarea>' +
+      '<button class="btn btn-ok" type="button" onclick="enviarDiv(\'' + esc(chave) + '\', this)">' + ICONES.check + 'Enviar explicação</button>';
+    el.querySelector("textarea").focus();
+  }
+  function enviarDiv(chave, botao){
+    const texto = botao.parentNode.querySelector("textarea").value.trim();
+    if(texto.length < 3){ toast("Escreva a sua explicação."); return; }
+    botao.disabled = true;
+    chamar("FREE_appDivExplicar", estado.token, chave, texto).then(function(d){ estado.div = d || []; renderizar(); toast("Explicação enviada"); })
+      .catch(function(e){ botao.disabled = false; tratarErro(e); });
   }
 
   function vazio(icone, titulo, texto){

@@ -136,9 +136,10 @@ html body .ia-time>header h2{margin:0;font:600 19px Inter,system-ui,sans-serif!i
 .ia-agente-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 html body .ia-agente h3{margin:16px 0 2px;font:600 19px Inter,system-ui,sans-serif!important;color:#1f2020;letter-spacing:0!important;text-transform:none!important}
 .ia-agente-papel{color:#6b6b6b;font:500 13px Inter,system-ui,sans-serif}
-.ia-agente-num{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;width:100%;margin:16px 0 12px}
+.ia-agente-num{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;width:100%;margin:16px 0 12px}
 .ia-agente-num>div{display:flex;flex-direction:column;gap:2px;padding:8px 4px;border-radius:10px;background:#f7f9fb}
-.ia-agente-num b{color:#1f2020;font:700 16px Inter,system-ui,sans-serif;white-space:nowrap}
+.ia-agente-num>div:last-child{grid-column:1/-1;flex-direction:row;align-items:baseline;justify-content:center;gap:5px}
+.ia-agente-num b{color:#1f2020;font:700 16px Inter,system-ui,sans-serif;white-space:normal;overflow-wrap:anywhere}
 .ia-agente-num small{color:#6b6b6b;font:500 11.5px Inter,system-ui,sans-serif}
 .ia-agente .ia-barra-trilho{width:100%}
 .ia-agente-parte{margin-top:6px;color:#6b6b6b;font:400 12px Inter,system-ui,sans-serif}
@@ -167,13 +168,13 @@ html body .ia-outros h3{margin:0 0 8px;font:600 14px Inter,system-ui,sans-serif!
 .ia-pz-leg strong{color:#1f2020;font:700 14px Inter,system-ui,sans-serif;text-align:right;white-space:nowrap}
 .ia-pz-leg strong small{display:block;font-weight:500}
 @media(max-width:600px){.ia-pizza{grid-template-columns:1fr;justify-items:center}}
-.ia-agentes{grid-template-columns:repeat(6,minmax(0,1fr))}
+.ia-agentes{grid-template-columns:repeat(7,minmax(0,1fr))}
 .ia-agente{padding:20px 12px 16px}
 .ia-agente-foto{width:120px;height:120px}
 .ia-agente-num b{font-size:14.5px}
 @media(max-width:1400px){.ia-agentes{grid-template-columns:repeat(3,minmax(0,1fr))}.ia-agente-foto{width:132px;height:132px}.ia-agente-num b{font-size:16px}}
 @media(max-width:700px){.ia-agentes{grid-template-columns:repeat(2,minmax(0,1fr))}.ia-agente-foto{width:96px;height:96px}}
-.ia-outros ul{grid-template-columns:repeat(auto-fill,minmax(380px,1fr))}
+.ia-outros ul{grid-template-columns:repeat(auto-fill,minmax(min(100%,380px),1fr))}
 
 /* Faixa dos créditos compacta (21/11/2026): uma linha, para os agentes subirem na tela. */
 .ia-hero-compacto{display:grid;grid-template-columns:minmax(260px,1.2fr) auto;grid-template-areas:"uso dados" "frase frase";align-items:center;gap:8px 28px;padding:14px 20px;margin-bottom:14px}

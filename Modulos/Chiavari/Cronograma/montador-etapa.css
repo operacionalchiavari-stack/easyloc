@@ -1,0 +1,181 @@
+/* As três abas da etapa: cores discretas e conferência visual inspirada no catálogo. */
+body.chiavari-equipe-app:has(#telaEtapa.ativa){max-width:1160px;background:#f7f7f5;padding-bottom:0}
+html:has(#telaEtapa.ativa){scroll-padding-bottom:108px}
+body.chiavari-equipe-app #telaEtapa.com-abas-etapa{padding:12px 20px calc(108px + env(safe-area-inset-bottom));color:#292b28}
+#telaEtapa .evento-navegacao{margin-bottom:18px}
+#telaEtapa .evento-navegacao .voltar{font-size:15px;font-weight:600}
+#telaEtapa #etapaEtiquetas .tipo,#telaEtapa #etapaEtiquetas .pedido{font-size:13px}
+#telaEtapa #etapaEtiquetas .pedido{max-width:none;flex:none;overflow:visible}
+#telaEtapa #etapaEtiquetas .tipo{background:#eeefeb!important;color:#52564e!important;border:1px solid #dfe1da}
+#telaEtapa .evento-particularidades,#telaEtapa .evento-orientacao-solta{background:#f3f2ee;border-color:#e1ded5;color:#736b5b}
+#telaEtapa .evento-particularidades strong{color:#736b5b}
+#etapaResumo{margin:0 0 26px;padding:0 2px}
+.etapa-resumo-rotulo{display:block;font:700 12px/1.5 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:#74776e}
+#etapaResumo h1{margin:6px 0;font:600 clamp(25px,4vw,34px)/1.18 var(--sans);letter-spacing:-.8px;overflow-wrap:anywhere}
+#etapaResumo>p{font-size:16px;color:#64675e;margin:0}
+.etapa-resumo-quando{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:14px;font-weight:600}
+.etapa-resumo-quando span+span:before{content:"·";margin-right:10px;color:#989b92}
+#telaEtapa .etapa-abas{width:min(100%,1160px);padding:8px 16px calc(8px + env(safe-area-inset-bottom));border-color:#e0e3db;box-shadow:0 -6px 22px #252a2205}
+#telaEtapa .etapa-abas button{min-height:58px;border-radius:12px;font-size:14px;gap:4px;color:#6b7065}
+#telaEtapa .etapa-abas button.ativa{color:#2c3129;background:#efefeb;font-weight:800}
+#telaEtapa :is(button,input,textarea):focus-visible{outline:2px solid #59664e;outline-offset:3px}
+#telaEtapa .etapa-aba-painel[hidden],#telaEtapa [hidden]{display:none!important}
+#telaEtapa .btn{min-height:48px;border-radius:12px;font:700 15px/1.4 var(--sans);padding:12px 18px;background:#30352d;border:1px solid #30352d;box-shadow:none}
+#telaEtapa .btn-claro{background:#fff;border-color:#d9ddd3;color:#363d30}
+
+/* Equipe: pessoas e transporte com a mesma hierarquia de leitura. */
+#telaEtapa .etapa-colunas,#telaEtapa .etapa-colunas>#etapaEquipe{gap:16px}
+#telaEtapa .etapa-colunas .secao,#telaEtapa #passo_equipe{padding:22px!important;border:1px solid #e1e4dc;border-radius:18px;background:#fff;box-shadow:0 3px 14px #252a2203}
+#telaEtapa .etapa-colunas .secao-titulo{margin-bottom:16px}
+#telaEtapa .etapa-colunas .secao-titulo h2{font:700 20px/1.3 var(--sans)!important;letter-spacing:-.3px;text-transform:none;color:#30362c!important}
+#telaEtapa .etapa-colunas .pessoa{padding:12px 0!important;gap:14px!important}
+#telaEtapa .etapa-colunas .pessoa-nome{font:600 16px/1.45 var(--sans)!important;min-width:0;overflow-wrap:anywhere}
+#telaEtapa .etapa-colunas .pessoa-nome small{font-size:13px!important;color:#74796b}
+#telaEtapa .cadastro-foto{width:50px;height:50px;border-color:#e3e6de;background:#f5f5f1}
+#telaEtapa .etapa-colunas .pessoa-responsavel .pessoa-nome small{color:#626b58}
+#telaEtapa .etapa-colunas .btn{width:auto;min-height:46px;padding:10px 14px;font-size:14px}
+#telaEtapa .etapa-colunas .subtitulo{font-size:14px;letter-spacing:0;margin:20px 0 6px}
+#telaEtapa .etapa-colunas .chip{font-size:12px;padding:5px 9px;white-space:normal}
+#telaEtapa .etapa-colunas .pessoa-free{display:grid!important;grid-template-columns:48px minmax(0,1fr)!important;gap:8px 14px!important}
+#telaEtapa .etapa-colunas .pessoa-free>.pessoa-foto{width:48px;height:48px;border-radius:50%}
+#telaEtapa .etapa-colunas .pessoa-free>.pessoa-nome{min-width:0;overflow-wrap:anywhere}
+#telaEtapa .etapa-colunas .pessoa-free>.chip{grid-column:2;margin:0;justify-self:start}
+#telaEtapa .etapa-colunas .evento-sem-transporte{font-size:15px;line-height:1.55}
+.evento-encontro-free{margin-top:12px;font-size:14px;color:#7c8075;line-height:1.5}
+#telaEtapa .etapa-colunas .uber-vaga-topo>span,#telaEtapa .etapa-colunas .uber-motorista-nome{font-size:15px;line-height:1.5}
+#telaEtapa .etapa-colunas .uber-vaga-topo{flex-direction:row;align-items:flex-start;justify-content:space-between;gap:12px}
+#telaEtapa .etapa-colunas .uber-motorista{flex-direction:row;flex-wrap:wrap;text-align:left;align-items:center;gap:10px}
+#telaEtapa .etapa-colunas .uber-motorista-nome{flex:1;min-width:120px}
+#telaEtapa #passo_equipe{margin-bottom:0}
+#telaEtapa #passo_equipe .passo-topo{grid-template-columns:minmax(0,1fr)}
+#telaEtapa #passo_equipe .passo-num{display:none}
+#telaEtapa #passo_equipe .passo-titulo{font:700 20px/1.3 var(--sans);letter-spacing:-.3px}
+#telaEtapa #passo_equipe .passo-corpo{padding-top:18px}
+#telaEtapa #passo_equipe .foto{border:1.5px dashed #bdc4b4;border-radius:14px;background:#fafbf8;overflow:hidden}
+#telaEtapa #passo_equipe .foto-vazio{min-height:190px;font-size:16px;gap:12px;color:#656f59}
+#telaEtapa #passo_equipe .passo-feito{border-radius:12px;background:#f1f4ee;color:#4b6040;font-size:15px}
+
+/* Lista igual à grade do catálogo: foto, nome e as duas quantidades. */
+#telaEtapa.aba-lista>#etapaResumo,#telaEtapa.aba-lista>#etapaCabeca,#telaEtapa.aba-lista>#apontamentoEtapa{display:none!important}
+#telaEtapa.aba-lista{background:#fff}
+#telaEtapa.aba-lista .evento-navegacao{margin-bottom:28px}
+#telaEtapa #etapaAba_lista #regProgresso{display:none!important}
+#telaEtapa #passo_conferencia{padding:0;margin:0;border:0;background:none;box-shadow:none}
+#telaEtapa #passo_conferencia>.passo-topo{display:none}
+#telaEtapa #passo_conferencia>.passo-corpo{padding:0}
+#telaEtapa #entregaItens{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px;row-gap:40px}
+#telaEtapa #entregaItens>.entrega-carregando,#telaEtapa #entregaItens>.entrega-vazio,#telaEtapa #entregaItens>.entrega-erro,#telaEtapa #entregaItens>.btn{grid-column:1/-1}
+#telaEtapa .entrega-item{padding:0!important;background:#fff;border:0;border-radius:0;box-shadow:none;overflow:visible;min-width:0;text-align:center}
+#telaEtapa .entrega-item .entrega-item-topo{display:block;margin:0}
+#telaEtapa .entrega-item .entrega-foto{position:relative;display:grid;place-items:center;width:100%!important;height:auto!important;aspect-ratio:1/1;margin:0 0 18px;border:0;border-radius:0;background:#fff;padding:0;font:500 13px var(--sans);color:#9a958c;cursor:zoom-in}
+#telaEtapa .entrega-item .entrega-foto img{position:absolute;inset:0;display:block;width:100%;height:100%;padding:0;object-fit:contain;object-position:center bottom;border-radius:0}
+#telaEtapa .entrega-item .entrega-foto.sem-foto{background:#fafaf9;cursor:default}
+#telaEtapa .entrega-identidade{padding:0}
+#telaEtapa .entrega-item .entrega-item-topo h3{display:block;max-height:none;overflow:visible;-webkit-line-clamp:unset;font:500 20px/1.25 "Cormorant Garamond",Georgia,serif!important;letter-spacing:.01em;margin:0;color:#3e3933;overflow-wrap:anywhere}
+#telaEtapa .entrega-item .entrega-medidas{margin:5px 0 0;color:#90887e;font:400 14px/1.4 var(--sans)}
+#telaEtapa .entrega-item fieldset{display:block;min-width:0;padding:0;margin:0;border:0}
+#telaEtapa .entrega-item .entrega-quantidades{display:flex!important;flex-direction:column;align-items:center;gap:6px;margin-top:10px!important}
+#telaEtapa .entrega-item .entrega-previsto{display:inline-flex;align-items:baseline;justify-content:center;gap:5px;width:auto;margin:0;padding:4px 12px;border:0;border-radius:999px;background:#eeebe5;color:#565149;font:500 15px/1.3 var(--sans)}
+#telaEtapa .entrega-item .entrega-previsto b{font-weight:800;font-size:16px;color:inherit}
+#telaEtapa .entrega-item .entrega-no-local{display:inline-flex;flex-direction:row;align-items:center;justify-content:center;gap:0;max-width:100%;padding:3px 9px 3px 12px;border-radius:999px;background:#e3f1e8;color:#277344;font:500 15px/1.4 var(--sans);cursor:text}
+#telaEtapa .entrega-item .entrega-no-local input{flex:none;min-width:0;width:38px;min-height:27px;height:27px;padding:0 0 0 6px;margin-left:8px;border:0;border-left:1px solid #9cc7ae;border-radius:0;background:transparent;color:inherit;text-align:center;font:800 17px/1.2 var(--sans);box-shadow:none;-moz-appearance:textfield}
+#telaEtapa .entrega-no-local input::-webkit-inner-spin-button,#telaEtapa .entrega-no-local input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+#telaEtapa .entrega-no-local input::placeholder{color:#5b8b6d}
+#telaEtapa .entrega-item .ei-abrir-dano{align-self:center;display:inline-flex;align-items:center;justify-content:center;gap:0;min-height:36px;height:auto;margin:0;padding:5px 0;border:0;border-radius:0;background:transparent;color:#86786a;text-decoration:underline;text-underline-offset:3px;font:500 13px/1.4 var(--sans)}
+#telaEtapa .entrega-item.dano-aberto .ei-abrir-dano{display:none}
+#telaEtapa .entrega-item .ei-linha-dano{display:none;width:100%;margin-top:4px}
+#telaEtapa .entrega-item.dano-aberto .ei-linha-dano{display:grid;justify-items:center;gap:6px}
+#telaEtapa .entrega-item .ei-rotulo{font:500 13px var(--sans);text-transform:none;letter-spacing:0;color:#78685a}
+#telaEtapa .entrega-item .ei-passo{display:flex;align-items:stretch;border:1px solid #ded7cd;border-radius:9px;overflow:hidden;background:#fff}
+#telaEtapa .entrega-item .ei-passo button{width:34px;height:40px;padding:0;border:0;background:#f7f5f0;color:#695d50;font:600 21px var(--sans)}
+#telaEtapa .entrega-item .ei-passo input{width:38px!important;height:40px;min-height:40px!important;border:0!important;border-radius:0!important;background:#fff!important;padding:0!important;color:#574a3e;text-align:center;font:700 17px var(--sans)!important;box-shadow:none!important;-moz-appearance:textfield}
+#telaEtapa .entrega-item .ei-passo input::-webkit-inner-spin-button,#telaEtapa .entrega-item .ei-passo input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+#telaEtapa .entrega-item .entrega-dano{display:grid;gap:12px;padding:10px;margin-top:10px;border:1px solid #e7e0d6;border-radius:10px;background:#faf8f5;text-align:left}
+#telaEtapa .entrega-item .entrega-dano label{font-size:13px;line-height:1.45;color:#78685a;gap:6px}
+#telaEtapa .entrega-item .entrega-dano textarea{min-height:86px;width:100%;border:1px solid #ded7cd;border-radius:8px;padding:8px;background:#fff;font-size:15px;resize:vertical}
+#telaEtapa .entrega-item .entrega-anexo{font-size:12px;line-height:1.4;color:#86786a;overflow-wrap:anywhere}
+#telaEtapa .entrega-foto-dano{max-height:130px}
+#telaEtapa .entrega-rodape{margin-top:32px;padding-top:16px;display:flex;justify-content:center;gap:14px;flex-wrap:wrap;border:0}
+#telaEtapa .entrega-rodape>.btn{flex:none;min-width:220px}
+#telaEtapa .entrega-resumo{margin:0;font-size:14px;color:#74776e}
+#telaEtapa .entrega-bloqueio{font-size:13px;line-height:1.5;margin-bottom:24px;background:#f5f3ee;border:1px solid #e7e2d8;color:#887b69;padding:10px 12px;border-radius:10px}
+#telaEtapa .entrega-vazio,#telaEtapa .entrega-carregando{font-size:15px;padding:24px 0;color:#8c847b}
+#telaEtapa fieldset:disabled :is(button,input,textarea){cursor:default}
+@media(min-width:900px){#telaEtapa #entregaItens{grid-template-columns:repeat(4,minmax(0,1fr));column-gap:32px}}
+@media(max-width:359px){#telaEtapa #entregaItens{column-gap:16px}#telaEtapa .entrega-item .entrega-item-topo h3{font-size:18px!important}#telaEtapa .entrega-item .entrega-no-local{padding-left:9px;font-size:14px}#telaEtapa .entrega-item .entrega-no-local input{margin-left:5px;width:33px}}
+
+/* Informações: contexto do pedido e memória da montagem no mesmo lugar. */
+#telaEtapa.ativa.aba-chat{display:block;min-height:0}
+#telaEtapa.aba-chat>#etapaAba_info:not([hidden]){display:grid;gap:18px;align-items:start}
+#etapaInfo{display:grid;gap:18px}
+.etapa-info-card{padding:24px;border:1px solid #e1e5da;border-radius:18px;background:#fff}
+#telaEtapa .etapa-info-card h2{font:700 20px/1.3 var(--sans);letter-spacing:-.3px;margin:4px 0 20px}
+.etapa-info-grade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.etapa-info-grade>div{min-width:0}
+.etapa-info-grade dt{font-size:13px;color:#7b8471;margin-bottom:4px}
+.etapa-info-grade dd{font:600 15px/1.5 var(--sans);overflow-wrap:anywhere}
+.etapa-info-local{margin-top:22px;padding-top:20px;border-top:1px solid #edf0e7}
+#telaEtapa .etapa-info-card h3{font:600 15px/1.5 var(--sans);margin:0 0 6px}
+.etapa-info-local p,.etapa-info-nota p,.etapa-info-vazio{font-size:15px;line-height:1.65;color:#727d64;white-space:pre-wrap;overflow-wrap:anywhere}
+.etapa-info-local .btn{margin-top:14px}
+.etapa-info-logistica{display:flex;gap:8px;flex-wrap:wrap}
+#telaEtapa .etapa-info-logistica .chip{font-size:13px;font-weight:500;background:#f5f6f1;color:#6a755d;border:1px solid #e3e7d9;padding:7px 10px}
+.etapa-info-nota{padding-top:18px;margin-top:18px;border-top:1px solid #edf0e7}
+.etapa-info-vazio+.etapa-info-vazio{margin-top:8px}
+#telaEtapa #etapaAssistenteIa{margin:0;padding:24px;background:#fff;border:1px solid #e1e5da;border-radius:18px;box-shadow:none}
+#etapaAssistenteIa>header{align-items:flex-start;flex-direction:column;gap:16px}
+#etapaAssistenteIa h3{font:700 20px/1.3 var(--sans);margin:0 0 10px}
+#etapaAssistenteIa header p,#etapaAssistenteIa .mont-ia-vazio{font-size:15px;color:#76816b;line-height:1.65;margin:0}
+#etapaAssistenteIa .mont-ia-vazio{margin-top:20px;padding-top:20px;border-top:1px solid #edf0e7}
+#etapaAssistenteIa summary{font-size:14px;line-height:1.5;color:#5c6a4f}
+#etapaAssistenteIa .mont-ia-resumo{grid-template-columns:1fr}
+
+@media(min-width:900px){
+ #telaEtapa #etapaAba_equipe:not([hidden]){display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:24px;align-items:start}
+ #telaEtapa.aba-chat>#etapaAba_info:not([hidden]){grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:24px}
+ #etapaResumo{margin-bottom:30px}
+}
+@media(max-width:599px){
+ body.chiavari-equipe-app #telaEtapa.com-abas-etapa{padding-left:14px;padding-right:14px}
+ #etapaResumo{margin-bottom:22px}
+ #telaEtapa .etapa-colunas .secao,#telaEtapa #passo_equipe{padding:18px!important}
+ .entrega-rodape{align-items:stretch;flex-direction:column;gap:12px}
+ .entrega-rodape .btn{width:100%}
+ .etapa-info-card,#telaEtapa #etapaAssistenteIa{padding:20px}
+ .etapa-info-grade{gap:18px 12px}
+ #telaEtapa .etapa-abas{padding-left:8px;padding-right:8px}
+ #telaEtapa .etapa-abas button{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){#telaEtapa *{scroll-behavior:auto!important;animation:none!important}}
+#telaEtapa.com-abas-etapa [hidden]{display:none!important}
+
+/* Assistente abre direto na conversa, como os outros agentes do app. */
+body.chiavari-equipe-app #telaEtapa.ativa.aba-chat{position:relative;display:flex;flex-direction:column;height:100dvh;min-height:0;padding:calc(6px + env(safe-area-inset-top)) 0 var(--etapa-abas-h,82px);overflow:hidden;background:#fff}
+#telaEtapa.aba-chat>#etapaNavegacao{position:absolute;z-index:2;left:10px;top:calc(6px + env(safe-area-inset-top));display:flex;align-items:center;width:64px;height:82px;min-height:0;margin:0;padding:0}
+#telaEtapa.aba-chat #etapaEtiquetas{display:none!important}
+#telaEtapa.aba-chat #btnVoltar{min-height:44px;font-size:14px}
+#telaEtapa.aba-chat>#etapaResumo,#telaEtapa.aba-chat>#etapaCabeca,#telaEtapa.aba-chat>#apontamentoEtapa,#telaEtapa.aba-chat>#etapaTituloPagina{display:none!important}
+#telaEtapa.aba-chat>#etapaAba_info:not([hidden]){display:flex;flex:1;min-height:0;min-width:0;gap:0;padding:0}
+#etapaAba_info>#etapaInfo,#etapaAba_info>#etapaPedido{display:none!important}
+#telaEtapa #etapaAssistenteIa.mont-ia-chat{display:flex;flex-direction:column;flex:1;min-height:0;min-width:0;width:100%;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:#fff}
+#etapaAssistenteIa.mont-ia-chat>.as-dialog.as-inline{flex:1;width:100%;height:auto;min-height:0;border:0;border-radius:0;box-shadow:none;font:400 16px/1.5 var(--sans);background:#fff}
+#etapaAssistenteIa.mont-ia-chat .as-topo{min-height:82px;padding:12px 14px 12px 84px;gap:10px;border-color:#eeece7;flex:none}
+#etapaAssistenteIa.mont-ia-chat .as-avatar{width:36px;height:36px;flex:0 0 36px}
+#etapaAssistenteIa.mont-ia-chat .as-topo-acoes{display:none}
+#etapaAssistenteIa.mont-ia-chat .as-topo strong{font:700 16px/1.3 var(--sans);color:#302e29}
+#etapaAssistenteIa.mont-ia-chat .as-topo small{font:500 12px/1.45 var(--sans);color:#8a857b;overflow-wrap:anywhere;margin-top:3px}
+#etapaAssistenteIa.mont-ia-chat .as-msgs{flex:1;min-height:0;padding:18px 14px;gap:12px;background:#fff;overscroll-behavior:contain}
+#etapaAssistenteIa.mont-ia-chat .as-msg{flex-shrink:0;max-width:min(88%,680px);padding:12px 15px;font:500 15px/1.55 var(--sans);box-shadow:none}
+#etapaAssistenteIa.mont-ia-chat .as-msg.ia{background:#f4f2ee;border:0;color:#3b372f;border-radius:4px 17px 17px}
+#etapaAssistenteIa.mont-ia-chat .as-msg.pessoa{background:#eeefec;border:0;color:#33392d;border-radius:17px 4px 17px 17px}
+#etapaAssistenteIa.mont-ia-chat .as-campo{flex:none;gap:4px;padding:8px 10px;border-top:1px solid #edece7;background:#fff}
+#etapaAssistenteIa.mont-ia-chat .as-campo textarea{flex:1;min-width:0;width:0;min-height:44px!important;max-height:min(130px,25dvh);padding:11px 13px;border:1px solid #e1ddd4;border-radius:22px;background:#faf9f6;color:#35312b;font:500 16px/1.35 var(--sans)}
+#etapaAssistenteIa.mont-ia-chat .as-campo [data-as=clipe]{display:none}
+#etapaAssistenteIa.mont-ia-chat .as-icone,#etapaAssistenteIa.mont-ia-chat .as-enviar{flex:0 0 42px;width:42px;height:44px;border:0;background:#fff;color:#625a4d}
+#etapaAssistenteIa.mont-ia-chat .as-enviar{background:#302d28;color:#fff}
+#etapaAssistenteIa.mont-ia-chat .as-resumo{flex:none;background:#fff;border-color:#e3dfd6;box-shadow:none;font-size:15px}
+#etapaAssistenteIa.mont-ia-chat .as-resumo p{white-space:pre-wrap;overflow-wrap:anywhere;margin:10px 0;line-height:1.55}
+#etapaAssistenteIa.mont-ia-chat .as-resumo footer{flex-wrap:wrap;gap:10px}
+#etapaAssistenteIa.mont-ia-chat .as-eyebrow,#etapaAssistenteIa.mont-ia-chat .as-link{color:#706348}
+#etapaAssistenteIa.mont-ia-chat .mont-ia-erro{margin:18px;padding:20px;border:1px solid #e1ddd4;border-radius:14px;color:#6e6657;font-size:15px}
+@media(min-width:900px){#telaEtapa.aba-chat>#etapaNavegacao{left:calc((100% - 900px)/2 + 10px)}#etapaAssistenteIa.mont-ia-chat>.as-dialog{max-width:900px;margin:auto}#etapaAssistenteIa.mont-ia-chat .as-msgs{padding:24px}}

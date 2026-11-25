@@ -187,6 +187,18 @@ p.apoio{ margin:0 0 18px; font-size:15px; color:var(--texto2); font-weight:500; 
 .status.conferido{ background:var(--el-color-surface-soft,#f6f7f9); color:var(--el-color-text,#1f2020); }
 .status.pago{ background:var(--verde-claro); color:var(--verde); }
 .status.recusado{ background:var(--vermelho-claro); color:var(--vermelho); }
+.div-card{ padding:14px 16px; border-radius:16px; background:#fff; border:1px solid #e6e9ee; margin-bottom:10px; }
+.div-topo{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.div-data{ font-size:13px; color:var(--texto2); }
+.div-tit{ font-weight:700; margin-top:6px; }
+.div-frase{ margin:4px 0 10px; font-size:14px; color:var(--texto2); line-height:1.45; }
+.div-lado{ padding:10px 12px; border-radius:12px; background:#fff7e6; margin:8px 0; }
+.div-lado small{ display:block; font-size:11px; text-transform:uppercase; letter-spacing:.05em; opacity:.75; }
+.div-lado p{ margin:4px 0 0; white-space:pre-wrap; }
+.div-lado.decisao{ background:#eaf0fa; }
+.div-texto{ width:100%; box-sizing:border-box; padding:12px; border:2px solid #e6e9ee; border-radius:14px; margin:4px 0 8px; font-size:15px; }
+.menu-n{ display:inline-block; min-width:18px; margin-left:6px; padding:1px 6px; border-radius:999px; background:#e60012; color:#fff; font-size:11px; text-align:center; }
+.menu-n[hidden]{ display:none; }
 
 /* Menu lateral */
 .fundo-escuro{ position:fixed; inset:0; z-index:40; background:rgba(0,0,0,.4); opacity:0; pointer-events:none; transition:opacity .25s; }
@@ -337,7 +349,9 @@ h1.titulo{ font-family:"Cormorant Garamond", Georgia, serif !important; font-wei
   <div class="menu-perfil"><span class="avatar" id="avatarMenu">?</span><div><strong id="nomeMenu">Motorista</strong><span id="foneMenu"></span></div></div>
   <button type="button" onclick="App.ir('inicio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Corridas disponíveis</button>
   <button type="button" onclick="App.ir('minhas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Minhas corridas</button>
+  <button type="button" onclick="App.ir('divergencias')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></svg>Divergências <span class="menu-n" id="nDiv" hidden></span></button>
   <button type="button" onclick="App.ir('perfil')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Meus dados</button>
+  <button type="button" onclick="App.nota()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2-5.6-2.9-5.6 2.9 1.1-6.2L3 9.6l6.2-.9z"/></svg>Minha nota</button>
   <button type="button" onclick="App.sair()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 16l-4-4 4-4M6 12h10"/></svg>Sair</button>
   <div class="rodape-menu">Chiavari Eventos · App do Motorista</div>
 </nav>
@@ -396,6 +410,7 @@ h1.titulo{ font-family:"Cormorant Garamond", Georgia, serif !important; font-wei
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/logistica/divergencias-tabela.js?v=20261123-uber-interna"></script>
 <script src="../../../js/core/leitorQr.js?v=20261111-teclado-br"></script>
 <script>
 /* =========================================================
@@ -582,6 +597,7 @@ var App = (function(){
     if (!estado.token) return telaEntrar();
     if (tela === "inicio"){ telaInicio(); return recarregar().then(function(){ if (estado.tela === "inicio") telaInicio(); }).catch(function(){}); }
     if (tela === "minhas"){ telaMinhas(); return recarregar().then(function(){ if (estado.tela === "minhas") telaMinhas(); }).catch(function(){}); }
+    if (tela === "divergencias") return telaDivergencias();
     if (tela === "perfil") return telaCadastro(true);
   }
 
@@ -626,9 +642,16 @@ var App = (function(){
   }
   async function recarregar(){
     estado.dados = await rpc("uber_app", { p_token:estado.token });
+    try { estado.desempenho = await rpc("logistica_desempenho_app", { p_token:estado.token, p_tipo:"uber" }); } catch (_) {}
+    try { estado.div = await rpc("uber_app_divergencias", { p_token:estado.token }); const n = (estado.div || []).filter(function(d){ return !d.resolvida && !d.explicacao; }).length; const el = document.getElementById("nDiv"); if (el){ el.textContent = n; el.hidden = !n; } } catch (_) {}
     estado.perfil = estado.dados.perfil || null;
     atualizarTopo();
     return estado.dados;
+  }
+  function nota(){
+    menu(false);const d=estado.desempenho;if(!d)return avisar('Não foi possível carregar sua nota.',true);
+    const h=(d.historico||[]).map(function(x){return '<div class="linha"><div><strong>'+esc(x.motivo)+'</strong><small>'+esc(x.observacao||new Date(x.data).toLocaleDateString('pt-BR'))+'</small></div><strong style="color:#b42318">−'+Number(x.pontos||0).toFixed(1).replace('.',',')+'</strong></div>';}).join('');
+    mostrar('<h1 class="titulo">Minha nota</h1><div style="text-align:center;padding:18px"><strong style="font-size:52px">'+Number(d.nota||10).toFixed(1).replace('.',',')+'</strong><span style="display:block">de 10</span></div><p class="apoio">A nota começa em 10 e considera as ocorrências registradas pela Logística e pela Luísa.</p>'+(h||'<p class="apoio">Você ainda não tem ocorrências.</p>')+'<button class="botao claro" onclick="App.ir(\'inicio\')">Voltar</button>',true);
   }
   const ponto = function(lat, lng, texto){ return lat && lng ? Number(lat) + "," + Number(lng) : texto; };
   // vaga (+ corrida aceita) no formato das telas do app
@@ -639,7 +662,7 @@ var App = (function(){
       origemQuery:ponto(v.ponto_lat, v.ponto_lng, v.ponto_encontro ? v.ponto_encontro + ", Brasil" : BASE.endereco),
       destinoQuery:ponto(v.destino_lat, v.destino_lng, (v.destino || "") + ", Brasil"),
       data:dataBr(v.data), hora:v.hora || "", km:Number(v.km) || 0, idaVolta:!!v.ida_volta,
-      valor:Number(c ? c.valor : v.valor) || 0, obs:v.obs || ""
+      valor:Number(c ? c.valor : v.valor) || 0, obs:v.obs || "", identificacao:v.solicitacao_interna ? "Solicitação interna" : v.pedido ? "Pedido " + v.pedido : "Vínculo pendente", motivo:v.solicitacao_motivo || ""
     };
   }
 
@@ -725,7 +748,7 @@ var App = (function(){
   function cartaoCorrida(c, i, origem){
     return '<button type="button" class="corrida" data-' + origem + '="' + i + '">' +
       '<span class="corrida-ico">' + ICO.local + '</span>' +
-      '<span class="corrida-info"><strong>' + esc(c.local) + '</strong><span>' + esc(c.data) + (c.hora ? ' · ' + esc(c.hora) : '') + ' · ' + kmTotal(c) + (c.idaVolta ? ' · ida e volta' : '') + '</span></span>' +
+      '<span class="corrida-info"><strong>' + esc(c.local) + '</strong><span>' + esc(c.identificacao) + '</span><span>' + esc(c.data) + (c.hora ? ' · ' + esc(c.hora) : '') + ' · ' + kmTotal(c) + (c.idaVolta ? ' · ida e volta' : '') + '</span></span>' +
       '<span class="corrida-preco"><strong>' + moeda(c.valor) + '</strong><span>' + (origem === "a" ? (c.status === "em_andamento" ? '<span class="status conferido">Em andamento</span>' : '<span class="status pendente">Aceita</span>') : (c.idaVolta ? "ida e volta" : "só ida")) + '</span></span></button>';
   }
   function telaInicio(){
@@ -756,9 +779,10 @@ var App = (function(){
       '<div class="rota">' +
         '<span class="ponto"></span><div><strong>' + esc(c.ponto || "Ponto de encontro") + '</strong><span>Ponto de encontro' + (c.hora ? ' · ' + esc(c.hora) : '') + '</span></div>' +
         '<span class="traco"></span><span></span>' +
-        '<span class="ponto fim"></span><div><strong>' + esc(c.local) + '</strong><span>Evento em ' + esc(c.data) + '</span></div>' +
+        '<span class="ponto fim"></span><div><strong>' + esc(c.local) + '</strong><span>' + esc(c.identificacao) + ' · ' + esc(c.data) + '</span></div>' +
       '</div>' +
       '<div class="chips"><span class="chip">' + ICO.local + kmTotal(c) + ' no total</span><span class="chip">' + (c.idaVolta ? ICO.idaVolta + 'Ida e volta' : ICO.ida + 'Só ida') + '</span><span class="chip" id="chipTempo">' + ICO.tempo + 'calculando…</span></div>' +
+      (c.motivo ? '<div class="recibo"><strong>Motivo da solicitação interna</strong><p>' + esc(c.motivo) + '</p></div>' : '') +
       (c.obs ? '<div class="recibo" style="margin-top:6px"><div class="linha-calc"><span>' + esc(c.obs) + '</span></div></div>' : '') +
       '<div class="recibo"><div class="linha-calc total"><span>Valor total da corrida</span><b>' + moeda(c.valor) + '</b></div></div>' +
       '<div class="barra-acao">' +
@@ -809,6 +833,35 @@ var App = (function(){
       '<button type="button" class="botao claro" onclick="App.ir(\'minhas\')">Ver minhas corridas</button>' +
       '<button type="button" class="botao claro" onclick="App.ir(\'inicio\')">Voltar às corridas</button>', true);
     $("btnNavegarAceita").onclick = function(){ nav.iniciar(c.origemQuery, "Ponto de encontro · " + c.ponto); };
+  }
+
+  /* ---------- Divergências (nov/2026): o motorista explica; quem decide é a Logística. ---------- */
+  async function telaDivergencias(){
+    estado.tela = "divergencias";
+    try { estado.div = await rpc("uber_app_divergencias", { p_token:estado.token }); } catch (e){ avisar(e.message, true); }
+    const lista = estado.div || [];
+    const cart = function(d){
+      const k = esc(d.chave), frase = window.DivergenciasTabela ? window.DivergenciasTabela.explicar(d) : (d.titulo || "");
+      return '<div class="div-card"><div class="div-topo"><strong>' + esc(d.local || "Corrida") + '</strong><span class="status ' + (d.resolvida ? "pago" : "pendente") + '">' + (d.resolvida ? "Decidida" : "Aguardando decisão") + '</span></div>' +
+        '<span class="div-data">' + esc(dataBr(d.data)) + '</span><div class="div-tit">' + esc(d.titulo || "") + '</div><p class="div-frase">' + esc(frase) + '</p>' +
+        '<div data-div-acao="' + k + '">' + (d.explicacao ? '<div class="div-lado"><small>Sua explicação</small><p>' + esc(d.explicacao) + '</p></div>' : "") +
+        (!d.resolvida ? '<button type="button" class="botao claro" data-div-editar="' + k + '">' + (d.explicacao ? "Mudar explicação" : "Explicar o que aconteceu") + '</button>' : "") + '</div>' +
+        (d.resolvida ? '<div class="div-lado decisao"><small>Decisão da Logística' + (d.tratado_por ? " · " + esc(d.tratado_por) : "") + '</small><p>' + esc(d.motivo || "Sem justificativa") + '</p></div>' : "") + '</div>';
+    };
+    const abertas = lista.filter(function(d){ return !d.resolvida; }), feitas = lista.filter(function(d){ return d.resolvida; });
+    mostrar('<h1 class="titulo">Divergências</h1><p class="apoio">Quando algo da corrida não bater (check-in, check-out, valor), explique aqui. A Logística decide.</p>' +
+      (lista.length ? (abertas.length ? '<span class="rotulo">Aguardando decisão</span>' + abertas.map(cart).join("") : "") + (feitas.length ? '<span class="rotulo">Decididas</span>' + feitas.map(cart).join("") : "")
+        : '<div class="vazio">' + ICO.vazio + 'Nenhuma divergência.</div>'), true);
+    document.querySelectorAll("[data-div-editar]").forEach(function(b){ b.onclick = function(){
+      const chave = b.dataset.divEditar, d = lista.find(function(x){ return x.chave === chave; }) || {}, box = b.parentNode;
+      box.innerHTML = '<textarea class="div-texto" rows="4" maxlength="2000" placeholder="Conte o que aconteceu">' + esc(d.explicacao || "") + '</textarea><button type="button" class="botao">Enviar explicação</button>';
+      box.querySelector("textarea").focus();
+      box.querySelector("button").onclick = function(){
+        const t = box.querySelector("textarea").value.trim(); if (t.length < 3){ avisar("Escreva a sua explicação.", true); return; }
+        this.disabled = true;
+        rpc("uber_app_div_explicar", { p_token:estado.token, p_chave:chave, p_texto:t }).then(function(r){ estado.div = r; avisar("Explicação enviada"); telaDivergencias(); }).catch(function(e){ avisar(e.message, true); telaDivergencias(); });
+      };
+    }; });
   }
 
   /* ---------- Minhas corridas ---------- */
@@ -1166,7 +1219,7 @@ var App = (function(){
     return { iniciar:iniciar, sair:sair, passo:passo, recentrar:recentrar, som:som, opcoes:opcoes, externo:externo, voltarBase:voltarBase, _estado:n };
   })();
 
-  return { iniciar:iniciar, iniciarMapa:iniciarMapa, ir:ir, menu:menu, sair:sair, nav:nav };
+  return { iniciar:iniciar, iniciarMapa:iniciarMapa, ir:ir, menu:menu, sair:sair, nota:nota, nav:nav };
 })();
 
 function iniciarMapaGoogle(){ App.iniciarMapa(); }

@@ -80,9 +80,9 @@
           {
             rotulo: "Contratos",
             legado: {
-              html: "Modulos/Comercial/Contratos/contratos.html",
-              js: "Modulos/Comercial/Contratos/contratos.mjs",
-              css: "Modulos/Comercial/Contratos/contratos.css",
+              html: "Modulos/Comercial/Contratos/contratos.html?v=20261122-regras-formatar",
+              js: "Modulos/Comercial/Contratos/contratos.mjs?v=20261122-regras-formatar",
+              css: "Modulos/Comercial/Contratos/contratos.css?v=20261122-regras-formatar",
             },
           },
           { rotulo: "Pós-venda", href: "Modulos/Chiavari/Feedback/feedback.html" },
@@ -127,12 +127,19 @@
         icone: "truck",
         rotulo: "Logística",
         itens: [
+          {
+            rotulo: "Cadastros",
+            grupo: [
+              { rotulo: "Caminhões", href: "Modulos/Logistica/cadastro-caminhoes.html" },
+              { rotulo: "Free", href: "Modulos/Logistica/cadastro-prestadores.html?tipo=free" },
+              { rotulo: "Uber", href: "Modulos/Logistica/cadastro-prestadores.html?tipo=uber" },
+            ],
+          },
           { rotulo: "Painel Logístico", href: "Modulos/Logistica/PainelLogistico/painel-logistico.html" },
           { rotulo: "Rastreamento", href: "Modulos/Logistica/Rastreamento/rastreamento.html" },
           { rotulo: "Câmeras ao vivo", href: "Modulos/Logistica/Cameras/cameras.html" },
           // Triagem era categoria própria; com o menu no topo foi para dentro de Logística (pedido do usuário).
           { rotulo: "Triagem", href: "Modulos/Estoque/SeparacaoMateriais/separacao-materiais.html" },
-          { rotulo: "Fretes", href: "Modulos/Chiavari/Fretes/gestao-fretes.html" },
           { rotulo: "Controle de Uber", href: "Modulos/Chiavari/Uber/index.html" },
           { rotulo: "Expedição", href: "Modulos/Logistica/Expedicao/expedicao.html" },
         ],

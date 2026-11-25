@@ -16,6 +16,7 @@
   function origemHtml(r) {
     if (r.origem === "separacao") return "Separação" + (r.motivo && /pedido\s+(\S+)/i.test(r.motivo) ? " · pedido " + esc(r.motivo.match(/pedido\s+(\S+)/i)[1]) : "");
     if (r.origem === "inventario") return "Inventário";
+    if (r.origem === "avulsa") return "Depósito" + (r.motivo ? "<small>" + esc(r.motivo.replace(/ · encontrado no depósito$/, "")) + "</small>" : "");
     return (r.pedido ? '<span class="sq-ped">' + esc(r.pedido) + "</span> " : "") + esc(r.cliente || "") + '<small>' + (r.origem === "coleta" ? "Coleta / App" : "Triagem da volta") + "</small>";
   }
   async function fotos(lista) {
@@ -133,6 +134,17 @@
     nav.innerHTML = '<button type="button" role="tab" data-sq-aba="triagem" aria-selected="true">Triagem</button>' +
       '<button type="button" role="tab" data-sq-aba="qualidade" aria-selected="false">Controle de qualidade <span class="tab-badge" id="sqBadge" hidden></span></button>';
     header.prepend(nav);
+    if (window.EasyLocEnviarManutencao) {
+      const enviar = document.createElement("button");
+      enviar.type = "button"; enviar.id = "sqEnviarManutencao"; enviar.className = "sq-enviar";
+      enviar.textContent = "Peça danificada? Falar com o Marcos";
+      enviar.title = "Peça danificada encontrada no depósito, fora de um pedido";
+      enviar.onclick = async () => {
+        if (!S.empresa) return avisar("Aguarde a tela terminar de carregar.");
+        await window.EasyLocEnviarManutencao.abrir({ sb: S.sb, empresa: S.empresa, aoEnviar: () => (S.aba === "qualidade" ? pintar() : carregar()).catch(() => {}) });
+      };
+      nav.append(enviar);
+    }
     const sec = document.createElement("section");
     sec.id = "sqQualidade"; sec.className = "sq-qualidade"; sec.hidden = true;
     board.after(sec);

@@ -8,6 +8,7 @@ import { esquemaMontagem, sistemaMontagem, validarMontagem } from '../_shared/mo
 // transcrever {empresa_id, audio: dataURL}. Só a equipe logada (vínculo + funcionário ativo + 2FA). Nada é guardado aqui.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { esquemaSeparacao, sistemaSeparacao, validarSeparacao } from "../_shared/separacao-assistente.mjs";
+import { IDENTIDADE_ESTOQUE } from "../_shared/estoque-identidade.mjs";
 import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
 
 const corsHeaders = {
@@ -259,7 +260,7 @@ async function conversar(nome: string, body: any) {
     return { role: "user", content: [{ type: "text", text: legenda }, ...usar.map((u: string) => ({ type: "image_url", image_url: { url: u, detail: ["separacao","montagem"].includes(tipo) ? "high" : "low" } }))] };
   }).reverse().filter((m: any) => typeof m.content !== "string" || m.content.trim());
   const sistemaBase = tipo === "montagem" ? sistemaMontagem(nome,body.contexto_validado) : tipo === "separacao" ? sistemaSeparacao(nome,body.contexto_validado) : tipo === "compra" ? SISTEMA_COMPRA(nome) : SISTEMA_MANUTENCAO(nome);
-  const sistema=sistemaBase+await instrucoesEmpresa(body.empresa_id,tipo);
+  const sistema=sistemaBase+await instrucoesEmpresa(body.empresa_id,tipo)+(tipo==='separacao'?'\n'+IDENTIDADE_ESTOQUE:'');
   const r = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },

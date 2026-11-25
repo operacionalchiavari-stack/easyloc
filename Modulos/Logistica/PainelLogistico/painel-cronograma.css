@@ -1,4 +1,10 @@
 /* A primeira área é o cronograma editável; as demais abas mantêm o layout próprio. */
+.pl-rh-aviso{display:block;color:#963e38!important;background:#fceeed;padding:5px 7px;border-radius:6px;font-size:11px;line-height:1.4}
+.pl-escolha-card:disabled{cursor:not-allowed;border-color:#e7bebb!important;background:#fdf3f2!important;opacity:.8}
+.pl-crono-tabela [data-crono-situacao="montagem"]{--pl-situacao-fundo:#dbeafe}
+.pl-crono-tabela [data-crono-situacao="desmontagem"]{--pl-situacao-fundo:#ede9fe}
+.pl-crono-tabela [data-crono-situacao="pre-reserva"]{--pl-situacao-fundo:#fef3c7}
+html:root:is(#plc#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tbody>tr.crono-tabela-linha[data-crono-situacao]>td:is([data-col="Data"],[data-col="Pedido"]){background:var(--pl-situacao-fundo)!important}
 html:root body .pl-page #plAbasDias{display:none!important}
 html:root body .pl-page #plDias{display:block!important;min-width:0;overflow:visible}
 html:root body .pl-page #plCronogramaEquipe{min-width:0;overflow-anchor:none}
@@ -86,6 +92,11 @@ html:root .pl-escala-dialog .pl-info-supervisor{margin-top:8px;min-width:0}
 
 /* Ajustes na própria célula; iniciais identificam pessoas e a silhueta indica vaga. */
 .pl-crono-hora{display:block;margin-top:4px;color:#63758b;font-weight:400}
+html:root body .pl-page .pl-crono-confirmacao{display:flex;align-items:flex-start;gap:4px;width:fit-content;max-width:100%;box-sizing:border-box;margin-top:7px;padding:4px 6px;border-radius:6px;background:#fff5e5;color:#8b601d;font:500 11px/1.35 Inter,Arial,sans-serif;white-space:normal;text-align:left}
+.pl-crono-confirmacao>span{flex:0 0 auto}
+html:root body .pl-page .pl-crono-confirmacao[data-confirmacao-comercial="confirmado"]{background:#e9f5ed;color:#256744}
+html:root body .pl-page .pl-crono-confirmacao[data-confirmacao-comercial="alterado"]{background:#fff0e8;color:#974c27}
+html:root body .pl-page .pl-crono-confirmacao[data-confirmacao-comercial="indisponivel"]{background:#edf0f3;color:#63758b}
 .pl-inline-equipe{display:grid;gap:8px;min-width:0}
 html:root body .pl-page .pl-inline-editar{position:relative;min-width:0;margin:0}
 .pl-inline-editar>summary{display:flex;align-items:center;min-width:0;gap:5px;list-style:none;cursor:pointer;border-radius:7px;padding:3px 0}
@@ -136,7 +147,10 @@ html:root body .pl-page .pl-escolha-painel input{width:260px;min-width:0;max-wid
 html:root body .pl-page .pl-escolha-painel [data-fechar-escolha]{width:32px;height:32px;flex:0 0 32px;margin:0;padding:0;border:0;background:transparent;color:#718398;font-size:26px;cursor:pointer;box-shadow:none}
 .pl-escolha-abas{display:flex;gap:8px;margin:18px 0 12px;flex-wrap:wrap}
 html:root body .pl-page .pl-escolha-abas button{padding:8px 14px;margin:0;border:1px solid #dbe4ee;border-radius:8px;background:#fff;color:#526b88;font:500 14px Inter,Arial,sans-serif;letter-spacing:0;text-transform:none;cursor:pointer}
-html:root body .pl-page .pl-escolha-abas button[aria-pressed="true"]{background:#edf5f0;border-color:#a9cfb9;color:#226744}
+html:root body .pl-page .pl-escolha-abas button:is([aria-pressed="true"],[aria-selected="true"]){background:#edf5f0;border-color:#a9cfb9;color:#226744}
+.pl-escolha-abas button:focus-visible{outline:2px solid #57936f;outline-offset:2px}
+dialog.pl-escolha-flutuante>.pl-escolha-abas{flex:0 0 auto;gap:6px;margin:14px 0 0}
+@media(max-width:480px){html:root body .pl-page .pl-escolha-abas button{flex:1;padding:8px 6px;font-size:13px}}
 .pl-escolha-grade{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;max-width:960px;margin:0 auto;min-width:0}
 html:root body .pl-page .pl-escolha-card{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:7px;min-width:0;padding:18px 10px;margin:0;border:1px solid transparent;border-radius:12px;background:#fff;color:#243951;font:400 14px/1.4 Inter,Arial,sans-serif;text-align:center;text-transform:none;letter-spacing:0;cursor:pointer;box-shadow:none;transition:background .15s,border-color .15s}
 html:root body .pl-page .pl-escolha-card:hover{background:#f2f7f4;border-color:#bad5c5}
@@ -224,8 +238,19 @@ html:root body .pl-page #cronogramaTabela dialog.pl-escolha-flutuante .pl-escolh
 html:root body .pl-page #cronogramaTabela dialog.pl-escolha-flutuante .pl-escolha-card>*{flex-shrink:0}
 html:root body .pl-page #cronogramaTabela dialog.pl-escolha-flutuante .pl-escolha-card:hover{border-color:#bad5c5}
 
-html:root body .pl-page table.pl-crono-tabela button.pl-inline-escolher.pl-inline-foto{display:inline-flex;width:auto;min-width:0;flex:0 0 auto;padding:0;margin:0;border:0;border-radius:50%;line-height:1;vertical-align:middle}
+html:root:is(#plc#plc#plc,html) body .pl-page table.pl-crono-tabela button.pl-inline-escolher.pl-inline-foto{position:relative;display:inline-flex;align-items:center;justify-content:center;width:auto;min-width:48px;min-height:48px;flex:0 0 auto;box-sizing:border-box;padding:4px;margin:0;border:1px solid #a7bfd7!important;border-radius:12px;background:#edf4fb!important;line-height:1;vertical-align:middle;overflow:visible;cursor:pointer;box-shadow:0 1px 2px #24395112}
 .pl-inline-escolher.pl-inline-foto::after{display:none}
+html:root:is(#plc#plc#plc,html) body .pl-page table.pl-crono-tabela button.pl-inline-escolher.pl-inline-foto:hover,
+html:root:is(#plc#plc#plc,html) body .pl-page table.pl-crono-tabela button.pl-inline-escolher.pl-inline-foto[aria-expanded="true"]{background:#dceaf7!important;border-color:#547da6!important}
+html:root body .pl-page .pl-inline-lapis{position:absolute;right:-3px;bottom:-3px;display:grid;place-items:center;box-sizing:border-box;width:21px;height:21px;border:2px solid #fff;border-radius:7px;background:#365f88;color:#fff;pointer-events:none}
+html:root body .pl-page .pl-inline-lapis svg{display:block;width:12px;height:12px;fill:none;stroke:currentColor}
+html:root:is(#plc#plc#plc,html) body .pl-page table.pl-crono-tabela button.pl-inline-escolher:not(.pl-inline-foto){width:auto;min-height:34px;gap:10px;padding:6px 10px;border:1px dashed #9eb8d0!important;border-radius:8px;background:#f0f6fc!important;color:#365f88;font-weight:500;cursor:pointer}
+html:root:is(#plc#plc#plc,html) body .pl-page table.pl-crono-tabela .pl-inline-escolher .pl-inline-adicionar{padding:0;color:inherit;font:inherit}
+html:root:is(#plc#plc#plc,html) body .pl-page table.pl-crono-tabela .pl-inline-uber>summary{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:3px 6px;min-height:44px;padding:6px;box-sizing:border-box;border:1px solid #a7bfd7;border-radius:8px;background:#edf4fb;color:#365f88;cursor:pointer}
+.pl-inline-uber-acao{font-size:11px;font-weight:500}
+html:root:is(#plc#plc#plc,html) body .pl-page table.pl-crono-tabela .pl-inline-uber>summary:hover{background:#dceaf7;border-color:#547da6}
+html:root:is(#plc#plc#plc,html) body .pl-page table.pl-crono-tabela .pl-inline-escolher:focus-visible,
+html:root:is(#plc#plc#plc,html) body .pl-page table.pl-crono-tabela .pl-inline-uber>summary:focus-visible{outline:2px solid #365f88;outline-offset:3px}
 
 /* Data/horário e pedido/etapa centralizados nas respectivas colunas. */
 html:root:is(#plc#plc#plc,html) .pl-page table.pl-crono-tabela .crono-tabela-linha>td:is([data-col="Data"],[data-col="Pedido"]){text-align:center!important;vertical-align:middle!important}
@@ -244,3 +269,73 @@ html:root:is(#plc#plc#plc,html) .pl-page #cronogramaTabela .crono-dia-titulo em{
 .pl-crono-dia-orn::after{content:"";position:absolute;top:50%;width:5px;height:5px;background:#b99a72;transform:translateY(-50%) rotate(45deg)}
 .pl-crono-dia-orn:first-child::after{right:-2px}.pl-crono-dia-orn:last-child::after{left:-2px}
 @media(max-width:760px){html:root body .pl-page #cronogramaTabela .crono-dia-cabecalho{padding:14px 10px;gap:12px}html:root:is(#plc#plc#plc,html) .pl-page #cronogramaTabela .crono-dia-titulo{font-size:22px!important}.pl-crono-dia-orn{flex-basis:24px;min-width:10px}}
+
+/* Linha de cada data com fundo neutro e suave, para dividir os dias (21/11/2026). */
+html:root:is(#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table .crono-tabela-dia th{background:#eef1f4!important;border-top:1px solid #dde3e9!important;border-bottom:1px solid #dde3e9!important}
+html:root:is(#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela .crono-dia-cabecalho{background:transparent!important}
+/* Título da data em fonte comum do sistema (21/11/2026). */
+html:root:is(#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela .crono-dia-titulo{font:600 16px/1.3 Inter,system-ui,sans-serif!important;letter-spacing:0!important;color:#2b3036}
+html:root:is(#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela .crono-dia-cabecalho{padding:11px 16px!important}
+@media(max-width:760px){html:root:is(#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela .crono-dia-titulo{font-size:15px!important}}
+/* Fotos da tabela um pouco maiores (21/11/2026). */
+html:root:is(#plc#plc#plc#plc,html) body .pl-page table.pl-crono-tabela .crono-tabela-avatar,
+html:root:is(#plc#plc#plc#plc,html) body .pl-page table.pl-crono-tabela .pl-vaga-avatar{width:48px!important;height:48px!important;flex:0 0 48px!important;font-size:14px!important}
+html:root:is(#plc#plc#plc#plc,html) body .pl-page table.pl-crono-tabela .pl-vaga-avatar svg{width:28px;height:28px}
+html:root:is(#plc#plc#plc#plc,html) body .pl-page table.pl-crono-tabela .pl-crono-cam .crono-tabela-avatar{width:40px!important;height:40px!important;flex-basis:40px!important}
+/* Títulos das colunas, bem finos, logo abaixo de cada data (21/11/2026). */
+html:root:is(#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table .pl-crono-colunas td{padding:6px 16px!important;background:#e4eaf2!important;border-bottom:1px solid #d2dbe6!important;color:#7b8794!important;font:600 10.5px/1.3 Inter,system-ui,sans-serif!important;letter-spacing:.06em!important;text-transform:uppercase!important;vertical-align:middle!important}
+html:root:is(#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table .pl-crono-colunas td:nth-child(-n+2){text-align:center!important}
+@media(max-width:760px){html:root body .pl-page #cronogramaTabela .pl-crono-colunas{display:none!important}}
+/* Cada dia num card próprio, com espaço entre os dias (21/11/2026). */
+.pl-crono-espaco{display:none}
+@media(min-width:761px){
+ html:root:is(#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important}
+ html:root:is(#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table thead th{background:#fff!important}
+ html:root:is(#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tr.pl-crono-espaco{display:table-row}
+ html:root:is(#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tr.pl-crono-espaco>td{height:18px!important;padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important}
+ html:root:is(#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tbody tr:not(.pl-crono-espaco)>:first-child{border-left:1px solid #dfe4ea!important}
+ html:root:is(#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tbody tr:not(.pl-crono-espaco)>:last-child{border-right:1px solid #dfe4ea!important}
+ html:root:is(#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table .crono-tabela-dia>th{border-top:1px solid #dfe4ea!important;border-radius:14px 14px 0 0!important}
+ html:root:is(#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tbody>tr:last-child>td{border-bottom:1px solid #dfe4ea!important}
+ html:root:is(#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tbody>tr:last-child>td:first-child{border-bottom-left-radius:14px!important}
+ html:root:is(#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tbody>tr:last-child>td:last-child{border-bottom-right-radius:14px!important}
+}
+/* O espaço entre os cards mostra o fundo da página, não branco (21/11/2026). */
+@media(min-width:761px){
+ html:root:is(#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela,
+ html:root:is(#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela .crono-tabela-scroll,
+ html:root:is(#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table,
+ html:root:is(#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tbody,
+ html:root:is(#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tbody>tr,
+ html:root:is(#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tr.pl-crono-espaco>td{background:transparent!important;box-shadow:none!important}
+ html:root:is(#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tbody>tr.crono-tabela-linha>td{background:#fff!important}
+ html:root:is(#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tbody>tr.crono-tabela-linha:hover>td{background:#fafbfc!important}
+}
+/* Mais espaço entre os cards e faixa da data num tom que se destaca do fundo (21/11/2026). */
+@media(min-width:761px){
+ html:root:is(#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tr.pl-crono-espaco>td{height:30px!important}
+}
+html:root:is(#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table .crono-tabela-dia th{background:#e4eaf2!important;border-color:#d2dbe6!important}
+/* Títulos das colunas centralizados e em preto (21/11/2026). */
+html:root:is(#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table .pl-crono-colunas td,
+html:root:is(#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table thead th{text-align:center!important;color:#1f2020!important}
+/* Dias que passaram ficam escondidos; botão para ver (21/11/2026). */
+html:root body .pl-page .pl-crono-mais[hidden]{display:none!important}
+html:root:is(#plc#plc#plc,html) body .pl-page .pl-crono-passados{display:flex;align-items:center;gap:8px;margin:6px auto 0;padding:7px 16px;border:1px solid #d2dbe6;border-radius:999px;background:#fff;color:#1f2020;font:500 13px Inter,Arial,sans-serif;letter-spacing:0;text-transform:none;cursor:pointer;box-shadow:none}
+html:root:is(#plc#plc#plc,html) body .pl-page .pl-crono-passados::before{content:"↺";font-size:14px;color:#6b7d92}
+html:root:is(#plc#plc#plc,html) body .pl-page .pl-crono-passados[aria-pressed="true"]{background:#e4eaf2;border-color:#c3cfdc}
+html:root:is(#plc#plc#plc,html) body .pl-page .pl-crono-passados:hover{border-color:#9fb0c4}
+/* Cabeçalho de cima escondido: ficam só os títulos embaixo de cada data (21/11/2026).
+   O <thead> continua na tabela (dá a largura das colunas e é lido por leitor de tela), mas sem altura. */
+html:root:is(#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table thead th{position:static!important;height:0!important;padding:0!important;border:0!important;font-size:0!important;line-height:0!important;color:transparent!important;background:transparent!important;box-shadow:none!important;overflow:hidden}
+html:root:is(#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table thead tr{border:0!important;box-shadow:none!important}
+/* Sombra leve em volta de cada card de dia (21/11/2026). A tabela não aceita sombra no <tbody>,
+   então cada borda do card ganha a sua: em cima (faixa da data), nas laterais e embaixo (última linha). */
+@media(min-width:761px){
+ html:root:is(#plc#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table .crono-tabela-dia>th{box-shadow:0 -3px 10px -6px #1b2c402e!important}
+ html:root:is(#plc#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tbody tr:not(.pl-crono-espaco):not(.crono-tabela-dia)>:first-child{box-shadow:-5px 0 10px -7px #1b2c402e!important}
+ html:root:is(#plc#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tbody tr:not(.pl-crono-espaco):not(.crono-tabela-dia)>:last-child{box-shadow:5px 0 10px -7px #1b2c402e!important}
+ html:root:is(#plc#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tbody>tr:last-child>td{box-shadow:0 7px 12px -7px #1b2c4033!important}
+ html:root:is(#plc#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tbody>tr:last-child>td:first-child{box-shadow:-5px 0 10px -7px #1b2c402e,0 7px 12px -7px #1b2c4033!important}
+ html:root:is(#plc#plc#plc#plc#plc#plc,html) body .pl-page #cronogramaTabela table tbody>tr:last-child>td:last-child{box-shadow:5px 0 10px -7px #1b2c402e,0 7px 12px -7px #1b2c4033!important}
+}

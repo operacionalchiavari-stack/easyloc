@@ -55,11 +55,14 @@ const FOTO = process.env.FOTO;
     assert.ok(await page.locator('.ia-hero.is-alerta').count(), 'acima de 80% fica em alerta');
     assert.equal(await page.locator('#iaPlanoBtn').isHidden(), true, 'a empresa não muda a franquia');
     assert.doesNotMatch(hero, /Custo real/, 'custo real só para o dono');
-    assert.equal(await page.locator('.ia-agente').count(), 6, 'os 6 agentes do time aparecem sempre');
-    assert.equal(await page.locator('.ia-agente img').count(), 6, 'com a foto de cada um');
+    assert.equal(await page.locator('.ia-agente').count(), 7, 'os 7 agentes aparecem mesmo sem consumo');
+    assert.equal(await page.locator('.ia-agente img').count(), 7, 'com a foto de cada um');
     assert.ok((await page.locator('.ia-agente-foto').first().boundingBox()).width >= 120, 'foto grande');
-    assert.match(await page.locator('#iaOrigens').innerText(), /Helena[\s\S]*decoradores 600/);
-    assert.match(await page.locator('#iaOrigens').innerText(), /Outras funções com IA[\s\S]*3D e renderizações/);
+    const helena=await page.locator('[data-agente=helena]').innerText();
+    assert.match(helena,/renderizações 3D/);assert.match(helena,/1\.330/);assert.match(helena,/182/);assert.match(helena,/decoradores 810/);
+    assert.doesNotMatch(await page.locator('.ia-outros').innerText(),/3D e renderizações/);
+    assert.match(await page.locator('[data-agente=ideia]').innerText(),/Sofia[\s\S]*Recursos humanos/);
+    assert.match(await page.locator('[data-agente=montagem]').innerText(),/Luísa[\s\S]*Auxiliar de logística[\s\S]*Sem tarefas/);
     assert.match(await page.locator('h1').innerText(), /Time de agentes/i);
     assert.ok(await page.locator('.ia-dia').count() >= 28, 'um dia por coluna no gráfico');
     await page.locator('.ia-dia').nth(1).hover();
@@ -69,6 +72,12 @@ const FOTO = process.env.FOTO;
     assert.equal(await page.locator('#iaPDecoradores svg circle').count(), 2, 'uma fatia por decorador');
     assert.match(await page.locator('#iaHistorico').innerText(), /R\$\s*38,00/);
     if (FOTO) await page.screenshot({ path: FOTO, fullPage: true });
+    for(const width of [390,320]){
+      await page.setViewportSize({width,height:900});
+      assert.ok(await page.locator('.ia-agentes').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'time sem corte no celular');
+      assert.ok(await page.locator('.ia-agente-num').first().evaluate(el=>el.scrollWidth<=el.clientWidth+1),'valores legíveis dentro do card');
+    }
+    await page.setViewportSize({width:1440,height:1000});
     // responsável pelo sistema: vê o custo real e muda a franquia
     await page.evaluate(() => { window.__dono = true; return window.UsoIA.carregar(); });
     await page.locator('#iaPlanoBtn').waitFor();

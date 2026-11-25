@@ -656,6 +656,7 @@ function infoCadastro(rotulo, valor, icone){
       evento: row.tipo_evento || row.evento || row.nome_evento || "Evento",
       local: row.local_nome || row.local || row.endereco || "Local nao informado",
       data: row.data_evento || row.data_hora || row.data || row.created_at,
+      dataFim: row.data_evento_fim || "",
       entrega: row.data_entrega || "",
       coleta: row.data_coleta || "",
       fin: row.fin || null,
@@ -938,7 +939,7 @@ function infoCadastro(rotulo, valor, icone){
   async function abrirPreviewPedido(pedidoId){
     if(!pedidoId || !state.supabase || !state.empresaId) return;
     try{
-      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261118-fixo"); await carregarAvisosDocumento();
+      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261122-regras-formatadas"); await carregarAvisosDocumento();
       const { data: pedido, error } = await state.supabase.from("separacoes_pedidos").select("*")
         .eq("empresa_id", state.empresaId).eq("id", pedidoId).single();
       if(error || !pedido) throw error || new Error("Pedido não encontrado.");
@@ -1097,7 +1098,7 @@ function infoCadastro(rotulo, valor, icone){
 
   async function abrirPreviewProjetoCatalogo(pedido){
     try{
-      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261118-fixo"); await carregarAvisosDocumento();
+      apresentacaoModulo ||= await import("../Catalogo/projeto-apresentacao.mjs?v=20261122-regras-formatadas"); await carregarAvisosDocumento();
       const { data: projeto, error } = await state.supabase.from("projetos").select("*")
         .eq("empresa_id", state.empresaId).eq("id", pedido.projetoId).single();
       if(error || !projeto) throw error || new Error("Projeto não encontrado.");
@@ -1210,34 +1211,45 @@ function infoCadastro(rotulo, valor, icone){
   function abrirConfirmarDatas(p){
     const dlg = document.createElement("dialog");
     dlg.className = "central-confirmar-dialog";
-    const linha = (rotulo, data) => `<div><dt>${rotulo}</dt><dd>${data ? escapeHtml(formatDate(data)) : "—"}</dd></div>`;
+    let salvandoDatas = false;
+    const antes = { data_entrega: diaISO(p.entrega) || null, data_evento: diaISO(p.data) || null, data_evento_fim: diaISO(p.dataFim) || null, data_coleta: diaISO(p.coleta) || null };
+    const linha = (rotulo, nome, valor, bloqueado = false) => `<label class="central-confirmar-data"><span>${rotulo}</span><input type="date" name="${nome}" value="${escapeHtml(diaISO(valor))}" required${bloqueado ? ' disabled' : ''}></label>`;
     const tel = String(p.contato || "").replace(/\D/g, "");
     dlg.innerHTML = `<form method="dialog">
       <h2>Confirmar as datas · Pedido ${escapeHtml(p.numero)}</h2>
-      <p>Fale com <b>${escapeHtml(p.cliente)}</b>${p.contato ? ` (${escapeHtml(formatPhone(p.contato))})` : ""} e confira se as datas do pedido estão certas.</p>
-      <dl>${linha("Entrega", p.entrega)}${linha("Evento", p.data)}${linha("Coleta", p.coleta)}</dl>
+      <p>Fale com <b>${escapeHtml(p.cliente)}</b>${p.contato ? ` (${escapeHtml(formatPhone(p.contato))})` : ""} e ajuste as datas, se necessário, antes de confirmar.</p>
+      <div class="central-confirmar-datas">${linha("Entrega", "data_entrega", p.entrega)}${linha(p.dataFim ? "Início do evento" : "Evento", "data_evento", p.data, !!p.origemId)}${p.dataFim ? linha("Fim do evento", "data_evento_fim", p.dataFim, !!p.origemId) : ''}${linha("Coleta", "data_coleta", p.coleta, !!p.origemId)}</div>
+      ${p.origemId ? '<p>O evento e a coleta deste pedido extra acompanham o pedido principal.</p>' : ''}
       <label><span>Observação (opcional)</span><textarea rows="3" maxlength="1000" placeholder="Ex.: confirmado por WhatsApp"></textarea></label>
       <p class="central-confirmar-erro" role="alert" hidden></p>
       <footer>
         ${tel ? `<a class="btn btn-secondary" href="https://wa.me/${tel.length <= 11 ? "55" + tel : tel}" target="_blank" rel="noopener">WhatsApp</a>` : ""}
-        <button type="button" class="btn btn-secondary" data-mudar>As datas mudaram: abrir o pedido</button>
         <span></span>
         <button type="button" class="btn btn-secondary" data-cancelar>Cancelar</button>
-        <button type="button" class="btn btn-primary" data-ok>Datas confirmadas</button>
+        <button type="submit" class="btn btn-primary" data-ok>Salvar e confirmar datas</button>
       </footer></form>`;
     document.body.append(dlg);
     dlg.addEventListener("close", () => dlg.remove());
+    dlg.addEventListener("cancel", ev => { if(salvandoDatas) ev.preventDefault(); });
     dlg.querySelector("[data-cancelar]").addEventListener("click", () => dlg.close());
-    dlg.querySelector("[data-mudar]").addEventListener("click", () => { dlg.close(); abrirPedido(p.id, "editar"); });
-    dlg.querySelector("[data-ok]").addEventListener("click", async (ev) => {
-      const b = ev.currentTarget, erro = dlg.querySelector(".central-confirmar-erro");
-      b.disabled = true; erro.hidden = true;
+    dlg.querySelector("form").addEventListener("submit", async (ev) => {
+      ev.preventDefault();if(salvandoDatas)return;
+      const b = dlg.querySelector('[data-ok]'), erro = dlg.querySelector(".central-confirmar-erro");
+      const datas = Object.fromEntries(Object.keys(antes).map(nome => [nome, dlg.querySelector(`[name="${nome}"]`)?.value || null]));
+      erro.hidden = true;
+      if(!p.origemId && datas.data_entrega > datas.data_evento){erro.textContent = 'A entrega precisa ser no dia do evento ou antes.';erro.hidden = false;return;}
+      if(datas.data_evento_fim && datas.data_evento_fim < datas.data_evento){erro.textContent = 'O fim do evento precisa ser no dia do início ou depois.';erro.hidden = false;return;}
+      if(datas.data_coleta < (datas.data_evento_fim || datas.data_evento) || datas.data_coleta < datas.data_entrega){erro.textContent = 'A coleta precisa ser no último dia do evento e da entrega ou depois.';erro.hidden = false;return;}
+      salvandoDatas = true;b.textContent = 'Salvando…';
+      const campos = [...dlg.querySelectorAll('input,textarea,button')].filter(campo => !campo.disabled);
+      campos.forEach(campo => campo.disabled = true);
       try{
-        const { error } = await state.supabase.rpc("comercial_confirmar_datas_registrar", { p_empresa: state.empresaId, p_pedido: p.id, p_observacao: dlg.querySelector("textarea").value });
+        const { error } = await state.supabase.rpc("comercial_confirmar_datas_atualizar", { p_empresa: state.empresaId, p_pedido: p.id, p_datas: datas, p_antes: antes, p_observacao: dlg.querySelector("textarea").value });
         if(error) throw error;
-        await carregarConfirmacoes(); dlg.close(); aplicarFiltros();
-        avisar("Datas confirmadas.", "Confirmar datas", "sucesso");
-      }catch(e){ erro.textContent = e.message || "Não foi possível salvar."; erro.hidden = false; b.disabled = false; }
+        await carregarPedidos(); dlg.close();
+        avisar("Datas salvas e confirmadas.", "Confirmar datas", "sucesso");
+      }catch(e){ erro.textContent = e.message || "Não foi possível salvar."; erro.hidden = false; }
+      finally{salvandoDatas = false;campos.forEach(campo => campo.disabled = false);b.textContent = 'Salvar e confirmar datas';}
     });
     dlg.showModal();
   }

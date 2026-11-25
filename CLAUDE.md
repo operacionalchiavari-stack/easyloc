@@ -12580,3 +12580,376 @@ duas pastas: **Itens personalizáveis** (tecido e tinta, por categoria e item, c
 guardada sozinha (`guardarRender3d` em `studio-ai-engine/personalizacao-acervo.mjs` → RPC `comercial_render3d_salvar`,
 bucket `personalizacoes-ia`, pasta `<empresa>/_renders3d/`), com os móveis da cena no título e quem gerou. Migration
 `20261121000700_renderizacoes_3d.sql` (aplicada). Renderizações anteriores a esta data não foram guardadas.
+
+## Painel Logístico: aba "Luísa · IA" para o supervisor (21/11/2026)
+Antes de Freteiros (`data-modulo="luisa"`, permissão `logistica.planejamento.visualizar`). É a mesma Luísa do App do Montador,
+que colhe o relato de cada evento com a equipe (`montagem_relatos_ia`); aqui ela responde ao supervisor sobre as montagens.
+Tela `Modulos/Logistica/PainelLogistico/painel-luisa.{js,css}` (`window.PainelLuisa.iniciar`; conversa em
+`sessionStorage luisa_supervisor:<empresa>:<usuário>`, sugestões de perguntas, foto `assets/agentes/montagem.jpg`).
+Edge Function nova `logistica-assistente` (publicada, `verify_jwt=false`; login + 2FA + funcionário ativo; uso de IA na origem
+`montagem`): lê COM O LOGIN DE QUEM PERGUNTA as etapas de montagem/desmontagem dos últimos 120 dias e próximos 30, com
+pedido, cliente, local, escala, caminhão, observação e o relato da equipe, e responde com `gpt-4.1`
+(`LOGISTICA_ASSISTENTE_MODEL`). Não grava nada. Em 21/11 ainda não havia nenhum relato salvo pelas equipes.
+Também nesse dia, no Painel: dias com faixa neutra e card próprio, títulos das colunas embaixo de cada data (o cabeçalho de
+cima ficou sem altura), dias que passaram escondidos (botão "Ver dias que passaram") e Entrega/Coleta mais perto das abas.
+
+## Cabeçalho padrão dos chats de IA (21/11/2026)
+Pedido: em todos os chats de IA, a foto da IA fixa no topo, todos iguais, no estilo da Helena do catálogo (que não mudou).
+`styles/ia-chat-topo.css` (importado no `global.css` e linkado direto nas telas dos chats e nas do app): faixa `.ia-topo`
+na cor do menu (`--color-sidebar`; no app `--app-cor`), foto `.ia-topo-foto` com ponto verde, nome em serifa, papel
+"· online" e botões `.ia-topo-btn` em pílula à direita (só ícone no celular). Fica fora da área que rola. Aplicado em:
+Clara (`financeiro-clara.js`), Luísa (`painel-luisa.js`) — as duas com `.ia-chat-com-topo` + `.ia-chat-corpo` —, Miguel
+(`acervo-cora.js`), Carla/Marcos/assistentes da separação e montagem (`assistente-solicitacao.js`), Sofia
+(`ideia-premiada.html`) e os agentes do app (`agente.html`/`agente-chat.js`). **Chat de IA novo: usar esse cabeçalho.**
+Ajuste seguinte (21/11): fotos maiores (cabeçalho 60px, 88px de altura), conversa mais larga (Clara/Luísa até 1180px;
+Solicitações e Ideia com a coluna do chat maior e mais alta) e foto em cada mensagem: `js/ui/ia-chat-fotos.js` (incluído
+nas mesmas telas) observa as mensagens e põe a foto da IA (a do `.ia-topo`) e a de quem usa (avatar da conta
+`avatares/<empresa>/<usuário>.jpg`, senão iniciais) ao lado de cada balão (`.ia-linha`, `.ia-msg-foto`). Chat novo:
+incluir o script e acrescentar o seletor das mensagens em `ENVOLVER` (ou `SO_EU`, se a IA já tiver foto na mensagem).
+Ajuste seguinte (21/11): a faixa escura foi recusada ("muito escura, dá sensação de tela pequena"). A barra `.ia-topo`
+virou clara e discreta como no WhatsApp (fundo #fbfaf7, linha fina, foto 46px, nome 16px, "online" cinza, botões
+brancos), e o corpo de todos os chats (Carla/Marcos/separação/montagem, Sofia, Miguel; Clara e Luísa já eram) segue a
+Helena do pedido: fundo creme, balão da IA branco, o seu na cor do menu, campo em pílula. Tudo no fim de
+`styles/ia-chat-topo.css` (bloco "visual da Helena"). As fotos em cada mensagem continuam.
+
+## App do Montador: aba Equipe compacta, com abas e QR fixo (21/11/2026)
+Na etapa (montagem/desmontagem), a linha do Voltar mostra etapa · cliente · número do pedido numa linha só
+(`#etapaEtiquetas`, `.nav-cliente`); o bloco "Montagem do evento / cliente / local / data e hora" (`#etapaResumo`) saiu.
+"Atenção neste local" continua. Dentro da aba Equipe, `#eqAbas` (Equipe | Caminhões | Uber, `trocarAbaEquipe`,
+`#etapaColunas[data-eq]` decide o que aparece por CSS). Cada aba tem o QR code desenhado fixo na tela (`.eq-qr-caixa`,
+`desenharQr`): Equipe = presença dos freelancers (`MONT_qrVaga`, só quando a etapa tem free), Caminhões = freteiro
+(`MONT_freteQr`, só com frete de freteiro), Uber = motorista de cada vaga (`MONT_uberQr`). Atualizam a cada 45 s com a
+etapa aberta (`iniciarQrsFixos`); "Ampliar" abre o QR grande como antes. CSS no fim de `montador-evento.css`.
+
+## Fretes cobrados pelo relatório do App do Freteiro (21/11/2026; supera a Conciliação de Fretes)
+Pedido: o freteiro lança os fretes que fez **sem ver nada do sistema**, gera o PDF e envia; enviado, trava; o sistema confere;
+o que não bate ele explica (com a Luísa) e a Logística resolve; resolvido vai para Financeiro › Fechamentos de parceiros.
+Os freteiros só usam o App do Freteiro (o portal da transportadora `fretes.html` saiu da tela Fretes).
+- **Período** (Parâmetros › Logística e operação › "Frete, montagem e Uber" › "Período do relatório de fretes",
+  `carregarParametrosFretePeriodo` em `parametros-uber.js`): `empresa_logistica_regras.frete_periodo` {tipo semanal|quinzenal|mensal,
+  dia} (padrão semanal, sexta). `frete_periodo`/`frete_periodo_aberto`: o período anterior fica aberto enquanto não enviado e com frete
+  lançado ou anúncio feito; data fora do período aberto é recusada enquanto digita (tela) e no banco. Enviar só a partir do último dia.
+- **App** (`freteiro.html` menu "Meus fretes" → `freteiro-lancamentos.js/.css`, `window.FreteiroLanc`; os aceitos viraram "Fretes
+  aceitos"): lançar (data, saiu de, foi para, valor combinado, extras com motivo, observação), editar/apagar até enviar, PDF do período,
+  "Enviar relatório"; relatórios enviados com a situação de cada frete; divergência → "Explicar" (Luísa pela Edge Function
+  `freteiro-assistente`, que lê só o que ele lançou por `frete_lanc_contexto`, ou só texto).
+- **Banco** (migrations `20261121000800_frete_lancamentos.sql` e `…000900`, aplicadas e registradas): `frete_relatorios`,
+  `frete_lancamentos` (sem acesso direto; tudo por função). `frete_lanc_enviar` casa cada frete por data com os anúncios aceitos com
+  check-out do freteiro (valor igual primeiro): **só valor igual aprova** (ok); senão `divergente` (valor/sem_frete), e anúncio feito
+  que ele não lançou entra como linha `sistema` (nao_lancado). Sem divergência pendente, `frete_relatorio_finalizar` cria uma
+  `fin_pagar` por frete (origem frete, aguardando o fechamento do parceiro, fornecedor = o do freteiro, que passa a cobrar por
+  fechamento no período escolhido), o custo por pedido e as linhas já conferidas do `fin_fechamentos` em conferência (com o motivo da
+  divergência e da decisão).
+- **Ajuste (21/11)**: o lançamento tem **Caminhão** (obrigatório, já vem com o veículo do cadastro) e **Saiu de / Foi para pelo Google** (sugestões numa lista abaixo do campo, `AutocompleteService` + `Geocoder` via `google.maps.importLibrary`; guarda `origem_lat/lng`, `destino_lat/lng`); o campo de extras saiu (o banco ainda aceita). Migration `20261121001000`. Os relatórios enviados ficam numa tela própria do menu, **Relatórios enviados** (`App.ir("relatorios")`); "Meus fretes" só tem o período aberto. Freteiro de teste: `Scripts/teste-freteiro.sql` / `remover-teste-freteiro.sql` (celular 24997770001, senha 123456).
+- **Logística**: Painel Logístico › Freteiros › aba **Divergências** (bolinha também na aba do Painel): freteiro lançou × no sistema,
+  explicação, Aceitar / Corrigir valor / Recusar, sempre com motivo (`frete_div_lista`, `frete_div_resolver`).
+- **Apagados**: `conciliacao.html/.js` (o `conciliacao.css` continua, usado por `freteiros.html`), as abas Conciliação e Cadastro de
+  fretes da tela Fretes (ficam Fretes anunciados e Caminhões; `?exemplo=1` só se pedido) e os testes `fretes-exemplo-envio-browser.cjs`
+  e `fretes-unificados-browser.cjs`. `frete_viagens`/`frete_fechar` ficaram no banco, sem tela.
+- Teste: `RUN_FRETEIRO_LIVE=1 node tests/freteiro-lancamentos-live.cjs` (banco real, freteiro temporário apagado no fim).
+- **Próximo (pedido do usuário)**: o mesmo mecanismo para o Uber.
+
+## Ajustes de 22/11/2026 (App do Freteiro, chats de IA, Painel Logístico, Posição final e outros)
+- **App do Freteiro**: estrutura = Fretes disponíveis (o que a Chiavari publica) · Fretes aceitos (só o que ele confirmou e ainda
+  vai fazer; sem "aguardando pagamento"; tocar no frete abre o GPS até o local — `telaMinhas` em `freteiro.html`) · Meus fretes
+  (lançar o que fez, período aberto) · Relatórios enviados (lista de títulos; tocar abre o relatório com abas **Fretes** e
+  **Assistente** — a Luísa ajuda a explicar cada divergência, escolhida numa fileira de cartões) · **Meus veículos** (vários
+  caminhões; tabela `frete_veiculos`, RPCs `frete_veiculos_app/frete_veiculo_salvar/frete_veiculo_excluir`; o veículo do cadastro
+  entra sozinho como o primeiro; o lançamento escolhe o veículo, `frete_lancamentos.veiculo_id`, e o gatilho grava o nome em
+  `caminhao`). Migration `20261122000100`.
+- **Chats de IA iguais, sem bege**: fundo branco, resposta da IA em cinza suave `#f1f3f6`, a sua em azul suave `#e3ecf9`. O mesmo
+  bloco (`#iac`) está no fim de `ia-chat-topo.css`, `catalogo-assistente.css`, `app-agente.css` e `freteiro-lancamentos.css` —
+  mudar a cor = mudar nos quatro.
+- **Painel Logístico › Entrega/Coleta**: no cabeçalho escuro do documento, depois do decorador solicitante, o responsável da etapa
+  com foto; passar o mouse mostra a equipe inteira (`marcarResponsavel` em `entregas-coletas.js`;
+  `logistica_confirmacao_responsaveis` devolve `equipe`, migration `20261122000200`). A quantidade da lista não quebra mais ("40").
+- **Segunda contagem** (conferência): janela refeita (aviso âmbar, cartões leves, botão na cor principal) — bloco `#cfseg` no fim
+  de `conferencia.css`.
+- **Parâmetros › Logística e operação › Fluxo dos pedidos › "Enviar o pedido para a Posição final com divergência de contagem ainda
+  não concluída?"** (`empresa_fluxo_pedidos.posicao_com_divergencia`, padrão Sim; `pedido_posicao_divergencia_salvar`). Com "Não",
+  `pedido_fluxo_fila(...,'posicao_final')` esconde o pedido enquanto houver falta/sobra aberta em `operacao_ocorrencias` (do pedido ou
+  dos extras), via `pedido_posicao_bloqueada`. Migration `20261122000300`.
+- **Posição final**: parcela quitada com a linha verde (`tr.pf-quitado`); na lista, concluídos verdes e pendentes amarelos; decisão
+  do BV numa linha só.
+- Outros: Inventário e qualidade sem o título "Inventário geral · data" e a linha da 1ª contagem; Gestão de Pessoas sem as linhas do
+  título e das abas; busca de cliente do pedido com foto de 54px e "Cadastrar novo cliente" com círculo verde "+"; ambiente rápido
+  ganhou "Itens"; Almoxarifado › A separar com a foto do cliente do tamanho certo (`materiais-triagem.css`, `.mp-root`).
+
+## Peça danificada achada no depósito: conversa com o Marcos (22/11/2026)
+Pedido: "passando no depósito vi danificado, já envio" — e logo depois "não quero modal, quero um chat com o Marcos; ele identifica
+o dano pela foto, descreve, manda para o setor certo e vai perguntando até ter tudo; foto obrigatória porque é ela que aparece na O.S".
+Botão **"Peça danificada? Falar com o Marcos"** na Triagem de Materiais (ao lado das abas) e **"⚠ Achei uma peça danificada · falar
+com o Marcos"** no App da Triagem (tela da fila). Abre a conversa padrão (`js/ui/enviar-manutencao.js` → `EasyLocAssistenteSolicitacao`,
+que ganhou `cfg.funcao` para chamar outra Edge Function; resumo com CSS `.emc-*` no fim de `styles/avaria-setor.css`).
+- **Marcos** = Edge Function `avaria-setor` com `modo:"avulsa"` (`avaria-setor/marcos-avulsa.ts`; publicada; uso de IA na origem
+  `marcos`; também transcreve áudio). Ordem: pede a foto (sem foto nunca fecha, o servidor confere), descreve o dano pela foto,
+  acha o item com a ferramenta `buscar_itens` (lê `itens` com o login de quem conversa; kit não serve; o servidor só aceita o item
+  devolvido pela busca), quantidade (≤ estoque), onde estava (aceita "não sei") e o setor. Resumo → "Está certo, mandar para o setor".
+- Grava pela RPC `acervo_avaria_avulsa(p_empresa,p_item,p_quantidade,p_descricao,p_setor,p_fotos,p_local)` (migrations
+  `20261122000400` e `…000500`, aplicadas e registradas; `acervo_triagem_pode`; **exige pelo menos uma foto**): `acervo_retornos`
+  origem nova **`avulsa`** (sem pedido: bloqueia na hora) + O.S no setor (`acervo_os_abrir_`). Fotos no bucket
+  `solicitacoes-evidencias` (`<empresa>/<usuário>/`), guardadas em `evidencias` com o link público.
+- **A foto do dano aparece na O.S**: `acervo_ordens` devolve `foto_dano`/`fotos_dano` e `onde` = Depósito/Separação/Inventário/Retorno;
+  a tela de O.S (`os-operacao.js`) mostra a foto do dano no lugar da foto do item quando há. Controle de qualidade mostra "Depósito";
+  Central de Metas classifica como "Depósito" (`central-metas`, republicada).
+- Resumo do Marcos em cartão (`.emc`): item com foto, "O que o Marcos viu" (bege), quantidade e onde estava, "Vai para" o setor (azul).
+- **Tela de O.S** (`os-operacao.js`): foto do item 96px; clicar na foto ou no nome do item abre a foto grande no centro (fotos do dano
+  e depois a do item, setas/←→, Esc fecha); clicar no resto da linha continua abrindo "Serviço concluído / Passar para outro setor".
+  Quem enviou: sem cadastro de funcionário (ex.: administrador) aparece o nome da conta (`acervo_ordens` devolve
+  `solicitante_usuario` e cai em `usuarios.nome`, migration `20261122000600`) e a foto da conta (`avatares/<empresa>/<usuário>.jpg`;
+  se não existir, as iniciais).
+- Testes: `tests/enviar-manutencao-browser.cjs` (tela, servidor simulado) e `RUN_MARCOS_LIVE=1 node tests/marcos-peca-live.cjs`
+  (IA e banco reais, usuário temporário; apaga a O.S criada).
+
+## Ajustes de 22/11/2026 (O.S, Ordem de produção, Triagem, Compras)
+- **Ordem de produção**: a foto é a do item personalizado gravada no pedido (`origem.personalizacao_foto`, a mesma da
+  personalização escolhida no catálogo do pedido); sem ela, a foto do cadastro do item; a renderização do ambiente ficou só como
+  último recurso (ela pode mostrar outros móveis do ambiente — ex.: a estante saía com a foto da mesa de bolo). Foto da coluna
+  da direita centralizada. Teste `tests/producao-browser.cjs` com `personalizacao_foto` no fixture.
+- **Triagem**: o selo "Em produção" / "Confirmar recebimento" não corta mais (a coluna da direita do cartão de produção cresce
+  com o conteúdo; no QR ela tinha 150px fixos).
+- **O.S**: número da O.S antes da foto (abertas e concluídas); coluna Origem sem pedido mostra "Triagem" + Depósito/Inventário/
+  Separação (`htmlOrigemOS`).
+- **Compras › Necessidades operacionais**: foto de 96px (igual à O.S), com a foto do item personalizado do pedido
+  (`observacoes.projeto_comercial.dados.ambientes[].itens[].personalizacao_foto`, pelo item e nome da personalização); clicar
+  abre a foto grande (visor do `compras-fotos.js`).
+
+## Material de item personalizado → Almoxarifado → Compras, revisado (22/11/2026)
+Relato: "coloquei estante pintada no pedido, não gerou necessidade operacional; vinculei e nada aconteceu". Migration
+`20261122000700_personalizacao_materiais_compras.sql` (aplicada e registrada; testada antes numa transação desfeita):
+- **Vínculo morto**: a opção "Tinta branca" da cartela apontava para um material do almoxarifado antigo (`DEMO-SISTEMA-…`);
+  a compra da cartela achava que "já tinha material" e não pedia nada. `almox_material_valido()` só aceita material que existe;
+  os 4 vínculos mortos das cartelas foram apagados. Insumo fixo de personalização com vínculo morto não pode ficar sem material
+  (regra do cadastro): ele fica, e a Produção trata como "sem vínculo".
+- **Vincular depois não chegava à Ordem de produção**: `producao_materiais_revincular()` atualiza os materiais ainda não entregues
+  para o vínculo atual (cartela ou cadastro). Roda ao ligar na cartela/no cadastro (gatilhos) e ao atualizar a tela.
+- **Necessidade operacional** (`producao_compras_sincronizar(empresa)`, origem `op_faltando`): por material, soma o que falta
+  entregar dos pedidos Reservados (do mais próximo ao mais distante) contra o saldo do Almoxarifado; a diferença vira necessidade
+  por pedido + material (com pedido, cliente, local, item e personalização). Estoque passou a cobrir e não foi comprada: cancela
+  sozinha. Gatilhos: materiais da produção (por instrução), saldo do material, vínculo da cartela/cadastro.
+- **Tinta/tecido sem material** continua como necessidade da cartela (`aguardando_vinculo`), agora com os dados do pedido e na aba
+  **Necessidades operacionais** do Compras (botão de vincular na própria linha). Ligada (pelo Compras ou na cartela), passa a ser
+  conferida pela mesma conta do estoque (não duplica).
+- Testado: sem material → necessidade aguardando vínculo; ligar com 0 L → compra de 1,5 L; com 1 L → 0,5 L; com 5 L → nada.
+
+Mesmo dia: Central de Pedidos com a foto do cliente em 46px sem crescer a linha (margem negativa); Início, "Carinho para todos":
+recados soltos e espalhados pela área, sem colunas (posição sorteada com semente fixa e sem sobrepor, pelo bloco do fim de `js/ui/portalMural.js`; sem lugar, a área cresce para baixo e rola sem barra), cada um flutuando para um lado (`pm-solto`, fim de `portal-shell.css`).
+- **"Necessário em"** dessas compras = dia em que começa a primeira etapa da Ordem de produção do pedido (horário de São Paulo;
+  as etapas são calculadas de trás para frente a partir da entrega). Sem produção montada: entrega − 3 dias. Migration
+  `20261122000800` (aplicada e registrada). Visor de fotos do Compras (`.cs-visor`) não tinha CSS: agora a foto aparece inteira.
+- **Antecedência da personalização** (pedido: "com quantos dias de antecedência a personalização precisa começar… conta antes do
+  carregamento"): campo `personalizacoes.dias_antecedencia` no cadastro (Editar personalização, abaixo da observação). "Necessário
+  em" das compras do material = data do **carregamento** no cronograma (`operacao_etapas` tipo carregamento; sem ele, a entrega) −
+  esses dias (`pedido_data_material`; com várias personalizações, a maior antecedência); data já passada vira hoje. Sem dias
+  cadastrados: regra anterior. Mudar os dias atualiza as compras abertas (gatilho). O campo não altera a Ordem de produção
+  (`producao_cadastro_snapshot` ignora `dias_antecedencia`). Migrations `20261122000900` e `…1000`.
+- Ordens de produção: cartões da fila com a foto do decorador (`decorador-cards.js`, como Triagem/Expedição).
+- **Regras do pedido com formatação** (22/11/2026): em Contratos › Regras do pedido o campo virou o mesmo editor do contrato —
+  selecionar um trecho mostra a barra (negrito, itálico, cores). Grava o HTML limpo por `contratoMarkupParaHtml` em
+  `comercial_avisos_pedido.regras_pedido`. No documento do pedido (prévia, PDF, Central e link do cliente)
+  `regrasFormatadasHtml` (projeto-apresentacao.mjs) só deixa passar negrito, itálico, quebra de linha e cor (#rrggbb); o resto
+  vira texto. Regras antigas (texto puro) mantêm as quebras de linha.
+
+## Painel Logístico: Fretes, Free e Uber anunciados no mesmo formato (22/11/2026)
+Pedido: as três abas iguais, agrupadas por pedido como o A receber do Financeiro / Pagamento de Freelancer. `painel-anunciados.js/.css`
+(`window.PainelAnunciados.abrir('frete'|'free'|'uber')`, chamado por `painel-modulos.js`; a aba Fretes não abre mais `freteiros.html` no
+quadro, e `painel-servicos.js` ficou só para Divergências). Abas Próximos (hoje + 90 dias; bolinha = vagas sem confirmação) / Realizados
+(90 dias para trás) e busca. Por pedido: número (abre o pedido), foto do cliente, cliente, local, "N de M confirmados", total confirmado.
+Colunas: Etapa e horário (rowspan por vaga) · Freelancer/Motorista/Freteiro · Confirmou · QR Code (Lido/Não lido + "Abrir QR" com o
+código que troca a cada minuto) · Check-in · Check-out (Em andamento / Sem check-out) · Duração · Local do check-in (≤1 km verde, longe
+vermelho, ver no mapa satélite) · Valor. Vaga que ninguém aceitou = linha amarela "Vaga em aberto"; free escalado sem aceitar = "Aguardando".
+Banco (migration `20261122002010`, aplicada e registrada): `logistica_anunciados(p_empresa,p_tipo,p_inicio,p_fim)` e
+`logistica_anunciado_qr(p_empresa,p_tipo,p_id)` (permissão `logistica_servicos_autorizar`). Frete: distância medida até o destino do
+anúncio. Uber e freteiro não têm foto (iniciais).
+Correção (22/11): Free anunciados também mostra as etapas com free escalado no Painel sem vaga publicada no app ("Não publicado",
+migration `20261122002020`, aplicada e registrada). A aba Fretes só mostra anúncios de frete (caminhões de freteiro); caminhões da frota
+própria escalados não entram.
+
+## Free automático: a escala vira vaga no app quando o Comercial confirma as datas (22/11/2026)
+Pedido: o "Pedir free" sai do RH; tudo fica no Painel Logístico. A escala automática escolhe os free; quando o **Comercial confirma
+as datas** do pedido (`comercial_confirmacoes_datas` com as MESMAS datas atuais de entrega/evento/coleta) e falta no máximo N dias
+para a etapa, a vaga vai sozinha para o App do Freelancer. Esta regra exige a confirmação sempre, mesmo com
+"anunciar sem confirmação" ligado em `logistica_anuncios_config`.
+- **Parâmetros** (Painel Logístico › Parâmetros › categoria "Free automático", `js/logistica/free-parametros.js`, categoria em
+  `escala-parametros.js`): liga/desliga (nasce desligado), antecedência em dias, minutos de encontro antes da etapa, horas só para os
+  escalados, ponto de encontro padrão (vazio = local do evento) e diária por tipo de etapa (sem diária = não publica).
+- **Banco** (migration `20261122002030`, aplicada e registrada): `free_automacao_config`, `free_vagas.automatica`,
+  `free_automacao_parametros/_salvar/_rodar` e `free_automacao_processar(p_empresa)`. Cria a vaga modo PRIORIDADE com
+  `preferidos` = free escalados, `liberar_em` = agora + horas (depois abre para todos os aprovados), quantidade = escalados e líder =
+  responsável da etapa. Também acompanha as vagas automáticas (escalados mudaram → preferidos/quantidade). Etapa sem free e sem
+  ninguém confirmado → vaga cancelada. Roda pelo pg_cron `free-automatico` (5 min), pelo gatilho em `comercial_confirmacoes_datas`
+  e ao abrir a aba Free anunciados. Etapa de hoje cujo horário já passou não é publicada.
+- **Aprovação dos free**: Logística › Cadastros › Free (`cadastro-prestadores.html?tipo=free`). Pendentes vêm primeiro, com o selo
+  "Aguardando aprovação" e o contador na aba; Aprovar cadastro / Recusar (grava bloqueado) / Bloquear. Rota em `permissions.js` =
+  `logistica.planejamento.visualizar`. O RH (Gestão de Pessoas) fica só com o Pagamento de Freelancer; `equipe-free.html` não
+  tem mais entrada no sistema.
+- Ficha (Logística › Cadastros › Free/Uber, 22/11): topo com foto, nome, botões (+ Registrar ocorrência, Aprovar/Recusar/Bloquear)
+  e nota numa linha; abas **Dados** (o que o app pede no cadastro: nome, CPF e PIX mascarados, telefone com WhatsApp, foto, aceite,
+  datas; "Ver CPF e PIX completos" = Edge Function `free-protegido` `revelar_rh`, exige `rh.dados_sensiveis.ver` e registra; números de
+  trabalho, faltas e cancelamentos; próximos trabalhos confirmados) e **Histórico** (ocorrências da nota). RPC
+  `logistica_prestador_dados(p_empresa,p_tipo,p_pessoa)` (migration `20261122002040`, aplicada e registrada). A migration da outra
+  sessão `20261122001900` (nota e histórico) não tinha sido aplicada e foi aplicada/registrada em 22/11.
+
+## Frete automático em Parâmetros (22/11/2026)
+Painel Logístico › Parâmetros › categoria "Frete automático" (`js/logistica/frete-parametros.js`, categoria em `escala-parametros.js`).
+O card explica como o frete é anunciado e guarda três opções: liga/desliga, antecedência máxima em dias (vazio = sem limite) e
+"anunciar só depois que o Comercial confirmar as datas". Migration `20261122002050` (aplicada e registrada):
+`frete_automacao_config`, `frete_automacao_parametros/_salvar`, `pedido_datas_confirmadas`, e `frete_anuncios_sincronizar` com as
+três verificações só na criação de anúncio NOVO (anúncios já no app continuam). Sem configuração = comportamento de antes.
+- (22/11) Fretes anunciados também mostra os caminhões **terceirizados de transportadora** (`caminhoes.tipo='terceirizado'`, sem
+  freteiro) escalados na entrega/coleta: uma linha por pedido + direção ("Entrega · transportadora"), situação "Escalado", sem QR nem
+  check-in ("Sem app"). RPC `logistica_anunciados_transportadoras` (migration `20261122002060`, aplicada e registrada), juntada à
+  lista no `painel-anunciados.js`. Caminhão próprio continua fora. A janela de escolher caminhão da escala mostra "Próprio" ou
+  "Terceirizado · transportadora" (`vinculo` em `painel-logistico.js` → `painel-cronograma.js`).
+- (22/11) Painel Logístico › Divergências: os cartões viraram tabelas agrupadas por pedido (mesmo visual das abas de anunciados,
+  classes `pla-*`), com o resumo por serviço no cabeçalho (Frete / Montagem (free) / Uber) e uma linha por divergência: serviço e
+  tipo, pessoa e data, título + frase explicando o que houve (`explicarDiv` em `painel-servicos.js`), combinado, registrado e a ação
+  (Aceitar/Corrigir/Recusar no frete; Registrar tratamento nos outros). Pedido do frete vem de `registro.sistema`. Sem mudança no banco.
+
+## Divergências com os dois lados: Logística decide, parceiro explica, Financeiro e RH acompanham (22/11/2026)
+Fluxo pedido pelo usuário: supervisor revisa a escala → acompanha os anunciados → no fim do dia vê as Divergências e decide. O parceiro
+(freteiro, motorista do Uber, free) vê a divergência no app e explica. **A palavra final é do supervisor**; o Financeiro (frete e Uber,
+em Fechamentos de parceiros) e o RH (free, em Pagamento de Freelancer) acompanham as duas justificativas em tempo real.
+- **Tabela comum** `js/logistica/divergencias-tabela.js` (`window.DivergenciasTabela.html/lerFotos/explicar`, CSS `dvt-*` no fim de
+  `painel-anunciados.css`): agrupada por pedido, uma linha por divergência, com "Explicação do parceiro" e "Decisão do supervisor".
+  Logística passa `acoes` (botões); Financeiro e RH não (coluna Situação).
+- **Banco** (migration `20261122002070`, aplicada e registrada): `logistica_div_explicacoes` (explicação de Uber/free por chave; frete
+  continua em `frete_lancamentos.explicacao`); `logistica_divergencias_dados` (sem conferir permissão) usada por
+  `logistica_divergencias_lista` (Logística) e `divergencias_acompanhar(p_empresa,p_origens)` (Financeiro: frete/uber com
+  `financeiro.fluxo.visualizar`; RH: free com `rh.colaboradores.visualizar`; devolve também os relatórios de frete enviados em
+  conferência). `frete_div_lista` virou trava + `frete_div_dados` (criada por SQL dinâmico a partir da função antiga).
+  Apps: `free_app_divergencias/_div_explicar`, `uber_app_divergencias/_div_explicar` (sessão do app; `app_divergencias_minhas`).
+  `free_rh_enviar_financeiro` agora recusa diária com divergência aberta (a original virou `free_rh_enviar_financeiro_base`).
+- **Telas**: Financeiro › Fechamentos de parceiros ganhou o item "Divergências · frete e Uber" no topo da lista de parceiros
+  (abas Aguardando decisão / Decididas, relatórios em conferência, relê a cada 30 s); RH › Pagamento de Freelancer ganhou a aba
+  "Divergências" e a diária travada mostra um "!" vermelho no lugar da caixa de envio; App do Free ganhou a aba "Divergências";
+  App do Motorista ganhou "Divergências" no menu (com o número). Adaptador: `RH_divergencias`, `FREE_appDiv*`, `UBER_appDiv*`.
+- (22/11) Financeiro › Fechamentos de parceiros: ao escolher um parceiro, abas **Aguardando conciliar** e **Pagos**. Aguardando conciliar
+  mostra "Registrado pelo sistema" mesmo antes de o parceiro enviar o relatório: anúncios de frete aceitos pelo freteiro, fretes que ele
+  lançou sem existir no sistema, caminhões da transportadora escalados (sem valor) e contas a pagar ainda não pagas, com a coluna
+  **Situação** (Agendado / Aguardando o envio do relatório / Lançado no app, relatório não enviado / Divergência com a Logística /
+  Conferido · aguardando o fechamento / Aguardando a cobrança da transportadora / No contas a pagar). Embaixo continua o fechamento de
+  sempre (+ Novo fechamento, importar cobrança). Pagos = `fin_pagar` pagas do parceiro com data e forma da baixa. RPC
+  `fin_parceiro_movimentos(p_empresa,p_fornecedor)` (migration `20261122002080`, aplicada e registrada).
+  (22/11) Aguardando conciliar sem a coluna Serviço: Data · Pedido (Entrega/Coleta embaixo do número) · **Cliente com foto**
+  (`clientes_empresas.catalogo_logo_url`) e o local embaixo do nome · Caminhão (o informado no lançamento; senão o do freteiro; transportadora: código · placa; migration `20261122002100`) · Valor do sistema (azul) · Cobrado (laranja; fora da cor automática do
+  Financeiro, `.fe-val`) · Situação com o detalhe embaixo (qual divergência: valor diferente "cobrou R$ X a mais/a menos",
+  freteiro não lançou, frete cobrado que não está no sistema; ou o caminhão da transportadora). Migration `20261122002090`.
+  (22/11) Aguardando conciliar virou blocos por pedido/cliente no visual de Fretes anunciados (`pla-grupo`, CSS de `painel-anunciados.css`): cabeçalho com nº do pedido, foto, cliente, local, nº de fretes/divergências e totais Sistema × Cobrado; à parte "Fora do sistema" e "Contas a pagar".
+- **Frete lançado sempre de um pedido (22/11/2026)**: no App do Freteiro › Meus fretes › Lançar frete não se digita mais endereço nem data. Ele escolhe um cartão "Qual frete?" (só nº do pedido e endereço, sem o nome do cliente — migration `20261122002120`) com os pedidos reservados (aprovado/finalizado/enviado) que têm **entrega ou coleta dentro do período aberto** (`frete_lanc_opcoes`; coleta de pedido extra não entra, vai junto com o principal). O sistema preenche a data, a saída e a chegada (entrega = Galpão → local do evento com endereço e coordenadas do Cadastro de Locais; coleta = local → Galpão). Ficam o caminhão, o valor e a observação. `frete_lancamentos.pedido_id` / `direcao`; `frete_lanc_salvar` recusa pedido fora da lista; `frete_lanc_enviar` não envia com frete sem pedido ("Escolha o pedido de N frete(s)") e confere pelo **pedido + direção** com o anúncio aceito. O Google de endereços saiu do app. Migration `20261122002110`. Uber continua igual (a corrida já nasce do Painel). **Frete sem pedido = frete avulso (23/11)**: a Logística cadastra em Painel Logístico › Fretes › "+ Frete avulso" (freteiro aprovado, data, de onde, para onde, motivo, valor combinado; editar/cancelar com motivo enquanto o relatório não foi enviado). Tabela `frete_avulsos` (sem acesso direto; RPCs `logistica_fretes_avulsos/_frete_avulso_salvar/_cancelar`, permissão `logistica_servicos_autorizar`). No app ele aparece em "Qual frete?" como cartão roxo "Avulso" (só para o freteiro escolhido, dentro do período); `frete_lancamentos.avulso_id`. Na conferência o valor lançado é comparado com o combinado (igual = ok; diferente = divergência de valor); avulso não lançado entra como "não lançado". Financeiro › Fechamentos mostra o bloco "Fretes avulsos" (já antes de o freteiro lançar). Migration `20261123000100`.
+- **Fretes de teste da Transportes Caminho Certo (23/11/2026)**: freteiro "Transportes Caminho Certo" ligado ao fornecedor (celular 24997770002, senha 123456, `motivo='TESTE-FRETES-20261123'`), 12 fretes: semana 07–13/11 conferida e já no fechamento (4 contas a pagar), semana 14–20/11 com 3 que bateram, 2 com valor diferente, 1 não lançado e 1 cobrado fora do sistema (4 divergências na Logística), semana aberta com 1 feito, 1 agendado e 1 avulso. Criar: `Scripts/teste-fretes-caminho-certo.sql`; **apagar: `npx supabase db query --linked -f Scripts/remover-teste-fretes-caminho-certo.sql`**.
+  (23/11) As divergências de frete saíram do item separado: ficam na aba **Divergências** do próprio parceiro (entre Aguardando conciliar e Pagos, com o número em vermelho; o parceiro na lista da esquerda mostra "N divergências aguardando decisão"). `divergencias_acompanhar` devolve `fornecedor_id` em cada divergência de frete e em cada relatório (migration `20261123000200`). O item "Divergências · Uber" só aparece quando há divergência de Uber (Uber não tem parceiro).
+
+## Câmeras ao vivo das montagens (24/11/2026)
+Pedido: acompanhar as montagens em tempo real pela câmera do celular da equipe, num mosaico tipo central de segurança.
+- **Celular**: cartão **Câmera ao vivo** no app (`app_celular_modulos.camera` = `camera_pode_transmitir`: equipe de Montagem,
+  Supervisor de Montagem ou `logistica.planejamento.visualizar`) → `Modulos/Logistica/CameraApp/camera.{html,js,css}`. **Sem
+  escolher montagem** (pedido do usuário: "só ligar e pronto"): abre direto em "Ligar a câmera" (dicas + "Enviar o som também",
+  padrão sem som) e transmite em tela cheia (AO VIVO, tempo, "N pessoas assistindo", Trocar câmera, Som, Encerrar). O banco
+  (`camera_iniciar`, `p_etapa` opcional, migration `20261124000200`) liga sozinho a câmera a uma montagem/desmontagem de hoje em
+  que a pessoa está escalada (a mais perto da hora atual), só para mostrar o cliente no mosaico; sem isso fica "Câmera de <nome>".
+  `camera_etapas` ficou sem uso. Wake Lock mantém a tela acesa; voltando ao app, reabre a câmera se o celular a desligou; conexão
+  caída (painel recarregado) é solta em 8 s. Sair do app/bloquear a tela para a transmissão (limite do navegador).
+- **Logística › Câmeras ao vivo** (tela própria, `Modulos/Logistica/Cameras/cameras.{html,js,css}`, `window.PainelCameras`; rota
+  `logistica.planejamento.visualizar`; no começo foi uma aba do Painel Logístico e saiu de lá a pedido do usuário). Tela clara,
+  onde prevalece a imagem (o mosaico escuro "de segurança" foi recusado: "ficou muito preto"): só as câmeras no ar, cada uma do
+  maior tamanho que cabe na tela (`grade()`/`medir()` testam o nº de colunas que dá a imagem mais larga, recalcula ao
+  redimensionar), escolha **Horizontal (16:9) / Vertical (9:16)** (`localStorage cam_formato`), legenda branca embaixo da
+  imagem (cliente ou "Câmera de <nome>", pedido, local, quem filma), selo "Ao vivo · N min" e, no passar do mouse, ouvir o som,
+  salvar foto e ampliar (duplo clique também amplia; Esc volta). As que saíram do ar ficam numa linha discreta embaixo.
+- **Como funciona**: WebRTC direto celular → quem assiste (uma conexão por quadro; o celular baixa a qualidade com mais gente:
+  1,2 Mbps com 1, 0,8 com 2, 0,5 até 4). A sinalização passa pelo banco: `logistica_camera_sinais` (pedido/oferta/resposta/ice/
+  sair, só pela RPC `camera_sinal`, lida por Realtime + consulta a cada 3 s; apagados depois de 2 h) e `logistica_cameras`
+  (`camera_iniciar/ping/encerrar/painel`). Migration `20261124000100_logistica_cameras.sql` (aplicada e registrada).
+  **Pegadinha**: `sb.rpc(...)` só é enviado quando a resposta é aguardada (`then`/`await`); chamada "solta" nunca sai.
+- **ICE** em `js/core/camera-ice.js`: só STUN público. Em 4G de operadora que bloqueia conexão direta o quadro fica "Não foi
+  possível conectar": aí é preciso um servidor TURN (preencher `TURN` nesse arquivo).
+- Teste: `RUN_CAMERAS_LIVE=1 node tests/cameras-live.cjs` (banco e Realtime reais, câmera simulada do Edge; usuário e montagem
+  temporários apagados no fim; fotos em `outputs/cameras/`). Publicado em 24/11 (Pages + Vercel, junto com 26 commits de outras
+  conversas que estavam sem publicar; a Vercel subiu de uma cópia limpa do commit, sem o trabalho pela metade da pasta).
+
+### Câmera ao vivo nativa no app Android (25/11/2026)
+Pedido do usuário (prompt longo): transmitir com a tela apagada/bloqueada e enquanto usa outras telas. Feito no app Android que
+já existia (`android/`, Java + WebView + ponte `AcervoAndroid`), **sem Capacitor**. Documento completo (o que foi feito, como
+compilar/atualizar, testes e roteiro para o aparelho físico): `docs/camera-android.md`.
+- `CameraStreamService` (primeiro plano tipo camera; WebRTC nativo `io.github.webrtc-sdk:android:125.6422.07`; 480p/15 fps,
+  sem som; reduz com calor/bateria/mais gente assistindo; reconexão progressiva; câmera caída = imagem preta + "Câmera
+  indisponível"; wake lock só durante a transmissão). `CameraPreviewActivity` ("Ver a câmera"). Ponte: `camera:start/stop/
+  status/ver/ciente`, evento `acervo:camera`. Foto por campo de foto = pausa e volta; `getUserMedia` recusado enquanto transmite.
+- O serviço usa um **token do aparelho** (`camera_dispositivo_iniciar` → `camera_disp_ping/sinal/sinais/encerrar`), nunca a
+  sessão do site (refresh token rotativo). Migration `20261124000300` (aplicada): `logistica_cameras.origem/estado/telemetria/
+  motivo_fim`, `logistica_camera_config` (Qualidade, quem edita o planejamento), `logistica_camera_eventos`, `logistica_camera_acessos`.
+- Site: `Modulos/Logistica/CameraApp/camera-nativo.js` (só no app; navegador igual a antes), barra `js/app/camera-barra.js`
+  nas telas do app, sair da conta encerra; central com telemetria, estados, alertas e "Qualidade"; se conectou e não chegou
+  quadro em 8 s, a central reconecta (exceto câmera indisponível/pausada).
+- APK de teste: Actions › "APK Android de teste" (`gh workflow run android.yml --ref main`), artefato `acervo-android-teste`.
+  Teste: `RUN_CAMERAS_LIVE=1 node tests/cameras-nativo-live.cjs` (fonte de vídeo do "celular" é um canvas: a câmera simulada do
+  Edge sem janela para de gerar quadros quando a página fica em segundo plano). **Nada testado em aparelho físico.**
+- **Baixar o app pelo site (25/11)**: `instalar.html` mostra "Baixar para Android" com `downloads/chiavari.apk` (APK **assinado**
+  1.1.0, código 3, 20 MB — só ARM, `ndk.abiFilters`; gerado por "Android assinado" com `candidate=true`, sem Firebase). Liga pelo
+  campo novo `downloadReady` de `downloads/chiavari-android.json`; `ready` continua false (com true + notificationsReady o site
+  manda TODO Android para a instalação — é a migração definitiva, que espera o Firebase). Links: Ajustes do app (`#apBaixarAndroid`)
+  e Câmera ao vivo (`#cmBaixarApp`), só em Android pelo navegador sem o app. Versão nova: gerar o assinado, trocar o `.apk`,
+  subir versionCode/versionName/sha256/tamanho no JSON. Notificações do app só depois do `google-services.json` (Firebase).
+- **Imagem preta no Galaxy A57 (25/11)**: o aparelho capturava (15 fps) e conectava, mas o vídeo chegava preto: VP8 por
+  hardware do Exynos. 1.1.1 (código 4): oferta com H.264 na frente (`preferirCodec`, testada com a oferta real: o navegador
+  responde H.264) e encoder sem VP8 Intel/H264 High; **Qualidade › Codificação "Compatibilidade"** (`logistica_camera_config.
+  codificador`, migration `20261125000100`) = VP8 pelo processador, vale ao religar a câmera. Telemetria ganhou `luz` (brilho
+  médio 0–255 da imagem capturada; < 12 = "imagem muito escura na câmera"), `codec` e `codificador` (encoderImplementation).
+  **Ainda não confirmado no aparelho.** GitHub Pages ficou na 1.1.0 por falha do GitHub ("Fetching artifact metadata failed");
+  a Vercel (que o app usa) está na 1.1.1 — rodar `gh workflow run deploy-pages.yml --ref main` de novo.
+- **Exynos também preto em H.264 (25/11)**: com a 1.1.1 o encoder foi `c2.exynos.h264.encoder` e a central continuou preta
+  ("Ver a câmera" no celular mostrava a imagem). 1.1.2 (código 5): `codificadorExynos()` (MediaCodecList, nome com "exynos")
+  liga sozinho o modo compatibilidade (VP8 `libvpx` pelo processador). A config da Chiavari ficou em `codificador =
+  'compatibilidade'` (mudada direto no banco para teste); com a 1.1.2 pode voltar a "automatico". GitHub Pages segue falhando
+  ao publicar (GitHub); a Vercel está na 1.1.2.
+- **Imagem preta pela cópia da textura (25/11, 1.1.3, código 6)**: mesmo no modo compatibilidade a central seguia preta e a
+  telemetria `luz` dava 20–22 (preto = 16): a imagem já vinha preta antes do codificador, na cópia da textura da câmera para a
+  memória (o "Ver a câmera" desenha a textura direto na tela, por isso funcionava). A captura passou para `Camera1Enumerator(false)`
+  (quadros já em memória, NV21, sem essa cópia). Publicado na Vercel e no GitHub Pages. **Ainda não confirmado no aparelho**: se a
+  `luz` passar de ~40 numa cena iluminada e a central continuar preta, o problema estaria depois (codificador/rede).
+- **1.1.4/1.1.5 (25/11)**: a telemetria da 1.1.4 mostrou 816 quadros e 2 MB enviados ao painel com brilho 17 (preto). A medição de
+  brilho e a transmissão usam a mesma conversão textura → memória da placa de vídeo, e ela devolve preto nesse Samsung; o
+  "Ver a câmera" desenha a textura direto. A 1.1.5 não usa mais o capturador do WebRTC: `CameraMemoria.java` (Camera2 +
+  `ImageReader` YUV_420_888, cópia dos planos para `JavaI420Buffer`, rotação = orientação do sensor, pensado para o celular em
+  pé) entrega os quadros já em memória. Telemetria ganhou `quadros_enviados`, `bytes_enviados`, `tamanho_enviado`.
+  Camera1 (1.1.3) derrubava a câmera nesse aparelho: não voltar a ele. **Ainda não confirmado no aparelho.**
+- **Conferido de fora (25/11, 1.1.5)**: um espectador automático (Playwright como usuário temporário) abriu a central com a câmera
+  real do usuário no ar: conectou, 274 de 274 quadros decodificados (VP8, 640×480, sem perda) e a imagem chegou certa (TV e
+  notebook num quarto escuro; brilho baixo porque o ambiente estava escuro). Para diagnosticar a imagem de uma câmera em produção
+  sem depender de print: script de espectador com `getStats()` (inbound-rtp) e captura do `<video>` num canvas.
+- **1.1.6 (25/11)**: com a imagem chegando certa num espectador automático, no Edge do notebook do usuário seguia preta. Diferença do
+  navegador do celular (que funcionava): o app mandava o quadro deitado com o aviso de rotação (`urn:3gpp:video-orientation`) e o
+  navegador girava ao mostrar. `CameraMemoria` agora gira o quadro no celular (`YuvHelper.I420Rotate`) e manda rotação 0.
+  **Ainda não confirmado no notebook do usuário.**
+- **App 1.1.7 (25/11)**:
+  - **Bordas do celular**: o app (`MainActivity`) reservava o espaço das barras do Android e as páginas também
+    (`env(safe-area-inset-*)`), o que dava faixa branca em cima e o menu de baixo "subido". Agora, a cada página carregada,
+    `medirBordas()` mede se a página já reserva (env > 0) e só então tira a reserva do app (lembrado em
+    `prefs pagina_cuida_bordas`). Também pinta o fundo e os ícones da barra de cima pela `meta theme-color` (senão pela cor do
+    topo da página). Celular antigo, sem edge-to-edge, continua como antes.
+  - **Aviso de atualização**: `js/app/android-principal.js` mostra no topo, dentro do app, um cartão vermelho "Atualize o
+    aplicativo" quando `downloads/chiavari-android.json` tem `versionCode` maior que o instalado (`downloadReady`).
+    "Depois" esconde só nas telas internas e só nesta sessão; no `app.html` volta sempre.
+  - Faixa do topo do `app.html` compacta (50px, logo 28px).
+  - Câmeras ao vivo: contador e botões na linha do título (`levarParaTopo()`). O título continua primeiro no `<header>`,
+    porque o tema esconde o que vem antes dele.
+
+## Localização do app Android sempre ligada (25/11/2026, app 1.1.8)
+Pedido: "que funcionasse sempre, que nunca desconectasse". Achado: o celular do Jonatan estava registrado (hoje) mas a última
+posição no banco era de 08/11 — o app dizia "ativo" logo ao ligar o serviço, sem nunca saber se algo chegava.
+- **Banco** (migration `20261125000200_rastreamento_sempre_ligado.sql`, aplicada e registrada): `rastreamento_dispositivos`
+  ganhou `visto_em`, `estado`, `detalhe`, `telemetria`; RPC `rastreamento_dispositivo_ping(p_token,p_estado,p_detalhe,
+  p_telemetria)` (anon, pelo token do aparelho); `ping` e `enviar` renovam `expira_em` (+30 dias) — antes vencia e parava calado.
+- **`TrackingService`**: batimento a cada 60 s com o estado real (enviando, aguardando_gps, sem_leitura, gps_desligado,
+  sem_internet, erro_servidor, sem_autorizacao) e diagnóstico (bateria, GPS ligado, permissão "o tempo todo", fora da economia
+  de bateria, tela, idade do último envio/leitura); sem envio há 90 s pede uma leitura na hora (`getCurrentLocation`, senão a
+  última conhecida até 10 min); a volta da internet tenta na hora; wake lock só durante o envio.
+- **Volta sozinho**: `BootReceiver` (reiniciar o celular / atualizar o app) e `MainActivity.retomarLocalizacao()` ao abrir o app.
+- **Permissões**: ao ligar, pede "Permitir o tempo todo" (`ACCESS_BACKGROUND_LOCATION`) e tirar o app da economia de bateria;
+  em Ajustes aparece um aviso vermelho "Para a localização nunca parar" enquanto faltar algum dos dois (botão chama
+  `localizacao:reforcar`). Ajustes mostra "Última posição enviada às HH:MM" (status pedido a cada 30 s).
+- **Conferir de longe**: `select coalesce(f.nome,u.nome), d.estado, d.detalhe, d.visto_em, d.telemetria from
+  rastreamento_dispositivos d left join funcionarios_acesso f on f.id=d.usuario_id left join usuarios u on u.id=d.usuario_id`.
+- Limite: se o Android matar o app e ele não tiver "o tempo todo", o serviço não consegue voltar em segundo plano — volta ao
+  abrir o app (avisa por notificação). Não testado no aparelho ainda.

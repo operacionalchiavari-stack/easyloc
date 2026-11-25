@@ -1,0 +1,113 @@
+/* Cabeçalho padrão dos chats de IA (21/11/2026), inspirado na faixa da Helena do catálogo (.cas-head):
+   faixa na cor do menu da empresa, foto da IA com o ponto verde de "online", nome em serifa, papel embaixo e os
+   botões em pílula à direita. Fica SEMPRE no topo do chat: o cabeçalho fica fora da área que rola.
+   Usado por: Clara (Financeiro), Luísa (Painel Logístico), Miguel (Gestão do acervo), Carla, Marcos e os
+   assistentes da separação/montagem (assistente-solicitacao.js), Sofia (Ideia Premiada) e os agentes do app.
+   A Helena do catálogo tem o próprio (catalogo-assistente.css). Markup:
+   <header class="ia-topo"><span class="ia-topo-foto"><img data-ia-foto src="…"></span>
+     <div class="ia-topo-texto"><strong>Nome</strong><small><i class="ia-topo-dot"></i><span>Papel · online</span></small></div>
+     <div class="ia-topo-acoes"><button class="ia-topo-btn">…</button></div></header> */
+html:root:is(#iat#iat#iat#iat,html) .ia-topo{position:relative;z-index:2;display:flex!important;flex:none!important;align-items:center;gap:14px;box-sizing:border-box;width:100%;height:76px;min-height:76px;margin:0!important;padding:0 clamp(14px,2.2vw,32px)!important;border:0!important;border-radius:0;background:var(--ia-topo-cor,var(--app-cor,var(--color-sidebar,#5a5a55)))!important;color:#fff!important;box-shadow:0 2px 10px #0000001a;grid-template-columns:none}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo-foto{position:relative;display:block!important;flex:none;width:44px!important;height:44px!important;min-width:44px;border-radius:50%;background:#eeece8!important;box-shadow:0 0 0 2px #ffffff40!important}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo-foto img{display:block;width:100%!important;height:100%!important;border-radius:50%;object-fit:cover;object-position:center}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo-foto::after{content:"";position:absolute;right:-1px;bottom:0;width:11px;height:11px;border:2px solid var(--ia-topo-cor,var(--app-cor,var(--color-sidebar,#5a5a55)));border-radius:50%;background:#3f9a63}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo-texto{flex:1;min-width:0;line-height:1.2;overflow:hidden}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo-texto strong{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin:0;color:#fff!important;font:600 1.45rem/1.15 "Cormorant Garamond",Georgia,serif!important;letter-spacing:.02em!important;text-transform:none!important}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo-texto small{display:flex;align-items:center;gap:6px;min-width:0;margin-top:2px;color:#ffffffcc!important;font:400 .8rem/1.3 Inter,system-ui,sans-serif!important;white-space:nowrap}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo-texto small span{overflow:hidden;text-overflow:ellipsis}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo-dot{flex:none;width:7px;height:7px;border-radius:50%;background:#6fd497}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo-acoes{display:flex;flex:none;align-items:center;gap:8px}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo .ia-topo-btn{display:inline-flex!important;align-items:center;justify-content:center;gap:8px;height:40px;min-height:0;margin:0;padding:0 16px;border:1px solid #ffffff47!important;border-radius:999px!important;background:transparent!important;color:#fff!important;font:600 .8rem Inter,system-ui,sans-serif!important;letter-spacing:.03em;text-transform:none!important;text-decoration:none!important;cursor:pointer;box-shadow:none!important;white-space:nowrap}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo .ia-topo-btn[hidden]{display:none!important}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo .ia-topo-btn:is(:hover,:focus-visible){background:#ffffff24!important;outline:none}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo .ia-topo-btn.is-icone{width:40px;padding:0;border:0!important;font-size:22px!important;line-height:1}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo .ia-topo-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:760px){
+ html:root:is(#iat#iat#iat#iat,html) .ia-topo{height:64px;min-height:64px;gap:10px}
+ html:root:is(#iat#iat#iat#iat,html) .ia-topo .ia-topo-btn:not(.is-icone){width:40px;padding:0;border:0!important}
+ html:root:is(#iat#iat#iat#iat,html) .ia-topo .ia-topo-btn:not(.is-icone) span{display:none}
+}
+/* Chats de duas colunas (Clara, Luísa, Miguel): o cabeçalho vai em cima das duas e o corpo ocupa o resto. */
+html:root:is(#iat#iat#iat#iat,html) .ia-chat-com-topo{display:flex!important;flex-direction:column!important}
+html:root:is(#iat#iat#iat#iat,html) .ia-chat-com-topo>.ia-chat-corpo{display:flex;flex:1 1 auto;min-height:0;min-width:0}
+html:root:is(#iat#iat#iat#iat,html) .ia-chat-com-topo>.ia-chat-corpo>*{min-height:0}
+/* Miguel (Gestão do acervo): o cabeçalho fica no topo do cartão da conversa. */
+html:root:is(#iat#iat#iat#iat,html) .cora-chat{overflow:hidden}
+/* Agentes do app (agente.html): a seta de voltar fica à esquerda, a foto e o nome no meio. */
+html:root:is(#iat#iat#iat#iat,html) .ia-topo .ag-cab-quem{display:flex;flex:1;align-items:center;gap:12px;min-width:0}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo .ag-cab-quem small{color:#ffffffcc!important}
+html:root:is(#iat#iat#iat#iat,html) .ag-cab.ia-topo{height:auto;min-height:64px;gap:8px;padding:calc(env(safe-area-inset-top) + 8px) 8px 8px!important;border-bottom:0}
+
+/* Fotos maiores, conversa mais larga e foto em cada mensagem (21/11/2026; fotos colocadas por js/ui/ia-chat-fotos.js). */
+html:root:is(#iat#iat#iat#iat,html) .ia-topo{height:88px;min-height:88px}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo-foto{width:60px!important;height:60px!important;min-width:60px}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo-foto::after{width:13px;height:13px}
+html:root:is(#iat#iat#iat#iat,html) .ia-topo-texto strong{font-size:1.65rem!important}
+html:root:is(#iat#iat#iat#iat,html) .ia-linha{display:flex;align-items:flex-end;gap:12px;max-width:min(90%,1000px);min-width:0}
+html:root:is(#iat#iat#iat#iat,html) .ia-linha.is-ia{align-self:flex-start}
+html:root:is(#iat#iat#iat#iat,html) .ia-linha.is-eu{align-self:flex-end;flex-direction:row-reverse}
+html:root:is(#iat#iat#iat#iat,html) .ia-linha>:not(.ia-msg-foto){max-width:none!important;min-width:0;margin:0!important;align-self:auto!important}
+html:root:is(#iat#iat#iat#iat,html) :is(.ia-msg-foto,.cora-msg .cora-avatar,.ag-msg .ag-avatar){display:grid;place-items:center;flex:0 0 44px!important;width:44px!important;height:44px!important;border-radius:50%;overflow:hidden;background:#e4eaf2;color:#2b3036;font:600 15px Inter,system-ui,sans-serif;box-shadow:0 0 0 2px #fff,0 2px 6px #0f172a1f}
+html:root:is(#iat#iat#iat#iat,html) :is(.ia-msg-foto,.cora-msg .cora-avatar,.ag-msg .ag-avatar) img{display:block;width:100%!important;height:100%!important;object-fit:cover;border-radius:50%}
+html:root:is(#iat#iat#iat#iat,html) .ia-msg-foto b{font-weight:600}
+html:root:is(#iat#iat#iat#iat,html) :is(.cora-msg,.ag-msg){align-items:flex-end}
+/* Conversa ocupa mais a tela */
+html:root:is(#iat#iat#iat#iat,html) .ch-coluna{width:min(1180px,100%)}
+html:root:is(#iat#iat#iat#iat,html) section.as-dialog.as-inline{height:calc(100vh - 160px)}
+html:root:is(#iat#iat#iat#iat,html) .sl-layout{grid-template-columns:minmax(240px,.55fr) minmax(0,2fr);gap:32px}
+html:root:is(#iat#iat#iat#iat,html) .ideia-form-layout{grid-template-columns:minmax(240px,.55fr) minmax(0,2fr)!important;gap:32px!important}
+html:root:is(#iat#iat#iat#iat,html) .ideia-chat{height:calc(100vh - 170px)}
+@media(max-width:900px){
+ html:root:is(#iat#iat#iat#iat,html) .sl-layout,html:root:is(#iat#iat#iat#iat,html) .ideia-form-layout{grid-template-columns:1fr!important}
+ html:root:is(#iat#iat#iat#iat,html) section.as-dialog.as-inline,html:root:is(#iat#iat#iat#iat,html) .ideia-chat{height:72vh}
+}
+@media(max-width:760px){
+ html:root:is(#iat#iat#iat#iat,html) .ia-topo{height:68px;min-height:68px}
+ html:root:is(#iat#iat#iat#iat,html) .ia-topo-foto{width:48px!important;height:48px!important;min-width:48px}
+ html:root:is(#iat#iat#iat#iat,html) :is(.ia-msg-foto,.cora-msg .cora-avatar,.ag-msg .ag-avatar){flex-basis:34px!important;width:34px!important;height:34px!important;font-size:12px}
+ html:root:is(#iat#iat#iat#iat,html) .ia-linha{max-width:96%;gap:8px}
+}
+html:root:is(#iat#iat#iat#iat,html) .ag-cab.ia-topo{height:auto;min-height:68px}
+
+/* ===== 21/11/2026 (pedido seguinte): barra discreta e todos os chats com o visual da Helena do pedido =====
+   A faixa escura "deixava a tela pequena": a barra agora é clara (mesmo tom da área de escrever da Helena), com a foto,
+   o nome e "online" em cinza, como no WhatsApp. O corpo de todos os chats segue a Helena: fundo creme, balão da IA
+   branco, o seu na cor do menu, campo de escrever em pílula. Estas regras vêm por último e valem sobre as de cima. */
+html:root:is(#iat#iat#iat#iat#iat,html) .ia-topo{height:68px;min-height:68px;padding:0 clamp(14px,2.2vw,28px)!important;background:#fbfaf7!important;color:#2f2b27!important;border-bottom:1px solid #e8e1d6!important;box-shadow:none}
+html:root:is(#iat#iat#iat#iat#iat,html) .ia-topo-foto{width:46px!important;height:46px!important;min-width:46px;box-shadow:none!important}
+html:root:is(#iat#iat#iat#iat#iat,html) .ia-topo-foto::after{width:12px;height:12px;border-color:#fbfaf7}
+html:root:is(#iat#iat#iat#iat#iat,html) .ia-topo-texto strong{color:#2f2b27!important;font:600 16px/1.2 Inter,system-ui,sans-serif!important;letter-spacing:0!important}
+html:root:is(#iat#iat#iat#iat#iat,html) .ia-topo-texto small{color:#8a8178!important;font-size:12.5px!important}
+html:root:is(#iat#iat#iat#iat#iat,html) .ia-topo-dot{background:#3f9a63}
+html:root:is(#iat#iat#iat#iat#iat,html) .ia-topo .ia-topo-btn{height:36px;padding:0 14px;border:1px solid #e3dccf!important;background:#fff!important;color:#4a443e!important;font-weight:500!important;letter-spacing:0}
+html:root:is(#iat#iat#iat#iat#iat,html) .ia-topo .ia-topo-btn.is-icone{width:36px;border:0!important;background:transparent!important}
+html:root:is(#iat#iat#iat#iat#iat,html) .ia-topo .ia-topo-btn:is(:hover,:focus-visible){background:#f3efe8!important}
+html:root:is(#iat#iat#iat#iat#iat,html) .ia-topo .ag-cab-quem small{color:#8a8178!important}
+html:root:is(#iat#iat#iat#iat#iat,html) .ag-cab.ia-topo{height:auto;min-height:60px}
+@media(max-width:760px){html:root:is(#iat#iat#iat#iat#iat,html) .ia-topo{height:60px;min-height:60px}html:root:is(#iat#iat#iat#iat#iat,html) .ia-topo-foto{width:40px!important;height:40px!important;min-width:40px}}
+
+/* Corpo igual ao da Helena */
+html:root:is(#iat#iat#iat#iat#iat,html) :is(section.as-dialog,dialog.as-dialog,.ideia-chat,.cora-chat){background:#f4f1ec;border-color:#e8e1d6;font-family:Inter,system-ui,sans-serif;color:#2f2b27}
+html:root:is(#iat#iat#iat#iat#iat,html) :is(.as-dialog>.as-msgs,.ideia-chat-msgs,.cora-msgs){padding:28px clamp(16px,4vw,48px) 18px;gap:14px;background:radial-gradient(circle at 20% 0%,rgba(196,163,122,.10),transparent 42%),#f4f1ec}
+html:root:is(#iat#iat#iat#iat#iat,html) :is(.as-msg,.ideia-msg,.cora-balao){padding:12px 16px;border:0!important;border-radius:18px 18px 18px 6px;background:#fff;color:#2f2b27;box-shadow:0 1px 2px rgba(31,24,19,.06);font-size:1rem;line-height:1.55;overflow-wrap:anywhere}
+html:root:is(#iat#iat#iat#iat#iat,html) :is(.as-msg.pessoa,.ideia-msg.pessoa,.cora-msg.eu .cora-balao){border-radius:18px 18px 6px 18px;background:var(--color-sidebar,#5a5a55);color:#fff}
+html:root:is(#iat#iat#iat#iat#iat,html) :is(.as-msg,.ideia-msg) p{margin:0}
+html:root:is(#iat#iat#iat#iat#iat,html) .as-msg.erro{background:#fff6f5;color:#8a2a22}
+html:root:is(#iat#iat#iat#iat#iat,html) :is(.as-campo,.ideia-chat-campo,.cora-campo){margin:0;padding:12px clamp(14px,3vw,32px) 14px;border-top:1px solid #e8e1d6;background:#fbfaf7}
+html:root:is(#iat#iat#iat#iat#iat,html) :is(.as-campo,.ideia-chat-campo,.cora-campo) textarea{min-height:48px;padding:13px 18px;border:1px solid #e3dccf!important;border-radius:24px!important;background:#fff;color:#2f2b27;font:400 1rem/1.45 Inter,system-ui,sans-serif;resize:none;box-shadow:none}
+html:root:is(#iat#iat#iat#iat#iat,html) :is(.as-campo,.ideia-chat-campo,.cora-campo) textarea:focus{outline:none;border-color:#b18a5a!important}
+html:root:is(#iat#iat#iat#iat#iat,html) :is(.as-enviar,.ideia-chat-enviar,.cora-campo [data-cora-enviar]){width:48px;height:48px;min-width:48px;padding:0;border:0;border-radius:50%;background:var(--el-button-primary-bg,#7d603d)!important;color:#fff!important;font-size:0}
+html:root:is(#iat#iat#iat#iat#iat,html) .cora-campo [data-cora-enviar]::before{content:"➤";font-size:17px}
+html:root:is(#iat#iat#iat#iat#iat,html) :is(.cora-dica,.as-rodape){background:#fbfaf7;color:#a39a8f;font-size:.75rem}
+html:root:is(#iat#iat#iat#iat#iat,html) .ch-coluna{width:min(960px,100%)}
+
+/* 22/11/2026 — Todos os chats de IA iguais, sem fundo bege (pedido do usuário): fundo branco, resposta da IA num cinza suave
+   e a sua mensagem num azul suave, os dois com texto escuro. Vale para Helena, Clara, Luísa, Miguel, Carla, Marcos, Sofia,
+   assistentes do app e do App do Freteiro. Mudar aqui muda em todos (o mesmo bloco está em ia-chat-topo.css,
+   catalogo-assistente.css, app-agente.css e freteiro-lancamentos.css). */
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.ch-tela,.ch-msgs,.cas-msgs,.cas-conversa,.ag-msgs,section.as-dialog,dialog.as-dialog,.ideia-chat,.cora-chat,.as-dialog>.as-msgs,.ideia-chat-msgs,.cora-msgs,.fl-luisa,.fl-msgs){background:#fff!important;background-image:none!important;border-color:#e6e9ee!important}
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.ch-bubble,.cas-bubble,.ag-msg.ia .ag-balao,.as-msg,.ideia-msg,.cora-balao,.fl-msg.ia){background:#f1f3f6!important;color:#1f2328!important;box-shadow:none!important;border:0!important}
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.is-eu .ch-bubble,.is-eu .cas-bubble,.ag-msg.eu .ag-balao,.as-msg.pessoa,.ideia-msg.pessoa,.cora-msg.eu .cora-balao,.fl-msg.eu){background:#e3ecf9!important;color:#1f2a3a!important}
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.ag-msg.eu .ag-balao time){color:#6b7a90!important}
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.as-campo,.ideia-chat-campo,.cora-campo,.cora-dica,.as-rodape,.ch-form,.ag-campo){background:#fff!important;border-color:#e6e9ee!important}
+html:root:is(#iac#iac#iac#iac#iac#iac,html) :is(.as-msg.erro){background:#fff4f3!important;color:#8a2a22!important}

@@ -258,7 +258,7 @@
   const programados=new Set((prog||[]).map(c=>String(c.caminhao_id||c.id)));
   const lista=(frota||[]).slice().sort((a,b)=>programados.has(String(b.id))-programados.has(String(a.id)));
   const d=$('taEscolha');
-  $('taEscolhaItens').innerHTML=lista.length?lista.map(c=>'<label class="escolha-material ex-caminhao'+(programados.has(String(c.id))?' is-programado':'')+'"><input type="checkbox" value="'+esc(c.id)+'" '+(programados.has(String(c.id))?'checked':'')+'><span><strong>'+esc(c.codigo||c.placa||'Caminhão')+'</strong><small>'+esc([c.placa&&!/^SEM PLACA/i.test(c.placa)?c.placa:'',c.modelo,programados.has(String(c.id))?'Programado':''].filter(Boolean).join(' · '))+'</small></span></label>').join(''):'<p class="muted">Nenhum caminhão cadastrado em Logística › Caminhões.</p>';
+    $('taEscolhaItens').innerHTML=lista.length?lista.map(c=>'<label class="escolha-material ex-caminhao'+(programados.has(String(c.id))?' is-programado':'')+'"><input type="checkbox" value="'+esc(c.id)+'" '+(programados.has(String(c.id))?'checked':'')+'><span><strong>'+esc(c.codigo||c.placa||'Caminhão')+'</strong><small>'+esc([c.placa&&!/^SEM PLACA/i.test(c.placa)?c.placa:'',c.modelo,programados.has(String(c.id))?'Programado':''].filter(Boolean).join(' · '))+'</small></span></label>').join(''):'<p class="muted">Nenhum caminhão cadastrado em Logística › Cadastros › Caminhões.</p>';
   d.returnValue='';d.showModal();
   return new Promise(resolve=>{
    const ok=d.querySelector('[data-confirmar-caminhao]'),volta=d.querySelector('[data-fechar-escolha]');

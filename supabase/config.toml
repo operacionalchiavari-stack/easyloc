@@ -482,6 +482,29 @@ enabled = true
 verify_jwt = true
 entrypoint = "./functions/financeiro-assistente/index.ts"
 
+[functions.estoque-assistente]
+enabled = true
+verify_jwt = true
+entrypoint = "./functions/estoque-assistente/index.ts"
+
+[functions.logistica-assistente]
+enabled = true
+# Luísa do supervisor (Painel Logístico): o handler valida a sessão, a empresa e a segunda etapa.
+verify_jwt = false
+entrypoint = "./functions/logistica-assistente/index.ts"
+
+[functions.freteiro-assistente]
+enabled = true
+# Luísa no App do Freteiro: o freteiro não tem login; o handler confere o token do app no banco (frete_lanc_contexto).
+verify_jwt = false
+entrypoint = "./functions/freteiro-assistente/index.ts"
+
+[functions.solicitacao-assistente]
+enabled = true
+# O handler valida a sessão, a empresa, o acesso à operação e a segunda etapa.
+verify_jwt = false
+entrypoint = "./functions/solicitacao-assistente/index.ts"
+
 # Link de pagamento do pedido (página pública: confere o código de 6 números no banco)
 [functions.pagamento-link]
 enabled = true

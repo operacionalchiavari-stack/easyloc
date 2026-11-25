@@ -5,6 +5,8 @@
 import { comUsoIA } from "../_shared/ia-uso.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
+// 22/11/2026: modo "avulsa" = conversa com o Marcos para peça danificada achada no depósito (marcos-avulsa.ts).
+import { conversarAvulsa, transcrever } from "./marcos-avulsa.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": Deno.env.get("APP_ORIGIN") ?? "*",
@@ -29,7 +31,7 @@ async function autenticar(req: Request, empresaId: string) {
   if (await segundaEtapaPendente(auth)) return { erro: MENSAGEM_2FA, status: 403 };
   const { data: ctx, error } = await usuario.rpc("funcionario_contexto", { p_empresa_id: empresaId });
   if (error || !ctx?.ativo) return { erro: "Seu acesso não está ativo nesta empresa.", status: 403 };
-  return { ok: true };
+  return { ok: true, usuario, nome: String(ctx?.nome || ctx?.usuario_nome || "") };
 }
 
 const SISTEMA = (item: string) => `Você ajuda a equipe da Chiavari (locação de móveis para eventos) a escolher para qual setor de manutenção mandar uma peça danificada.
@@ -89,13 +91,17 @@ async function conversar(body: any) {
   return json({ resposta: String(s?.resposta || "").slice(0, 1200) || "Pode me contar onde está o dano?", pronto, setor: pronto ? setor : null, justificativa: pronto ? String(s?.justificativa || "").slice(0, 600) : "" });
 }
 
-Deno.serve(comUsoIA("avaria", async (req) => {
+Deno.serve(comUsoIA((b: any) => (b?.modo === "avulsa" ? "marcos" : "avaria"), async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ erro: "Método não permitido" }, 405);
   let body: any = {};
   try { body = await req.json(); } catch { return json({ erro: "Pedido inválido" }, 400); }
   const quem = await autenticar(req, String(body?.empresa_id || ""));
   if ("erro" in quem) return json({ erro: quem.erro }, quem.status);
-  try { return await conversar(body); }
+  try {
+    if (body?.acao === "transcrever") return await transcrever(body, json);
+    if (body?.modo === "avulsa") return await conversarAvulsa(body, quem.usuario, quem.nome, json);
+    return await conversar(body);
+  }
   catch (e) { console.error(e); return json({ erro: "Não foi possível falar com a assistente agora." }, 500); }
 }));

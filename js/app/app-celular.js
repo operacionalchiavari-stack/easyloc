@@ -5,6 +5,7 @@
 (function(){
   "use strict";
   const sb = window.supabaseClient;
+  const fotosAgentes = new URL("../../assets/agentes/", document.currentScript.src);
   const $ = (id) => document.getElementById(id);
   const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const MODULOS = [
@@ -29,17 +30,21 @@
   const AGENTES = [
     { flag: "ag_helena", inicial: "H", nome: "Helena", papel: "Comercial e catálogo", texto: "Monta pedidos, confere disponibilidade, sugere combinações e gera fotos das composições.", href: "Modulos/Comercial/Catalogo/catalogo-app.html?app=1&agente=helena" },
     { flag: "ag_clara", inicial: "C", nome: "Clara", papel: "Financeiro", texto: "Diretora financeira: caixa, contas, DRE, simulações e relatórios com provas.", href: "Modulos/Gestao/AgentesApp/agente.html?ag=clara" },
-    { flag: "ag_cora", inicial: "C", nome: "Cora", papel: "Estoque e acervo", texto: "Próximas saídas, divergências, peças em manutenção e inventário.", href: "Modulos/Gestao/AgentesApp/agente.html?ag=cora" },
+    { flag: "ag_cora", inicial: "M", nome: "Miguel", foto: "miguel", papel: "Estoque, acervo e separação", texto: "Disponibilidade, separação, triagem, manutenção e inventário do estoque.", href: "Modulos/Gestao/AgentesApp/agente.html?ag=miguel" },
     { flag: "ag_carla", inicial: "C", nome: "Carla", papel: "Compras", texto: "Pede o que você precisa comprar e confere se a compra é mesmo necessária.", href: "Modulos/Gestao/AgentesApp/agente.html?ag=carla" },
     { flag: "ag_marcos", inicial: "M", nome: "Marcos", papel: "Manutenção", texto: "Abre a solicitação de manutenção com fotos, local e prioridade.", href: "Modulos/Gestao/AgentesApp/agente.html?ag=marcos" },
-    { flag: "ag_ideia", inicial: "I", nome: "Assistente da Ideia Premiada", papel: "Ideias de melhoria", texto: "Ajuda você a contar sua ideia e envia para o RH avaliar.", href: "Modulos/Gestao/AgentesApp/agente.html?ag=ideia" },
+    { flag: "ag_ideia", inicial: "S", foto: "ideia", nome: "Sofia", papel: "Recursos humanos", texto: "Funcionários, cargos, férias, benefícios, exames, treinamentos e ideias de melhoria.", href: "Modulos/Gestao/AgentesApp/agente.html?ag=rh" },
   ];
+  let modulosAgentes = null;
   function pintarAgentes(mods){
+    modulosAgentes = mods;
     $("apAgentesLista").innerHTML = AGENTES.filter((a) => mods[a.flag]).map((a, i) =>
-      '<a class="ap-modulo ap-rel ap-agente" href="' + a.href + '" style="--i:' + i + '"><span class="ap-agente-avatar" aria-hidden="true">' + esc(a.inicial) + '</span>' +
+      '<a class="ap-modulo ap-rel ap-agente" href="' + a.href + '" style="--i:' + i + '"><span class="ap-agente-avatar" aria-hidden="true">' + '<img data-ia-foto width="512" height="512" loading="eager" src="' + new URL((a.foto || a.flag.replace('ag_', '')) + '.jpg', fotosAgentes).href + '" alt="" decoding="sync">' + '</span>' +
       '<span class="ap-modulo-texto"><small class="ap-agente-papel">' + esc(a.papel) + '</small><b class="ap-modulo-titulo">' + esc(a.nome) + '</b><small>' + esc(a.texto) + '</small></span><span class="ap-seta" aria-hidden="true">›</span></a>').join("")
       || '<p class="ap-vazio">Seu usuário não tem acesso a nenhum agente. Fale com o administrador.</p>';
   }
+  // Ao restaurar a lista pelo histórico, recria os retratos para recuperar a pintura no celular.
+  window.addEventListener("pageshow", (e) => { if(e.persisted && modulosAgentes) pintarAgentes(modulosAgentes); });
   /* 20/11/2026: módulo Gerencial = os relatórios que já existem no sistema, abertos com ?app=1 (faixa do app em cima,
      js/app/relatorio-app.js). Cada um segue a permissão do sistema (flags ger_comercial / ger_financeiro da RPC). */
   /* Gerencial nativo (20/11/2026): tela própria Modulos/Gestao/GerencialApp/gerencial.html (js/app/gerencial-app.js), no lugar da lista

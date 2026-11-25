@@ -525,12 +525,37 @@ async function iniciarRegrasPedido(){
   try{
     const { data, error } = await state.supabase.rpc("comercial_avisos_pedido_ler", { p_empresa: state.empresaId });
     if(error) throw error;
-    texto.value = data?.regras || "";
+    texto.innerHTML = data?.regras ? contratoMarkupParaHtml(data.regras) : "";
   }catch(e){ status.textContent = "Não foi possível carregar: " + (e.message || e); }
+  // 22/11/2026: mesma barra do contrato (negrito, itálico e cores) ao selecionar um trecho
+  const barra = $("contratosRegrasToolbar");
+  const selecao = () => { const sel = window.getSelection?.(); if(!sel || !sel.rangeCount) return null; const r = sel.getRangeAt(0); return r.collapsed || !texto.contains(r.commonAncestorContainer) ? null : { sel, r }; };
+  const posicionar = () => {
+    const s = selecao(); if(!barra) return; if(!s){ barra.hidden = true; return; }
+    barra.hidden = false;
+    const wrap = texto.closest(".contratos-regras-wrap"), wr = wrap.getBoundingClientRect(), rr = s.r.getBoundingClientRect();
+    barra.style.left = Math.max(8, Math.min(rr.left - wr.left, wrap.clientWidth - (barra.offsetWidth || 220) - 8)) + "px";
+    barra.style.top = Math.max(8, rr.top - wr.top - barra.offsetHeight - 10) + "px";
+  };
+  const marcar = (tag, estilo = {}) => {
+    const s = selecao(); if(!s) return;
+    const el = document.createElement(tag); Object.assign(el.style, estilo);
+    el.appendChild(s.r.extractContents()); s.r.insertNode(el);
+    s.sel.removeAllRanges(); const r = document.createRange(); r.selectNodeContents(el); s.sel.addRange(r);
+    posicionar();
+  };
+  ["mouseup", "keyup", "focus"].forEach((ev) => texto.addEventListener(ev, posicionar));
+  texto.addEventListener("blur", () => setTimeout(() => { if(barra && !barra.contains(document.activeElement)) barra.hidden = true; }, 120));
+  barra?.addEventListener("mousedown", (e) => e.preventDefault());
+  barra?.addEventListener("click", (e) => {
+    const f = e.target.closest("[data-regras-format]"); if(f){ marcar(f.dataset.regrasFormat === "bold" ? "strong" : "em"); return; }
+    const c = e.target.closest("[data-regras-color]"); if(c && /^#[0-9a-f]{6}$/i.test(c.dataset.regrasColor)) marcar("span", { color: c.dataset.regrasColor.toLowerCase() });
+  });
   salvar.addEventListener("click", async () => {
     salvar.disabled = true; status.textContent = "Salvando…";
     try{
-      const { error } = await state.supabase.rpc("comercial_regras_pedido_salvar", { p_empresa: state.empresaId, p_texto: texto.value });
+      const limpo = (texto.textContent || "").trim() ? contratoMarkupParaHtml(texto.innerHTML || "").trim() : "";
+      const { error } = await state.supabase.rpc("comercial_regras_pedido_salvar", { p_empresa: state.empresaId, p_texto: limpo });
       if(error) throw error;
       status.textContent = "Salvo. Vale para todos os pedidos daqui pra frente.";
     }catch(e){ status.textContent = "Não foi possível salvar: " + (e.message || e); }

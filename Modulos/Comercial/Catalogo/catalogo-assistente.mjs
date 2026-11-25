@@ -9,6 +9,8 @@
 
 import { demarcarAreasPlanta } from './assistente-planta-areas.mjs';
 const MONTAGEM_PLANTA_ATIVA = false;
+const fotoHelena = new URL("../../../assets/agentes/helena.jpg", import.meta.url).href;
+const avatarHelena = () => `<img data-ia-foto width="512" height="512" loading="eager" src="${fotoHelena}" alt="" decoding="sync">`;
 let ctx = null;
 const S = { pendentes: [], aberto: false, carregado: false, enviando: false, nome: "Helena", mensagens: [], fila: Promise.resolve(), naoLidas: 0 };
 const $ = (id) => document.getElementById(id);
@@ -47,16 +49,17 @@ function montar(){
   const botao = document.createElement("button");
   botao.type = "button"; botao.id = "catalogAssistenteBotao"; botao.className = "cas-launcher";
   botao.setAttribute("aria-controls", "catalogAssistente"); botao.setAttribute("aria-expanded", "false");
-  botao.innerHTML = `<span class="cas-avatar" aria-hidden="true">${esc(S.nome[0])}</span><span class="cas-launcher-text"><b>Fale com a ${esc(S.nome)}</b><small>Consultora comercial</small></span><span class="cas-badge" data-cas-badge hidden></span>`;
+  botao.innerHTML = `<span class="cas-avatar" aria-hidden="true">${avatarHelena()}</span><span class="cas-launcher-text"><b>Fale com a ${esc(S.nome)}</b><small>Consultora comercial</small></span><span class="cas-badge" data-cas-badge hidden></span>`;
   const painel = document.createElement("section");
   painel.id = "catalogAssistente"; painel.className = "cas-panel"; painel.hidden = true;
   painel.setAttribute("role", "dialog"); painel.setAttribute("aria-label", "Conversa com a consultora comercial");
   painel.innerHTML = `
     <header class="cas-head">
       <button type="button" class="cas-icon cas-voltar" data-cas-fechar title="Voltar ao catálogo" aria-label="Minimizar a conversa e voltar ao catálogo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <span class="cas-avatar is-lg" aria-hidden="true">${esc(S.nome[0])}</span>
+      <span class="cas-avatar is-lg" aria-hidden="true">${avatarHelena()}</span>
       <div class="cas-head-copy"><strong data-cas-nome>${esc(S.nome)}</strong><small><i class="cas-dot" aria-hidden="true"></i><span data-cas-status>Consultora comercial · online</span></small></div>
       <button type="button" class="cas-pedido-btn" data-cas-pedido aria-expanded="false" title="Ver o pedido que está sendo alterado"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg><span data-cas-pedido-nome>Pedido</span><b data-cas-pedido-qtd></b><i class="cas-pedido-novo" aria-hidden="true"></i></button>
+      <button type="button" class="cas-head-btn cas-ver-pedido" data-cas-documento aria-label="Ver pedido" title="Ver o pedido no formato de impressão" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l4 4v14H6zM14 3v5h4M9 12h6M9 16h6"/></svg><span>Ver pedido</span></button>
       <button type="button" class="cas-head-btn cas-ligar" data-cas-ligar title="Ligar para a Helena e conversar por voz"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3.5l2.6.4 1.3 4-1.9 1.5a12 12 0 0 0 6 6l1.5-1.9 4 1.3.4 2.6a2 2 0 0 1-2 2.2A17 17 0 0 1 4.4 5.5a2 2 0 0 1 2.2-2z"/></svg><span>Ligar</span></button>
       <button type="button" class="cas-head-btn" data-cas-limpar title="Começar uma nova conversa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg><span>Nova conversa</span></button>
       <button type="button" class="cas-head-btn" data-cas-fechar title="Minimizar e voltar ao catálogo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg><span>Minimizar</span></button>
@@ -103,6 +106,15 @@ function montar(){
   });
   if(!window.RTCPeerConnection || !navigator.mediaDevices?.getUserMedia) painel.querySelector("[data-cas-ligar]").hidden = true;
   painel.querySelector("[data-cas-pedido]").addEventListener("click", () => alternarPedido());
+  painel.querySelector("[data-cas-documento]").addEventListener("click", async event => {
+    const botao = event.currentTarget;
+    botao.disabled = true; botao.setAttribute("aria-busy", "true");
+    try{
+      if(!await window.catalogAssistenteProjeto?.verPedido?.(true, { naConversa: true }))
+        ctx.notify({ title: "Nenhum pedido aberto", message: "Abra ou crie o pedido com a Helena para ver o documento.", status: "error" });
+    }catch(error){ ctx.notify({ title: "Não foi possível abrir o pedido", message: error.message, status: "error" }); }
+    finally{ botao.removeAttribute("aria-busy"); botao.disabled = !window.catalogAssistenteProjeto?.retrato(); }
+  });
   const input = painel.querySelector("[data-cas-input]");
   painel.querySelector('[data-cas-modo-planta]').addEventListener('change',event=>{
     painel.querySelector('[data-cas-planta-opcoes]').hidden=!event.target.checked;
@@ -186,7 +198,7 @@ function abrirVitrine(ids, { titulo = "" } = {}){
   const nome = titulo || (lista.length === 1 ? "Peça" : "Seleção da " + S.nome);
   el.innerHTML = `
     <header class="cas-vit-topo">
-      <span class="cas-avatar" aria-hidden="true">${esc(S.nome[0])}</span>
+      <span class="cas-avatar" aria-hidden="true">${avatarHelena()}</span>
       <div class="cas-vit-fala"><small>${esc(S.nome)}</small><p data-vit-fala></p></div>
       <div class="cas-vit-acoes" data-vit-acoes></div>
       <button type="button" class="cas-vit-voltar" data-vit-fechar>${lig ? "Voltar à ligação" : "Voltar à conversa"}</button>
@@ -251,7 +263,7 @@ function mini(){
   el = document.createElement("div");
   el.id = "catalogAssistenteMini"; el.className = "cas-mini"; el.hidden = true;
   el.setAttribute("role", "region"); el.setAttribute("aria-label", `Conversa com a ${S.nome}`);
-  el.innerHTML = `<button type="button" class="cas-mini-abrir" data-mini-abrir aria-label="Abrir a conversa inteira"><span class="cas-avatar" aria-hidden="true">${esc(S.nome[0])}</span><span class="cas-mini-copy"><b>${esc(S.nome)}</b><span data-mini-texto></span></span></button>
+  el.innerHTML = `<button type="button" class="cas-mini-abrir" data-mini-abrir aria-label="Abrir a conversa inteira"><span class="cas-avatar" aria-hidden="true">${avatarHelena()}</span><span class="cas-mini-copy"><b>${esc(S.nome)}</b><span data-mini-texto></span></span></button>
     <div class="cas-mini-acoes" data-mini-acoes></div>
     <button type="button" class="cas-mini-x" data-mini-fechar aria-label="Esconder">×</button>`;
   document.body.appendChild(el);
@@ -348,7 +360,7 @@ function atualizarNome(){
   document.querySelectorAll("[data-cas-nome]").forEach((el) => { el.textContent = S.nome; });
   const b = $("catalogAssistenteBotao");
   if(b) b.querySelector(".cas-launcher-text b").textContent = `Fale com a ${S.nome}`;
-  document.querySelectorAll(".cas-avatar").forEach((el) => { el.textContent = S.nome[0]; });
+  document.querySelectorAll(".cas-avatar").forEach((el) => { el.innerHTML = avatarHelena(); });
 }
 
 const painelMsgs = () => $("catalogAssistente").querySelector("[data-cas-msgs]");
@@ -378,6 +390,11 @@ function pintarLado(){
   const lado = $("catalogAssistente")?.querySelector("[data-cas-lado]");
   if(!lado) return;
   const p = window.catalogAssistenteProjeto?.retrato();
+  const documento = $("catalogAssistente")?.querySelector("[data-cas-documento]");
+  if(documento && !documento.hasAttribute("aria-busy")){
+    documento.disabled = !p;
+    documento.title = p ? "Ver o pedido no formato de impressão" : "Abra ou crie um pedido para ver o documento";
+  }
   const limparBtn = $("catalogAssistente")?.querySelector("[data-cas-limpar]");
   if(limparBtn) limparBtn.hidden = Boolean(p);
   const botao = $("catalogAssistente")?.querySelector("[data-cas-pedido]");
@@ -431,8 +448,8 @@ function boasVindas(){
   const primeiro = String(S.cliente || "").trim().split(/\s+/)[0];
   const ola = primeiro ? `Oi, ${esc(primeiro)}! ` : "Oi! ";
   const pedido = window.catalogAssistenteProjeto?.retrato();
-  if(pedido) return `<div class="cas-boasvindas"><span class="cas-avatar is-xl" aria-hidden="true">${esc(S.nome[0])}</span><h2>${ola}Conversa do pedido ${esc(pedido.noivos)}</h2><p>Tudo o que combinarmos sobre este pedido — por escrito ou por ligação — fica guardado aqui.</p></div>`;
-  return `<div class="cas-boasvindas"><span class="cas-avatar is-xl" aria-hidden="true">${esc(S.nome[0])}</span><h2>${ola}Eu sou a ${esc(S.nome)}.</h2><p>Sou do comercial. Me conta do seu evento que eu te ajudo a escolher as peças, monto as composições em foto e deixo seu pedido prontinho.</p></div>
+  if(pedido) return `<div class="cas-boasvindas"><span class="cas-avatar is-xl" aria-hidden="true">${avatarHelena()}</span><h2>${ola}Conversa do pedido ${esc(pedido.noivos)}</h2><p>Tudo o que combinarmos sobre este pedido — por escrito ou por ligação — fica guardado aqui.</p></div>`;
+  return `<div class="cas-boasvindas"><span class="cas-avatar is-xl" aria-hidden="true">${avatarHelena()}</span><h2>${ola}Eu sou a ${esc(S.nome)}.</h2><p>Sou do comercial. Me conta do seu evento que eu te ajudo a escolher as peças, monto as composições em foto e deixo seu pedido prontinho.</p></div>
     <div class="cas-sugestoes">${["Quero montar um lounge", "Tenho um casamento e queria ideias", "Me manda uma foto de uma composição", "O que vocês têm em tons claros?"].map((s) => `<button type="button" data-cas-sugestao>${esc(s)}</button>`).join("")}</div>`;
 }
 
@@ -869,7 +886,7 @@ function telaLigacao(){
   el.innerHTML = `
     <div class="cas-lig-topo"><span class="cas-lig-estado" data-lig-estado>Chamando…</span><span class="cas-lig-tempo" data-lig-tempo></span></div>
     <div class="cas-lig-centro">
-      <div class="cas-lig-avatar" data-lig-avatar><span class="cas-lig-onda" aria-hidden="true"></span><span class="cas-lig-onda" aria-hidden="true"></span><span class="cas-avatar is-xl" aria-hidden="true">${esc(S.nome[0])}</span></div>
+      <div class="cas-lig-avatar" data-lig-avatar><span class="cas-lig-onda" aria-hidden="true"></span><span class="cas-lig-onda" aria-hidden="true"></span><span class="cas-avatar is-xl" aria-hidden="true">${avatarHelena()}</span></div>
       <h2>${esc(S.nome)}</h2>
       <p class="cas-lig-quem">Consultora comercial</p>
       <p class="cas-lig-legenda" data-lig-legenda aria-live="polite"></p>

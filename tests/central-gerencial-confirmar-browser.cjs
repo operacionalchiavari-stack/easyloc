@@ -23,6 +23,17 @@ const mock = `(() => {
     fin_bv_comissoes: []
   };
   window.__confirmados = [];
+  window.__bancoDatas = banco;
+  window.__chamadasDatas = [];
+  window.__erroDatas = false;
+  function confirmarDatas(args){
+    window.__chamadasDatas.push(args);
+    if(window.__erroDatas) return {data:null,error:{message:'Falha de teste ao salvar datas'}};
+    const pedido = banco.separacoes_pedidos.find(p => p.id === args.p_pedido);
+    Object.assign(pedido,args.p_datas);
+    window.__confirmados.push({pedido_id:pedido.id,entrega:pedido.data_entrega,evento:pedido.data_evento,coleta:pedido.data_coleta,por:'Teste'});
+    return {data:{ok:true},error:null};
+  }
   function consulta(tabela){
     let linhas = (banco[tabela] || []).slice(), unico = false;
     const q = { select(){return q;}, order(){return q;}, limit(){return q;}, range(a){ if(a>0) linhas=[]; return q;}, gte(){return q;}, lte(){return q;}, neq(){return q;}, or(){return q;}, ilike(){return q;}, not(){return q;}, is(){return q;},
@@ -38,7 +49,7 @@ const mock = `(() => {
     rpc: (nome, args) => ({ then: (ok, erro) => Promise.resolve(
       nome === "funcionario_contexto" ? { data: { ativo: true, administrador_legado: true }, error: null }
       : nome === "comercial_confirmar_datas_lista" ? { data: { dias: 10, confirmados: window.__confirmados }, error: null }
-      : nome === "comercial_confirmar_datas_registrar" ? (window.__confirmados.push({ pedido_id: args.p_pedido, entrega: "2026-11-21", evento: "2026-11-22", coleta: "2026-11-23", por: "Teste" }), { data: { ok: true }, error: null })
+      : nome === "comercial_confirmar_datas_atualizar" ? confirmarDatas(args)
       : nome === "comercial_followup_lista" ? { data: { config: { dias: 3, motivos: [] }, acompanhamentos: [], encerrados: [] }, error: null }
       : { data: [], error: null }).then(ok, erro) }),
     channel: () => canal, removeChannel(){},
@@ -48,7 +59,7 @@ const mock = `(() => {
 })();`;
 
 (async () => {
-  const browser = await chromium.launch({ channel: "msedge" });
+  const browser = await chromium.launch({ channel: "msedge", headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   await page.clock.setFixedTime(new Date("2026-11-18T15:00:00Z"));
   const erros = [];
@@ -76,9 +87,42 @@ const mock = `(() => {
   assert.equal(await page.locator("#centralPedidosTbody tr[data-pedido-id]").count(), 2);
   assert.ok((await page.locator("#centralColFluxo").textContent()).includes("Confirmação"));
   await page.locator('tr[data-pedido-id="a3"] [data-action="confirmar-datas"]').click();
+  const dlg = page.locator('.central-confirmar-dialog');
+  assert.equal(await dlg.locator('[data-mudar]').count(),0,'edição não exige abrir o pedido');
+  assert.equal(await dlg.locator('[name=data_entrega]').inputValue(),'2026-11-21');
+  await dlg.locator('[name=data_entrega]').fill('2026-11-20');
+  await dlg.locator('[data-cancelar]').click();
+  assert.equal(await page.evaluate(()=>__chamadasDatas.length),0,'cancelar não grava datas');
+  await page.locator('tr[data-pedido-id="a3"] [data-action="confirmar-datas"]').click();
+  assert.equal(await dlg.locator('[name=data_entrega]').inputValue(),'2026-11-21');
+  await dlg.locator('[name=data_entrega]').fill('2026-11-24');
+  await dlg.locator('[data-ok]').click();
+  assert.match(await dlg.locator('.central-confirmar-erro').innerText(),/entrega precisa/);
+  assert.equal(await page.evaluate(()=>__chamadasDatas.length),0);
+  await dlg.locator('[name=data_entrega]').fill('2026-11-22');
+  await dlg.locator('[name=data_evento]').fill('2026-11-23');
+  await dlg.locator('[name=data_coleta]').fill('2026-11-24');
+  await dlg.locator('textarea').fill('Datas ajustadas por telefone');
+  await page.evaluate(()=>__erroDatas=true);
+  await dlg.locator('[data-ok]').click();
+  await page.waitForFunction(()=>document.querySelector('.central-confirmar-erro')?.textContent.includes('Falha de teste'));
+  assert.equal(await dlg.locator('[name=data_entrega]').inputValue(),'2026-11-22','falha mantém as datas digitadas');
+  assert.equal(await page.evaluate(()=>__bancoDatas.separacoes_pedidos.find(p=>p.id==='a3').data_entrega),'2026-11-21');
+  await page.evaluate(()=>__erroDatas=false);
+  for(const width of [1440,390]){
+    await page.setViewportSize({width,height:900});
+    assert.ok(await dlg.evaluate(e=>e.scrollWidth<=e.clientWidth+1),'modal sem corte horizontal');
+    fs.mkdirSync(path.join(raiz,'.tmp'),{recursive:true});
+    await page.screenshot({path:path.join(raiz,'.tmp/confirmar-datas-editar-'+width+'.png')});
+  }
+  await page.setViewportSize({width:1440,height:900});
   await page.locator(".central-confirmar-dialog [data-ok]").click();
   await page.waitForFunction(() => document.querySelectorAll("#centralPedidosTbody tr[data-pedido-id]").length === 1);
-  console.log("ok 1 - Confirmar datas: aparece N dias antes da entrega e sai da aba ao confirmar");
+  assert.deepEqual(await page.evaluate(()=>{const p=__bancoDatas.separacoes_pedidos.find(p=>p.id==='a3');return [p.data_entrega,p.data_evento,p.data_coleta];}),['2026-11-22','2026-11-23','2026-11-24']);
+  assert.deepEqual(await page.evaluate(()=>__chamadasDatas.at(-1).p_antes),{data_entrega:'2026-11-21',data_evento:'2026-11-22',data_evento_fim:null,data_coleta:'2026-11-23'});
+  assert.equal(await page.evaluate(()=>__confirmados.at(-1).entrega),'2026-11-22');
+  console.log("ok 1 - Confirmar datas: edição no modal, cancelar, validação, falha preserva campos, datas e confirmação salvas juntas; desktop e celular");
+  if(process.argv.includes('--somente-confirmar')){assert.deepEqual(erros,[]);await browser.close();return;}
 
   // Painel gerencial
   await page.goto(BASE + "Modulos/Comercial/Pedidos/gerencial.html");

@@ -21,7 +21,7 @@
  let sb,empresa,registros=[],ocupado=false,pagina=1,visiveis=[];
  function filtrar(){
   const q=$('opBusca').value.trim().toLocaleLowerCase('pt-BR');
-  return registros.filter(r=>!q||[r.pedido,r.cliente,r.item,r.descricao,tipos[r.tipo],nomes[r.origem],estados[r.status]].join(' ').toLocaleLowerCase('pt-BR').includes(q));
+  return registros.filter(r=>!q||[r.pedido,r.cliente,r.item,r.descricao,r.responsavel_nome,tipos[r.tipo],nomes[r.origem],estados[r.status]].join(' ').toLocaleLowerCase('pt-BR').includes(q));
  }
  // Foto do cliente (nov/2026): a do catálogo (clientes_empresas.catalogo_logo_url), pelo nome; sem foto, iniciais.
  const fotos={},normNome=v=>String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
@@ -31,7 +31,7 @@
  function render(){
   visiveis=filtrar();const n=visiveis.length;
   pagina=Math.max(1,Math.min(pagina,Math.ceil(n/30)||1));
-  $('opLinhas').innerHTML=visiveis.slice((pagina-1)*30,pagina*30).map(r=>'<tr data-caso="'+esc(r.id)+'" tabindex="0" title="Abrir a ocorrência e as provas"><td>'+esc(data(r.data))+'</td><td class="op-num-ped">'+(r.pedido?'<span class="op-num-card">'+esc(r.pedido)+'</span>':'<small>Sem pedido</small>')+'</td><td class="op-cli"><span class="op-cli-linha">'+fotoCliente(r.cliente)+'<span>'+esc(r.cliente||'—')+'</span></span></td><td>'+esc(r.item||'Etapa operacional')+'<small>'+esc(objetos[r.objeto]||'Registro operacional')+'</small></td><td>'+esc(tipos[r.tipo]||r.tipo)+'<small>'+esc(nomes[r.origem])+' · '+esc(etapas[r.etapa]||r.etapa||'')+'</small></td><td>'+esc(r.quantidade??'—')+(r.pendente!=null&&r.pendente!==r.quantidade?'<small>'+esc(r.pendente)+' pendente(s)</small>':'')+'</td><td><span class="op-status op-'+esc(r.status)+'">'+esc(estados[r.status]||r.status)+'</span></td></tr>').join('')||'<tr><td colspan="7" class="op-vazio">Nenhuma ocorrência com estes filtros.</td></tr>';
+  $('opLinhas').innerHTML=visiveis.slice((pagina-1)*30,pagina*30).map(r=>'<tr data-caso="'+esc(r.id)+'" tabindex="0" title="Abrir a ocorrência e as provas"><td>'+esc(data(r.data))+'</td><td class="op-num-ped">'+(r.pedido?'<span class="op-num-card">'+esc(r.pedido)+'</span>':'<small>Sem pedido</small>')+'</td><td class="op-cli"><span class="op-cli-linha">'+fotoCliente(r.cliente)+'<span>'+esc(r.cliente||'—')+'</span></span></td><td>'+esc(r.item||'Etapa operacional')+'<small>'+esc(objetos[r.objeto]||'Registro operacional')+'</small></td><td>'+esc(tipos[r.tipo]||r.tipo)+'<small>'+esc(nomes[r.origem])+' · '+esc(etapas[r.etapa]||r.etapa||'')+'</small></td><td>'+esc(r.quantidade??'—')+(r.pendente!=null&&r.pendente!==r.quantidade?'<small>'+esc(r.pendente)+' pendente(s)</small>':'')+'</td><td><span class="op-status op-'+esc(r.status)+'">'+esc(estados[r.status]||r.status)+'</span>'+(r.responsavel_nome?'<small>Responsável: '+esc(r.responsavel_nome)+'</small>':'')+'</td></tr>').join('')||'<tr><td colspan="7" class="op-vazio">Nenhuma ocorrência com estes filtros.</td></tr>';
   $('opPaginacao').textContent='Página '+pagina+' de '+(Math.ceil(n/30)||1)+' · '+n+' caso(s)';$('opAnterior').disabled=pagina<=1;$('opProxima').disabled=pagina*30>=n;
  }
  async function carregar(){

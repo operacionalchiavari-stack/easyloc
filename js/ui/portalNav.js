@@ -76,11 +76,14 @@
       return;
     }
     // Subgrupo: ao lado do painel da categoria.
-    const borda = (painelPai || menu).getBoundingClientRect().right;
+    const caixaPai = painelPai.getBoundingClientRect();
     const b = botao.getBoundingClientRect();
     const altura = painel.offsetHeight || 0;
-    painel.style.left = Math.round(borda + 8) + "px";
-    painel.style.top = Math.round(Math.max(12, Math.min(b.top - 10, window.innerHeight - altura - 12))) + "px";
+    // O painel interno é absoluto em relação ao painel da categoria. Assim o
+    // zoom do sistema não converte duas vezes as coordenadas e não deixa o
+    // submenu por cima da categoria.
+    painel.style.left = Math.round(painelPai.offsetWidth + 8) + "px";
+    painel.style.top = Math.round(Math.max(0, Math.min(b.top - caixaPai.top - 10, window.innerHeight - caixaPai.top - altura - 12))) + "px";
     // reposiciona subgrupos abertos dentro dele
     painel.querySelectorAll(":scope > .flyout.aberto").forEach(posicionarFlyout);
   }

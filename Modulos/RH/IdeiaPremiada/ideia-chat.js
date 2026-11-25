@@ -13,7 +13,7 @@
   function primeiroNome() { return String(S.ctx?.usuario_nome || "").trim().split(/\s+/)[0] || ""; }
   function saudacao() {
     return (primeiroNome() ? "Oi, " + primeiroNome() + "! " : "Oi! ") +
-      "Que bom que você quer compartilhar uma ideia. Me conte o que você reparou que pode melhorar e como imagina a solução. Pode escrever ou mandar um áudio.";
+      "Sou a Sofia, do RH. Me conte o que você reparou que pode melhorar e como imagina a solução. Pode escrever ou mandar um áudio.";
   }
   function guardar() { try { sessionStorage.setItem(chave(), JSON.stringify({ msgs: S.msgs, resumo: S.resumo })); } catch (_) {} }
   function recuperar() {

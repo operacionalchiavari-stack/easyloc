@@ -54,9 +54,11 @@
     });
   }
   const isoLocal = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
-  async function gradeExcel(buf) {
+  async function gradeExcel(buf,todas=false) {
     await carregarXlsx();
     const wb = window.XLSX.read(buf, { type: "array", cellDates: true });
+    const converter=l=>l.map(c=>c instanceof Date?isoLocal(c):typeof c==='number'?c:String(c??''));
+    if(todas)return wb.SheetNames.flatMap(n=>[['Planilha: '+n],...window.XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,raw:true,defval:''}).map(converter)]);
     let melhor = [];
     wb.SheetNames.forEach((n) => {
       const g = window.XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: "" });
@@ -66,14 +68,14 @@
   }
   const base64 = (buf) => { let s = ""; const b = new Uint8Array(buf); for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); };
 
-  async function prepararArquivo(f) {
+  async function prepararArquivo(f,todas=false) {
     const nome = f.name || "extrato";
     const buf = await f.arrayBuffer();
     if (/\.pdf$/i.test(nome) || f.type === "application/pdf") {
       if (f.size > 10 * 1024 * 1024) throw new Error("PDF grande demais (até 10 MB).");
       return { nome, formato: "pdf", pdf_base64: base64(buf) };
     }
-    if (/\.(xlsx|xls|xlsm|ods)$/i.test(nome)) return { nome, formato: "grade", grade: await gradeExcel(buf) };
+    if (/\.(xlsx|xls|xlsm|ods)$/i.test(nome)) return { nome, formato: "grade", grade: await gradeExcel(buf,todas) };
     const txt = textoDoArquivo(buf);
     if (/<OFX>|<STMTTRN>/i.test(txt)) {
       const banco = (txt.match(/<ORG>([^<\r\n]+)/i) || [])[1] || "";
@@ -701,12 +703,16 @@
   async function renderChat(ctx) {
     C = ctx || C;
     lerChat();
-    $("finConteudo").innerHTML = '<section class="ch-tela" aria-label="Conversa com a ' + NOME + '">' +
-      '<div class="ch-conversa"><div class="ch-msgs" id="chMsgs"></div>' +
+    $("finConteudo").innerHTML = '<section class="ch-tela ia-chat-com-topo" aria-label="Conversa com a ' + NOME + '">' +
+      '<header class="ia-topo"><span class="ia-topo-foto" aria-hidden="true"><img data-ia-foto width="512" height="512" src="../../assets/agentes/clara.jpg" alt=""></span>' +
+      '<div class="ia-topo-texto"><strong>' + NOME + '</strong><small><i class="ia-topo-dot" aria-hidden="true"></i><span>Diretora financeira · online</span></small></div>' +
+      '<div class="ia-topo-acoes"><button type="button" class="ia-topo-btn" id="chNovaTopo" title="Começar uma nova conversa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg><span>Nova conversa</span></button></div></header>' +
+      '<div class="ia-chat-corpo"><div class="ch-conversa"><div class="ch-msgs" id="chMsgs"></div>' +
       '<form class="ch-form" id="chForm"><div class="ch-form-in"><textarea id="chTexto" rows="1" placeholder="Escreva sua pergunta…" aria-label="Mensagem para a ' + NOME + '"></textarea>' +
       '<button type="submit" class="ch-send" id="chEnviar" aria-label="Enviar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12 20 4l-4 16-4-6-8-2Z"/><path d="m12 14 8-10"/></svg></button></div>' +
       '<small class="ch-form-dica">Enter envia · Shift+Enter quebra a linha · a ' + NOME + " responde com os dados do sistema e não altera nada sozinha</small></form></div>" +
-      '<aside class="ch-lado" id="chLado"></aside></section>';
+      '<aside class="ch-lado" id="chLado"></aside></div></section>';
+    $("chNovaTopo").addEventListener("click", () => { if (T.pensando) return; T.chat = []; T.provaSel = null; guardarChat(); pintarMsgs(); pintarLado(); $("chTexto")?.focus(); });
     pintarMsgs();
     const tx = $("chTexto");
     const ajustar = () => { tx.style.height = "auto"; tx.style.height = Math.min(tx.scrollHeight, 160) + "px"; };
@@ -818,7 +824,7 @@
     const nome = nomePessoa();
     el.innerHTML = '<div class="ch-coluna">' + (T.chat.length ? T.chat.map((m, i) => '<div class="ch-msg ' + (m.role === "user" ? "is-eu" : "is-bot") + '"><div class="ch-bubble">' + (m.role === "user" ? C.esc(m.content).replace(/\n/g, "<br>") : formatar(m.content)) +
         (m.role !== "user" && (m.evidencias || []).length ? '<button type="button" class="clp-ver' + (T.provaSel === i ? " ativo" : "") + '" data-clp-ver="' + i + '">Ver provas (' + m.evidencias.length + ")" + (m.titulo_relatorio ? " · gerar relatório" : "") + "</button>" : "") + "</div></div>").join("")
-      : '<div class="ch-boasvindas"><span class="ch-avatar is-xl titulo-serifa">C</span><h2>Oi' + (nome ? ", " + C.esc(nome) : "") + "! Eu sou a " + NOME + ".</h2>" +
+      : '<div class="ch-boasvindas"><span class="ch-avatar is-xl titulo-serifa"><img data-ia-foto width="512" height="512" loading="eager" src="../../assets/agentes/clara.jpg" alt="" decoding="sync"></span><h2>Oi' + (nome ? ", " + C.esc(nome) : "") + "! Eu sou a " + NOME + ".</h2>" +
         "<p>Sou a diretora financeira da empresa. Analiso caixa, resultado, lucro dos eventos, inadimplência e prazos, digo o que está acontecendo e o que eu faria — e mostro à direita os gráficos que provam.</p></div>" +
         '<div class="ch-sugestoes">' + SUGESTOES.map((t) => '<button type="button" data-ch-sug="' + C.esc(t) + '">' + C.esc(t) + "</button>").join("") + "</div>") +
       (T.pensando ? '<div class="ch-msg is-bot"><div class="ch-bubble ch-digitando" aria-label="' + NOME + ' está analisando"><i></i><i></i><i></i></div></div>' : "") + "</div>";
@@ -889,5 +895,6 @@
 
   // leitura do arquivo da fatura do cartão e da cobrança do parceiro (mesma leitura do extrato)
   async function lerArquivo(f, conta) { const arquivo = await prepararArquivo(f); return clara("ler_extrato", { conta_id: conta, arquivo }); }
-  window.FinanceiroClara = { render, organizarDre, chat: renderChat, lerArquivo };
+  async function lerCobranca(f,ctx){const arquivo=await prepararArquivo(f,true);const {data,error}=await ctx.S.sb.functions.invoke('financeiro-assistente',{body:{action:'ler_cobranca',empresa_id:ctx.S.emp,arquivo}});if(error){let msg=error.message;try{msg=(await error.context?.json?.())?.error||msg;}catch(_){}throw Error(msg||'Não foi possível ler a cobrança.');}if(data?.error)throw Error(data.error);return data;}
+  window.FinanceiroClara = { render, organizarDre, chat: renderChat, lerArquivo, lerCobranca };
 })();

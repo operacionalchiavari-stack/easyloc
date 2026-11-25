@@ -456,7 +456,7 @@ html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-falta-acoes button{border-radius:999px
 html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-falta-acoes button[data-acao="perda"]{color:#c4302b;border-color:#c4302b}
 /* Próximas saídas: bloco por categoria e filtro de período (18/11/2026) */
 .sa-tabela tr.sa-cat td{background:#fff;padding:14px;border-bottom:1px solid #e3e7ec;text-align:center}
-.sa-tabela .sa-categoria-titulo{margin:0;padding:0;border:0;font:500 24px/1.25 "Cormorant Garamond",Georgia,serif;letter-spacing:.12em;text-transform:uppercase;text-align:center;color:#1f2020}
+.sa-tabela .sa-categoria-titulo{margin:0;padding:0;border:0;font:500 24px/1.25 "Cormorant Garamond",Georgia,serif;font-size:24px!important;font-weight:500!important;letter-spacing:.12em;text-transform:uppercase;text-align:center;color:#1f2020}
 .sa-periodo{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .sa-periodo .el-select,.sa-periodo .el-input{height:34px!important;min-height:34px!important;padding:4px 10px!important;font:400 13px Inter,system-ui,sans-serif;width:auto}
 .sa-periodo label{display:flex;align-items:center;gap:4px;font:500 12px Inter,system-ui,sans-serif;color:#4f4f4f}
@@ -497,11 +497,11 @@ html:root:is(#dv#dv#dv#dv#dv#dv,html) .dv-falta-acoes button[data-acao="perda"]{
 @media(max-width:1000px){.cora{grid-template-columns:1fr}.cora-lado{position:static}}
 
 /* Próximas saídas: números compactos e mais espaço para identificar o item. */
-.sa-tabela th.sa-col-item{width:32%}.sa-tabela th.sa-col-pedido{width:17%}.sa-tabela th.sa-col-local{width:9%}
-.sa-tabela th.sa-col-estoque{width:4%}.sa-tabela th.sa-col-manutencao{width:6%}.sa-tabela th.sa-col-fora{width:4%}
-.sa-tabela th.sa-col-reservado{width:6%}.sa-tabela th.sa-col-livre{width:4%}.sa-tabela th.sa-col-protecao{width:8%}.sa-tabela th.sa-col-sinais{width:10%}
+.sa-tabela th.sa-col-item{width:32%}.sa-tabela th.sa-col-pedido{width:16%}.sa-tabela th.sa-col-local{width:8%}
+.sa-tabela th.sa-col-estoque{width:5%}.sa-tabela th.sa-col-manutencao{width:7%}.sa-tabela th.sa-col-fora{width:3.5%}
+.sa-tabela th.sa-col-reservado{width:7%}.sa-tabela th.sa-col-livre{width:3.5%}.sa-tabela th.sa-col-protecao{width:8%}.sa-tabela th.sa-col-sinais{width:10%}
 .sa-tabela{font-size:15px;line-height:1.45}
-.sa-tabela th{font-size:12px;overflow-wrap:anywhere}
+.sa-tabela th{font-size:12px;overflow-wrap:normal}
 .sa-tabela .sa-item strong{display:block;font-size:16px;font-weight:600;line-height:1.45;overflow:visible;overflow-wrap:anywhere;-webkit-line-clamp:unset}
 .sa-tabela .sa-item small{font-size:13px;line-height:1.5;margin-top:4px}
 .sa-tabela .sa-dia b{font-size:14px}

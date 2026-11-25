@@ -1,0 +1,5 @@
+Imagem ilustrativa gerada com a ferramenta integrada image_gen (skill imagegen).
+Uso: prévia da foto na coluna Caminhão quando não houver imagem cadastrada.
+
+Prompt utilizado:
+Use case: product-mockup. Asset type: small truck photo thumbnail in a Brazilian freight management web table. Create a photorealistic catalog photograph of one small white light-duty box truck, similar proportions to a delivery van chassis with a rectangular silver cargo box, parked on neutral light gray concrete in front of an unobtrusive warehouse wall. Three-quarter front view, entire truck visible including wheels with comfortable margin, horizontal 4:3 composition, truck fills most of frame, natural soft daylight, realistic tires and metal textures. No people, no logos, no readable license plate, no text, no watermark. This is an illustrative sample vehicle image, not a specific real registered truck.

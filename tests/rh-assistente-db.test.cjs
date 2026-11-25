@@ -1,0 +1,42 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),{PGlite}=require('@electric-sql/pglite');
+test('Sofia consulta RH com escopo próprio, permissões, empresa, 2FA e campos protegidos',async()=>{
+ const db=new PGlite(),emp='10000000-0000-0000-0000-000000000001',out='10000000-0000-0000-0000-000000000002',user='20000000-0000-0000-0000-000000000001',other='20000000-0000-0000-0000-000000000002';
+ try{
+  await db.exec(`create role anon; create role authenticated; create schema auth;
+   create function auth.uid() returns uuid language sql as $$select nullif(current_setting('test.uid',true),'')::uuid$$;
+   create function seguranca_2fa_ok() returns boolean language sql as $$select current_setting('test.segundo_fator',true) is distinct from 'nao'$$;
+   create function eh_membro_empresa(uuid) returns boolean language sql as $$select $1='${emp}'::uuid$$;
+   create function rh_pode(uuid,text) returns boolean language sql as $$select current_setting('test.gestor',true)='sim'$$;
+   create function funcionario_pode(uuid,uuid,text) returns boolean language sql as $$select current_setting('test.gestor',true)='sim'$$;
+   create function funcionario_tabela_permitida(uuid,text,text) returns boolean language sql as $$select false$$;
+   create table ia_agentes(chave text primary key,nome text,descricao text,comportamento text,coletar text,indispensavel text,limites text);
+   insert into ia_agentes(chave,nome,comportamento) values('ideia','Ideias','Personalizado');
+   create table funcionarios_acesso(id uuid primary key,empresa_id uuid,nome text,cargo text,ativo boolean,cpf text,salario_bruto numeric,pin_hash text);
+   insert into funcionarios_acesso values('${user}','${emp}','Ana','Montadora',true,'CPF SECRETO',1234,'PIN SECRETO'),('${other}','${emp}','Bia','Gerente',true,'OUTRO CPF',2345,'OUTRO PIN');
+   create table rh_ferias(id int,empresa_id uuid,funcionario_id uuid,inicio date,fim date,status text);
+   insert into rh_ferias values(1,'${emp}','${user}','2026-12-01','2026-12-15','programada'),(2,'${emp}','${other}','2026-12-16','2026-12-30','aprovada'),(3,'${out}','${user}','2026-11-01','2026-11-15','aprovada');
+   create table ideias_premiadas(id int,empresa_id uuid,autor_id uuid,titulo text,status text);
+   insert into ideias_premiadas values(1,'${emp}','${user}','Minha ideia','recebida'),(2,'${emp}','${other}','Ideia da Bia','premiada');
+   create table rh_cadastro_opcoes(id int,empresa_id uuid,tipo text,nome text,ativo boolean);
+   insert into rh_cadastro_opcoes values(1,'${emp}','cargo','Montador',true),(2,'${out}','cargo','Outra empresa',true);
+   select set_config('test.uid','${user}',false);select set_config('test.gestor','nao',false);`);
+  await db.exec(fs.readFileSync('supabase/migrations/20261121000600_sofia_rh.sql','utf8'));
+  const consultar=async(e=emp)=>(await db.query('select rh_assistente_contexto($1) r',[e])).rows[0].r;
+  const proprio=await consultar();
+  assert.equal(proprio.modulos.funcionarios.registros.length,1);assert.equal(proprio.modulos.funcionarios.registros[0].nome,'Ana');
+  assert.equal(proprio.modulos.ferias.registros.length,1);assert.equal(proprio.modulos.ferias.registros[0].status,'programada');
+  assert.equal(proprio.modulos.ideias.registros.length,1);assert.equal(proprio.modulos.cargos_setores_parametros.registros.length,1);
+  assert.equal(proprio.modulos.freelancers_pagamentos.acesso,'sem_permissao');assert.equal(proprio.modulos.exames.acesso,'indisponivel');
+  assert.doesNotMatch(JSON.stringify(proprio),/CPF SECRETO|PIN SECRETO|salario_bruto|Outra empresa|Ideia da Bia/);
+  await db.exec("set test.gestor='sim'");const equipe=await consultar();
+  assert.equal(equipe.modulos.ferias.total,2);assert.equal(equipe.modulos.ideias.registros.length,2);
+  assert.equal(equipe.modulos.freelancers_pagamentos.acesso,'sem_permissao','permissão de RH não ignora permissão da tabela de pagamentos');
+  await db.exec(`insert into funcionarios_acesso(id,empresa_id,nome,ativo) select ('30000000-0000-0000-0000-'||lpad(i::text,12,'0'))::uuid,'${emp}','Pessoa '||i,true from generate_series(1,205) i`);
+  const parcial=await consultar();assert.equal(parcial.modulos.funcionarios.total,207);assert.equal(parcial.modulos.funcionarios.registros.length,200);assert.equal(parcial.modulos.funcionarios.parcial,true);
+  await assert.rejects(consultar(out),/Sem acesso/);
+  await db.exec("set test.segundo_fator='nao'");await assert.rejects(consultar(),/Sem acesso/);await db.exec("set test.segundo_fator='sim'");
+  await db.exec(`update funcionarios_acesso set ativo=false where id='${user}'`);await assert.rejects(consultar(),/Sem acesso/);
+  await db.exec("set test.uid=''");await assert.rejects(consultar(),/Sem acesso/);
+  assert.equal((await db.query("select comportamento from ia_agentes where chave='ideia'")).rows[0].comportamento,'Personalizado');
+ }finally{await db.close();}
+});

@@ -6,12 +6,12 @@
   <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
 <script src="../../../js/core/themePrepaint.js"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
-  <link rel="stylesheet" href="ideia-premiada.css?v=20261105-sem-eyebrow">
+  <link rel="stylesheet" href="ideia-premiada.css?v=20261123-embutida-espaco">
   <!-- Nov/2026: aberta como aba da Gestão de Pessoas (?embutido=1) mostra só as ideias recebidas, sem piscar a tela da equipe. -->
   <script>if(/[?&]embutido=1/.test(location.search))document.documentElement.classList.add('ideia-embutida');</script>
   <style>html.ideia-embutida:is(#ie#ie#ie#ie#ie#ie,html) body .ideia-heading,html.ideia-embutida:is(#ie#ie#ie#ie#ie#ie,html) body .ideia-tabs,html.ideia-embutida:is(#ie#ie#ie#ie#ie#ie,html) body .ideia-list-tools,html.ideia-embutida:is(#ie#ie#ie#ie#ie#ie,html) body #painelEnviar{display:none!important}html.ideia-embutida,html.ideia-embutida body{background:transparent!important}</style>
 <script src="../../../js/app/relatorio-app.js?v=20261120-app2" data-titulo="Ideia Premiada" data-esconder=".ideia-heading h1, .ideia-intro"></script>
-</head>
+<link rel="stylesheet" href="../../../styles/ia-chat-topo.css?v=20261122-chat-suave"></head>
 <body>
 <main id="ideiaPremiada" class="el-page">
   <header class="ideia-heading"><h1>Ideia Premiada</h1><nav class="ideia-tabs" aria-label="Ideia Premiada">
@@ -36,10 +36,10 @@
     <!-- Nov/2026: chat com a assistente (Edge Function ideia-assistente) no lugar do formulário. O formulário continua
          como alternativa ("Prefiro escrever eu mesmo") e é quem grava pela RPC ideias_premiadas_enviar. -->
     <section class="ideia-chat" id="ideiaChat" aria-label="Conversa com a assistente de ideias">
-      <header class="ideia-chat-topo">
-        <span class="ideia-chat-avatar" aria-hidden="true">✦</span>
-        <div><strong>Assistente de ideias</strong><small>Conte sua ideia por texto ou áudio</small></div>
-        <button type="button" class="ideia-chat-link" id="ideiaRecomecar">Começar de novo</button>
+      <header class="ideia-chat-topo ia-topo">
+        <span class="ideia-chat-avatar ia-topo-foto" aria-hidden="true"><img data-ia-foto width="512" height="512" loading="eager" src="../../../assets/agentes/ideia.jpg" alt="" decoding="sync"></span>
+        <div class="ia-topo-texto"><strong>Sofia · RH</strong><small><i class="ia-topo-dot" aria-hidden="true"></i><span>Conte sua ideia por texto ou áudio</span></small></div>
+        <div class="ia-topo-acoes"><button type="button" class="ideia-chat-link ia-topo-btn" id="ideiaRecomecar" title="Começar de novo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg><span>Começar de novo</span></button></div>
       </header>
       <div class="ideia-chat-msgs" id="ideiaMsgs" aria-live="polite"></div>
       <div class="ideia-gravando" id="ideiaGravando" hidden><span class="ideia-rec-dot" aria-hidden="true"></span><strong id="ideiaRecTempo">0:00</strong><span>Gravando… toque no microfone para enviar</span><button type="button" class="ideia-chat-link" id="ideiaRecCancelar">Cancelar</button></div>
@@ -71,6 +71,6 @@
 <script src="../../../js/core/supabase.js"></script><script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script><script src="../../../js/core/companyTheme.js"></script>
 <script src="ideia-premiada.js?v=20261105-chat"></script>
-<script src="ideia-chat.js?v=20261105-chat"></script>
+<script src="ideia-chat.js?v=20261121-ia-topo"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
-</body></html>
+<script src="../../../js/ui/ia-chat-fotos.js?v=20261121-fotos-msg"></script></body></html>

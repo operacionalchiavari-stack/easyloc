@@ -288,7 +288,7 @@
  $('taSairTopo').onclick=()=>{if(s.ocupado)return;location.href=APP;};
  // Nov/2026: aberto pelo app, sem a faixa de cima (logo): voltar, busca e atualizar numa linha só, como no catálogo.
  document.body.classList.toggle('ta-app',APP_MODO);
- $('taVoltarApp').onclick=()=>$('taSairTopo').click();$('taAtualizarTopo').onclick=()=>$('taAtualizar').click();
+ $('taVoltarApp').onclick=()=>$('taSairTopo').click();$('taEnviarManutencao').onclick=async()=>{if(!window.EasyLocEnviarManutencao||!s.empresa)return;pararCamera();await window.EasyLocEnviarManutencao.abrir({sb,empresa:s.empresa,ctx:{empresa_id:s.empresa,usuario_id:s.usuario?.id,usuario_nome:s.nome}});};$('taAtualizarTopo').onclick=()=>$('taAtualizar').click();
  if(NO_QUADRO){$('taSairTopo').hidden=true;$('taSair').hidden=true;}
  $('taEscolha').onclick=e=>{const b=e.target.closest('[data-escolher]');if(b){$('taEscolha').returnValue=b.dataset.escolher;$('taEscolha').close();}if(e.target.closest('[data-fechar-escolha]'))$('taEscolha').close();};
  $('taDetalhe').addEventListener('click',async e=>{

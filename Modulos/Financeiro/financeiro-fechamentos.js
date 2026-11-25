@@ -1,7 +1,7 @@
 /* =====================================================
    FECHAMENTOS DE PARCEIROS (trazido da Tecnoweld em nov/2026) — Financeiro → A pagar → "Fechamentos de parceiros".
    Parceiros: fornecedores de Compras, empresas de sublocação (custo dos itens sublocados nos pedidos) e transportadoras/freteiros
-   (o que a Conciliação de Fretes envia ao Contas a Pagar).
+   (fretes: o relatório do App do Freteiro, depois das divergências resolvidas).
    Fornecedor marcado no cadastro "Cobra por fechamento" (mensal ou semanal, nov/2026): as contas do período ficam como prévia
    ("Vai no fechamento"). No fim do período: arrasta a cobrança do fornecedor (a IA lê, igual ao extrato), cada linha
    é ligada a um pedido nosso (pelo número do pedido ou pelo valor). Diferenças: ajustar ao valor deles, contestar, lançar o que
@@ -62,34 +62,241 @@
     let forns = [];
     try { forns = (await C.rpc("fin_fechamento_fornecedores", { p_empresa: C.S.emp })) || []; }
     catch (e) { box.innerHTML = '<div class="fin-vazio">' + C.esc(e.message) + "</div>"; return; }
-    if (!forns.length) {
+    try { T.div = await C.rpc("divergencias_acompanhar", { p_empresa: C.S.emp, p_origens: ["frete", "uber"] }); T.divErro = null; } catch (e) { T.div = null; T.divErro = e.message; }
+    if (!forns.length && !T.div) {
       box.innerHTML = '<section class="fin-bloco"><h3>Fechamentos de parceiros</h3><div class="fin-vazio">Nenhum parceiro cobra por fechamento.<br>Para usar, marque <b>Cobra por fechamento</b> no cadastro do parceiro e escolha se o fechamento é <b>mensal</b> ou <b>semanal</b> (Estoque → Cadastros → Fornecedores).</div></section>';
       return;
     }
-    if (!T.forn || !forns.some((f) => f.id === T.forn)) T.forn = forns[0].id;
+    if (!T.forn || (T.forn !== "__div" && !forns.some((f) => f.id === T.forn))) T.forn = forns.length ? forns[0].id : "__div";
+    if (T.forn === "__div" && !divDe((x) => x.origem === "uber").abertas.length && !divDe((x) => x.origem === "uber").resolvidas.length && forns.length) T.forn = forns[0].id;
     const ini = (n) => String(n || "?").replace(/^TST\s+/i, "").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
     const foto = (f) => '<span class="fe-av" aria-hidden="true">' + (f.logo_url ? '<img src="' + C.esc(f.logo_url) + '" alt="">' : C.esc(ini(f.nome))) + "</span>";
+    const nDivForn = (id) => divDe((x) => x.fornecedor_id === id).abertas.length;
     const nav = forns.map((f) => '<button type="button" class="bk-item fe-forn' + (f.id === T.forn ? " ativa" : "") + '" data-fe-forn="' + f.id + '">' + foto(f) + '<span class="bk-item-txt"><span class="bk-item-nome">' + C.esc(f.nome) + "</span>" +
+      (nDivForn(f.id) ? '<small class="fe-div-aviso"><b class="fe-div-n">' + nDivForn(f.id) + "</b> divergência" + (nDivForn(f.id) === 1 ? "" : "s") + " aguardando decisão</small>" : "") +
       '<small class="fe-periodo">' + C.esc(periodoTexto(f)) + "</small>" +
       "<small>" + (Number(f.aguardando_valor) > 0 ? C.brl(f.aguardando_valor) + " aguardando em " + f.aguardando_pedidos + " compra(s)" : "nada aguardando") + "</small>" +
       (f.fechamentos.some((x) => x.status === "em_conferencia") ? '<small class="fe-em-conf">fechamento em conferência</small>' : "") + "</span></button>").join("");
-    box.innerHTML = '<div class="bk-layout fe-layout"><nav class="bk-contas" aria-label="Parceiros com fechamento">' + nav + '</nav><div class="bk-main" id="feMain"></div></div>';
-    box.querySelectorAll("[data-fe-forn]").forEach((b) => b.addEventListener("click", () => { T.forn = b.dataset.feForn; T.fech = null; zerar(); render(C); }));
+    // As divergências de frete ficam nas próprias linhas; só o Uber, que não tem parceiro, fica à parte.
+    const dUber = divDe((x) => x.origem === "uber");
+    const nAb = dUber.abertas.length;
+    const navDiv = dUber.abertas.length || dUber.resolvidas.length ? '<button type="button" class="bk-item fe-forn fe-div-item' + (T.forn === "__div" ? " ativa" : "") + '" data-fe-forn="__div"><span class="fe-av fe-av-div" aria-hidden="true">!</span><span class="bk-item-txt"><span class="bk-item-nome">Divergências · Uber</span><small>' + (nAb ? '<b class="fe-div-n">' + nAb + "</b> aguardando decisão" : "nenhuma em aberto") + "</small></span></button>" : "";
+    box.innerHTML = '<div class="bk-layout fe-layout"><nav class="bk-contas" aria-label="Parceiros com fechamento">' + navDiv + nav + '</nav><div class="bk-main" id="feMain"></div></div>';
+    box.querySelectorAll("[data-fe-forn]").forEach((b) => b.addEventListener("click", () => { T.forn = b.dataset.feForn; T.fech = null; T.periodo = null; T.abaForn = "aguardando"; zerar(); render(C); }));
+    if (T.forn === "__div") { await pintarDivergencias(); return; }
     const forn = forns.find((f) => f.id === T.forn);
     if (!T.fech) T.fech = (forn.fechamentos.find((x) => x.status === "em_conferencia") || {}).id || null;
     if (T.fech && !forn.fechamentos.some((x) => x.id === T.fech)) T.fech = null;
     await pintarFornecedor(forn);
   }
 
-  async function pintarFornecedor(forn) {
+
+  /* Divergências (22/11; 23/11 dentro do parceiro): o Financeiro acompanha as duas justificativas; quem decide é a Logística. */
+  function divDe(filtro) {
+    const d = T.div || {};
+    return { abertas: (d.abertas || []).filter(filtro), resolvidas: (d.resolvidas || []).filter(filtro), relatorios: (d.relatorios || []).filter(filtro) };
+  }
+  async function divHtml(d) {
+    const aba = T.divAba || "abertas", lista = aba === "abertas" ? d.abertas : d.resolvidas;
+    if (window.DivergenciasTabela) await window.DivergenciasTabela.lerFotos(C.S.emp, [...d.abertas, ...d.resolvidas]);
+    const rel = d.relatorios.length ? '<section class="fin-bloco fe-div-rel"><h3>Relatórios em conferência</h3><table class="fin-tabela"><thead><tr><th>Enviado por</th><th>Período</th><th>Enviado em</th><th class="num">Total informado</th></tr></thead><tbody>' +
+      d.relatorios.map((r) => "<tr><td>" + C.esc(r.freteiro || "") + "</td><td>" + C.dataBr(r.periodo_ini) + " a " + C.dataBr(r.periodo_fim) + "</td><td>" + (r.enviado_em ? new Date(r.enviado_em).toLocaleString("pt-BR") : "—") + '</td><td class="num">' + C.brl(r.total) + "</td></tr>").join("") +
+      "</tbody></table><p class=\"fe-div-nota\">Viram conta a pagar (no fechamento) quando a Logística decidir todas as divergências do relatório.</p></section>" : "";
+    return '<div class="fe-div-sub" role="tablist"><button type="button" role="tab" class="' + (aba === "abertas" ? "ativa" : "") + '" data-fe-div="abertas">Aguardando decisão (' + d.abertas.length + ')</button><button type="button" role="tab" class="' + (aba === "resolvidas" ? "ativa" : "") + '" data-fe-div="resolvidas">Decididas · 30 dias (' + d.resolvidas.length + ")</button></div>" +
+      '<p class="fe-div-nota">Quem decide é o supervisor da Logística (Painel Logístico › Divergências). Aqui aparecem as duas justificativas: a do parceiro (enviada pelo app) e a do supervisor.</p>' + rel +
+      (lista.length && window.DivergenciasTabela ? window.DivergenciasTabela.html(lista, { resolvidas: aba === "resolvidas" }) : '<div class="fin-vazio">' + (aba === "abertas" ? "Nenhuma divergência aguardando decisão." : "Nenhuma divergência decidida nos últimos 30 dias.") + "</div>");
+  }
+  async function pintarDivergencias() {
     const el = $("feMain");
-    const hist = forn.fechamentos;
-    const temAberto = hist.some((x) => x.status === "em_conferencia");
-    el.innerHTML = '<div class="bk-cab fe-cab"><div class="cc-fats fe-fats" role="tablist" aria-label="Fechamentos de ' + C.esc(forn.nome) + '">' +
-      hist.slice().reverse().map((x) => '<button type="button" role="tab" class="cc-fat' + (x.id === T.fech ? " ativa" : "") + '" aria-selected="' + (x.id === T.fech) + '" data-fe-fech="' + x.id + '"><b>' + C.esc(x.referencia) + "</b>" +
+    el.innerHTML = await divHtml(divDe((x) => x.origem === "uber"));
+    el.querySelectorAll("[data-fe-div]").forEach((b) => b.addEventListener("click", () => { T.divAba = b.dataset.feDiv; pintarDivergencias(); }));
+  }
+  // tempo real: com divergências na tela, relê a cada 30 s
+  setInterval(async () => {
+    if (!C || document.hidden || !$("feMain") || document.querySelector("dialog[open]")) return;
+    if (T.forn !== "__div" && T.abaForn && T.abaForn !== "aguardando") return;
+    if (T.busy || T.formDirty || document.querySelector("#feRodape input:focus,#feRodape select:focus")) return;
+    try { T.div = await C.rpc("divergencias_acompanhar", { p_empresa: C.S.emp, p_origens: ["frete", "uber"] }); await render(C); } catch (_) {}
+  }, 30000);
+
+  // Fretes e contas primeiro, Pagos por último; o período é fechado pela ação do próprio parceiro.
+  const podeEditarFechamento = () => window.EasyLocPermissions?.hasPermission?.('financeiro.contas_pagar.editar') === true;
+  function previaFechamento(forn,mov){
+    const contas=(mov||[]).filter(x=>x.titulo_id&&x.situacao==='conta_fechamento');
+    return {fechamento:{id:null,referencia:referenciaNova(forn),status:'em_conferencia',fornecedor:forn.nome,fornecedor_id:forn.id,forma_padrao:forn.forma_padrao,condicao_padrao:forn.condicao_padrao},linhas:contas.map(x=>({id:x.titulo_id,titulo_id:x.titulo_id,valor:x.valor_final,nosso_valor:x.valor_final,situacao:'conferida'})),compras:[],parcelas:[]};
+  }
+  async function garantirFechamento(f){
+    if(f.id)return f.id;
+    const forn=T.fornecedorAtual;if(!forn)throw Error('Selecione o parceiro novamente.');
+    f.id=await C.rpc('fin_fechamento_preparar',{p_empresa:C.S.emp,p_fornecedor:forn.id,p_referencia:f.referencia});T.fech=f.id;return f.id;
+  }
+  async function importarCobranca(arquivo,forn){
+    await window.FinanceiroImportarCobranca.abrir({C,forn,arquivo,referencia:referenciaNova(forn),concluido:async()=>{T.fech=null;T.abaForn='aguardando';zerar();await C.carregar();await render(C);}});
+  }
+  const podeResolverDivergencia = () => window.EasyLocPermissions?.hasPermission?.('logistica.planejamento.editar') === true;
+  function acoesDivergencia(x) {
+    const d=x.caso, id=d?.referencia||d?.registro?.id;
+    return d&&!d.resolvida&&id&&podeResolverDivergencia() ? '<div class="fe-div-acoes">'+[['aceitar','Aceitar valor'],['corrigir','Corrigir valor'],['recusar','Recusar']].map(([acao,nome])=>'<button type="button" class="fin-btn peq claro" data-fe-resolver="'+C.esc(id)+'" data-acao="'+acao+'">'+nome+'</button>').join('')+'</div>' : '';
+  }
+  function justificativasInline(x,lado) {
+    const d=x.caso, r=d?.registro||{};
+    if(!d&&!x.frete_lancamento_id&&x.tipo!=='frete'&&x.tipo_servico!=='frete')return '';
+    const valoresIguais=x.valor_sistema!=null&&x.valor_cobrado!=null&&Math.abs(Number(x.valor_sistema)-Number(x.valor_cobrado))<=0.009;
+    const divergenciaPendente=d?!d.resolvida:x.situacao==='divergencia'||!!x.divergencia;
+    if(valoresIguais&&!divergenciaPendente)return '';
+    const explicacao=String(d?.explicacao||x.explicacao||r.explicacao||'').trim();
+    const motivo=String(d?.motivo||x.decisao_motivo||r.decisao_motivo||'').trim();
+    const supervisor=d?.tratado_por||x.decisao_por||r.decisao_por;
+    const em=d?.tratado_em||x.decisao_em||r.decisao_em;
+    const freteiro='<div class="dvt-lado '+(explicacao?'is-parceiro':'is-vazio')+'" data-fe-justificativa="freteiro"><b>Justificativa do freteiro</b><p>'+C.esc(explicacao||'Ainda não informada.')+'</p></div>';
+    const decisao='<div class="dvt-lado '+(motivo?'is-supervisor':'is-vazio')+'" data-fe-justificativa="supervisor"><b>Justificativa do supervisor</b>'+(supervisor||em?'<small>'+C.esc([supervisor,em?new Date(em).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'}):''].filter(Boolean).join(' · '))+'</small>':'')+'<p>'+C.esc(motivo||'Ainda não registrada.')+'</p></div>';
+    return '<div class="fe-mov-div"><div class="dvt-lados">'+(lado==='freteiro'?freteiro:lado==='supervisor'?decisao:freteiro+decisao)+'</div></div>';
+  }
+  function resolverDivergencia(item,acao) {
+    if(!item||!podeResolverDivergencia()||!['aceitar','corrigir','recusar'].includes(acao))return;
+    const empresa=C.S.emp, id=item.referencia||item.registro?.id;
+    if(!id)return;
+    const dialog=document.createElement('dialog');dialog.className='fe-div-dialogo';let salvando=false;
+    const titulo={aceitar:'Aceitar valor do frete',corrigir:'Corrigir valor do frete',recusar:'Recusar frete'}[acao];
+    dialog.innerHTML='<form><h2>'+titulo+'</h2><p>'+C.esc(item.titulo||'Divergência de frete')+'</p>'+(acao==='corrigir'?'<label>Valor correto (R$)<input type="number" name="valor" min="0.01" step="0.01" required></label>':'')+'<label>Motivo da decisão<textarea name="motivo" rows="4" minlength="3" maxlength="2000" required></textarea></label><p class="fin-erro" role="alert" hidden></p><footer><button type="button" class="fin-btn claro" data-cancelar>Cancelar</button><button type="submit" class="fin-btn">Confirmar decisão</button></footer></form>';
+    document.body.append(dialog);dialog.querySelector('[data-cancelar]').onclick=()=>dialog.close();dialog.onclose=()=>dialog.remove();dialog.oncancel=e=>{if(salvando)e.preventDefault();};
+    dialog.querySelector('form').onsubmit=async e=>{
+      e.preventDefault();if(salvando)return;
+      const motivo=dialog.querySelector('[name=motivo]').value.trim(),valor=acao==='corrigir'?num(dialog.querySelector('[name=valor]').value):null,erro=dialog.querySelector('[role=alert]');
+      if(motivo.length<3||acao==='corrigir'&&!(valor>0)){erro.textContent='Informe o motivo e um valor válido.';erro.hidden=false;return;}
+      salvando=true;erro.hidden=true;dialog.querySelectorAll('button,input,textarea').forEach(el=>el.disabled=true);
+      try{await C.rpc('frete_div_resolver',{p_empresa:empresa,p_id:id,p_acao:acao,p_valor:valor,p_motivo:motivo});}
+      catch(ex){erro.textContent=ex.message;erro.hidden=false;salvando=false;dialog.querySelectorAll('button,input,textarea').forEach(el=>el.disabled=false);return;}
+      dialog.close();
+      try{await C.carregar();await render(C);}
+      catch(ex){C.avisar('Decisão salva. Não foi possível atualizar a tela: '+ex.message,'Fechamentos','aviso');}
+    };
+    dialog.showModal();dialog.querySelector('input,textarea').focus();
+  }
+  async function pintarFornecedor(forn) {
+    T.formDirty=false;
+    const el = $("feMain");
+    const pedidoTela = T.pedidoTela = (T.pedidoTela || 0) + 1;
+    let mov = { aguardando: [], pagos: [] };
+    try { mov = (await C.rpc("fin_parceiro_movimentos", { p_empresa: C.S.emp, p_fornecedor: forn.id })) || mov; }
+    catch (e) {
+      if (pedidoTela !== T.pedidoTela || T.forn !== forn.id) return;
+      el.innerHTML = '<section class="fin-bloco"><p role="alert">Não foi possível carregar os lançamentos: ' + C.esc(e.message) + '</p><button type="button" class="fin-btn claro" data-fe-tentar>Tentar novamente</button></section>';
+      el.querySelector('[data-fe-tentar]').onclick = () => pintarFornecedor(forn); return;
+    }
+    if (pedidoTela !== T.pedidoTela || T.forn !== forn.id) return;
+    const dForn = divDe((x) => x.fornecedor_id === forn.id);
+    if (T.abaForn === 'divergencias' || T.abaForn === 'fechamentos') T.abaForn = 'aguardando';
+    const aba = T.abaForn || "aguardando";
+    const porId = new Map([...dForn.resolvidas.map(d=>({...d,resolvida:true})), ...dForn.abertas].map(d=>[d.referencia||d.registro?.id,d]).filter(([id])=>!!id));
+    const movimentos = mov.aguardando.map(x=>({...x,caso:porId.get(x.frete_lancamento_id)}));
+    const presentes = new Set(movimentos.map(x=>x.frete_lancamento_id).filter(Boolean));
+    // Uma divergência aberta nunca some por estar ausente da projeção de movimentos.
+    dForn.abertas.filter(d=>!presentes.has(d.referencia||d.registro?.id)).forEach(d=>{
+      const r=d.registro||{},pedido=window.DivergenciasTabela?.pedidoDe(d);
+      movimentos.push({tipo:'frete',frete_lancamento_id:d.referencia||r.id,pedido,cliente:window.DivergenciasTabela?.clienteDe(d),data:d.data,hora:d.hora,
+        local:d.local||r.destino,caminhao:r.caminhao,direcao:d.direcao||r.direcao||r.sistema?.direcao,avulso_id:r.avulso_id,avulso:r.avulso?.motivo,valor_sistema:d.valor_previsto,valor_cobrado:d.valor_informado,divergencia:r.divergencia,
+        fora_sistema:r.divergencia==='sem_frete',situacao:'divergencia',caso:d});
+    });
+    const rotulo = movimentos.some((x) => x.tipo === 'frete' || x.tipo === 'transportadora' || x.tipo_servico === 'frete') ? 'Fretes e contas' : 'Contas e serviços';
+    const abas = '<div class="fe-parceiro-barra"><div class="fe-abas-forn" role="tablist" aria-label="Registros do parceiro">' + [
+      ['aguardando', rotulo, movimentos.length],
+      ['pagos', 'Pagos', mov.pagos.length]
+    ].map(([chave, nome, quantidade]) => '<button type="button" role="tab" aria-selected="' + (aba === chave) + '" class="' + (aba === chave ? 'ativa' : '') + '" data-fe-aba="' + chave + '">' + nome + '<span>' + quantidade + '</span></button>').join('') + '</div>' + (aba === 'aguardando' && podeEditarFechamento() ? '<div class="fe-periodo-acoes"><button type="button" class="fin-btn" data-fe-importar>Importar cobrança</button><input type="file" data-fe-importacao accept=".xlsx,.xls,.xlsm,.ods,.csv,.txt,.pdf" hidden></div>' : '') + '</div>';
+    const ligar = () => {
+      el.querySelectorAll("[data-fe-aba]").forEach((b) => b.addEventListener("click", () => { T.abaForn = b.dataset.feAba; T.fech=T.abaForn==='aguardando'?forn.fechamentos.find(f=>f.status==='em_conferencia')?.id||null:null;T.periodo = null; pintarFornecedor(forn); }));
+      el.querySelector('[data-fe-importar]')?.addEventListener('click',()=>el.querySelector('[data-fe-importacao]').click());
+      el.querySelector('[data-fe-importacao]')?.addEventListener('change',e=>{const arquivo=e.target.files?.[0];e.target.value='';if(arquivo)importarCobranca(arquivo,forn);});
+    };
+    if (aba === "pagos") {
+      el.innerHTML = abas + (mov.pagos.length ? '<section class="fin-bloco"><div class="fin-rolar"><table class="fin-tabela fe-mov"><thead><tr><th>Pago em</th><th>Documento</th><th>Descrição</th><th>Vencimento</th><th>Forma</th><th class="num">Valor</th></tr></thead><tbody>' +
+        mov.pagos.map((x) => "<tr><td>" + C.dataBr(x.pago_em) + "</td><td>" + C.esc(x.documento || "—") + "</td><td>" + "<span>" + C.esc(x.descricao || "") + "</span>" + justificativasInline(x) + "</td><td>" + C.dataBr(x.vencimento) + "</td><td>" + C.esc(x.forma || "—") + '</td><td class="num">' + C.brl(x.pago || x.valor) + "</td></tr>").join("") +
+        '</tbody><tfoot><tr><td colspan="5"><b>Total pago</b></td><td class="num"><b>' + C.brl(mov.pagos.reduce((t, x) => t + Number(x.pago || x.valor || 0), 0)) + "</b></td></tr></tfoot></table></div></section>"
+        : '<section class="fin-bloco"><div class="fin-vazio">Nada pago a este parceiro ainda.</div></section>');
+      ligar();
+      el.insertAdjacentHTML('beforeend','<div id="feHistorico"></div>');await pintarHistoricoFornecedor($('feHistorico'),forn);return;
+    }
+    if (dForn.abertas.length || dForn.resolvidas.length) await window.DivergenciasTabela?.lerFotos(C.S.emp,[...dForn.abertas,...dForn.resolvidas]);
+    if (pedidoTela !== T.pedidoTela || T.forn !== forn.id) return;
+    movimentos.forEach(x=>{if(!x.cliente_foto&&x.pedido)x.cliente_foto=window.DivergenciasTabela?.fotoPedido?.(x.pedido);});
+    const iniciais = (n) => String(n || "").trim().split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "?";
+    const fotoCli = (x) => '<span class="fe-cli-foto">' + (x.cliente_foto ? '<img src="' + C.esc(x.cliente_foto) + '" alt="" loading="lazy" onerror="this.remove()">' : "") + "<b>" + C.esc(iniciais(x.cliente)) + "</b></span>";
+    const fotoCaminhao = (k) => k.foto_url?'<img class="fe-caminhao-foto" src="'+C.esc(k.foto_url)+'" alt="Foto do caminhão '+C.esc(k.nome||'')+'" loading="lazy" onerror="this.remove()">':'<span class="fe-caminhao-miniatura" data-fe-foto-exemplo title="Foto ilustrativa para visualizar o layout"><img class="fe-caminhao-foto" src="../../assets/financeiro/caminhao-exemplo.png" alt="Foto ilustrativa de caminhão" loading="lazy" onerror="this.parentElement.remove()"><span>Ilustrativa</span></span>';
+    const caminhaoHtml = (x) => {
+      const veiculos=Array.isArray(x.caminhoes)?x.caminhoes:[];
+      if(!veiculos.length)return x.caminhao?'<div class="fe-caminhao">'+fotoCaminhao({})+'<span class="fe-cam">'+C.esc(x.caminhao)+'</span></div>':'<span class="fe-tr">—</span>';
+      return '<div class="fe-caminhoes">'+veiculos.map(k=>'<div class="fe-caminhao">'+fotoCaminhao({...k,nome:k.nome||x.caminhao})+'<span class="fe-cam">'+C.esc(k.nome||x.caminhao||'Caminhão')+'</span></div>').join('')+'</div>';
+    };
+    // Agrupado por pedido / cliente, como em Logística › Fretes anunciados (22/11).
+    const cobradoDe = (x) => (x.valor_cobrado != null && x.divergencia !== "nao_lancado" ? Number(x.valor_cobrado) : null);
+    const finalDe = (x) => {
+      if(x.caso&&!x.caso.resolvida)return null;
+      const valor=x.valor_final??x.caso?.registro?.valor_final;
+      if(valor!=null)return Number(valor);
+      return x.tipo==='conta'?Number(x.aberto??x.valor_cobrado??0):null;
+    };
+    const statusMov = (x) => {
+      const final=finalDe(x),cobrado=cobradoDe(x);
+      let estado='pendente',texto='Pendente',detalhe='Aguardando lançamento ou conferência.';
+      if((x.tipo==='frete'||x.tipo_servico==='frete')&&!x.pedido&&!x.avulso_id&&!x.solicitacao_interna){
+        estado='divergente';texto='Divergente';detalhe='Frete antigo aguardando vínculo com pedido ou solicitação interna na Logística.';
+      }else if(x.caso&&!x.caso.resolvida||x.situacao==='divergencia'){
+        estado='divergente';texto='Divergente';detalhe='Divergência aguardando decisão.';
+      }else if(x.caso?.registro?.situacao==='recusado'||final===0&&cobrado>0){
+        estado='divergente';texto='Divergente';detalhe='Frete recusado na conferência.';
+      }else if(final!=null){
+        estado='conforme';texto='Conforme';detalhe='Valor conferido para pagamento.';
+      }else if(x.fora_sistema||x.divergencia||x.valor_sistema!=null&&cobrado!=null&&Math.abs(Number(x.valor_sistema)-cobrado)>0.009){
+        estado='divergente';texto='Divergente';detalhe=x.fora_sistema?'Frete lançado sem correspondência no sistema.':'Cobrança diferente do previsto no sistema.';
+      }
+      return '<span class="fe-status is-'+estado+'" title="'+C.esc(detalhe)+'">'+texto+'</span>';
+    };
+    const linhaMov = (x) => "<tr><td>" + C.dataBr(x.data) + (x.hora ? '<small class="fe-hora">' + C.esc(x.hora) + "</small>" : "") +
+        '</td><td class="fe-status-col">'+statusMov(x)+
+        '</td><td class="fe-direcao">' + ({entrega:'Ida',coleta:'Volta'}[x.direcao]||'<span class="fe-tr">—</span>') +
+        "</td><td>" + caminhaoHtml(x) +
+        '</td><td class="num fe-valor-justificado">' + (x.valor_sistema != null ? '<span class="fe-val fe-val-sis">' + C.brl(x.valor_sistema) + "</span>" : '<span class="fe-tr">—</span>') + justificativasInline(x,'supervisor') +
+        '</td><td class="num fe-valor-justificado">' + (cobradoDe(x) != null ? '<span class="fe-val fe-val-cob">' + C.brl(cobradoDe(x)) + "</span>" : '<span class="fe-tr">—</span>') + justificativasInline(x,'freteiro') +
+        '</td><td class="num fe-final">' + (finalDe(x)!=null?'<span class="fe-val fe-val-final">'+C.brl(finalDe(x))+'</span>':'<span class="fe-tr">A definir</span>') + acoesDivergencia(x) + "</td></tr>";
+    const grupos = [], porChave = {};
+    movimentos.forEach((x) => {
+      const interna=!!(x.avulso_id||x.solicitacao_interna);
+      const tipo = interna ? 'interna' : !x.pedido&&(x.tipo==='frete'||x.tipo_servico==='frete') ? 'pendente' : x.tipo === 'conta' ? 'conta' : 'sem';
+      const k = JSON.stringify(interna?['interna',x.avulso_id||x.avulso]:x.pedido ? ['pedido', x.pedido] : x.cliente ? ['cliente', x.cliente, tipo] : [tipo]);
+      if (!porChave[k]) { porChave[k] = { k, tipo, itens: [], x }; grupos.push(porChave[k]); }
+      porChave[k].itens.push(x);
+    });
+    const NOMES = { interna: ["Solicitação interna", "Frete autorizado pelo supervisor na Logística"], conta: ["Contas a pagar", "Já lançadas, ainda não pagas"], pendente: ["Vínculo pendente", "Fretes antigos aguardando vínculo com pedido ou solicitação interna na Logística"], sem: ["Sem pedido", ""] };
+    const grupoMov = (g) => {
+      const x = g.x, nm = NOMES[g.tipo];
+      const cab = '<header class="pla-cab">' + (x.pedido ? '<span class="pla-pedido fe-pla-ped">' + C.esc(x.pedido) + "</span>" : '<span class="pla-pedido is-sem">' + (g.tipo === "conta" ? "Contas" : g.tipo === "interna" ? "Solicitação interna" : g.tipo === "pendente" ? "Vínculo pendente" : "Sem pedido") + "</span>") +
+        (x.cliente ? fotoCli(x).replace("fe-cli-foto", "fe-cli-foto fe-cli-foto-g") : "") +
+        '<div class="pla-cli"><strong>' + C.esc(x.cliente || (x.pedido ? 'Sem cliente' : g.tipo==='interna' ? x.avulso||'Frete interno' : nm[0])) + "</strong><small>" + C.esc(x.pedido ? x.local || "" : nm[1]) + "</small></div></header>";
+      return '<section class="pla-grupo">' + cab + '<div class="pla-tabela-caixa"><table class="pla-tabela fe-mov"><colgroup><col style="width:14%"><col style="width:10%"><col style="width:8%"><col style="width:18%"><col style="width:18%"><col style="width:18%"><col style="width:14%"></colgroup><thead><tr><th>Data e horário</th><th>Status</th><th>Ida/Volta</th><th>Caminhão</th><th class="pla-num">Valor do sistema</th><th class="pla-num">Cobrado</th><th class="pla-num fe-final">Valor final</th></tr></thead><tbody>' +
+        g.itens.map(linhaMov).join("") + "</tbody></table></div></section>";
+    };
+    const tabMov = movimentos.length ? '<div class="fe-mov-grupos">' + grupos.map(grupoMov).join("") + "</div>" : '<section class="fin-bloco"><div class="fin-vazio">Nenhum frete ou conta pendente deste parceiro.</div></section>';
+    const historico = dForn.resolvidas.filter(d=>!presentes.has(d.referencia||d.registro?.id));
+    el.innerHTML = abas + (T.divErro?'<p role="alert">Não foi possível consultar as divergências: '+C.esc(T.divErro)+' <button type="button" class="fin-btn peq claro" data-fe-div-atualizar>Tentar novamente</button></p>':'') + tabMov + (historico.length&&window.DivergenciasTabela ? '<details class="fin-bloco fe-div-historico"><summary>Divergências decididas · últimos 30 dias ('+historico.length+')</summary>'+window.DivergenciasTabela.html(historico,{resolvidas:true})+'</details>' : ''); ligar();
+    el.insertAdjacentHTML('beforeend','<div id="feRodape"></div>');
+    await pintarFechamento($('feRodape'),{rodape:true,forn,mov:movimentos});
+    $('feRodape')?.addEventListener('input',()=>{T.formDirty=true;});
+    $('feRodape')?.addEventListener('click',e=>{if(e.target.closest('[data-fe-addp],[data-fe-delp],[data-fe-gerar]'))T.formDirty=true;});
+    el.querySelector('[data-fe-div-atualizar]')?.addEventListener('click',()=>render(C));
+    el.querySelectorAll('[data-fe-resolver]').forEach(b=>b.onclick=()=>resolverDivergencia(dForn.abertas.find(d=>(d.referencia||d.registro?.id)===b.dataset.feResolver),b.dataset.acao));
+  }
+
+  async function pintarHistoricoFornecedor(el, forn) {
+    T.fornecedorAtual=forn;
+    const somenteHistorico = T.abaForn === 'pagos';
+    const hist = forn.fechamentos.filter(x=>somenteHistorico?x.status!=='em_conferencia':x.status==='em_conferencia');
+    if (!hist.some(x=>x.id===T.fech)) T.fech = somenteHistorico ? null : hist[0]?.id || null;
+    const temAberto = forn.fechamentos.some((x) => x.status === "em_conferencia");
+    el.innerHTML = '<div class="bk-cab fe-cab"><div class="cc-fats fe-fats" aria-label="Fechamentos de ' + C.esc(forn.nome) + '">' +
+      hist.slice().reverse().map((x) => '<button type="button" class="cc-fat' + (x.id === T.fech ? " ativa" : "") + '" aria-pressed="' + (x.id === T.fech) + '" data-fe-fech="' + x.id + '"><b>' + C.esc(x.referencia) + "</b>" +
         (x.status === "unificado" ? "<span>" + C.brl(x.total) + "</span>" : "") + '<span class="fin-status ' + (x.status === "unificado" ? (Number(x.aberto) <= 0.005 ? "pago" : "parcial") : "aberto") + '">' +
         (x.status === "unificado" ? (Number(x.aberto) <= 0.005 ? "Pago" : "Unificado") : "Conferindo") + "</span></button>").join("") + "</div>" +
-      '<span class="fin-esp"></span>' + (temAberto ? "" : '<button type="button" class="fin-btn" data-fe-novo>+ Novo fechamento</button>') + "</div>" +
+      '<span class="fin-esp"></span>' + (temAberto || somenteHistorico ? "" : '<button type="button" class="fin-btn" data-fe-novo>+ Novo fechamento</button>') + "</div>" +
       '<div id="feFech"></div>';
     el.querySelectorAll("[data-fe-fech]").forEach((b) => b.addEventListener("click", () => { T.fech = b.dataset.feFech; zerar(); pintarFornecedor(forn); }));
     el.querySelector("[data-fe-novo]")?.addEventListener("click", async () => {
@@ -98,6 +305,7 @@
     });
     const alvo = $("feFech");
     if (!T.fech) {
+      if(somenteHistorico){alvo.innerHTML='<section class="fin-bloco"><div class="fin-vazio">'+(hist.length?'Selecione um fechamento para consultar a nota fiscal, as parcelas e os pagamentos.':'Nenhum fechamento concluído deste parceiro.')+'</div></section>';return;}
       alvo.innerHTML = '<section class="fin-bloco"><div class="fin-vazio">' + (Number(forn.aguardando_valor) > 0 ? C.brl(forn.aguardando_valor) + " em " + forn.aguardando_pedidos + " compra(s) aguardando o fechamento. Quando chegar a cobrança do parceiro, clique em <b>+ Novo fechamento</b>." : "Nada aguardando fechamento deste parceiro.") + "</div></section>";
       return;
     }
@@ -108,11 +316,13 @@
   // filtros (Prontas / Confira / Sem sugestão), área de envio, linhas por dia com a sugestão (tipo + confiança + resumo + motivo),
   // caixinhas + "Confirmar selecionadas", Alterar/Escolher abre o editor abaixo da linha, "Já reconhecidas" e as nossas compras que
   // não vieram. No fim: resumo, nota e "Unificar no contas a pagar" com forma e quantidade de parcelas.
-  async function pintarFechamento(el) {
+  async function pintarFechamento(el,opcoes={}) {
     let d;
-    try { d = await C.rpc("fin_fechamento_detalhe", { p_empresa: C.S.emp, p_id: T.fech }); }
+    const id = T.fech;
+    try { d = id ? await C.rpc("fin_fechamento_detalhe", { p_empresa: C.S.emp, p_id: id }) : previaFechamento(opcoes.forn,opcoes.mov); }
     catch (e) { el.innerHTML = '<div class="fin-vazio">' + C.esc(e.message) + "</div>"; return; }
-    T.det = d;
+    if (T.fech !== id || !el.isConnected || !opcoes.rodape && T.abaForn !== 'pagos') return;
+    T.det = d;T.fornecedorAtual=opcoes.forn||T.fornecedorAtual;
     const f = d.fechamento, linhas = d.linhas || [], compras = d.compras || [];
     const conf = f.status === "em_conferencia";
     const somaL = (st) => r2(linhas.filter((l) => st.includes(l.situacao)).reduce((s, l) => s + Number(l.valor), 0));
@@ -125,10 +335,10 @@
     const nfHtml = '<section class="fin-bloco fe-nf"><h3>Nota fiscal do fechamento <small>pode anexar a qualquer momento</small></h3><div class="fin-form fe-nf-form">' +
       '<label>Número da NF<input name="nf_numero" value="' + C.esc(f.nf_numero || "") + '"></label><label>Arquivo (PDF ou foto)<input type="file" name="nf_arquivo" accept="application/pdf,image/*"></label>' +
       '<div class="fe-nf-acoes">' + (f.nf_arquivo_url ? '<button type="button" class="fin-btn peq claro" data-fe-nf-ver>Ver ' + C.esc(f.nf_arquivo_nome || "nota") + "</button>" : "") + '<button type="button" class="fin-btn peq" data-fe-nf>Salvar nota</button></div></div></section>';
-    el.innerHTML =
+    el.innerHTML = (opcoes.rodape ? (pend.length?'<section class="fin-bloco"><h3>Conferir cobrança importada</h3><div id="feFiltrosSlot"></div><div id="feConc"></div></section>':'') :
       '<div class="fe-strip cc-strip"><div class="cc-strip-filtros" id="feFiltrosSlot"></div>' +
         (!conf && C.verFechamentoNoPagar ? '<button type="button" class="fin-btn claro cc-ver-pagar" data-fe-ver-pagar title="Abrir o A pagar na linha deste fechamento">Ver no A pagar →</button>' : "") + "</div>" +
-      (conf ? '<section class="cl-envio"><label class="cl-drop" id="feDrop"><input type="file" id="feArquivo" accept=".xlsx,.xls,.xlsm,.ods,.csv,.txt,.ofx,.pdf" hidden><b>' + (linhas.length ? "Enviar a cobrança de novo" : "Arraste aqui a cobrança do parceiro") + "</b><span>" +
+      (conf && !linhas.length ? '<section class="cl-envio"><label class="cl-drop" id="feDrop"><input type="file" id="feArquivo" accept=".xlsx,.xls,.xlsm,.ods,.csv,.txt,.ofx,.pdf" hidden><b>' + (linhas.length ? "Enviar a cobrança de novo" : "Arraste aqui a cobrança do parceiro") + "</b><span>" +
         (linhas.length ? "Último arquivo: " + C.esc(f.arquivo_nome || "") + " · " + linhas.length + " linha(s) · " : "ou clique para escolher · Excel, CSV, PDF… Cada linha é comparada com as nossas compras deste parceiro. ") +
         '<button type="button" class="fe-link" data-fe-addl>+ linha à mão</button></span></label><div class="cl-etapa" id="feEtapa" hidden></div><div id="feAddLinha"></div></section>' : "") +
       '<div id="feConc"></div>' +
@@ -138,7 +348,7 @@
         st("Fora da cobrança", C.brl(fora.reduce((s, c) => s + Number(c.valor), 0)), fora.length + " p/ o próximo") +
         (conf ? "" : st("Unificado", C.brl(totalParc), (d.parcelas || []).length + " parcela(s)" + (abertoParc > 0.005 ? " · em aberto " + C.brl(abertoParc) : " · pago"))) +
         '<span class="fin-esp"></span>' + (linhas.some((l) => l.situacao === "contestada") ? '<button type="button" class="fin-btn claro" data-fe-contest>Relatório da contestação</button>' : "") +
-        (conf ? '<button type="button" class="fin-btn claro" data-fe-excluir>Excluir fechamento</button>' : d.pago ? "" : '<button type="button" class="fin-btn claro verm" data-fe-desfazer>Desfazer unificação</button>') + "</section>" +
+        (conf ? '<button type="button" class="fin-btn claro" data-fe-excluir>Excluir fechamento</button>' : d.pago ? "" : '<button type="button" class="fin-btn claro verm" data-fe-desfazer>Desfazer unificação</button>') + "</section>") +
       nfHtml +
       (conf ? '<section class="fin-bloco fe-unificar"><h3>Unificar no contas a pagar <small>total conferido ' + C.brl(conferido) + " · cada parcela vira uma linha no A pagar</small></h3>" +
         (pend.length ? '<div class="cl-aviso">Falta decidir ' + pend.length + " linha(s) da cobrança.</div>" : "") +
@@ -148,12 +358,13 @@
         '<label>Intervalo entre parcelas (dias)<input type="number" id="feIntervalo" min="1" max="120" step="1" value="30"></label>' +
         '<div class="fe-nf-acoes"><button type="button" class="fin-btn peq claro" data-fe-gerar>Gerar parcelas</button><button type="button" class="fin-btn peq claro" data-fe-addp>+ Parcela</button></div></div>' +
         (f.condicao_padrao ? '<p class="cl-dica">Condição do cadastro do parceiro: ' + C.esc(f.condicao_padrao) + "</p>" : "") +
-        '<table class="fin-tabela fe-parcelas"><thead><tr><th>Parcela</th><th>Vencimento</th><th class="num">Valor</th><th></th></tr></thead><tbody id="feParc"></tbody></table>' +
+        '<div class="fin-rolar"><table class="fin-tabela fe-parcelas"><thead><tr><th>Parcela</th><th>Vencimento</th><th class="num">Valor</th><th></th></tr></thead><tbody id="feParc"></tbody></table></div>' +
         '<div class="fe-rodape"><span id="feSoma"></span><span class="fin-esp"></span><button type="button" class="fin-btn verde" data-fe-unificar' + (pend.length || conferido <= 0 ? " disabled" : "") + ">Unificar no contas a pagar</button></div></section>"
       : '<section class="fin-bloco"><h3>Parcelas no contas a pagar <small>cada parcela é uma linha no A pagar; o débito no banco paga a parcela inteira</small></h3><div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Parcela</th><th>Vencimento</th><th>Forma</th><th class="num">Valor</th><th class="num">Em aberto</th></tr></thead><tbody>' +
         (d.parcelas || []).map((p) => "<tr><td>" + p.numero + "/" + d.parcelas.length + "</td><td>" + C.dataBr(p.vencimento) + "</td><td>" + C.esc((FORMAS.find((x) => x[0] === f.forma_pagamento) || [0, f.forma_pagamento || "—"])[1]) + '</td><td class="num">' + C.brl(p.valor) + '</td><td class="num">' + C.brl(p.aberto) + "</td></tr>").join("") + "</tbody></table></div></section>");
     const recarregar = async () => { await C.carregar(); await render(C); };
-    renderConc($("feConc"), d, conf, recarregar);
+    if($("feConc"))renderConc($("feConc"), d, conf, recarregar);
+    if(!podeEditarFechamento())el.querySelectorAll("input,select,button[data-fe-nf],button[data-fe-unificar],button[data-fe-gerar],button[data-fe-addp]").forEach(x=>x.disabled=true);
     ligarComum(el, f);
     ligarFechamento(el, f, conf, conferido, recarregar);
   }
@@ -350,6 +561,7 @@
       const sec = e.target.closest(".fe-nf"), numero = sec.querySelector("[name=nf_numero]").value.trim(), arq = sec.querySelector("[name=nf_arquivo]").files?.[0];
       e.target.disabled = true;
       try {
+        await garantirFechamento(f);
         const dados = { nf_numero: numero };
         if (arq) {
           // bucket privado compras-documentos, pasta <empresa>/financeiro/fechamentos/… (abre por link assinado)
@@ -373,7 +585,7 @@
     el.querySelector("[data-fe-ver-pagar]")?.addEventListener("click", () => C.verFechamentoNoPagar(f.id));
     el.querySelector("[data-fe-desfazer]")?.addEventListener("click", async () => {
       if (!(await C.confirmar("Desfazer a unificação? As parcelas saem do contas a pagar e as compras voltam a aguardar o fechamento, como antes.", "Desfazer"))) return;
-      try { await C.rpc("fin_fechamento_desfazer", { p_empresa: C.S.emp, p_id: f.id }); await C.carregar(); await render(C); C.avisar("Unificação desfeita.", "Fechamentos", "sucesso"); }
+      try { await C.rpc("fin_fechamento_desfazer", { p_empresa: C.S.emp, p_id: f.id }); T.abaForn='aguardando'; await C.carregar(); await render(C); C.avisar("Unificação desfeita.", "Fechamentos", "sucesso"); }
       catch (e) { C.avisar(e.message, "Fechamentos", "erro"); }
     });
   }
@@ -431,7 +643,7 @@
       if (Math.abs(s - conferido) > 0.01) return C.avisar("A soma das parcelas (" + C.brl(s) + ") precisa ser igual ao total conferido (" + C.brl(conferido) + ").", "Fechamentos");
       if (!(await C.confirmar("Unificar " + C.brl(conferido) + " em " + ps.length + " parcela(s) (" + $("feForma").selectedOptions[0].textContent + ") no contas a pagar? Cada parcela vira uma linha; clicando nela aparecem as compras que a compõem.", "Unificar"))) return;
       e.target.disabled = true;
-      try { await C.rpc("fin_fechamento_unificar", { p_empresa: C.S.emp, p_id: f.id, p_parcelas: ps, p_forma: $("feForma").value }); C.avisar("Fechamento unificado no contas a pagar.", "Fechamentos", "sucesso"); await recarregar(); }
+      try { await garantirFechamento(f);await C.rpc("fin_fechamento_unificar", { p_empresa: C.S.emp, p_id: f.id, p_parcelas: ps, p_forma: $("feForma").value }); T.abaForn='pagos';T.fech=f.id; C.avisar("Fechamento unificado no contas a pagar.", "Fechamentos", "sucesso"); await recarregar(); }
       catch (err) { e.target.disabled = false; C.avisar(err.message, "Fechamentos", "erro"); }
     });
   }

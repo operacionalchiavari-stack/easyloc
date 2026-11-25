@@ -1,4 +1,4 @@
-/* Gestão do acervo > Cora · IA (18/11/2026; era "Vera", nome trocado em 19/11): agente especialista em estoque.
+/* Gestão do acervo > Miguel · IA (21/11/2026): mesma identidade em todo o estoque: agente especialista em estoque.
    Responde com base nas próximas saídas, divergências, problemas de separação, peças danificadas/O.S. e inventário
    (Edge Function estoque-assistente, que lê tudo com o login de quem pergunta).
    - Toda resposta vem com os itens comentados em cartões COM FOTO (pedido: "sempre fotos dos itens, nunca só texto").
@@ -7,7 +7,7 @@
    A conversa fica nesta aba do navegador. */
 (function(){
  'use strict';
- const NOME='Cora';
+ const NOME='Miguel';
  const RELATORIOS=[
   {t:'Próximos 3 meses',d:90,p:'Faça uma análise completa dos próximos 3 meses: em quais dias e com quais itens vamos ter falta ou pouca folga, o que depende de pré-reserva e o que precisa ser feito antes de cada evento.'},
   {t:'Problemas das próximas 2 semanas',d:14,p:'Quais problemas podem acontecer nas próximas 2 semanas? Organize por dia, do mais urgente para o menos urgente, com a solução de cada um.'},
@@ -42,16 +42,16 @@
    +'<small>'+escH([i.codigo,medida(i.nome)].filter(Boolean).join(' · '))+'</small>'+(i.foto_kit?'<small class="cora-kit">foto do kit '+escH(i.foto_kit)+'</small>':'')+'<p>'+escH(i.comentario)+'</p></figcaption></figure>';}).join('')+'</div>';
  function salvar(){try{sessionStorage.setItem(st.chave,JSON.stringify(st.lista.slice(-40)));}catch{}}
  function msgIa(m,i){
-  if(m.relatorio)return '<div class="cora-msg ia"><div class="cora-avatar" aria-hidden="true">C</div><div class="cora-balao"><p>Pronto, o relatório <b>'+escH(m.relatorio.titulo)+'</b> está pronto.</p>'
+  if(m.relatorio)return '<div class="cora-msg ia"><div class="cora-avatar" aria-hidden="true"><img data-ia-foto width="512" height="512" loading="eager" src="../../../assets/agentes/miguel.jpg" alt="" decoding="sync"></div><div class="cora-balao"><p>Pronto, o relatório <b>'+escH(m.relatorio.titulo)+'</b> está pronto.</p>'
    +(m.relatorio.resumo?'<p>'+escH(m.relatorio.resumo)+'</p>':'')+cartoes((m.relatorio.secoes||[]).flatMap(s=>s.itens).slice(0,4))
    +'<button type="button" class="btn primary cora-abrir" data-cora-abrir="'+i+'">Abrir relatório (A4 com fotos)</button></div></div>';
-  return '<div class="cora-msg ia"><div class="cora-avatar" aria-hidden="true">C</div><div class="cora-balao">'+formatar(m.texto)+cartoes(m.itens)+'</div></div>';
+  return '<div class="cora-msg ia"><div class="cora-avatar" aria-hidden="true"><img data-ia-foto width="512" height="512" loading="eager" src="../../../assets/agentes/miguel.jpg" alt="" decoding="sync"></div><div class="cora-balao">'+formatar(m.texto)+cartoes(m.itens)+'</div></div>';
  }
  function pintar(host){
   const msgs=host.querySelector('[data-cora-msgs]');
-  msgs.innerHTML=(st.lista.length?'':'<div class="cora-boas"><div class="cora-avatar grande" aria-hidden="true">C</div><h3>Oi, eu sou a '+NOME+'.</h3><p>Cuido para que todo o material esteja pronto e em condições no dia de cada evento. Pergunte o que quiser sobre as próximas saídas, manutenção, contagens e proteção, sempre com a foto de cada item, ou gere um relatório ao lado.</p></div>')
+  msgs.innerHTML=(st.lista.length?'':'<div class="cora-boas"><div class="cora-avatar grande" aria-hidden="true"><img data-ia-foto width="512" height="512" loading="eager" src="../../../assets/agentes/miguel.jpg" alt="" decoding="sync"></div><h3>Oi, eu sou o '+NOME+'.</h3><p>Cuido para que todo o material esteja pronto e em condições no dia de cada evento. Pergunte o que quiser sobre as próximas saídas, manutenção, contagens e proteção, sempre com a foto de cada item, ou gere um relatório ao lado.</p></div>')
    +st.lista.map((m,i)=>m.papel==='ia'?msgIa(m,i):'<div class="cora-msg eu"><div class="cora-balao">'+escH(m.texto)+'</div></div>').join('')
-   +(st.aguardando?'<div class="cora-msg ia"><div class="cora-avatar" aria-hidden="true">C</div><div class="cora-balao cora-digitando"><span></span><span></span><span></span> '+escH(st.aguardando)+'</div></div>':'');
+   +(st.aguardando?'<div class="cora-msg ia"><div class="cora-avatar" aria-hidden="true"><img data-ia-foto width="512" height="512" loading="eager" src="../../../assets/agentes/miguel.jpg" alt="" decoding="sync"></div><div class="cora-balao cora-digitando"><span></span><span></span><span></span> '+escH(st.aguardando)+'</div></div>':'');
   msgs.scrollTop=msgs.scrollHeight;
   host.querySelector('[data-cora-enviar]').disabled=!!st.aguardando;
   host.querySelectorAll('[data-cora-rel]').forEach(b=>b.disabled=!!st.aguardando);
@@ -93,7 +93,7 @@
    +(rel.destaques?.length?'<div class="rr-kpis">'+rel.destaques.map(x=>'<div><small>'+escH(x.rotulo)+'</small><strong>'+escH(x.valor)+'</strong></div>').join('')+'</div>':'')
    +(rel.secoes||[]).map(s=>'<div class="rr-section"><h2>'+escH(s.titulo)+' <b>'+(s.itens?.length||0)+' itens</b></h2>'+(s.texto?'<p style="margin:0 0 7px">'+escH(s.texto)+'</p>':'')+(s.itens?.length?'<div class="co-fichas">'+s.itens.map(ficha).join('')+'</div>':'')+'</div>').join('')
    +(rel.o_que_fazer?.length?'<div class="rr-section"><h2>O que fazer</h2><ol class="co-passos">'+rel.o_que_fazer.map(x=>'<li>'+escH(x)+'</li>').join('')+'</ol></div>':'')
-   +'<div class="rr-foot"><span>Gerado pela '+escH(NOME)+' com os dados do sistema em '+escH(quando)+'.</span><span>Acervo</span></div></div>';
+   +'<div class="rr-foot"><span>Gerado pelo '+escH(NOME)+' com os dados do sistema em '+escH(quando)+'.</span><span>Acervo</span></div></div>';
   if(window.FinRelatorioA4)window.FinRelatorioA4.previa(html,rel.titulo);
  }
  window.AcervoCora={
@@ -101,9 +101,9 @@
   render(ctx){
    const host=ctx.host;st.chave='cora_chat:'+ctx.empresa;
    try{st.lista=JSON.parse(sessionStorage.getItem(st.chave)||'[]');}catch{st.lista=[];}
-   host.innerHTML='<section class="cora"><div class="cora-chat"><div class="cora-msgs" data-cora-msgs aria-live="polite"></div>'
-    +'<form class="cora-campo" data-cora-form><textarea rows="1" data-cora-texto placeholder="Pergunte à '+NOME+' (ex.: o que pode faltar no próximo sábado?)" aria-label="Pergunta para a '+NOME+'"></textarea><button type="submit" class="btn primary" data-cora-enviar>Enviar</button></form>'
-    +'<p class="cora-dica">Enter envia · Shift+Enter quebra a linha · A '+NOME+' lê os dados com o seu acesso e não altera nada.</p></div>'
+   host.innerHTML='<section class="cora"><div class="cora-chat"><header class="ia-topo"><span class="ia-topo-foto" aria-hidden="true"><img data-ia-foto width="512" height="512" src="../../../assets/agentes/miguel.jpg" alt=""></span><div class="ia-topo-texto"><strong>'+NOME+'</strong><small><i class="ia-topo-dot" aria-hidden="true"></i><span>Estoque e separação · online</span></small></div><div class="ia-topo-acoes"><button type="button" class="ia-topo-btn" data-cora-nova title="Começar uma nova conversa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg><span>Nova conversa</span></button></div></header><div class="cora-msgs" data-cora-msgs aria-live="polite"></div>'
+    +'<form class="cora-campo" data-cora-form><textarea rows="1" data-cora-texto placeholder="Pergunte ao '+NOME+' (ex.: o que pode faltar no próximo sábado?)" aria-label="Pergunta para o '+NOME+'"></textarea><button type="submit" class="btn primary" data-cora-enviar>Enviar</button></form>'
+    +'<p class="cora-dica">Enter envia · Shift+Enter quebra a linha · O '+NOME+' lê os dados com o seu acesso e não altera nada.</p></div>'
     +'<aside class="cora-lado"><h3>Relatórios</h3><p class="cora-lado-dica">Cada um gera um arquivo A4 com a foto e o comentário de cada item, pronto para imprimir ou salvar em PDF.</p><div class="cora-rels">'+RELATORIOS.map((r,i)=>'<button type="button" class="cora-rel" data-cora-rel="'+i+'"><b>'+escH(r.t)+'</b><small>'+escH(r.p)+'</small><span class="cora-rel-arq">Gerar arquivo</span></button>').join('')+'</div>'
     +'<button type="button" class="cora-nova" data-cora-nova>Nova conversa</button></aside></section>';
    const txt=host.querySelector('[data-cora-texto]');
@@ -112,7 +112,7 @@
    txt.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();host.querySelector('[data-cora-form]').requestSubmit();}});
    host.querySelector('[data-cora-form]').addEventListener('submit',e=>{e.preventDefault();const v=txt.value;txt.value='';ajustar();perguntar(ctx,host,v);});
    host.querySelectorAll('[data-cora-rel]').forEach(b=>b.addEventListener('click',()=>gerarRelatorio(ctx,host,RELATORIOS[+b.dataset.coraRel])));
-   host.querySelector('[data-cora-nova]').addEventListener('click',()=>{if(st.aguardando)return;st.lista=[];salvar();pintar(host);txt.focus();});
+   host.querySelectorAll('[data-cora-nova]').forEach(b=>b.addEventListener('click',()=>{if(st.aguardando)return;st.lista=[];salvar();pintar(host);txt.focus();}));
    pintar(host);
   }
  };

@@ -8,6 +8,24 @@
 .producao-dialog{width:min(740px,calc(100vw - 40px));box-sizing:border-box;max-height:90vh;overflow:auto;border:1px solid #dfe4ea;border-radius:14px;padding:24px;font:14px Inter,system-ui,sans-serif}.producao-dialog::backdrop{background:#19253265}.producao-dialog form{display:grid;gap:14px}.producao-dialog h2{font-size:21px;margin:0}.producao-dialog label{display:grid;gap:7px}.producao-dialog footer{display:flex;gap:8px;justify-content:flex-end}.producao-dialog .erro{color:#b91c1c;min-height:18px;margin:0}.producao-dialog table{width:100%;border-collapse:collapse}.producao-dialog td,.producao-dialog th{text-align:left;padding:8px;border-bottom:1px solid #e4e7eb}.producao-dialog input[type=number]{width:100px}.producao-etiqueta{border:1px solid #aaa;padding:15px;max-width:420px}.producao-etiqueta [data-qr]{margin:12px 0}.producao-etiqueta small{display:block;overflow-wrap:anywhere}
 .producao-cadastro{border:1px solid #e2e6ea;border-radius:10px;padding:16px;margin:16px 0}.producao-cadastro h3{font-size:17px;margin:0 0 6px}.producao-cadastro p{font-size:13px;color:#6b7580}.producao-etapas-editor>div{display:grid;grid-template-columns:2fr 1.4fr .6fr .8fr auto;gap:10px;align-items:end;margin:10px 0}.producao-etapas-editor label{display:grid;gap:4px;font-size:12px}.producao-etapas-editor input,.producao-etapas-editor select{box-sizing:border-box;width:100%;padding:8px;border:1px solid #dce1e6;border-radius:6px}.producao-cadastro button{padding:8px;border:1px solid #dce1e6;border-radius:6px;background:white;cursor:pointer}
 .producao-page .producao-order-card{display:block;box-sizing:border-box;text-decoration:none!important}
+/* Cards da fila: identidade agrupada e dados em uma faixa com alinhamento próprio. */
+.producao-fila-page .producao-order-card{display:grid;gap:12px;padding:14px 16px;min-width:0}
+.producao-fila-page .producao-order-card .separacao-card-top{justify-content:flex-start;gap:8px}
+html:root:is(#acervo-separacao,html) .producao-fila-page .producao-order-card .card-tipo-ida{margin:0 0 0 auto}
+.producao-fila-page .producao-order-card .separacao-card-mainline{display:flex;flex-direction:column;align-items:stretch;gap:4px;margin:0;min-width:0}
+.producao-fila-page .producao-order-card .separacao-card-mainline.com-foto-decorador{flex-direction:row;align-items:center;gap:12px}
+.producao-fila-page .producao-order-card .decorador-card-foto{flex:0 0 48px;width:48px;height:48px;font-size:18px;text-align:center}
+.producao-fila-page .producao-order-card .decorador-card-texto{gap:4px}
+.producao-fila-page .producao-order-card .separacao-card-mainline strong{font-size:15px;line-height:1.35;white-space:normal;overflow-wrap:anywhere}
+.producao-fila-page .producao-order-card .separacao-card-mainline .decorador-card-texto>span,
+.producao-fila-page .producao-order-card .separacao-card-mainline>span:not(.decorador-card-foto){text-align:left;white-space:normal;overflow-wrap:anywhere;font-size:12px;line-height:1.4}
+.producao-fila-page .producao-card-dados{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) minmax(0,.5fr);gap:12px;margin:0;padding-top:10px;border-top:1px solid rgba(39,52,68,.1)}
+.producao-fila-page .producao-card-dados>div{min-width:0}
+.producao-fila-page .producao-card-dados dt{margin:0 0 3px;font-size:10px;font-weight:500;line-height:1.3;letter-spacing:.05em;text-transform:uppercase;color:#687587}
+.producao-fila-page .producao-card-dados dd{margin:0;font-size:12px;font-weight:600;line-height:1.4;color:#344254;overflow-wrap:anywhere}
+.producao-fila-page .producao-card-dados>div:last-child{text-align:right}
+.producao-fila-page .producao-order-card .separacao-lock-note{margin:0;padding:7px 10px;border-radius:6px;background:rgba(255,255,255,.6);font-size:11px;line-height:1.4}
+.producao-fila-page .producao-order-card .separacao-card-progress{margin:0}
 .producao-card-top{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:600;margin-bottom:12px}
 .producao-card-cliente{display:block;font-size:16px;margin-bottom:5px}.producao-card-local{margin:0;font-size:12px;color:#7c8490}
 .producao-card-datas{display:flex;gap:25px;margin:14px 0}.producao-card-datas>div{display:grid;gap:4px}.producao-card-datas small{font-size:10px;color:#8b929a}.producao-card-datas b{font-size:12px;font-weight:500}
@@ -238,3 +256,5 @@ html:root body .op-galeria-thumbs button{width:64px!important;height:64px!import
 html:root body .op-voltar-movido{display:none!important}
 .op-ped-v2>.op-ped-voltar{flex:none;display:inline-flex;align-items:center;height:34px;padding:0 14px;border:1px solid #dce4ec;border-radius:999px;background:#fff;color:#1f2020;font:500 13px Inter,system-ui,sans-serif;text-decoration:none;white-space:nowrap}
 .op-ped-v2>.op-ped-voltar:hover{border-color:#123f86;color:#123f86}
+/* 22/11/2026: foto da coluna da direita centralizada */
+.producao-page .op-galeria{margin-left:auto!important;margin-right:auto!important;justify-self:center!important}

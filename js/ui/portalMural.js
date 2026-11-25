@@ -1114,3 +1114,73 @@
   });
   if(document.body.classList.contains("portal-em-inicio")){ mostrar(); }
 })();
+
+/* 22/11/2026: "Carinho para todos" — recados soltos, espalhados pela área (sem colunas), cada um flutuando para um lado.
+   Posição sorteada com semente fixa (o mesmo recado fica no mesmo lugar ao redesenhar), evitando sobrepor; sem lugar livre,
+   fica onde sobrepõe menos. Refeito quando os recados mudam ou a área muda de tamanho. */
+(function () {
+  "use strict";
+  const hash = (s) => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; };
+  const sorteio = (semente) => { let x = semente || 1; return () => { x ^= x << 13; x ^= x >>> 17; x ^= x << 5; return ((x >>> 0) % 100000) / 100000; }; };
+  function posicionar(bolhas, W, H) {
+    const ocupados = [], res = [];
+    let sobrepos = 0;
+    bolhas.forEach((b, i) => {
+      const w = b.offsetWidth, h = b.offsetHeight;
+      const rnd = sorteio(hash(i + "|" + b.textContent));
+            const cand = [];
+      // ordem quase toda sorteada (leve preferência pela parte de cima): bolhas espalhadas pela área inteira
+      for (let y = 0; y <= Math.max(0, H - h); y += 6) for (let x = 0; x <= Math.max(0, W - w); x += 6) cand.push([x, y, y + rnd() * Math.max(140, H * 0.85)]);
+      cand.sort((a, b) => a[2] - b[2]);
+      let melhor = null;
+      for (const [x, y] of cand) {
+        let sobra = 0;
+        for (const o of ocupados) {
+          const ix = Math.max(0, Math.min(x + w + 8, o.x + o.w) - Math.max(x - 8, o.x));
+          const iy = Math.max(0, Math.min(y + h + 8, o.y + o.h) - Math.max(y - 8, o.y));
+          sobra += ix * iy;
+        }
+        if (!melhor || sobra < melhor.sobra) melhor = { x, y, sobra };
+        if (sobra === 0) break;
+      }
+      if (melhor.sobra) sobrepos++;
+      ocupados.push({ x: melhor.x, y: melhor.y, w, h });
+      res.push({ b, x: melhor.x, y: melhor.y, rnd });
+    });
+    return { res, sobrepos };
+  }
+  function espalhar(box) {
+    const W = box.clientWidth, H0 = box.clientHeight;
+    if (W < 80 || H0 < 40) return;
+    const bolhas = [...box.querySelectorAll(".parabens-recado")];
+    if (!bolhas.length) return;
+    box.classList.add("is-espalhado");
+    // não cabe sem sobrepor? a área cresce para baixo (a caixa rola) até caber
+    let H = H0, r = posicionar(bolhas, W, H);
+    for (let k = 0; r.sobrepos && k < 12; k++) { H += 50; r = posicionar(bolhas, W, H); }
+    r.res.forEach(({ b, x, y, rnd }, i) => {
+      b.style.left = Math.round(x) + "px";
+      b.style.top = Math.round(y) + "px";
+      b.style.setProperty("--r", (rnd() * 8 - 4).toFixed(2) + "deg");
+      b.style.setProperty("--dx", ((rnd() < .5 ? -1 : 1) * (6 + rnd() * 10)).toFixed(1) + "px");
+      b.style.setProperty("--dy", ((rnd() < .5 ? -1 : 1) * (5 + rnd() * 8)).toFixed(1) + "px");
+      b.style.setProperty("--dx2", (rnd() * 14 - 7).toFixed(1) + "px");
+      b.style.animationDuration = (9 + rnd() * 8).toFixed(1) + "s";
+      b.style.animationDelay = (-rnd() * 8).toFixed(1) + "s";
+      b.style.zIndex = String(1 + i);
+    });
+  }
+  const vistos = new WeakSet();
+  function ligar(box) {
+    if (vistos.has(box)) return;
+    vistos.add(box);
+    let t = 0;
+    const agendar = () => { cancelAnimationFrame(t); t = requestAnimationFrame(() => espalhar(box)); };
+    new MutationObserver(agendar).observe(box, { childList: true });
+    if (window.ResizeObserver) new ResizeObserver(agendar).observe(box);
+    agendar();
+  }
+  const procurar = () => document.querySelectorAll("#portalInicio .parabens-recados").forEach(ligar);
+  new MutationObserver(procurar).observe(document.getElementById("portalInicio") || document.body, { childList: true, subtree: true });
+  procurar();
+})();

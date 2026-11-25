@@ -27,7 +27,6 @@
     atual = nome;
     if (['equipe','entrega','coleta'].includes(nome)) window.PainelLogisticoDias.definirModulo(nome);
     document.getElementById('plAbasDias').hidden = true;
-    document.getElementById('plIrHoje').hidden=nome!=='equipe';
     abas.forEach(aba => {
       const selecionada = aba.dataset.modulo === nome;
       aba.setAttribute('aria-selected', String(selecionada));
@@ -35,39 +34,36 @@
     });
     document.getElementById('plModuloEquipe').hidden = nome !== 'equipe';
     document.getElementById('plModuloEntregas').hidden = !operacao;
-    document.getElementById('plModuloFreteiros').hidden = nome !== 'freteiros';
+    document.getElementById('plModuloFretes').hidden = nome !== 'fretes';
+    document.getElementById('plModuloFree').hidden = nome !== 'free';
+    document.getElementById('plModuloUber').hidden = nome !== 'uber';
+    document.getElementById('plModuloDivergencias').hidden = nome !== 'divergencias';
+    document.getElementById('plModuloLuisa').hidden = nome !== 'luisa';
     document.getElementById('plModuloParametros').hidden = nome !== 'parametros';
     if (operacao) {
       document.getElementById('plModuloEntregas').setAttribute('aria-labelledby', nome === 'entrega' ? 'plTabEntrega' : 'plTabColeta');
       window.EntregasColetas.definirOperacao(nome);
     }
-    document.getElementById('plPreencher').hidden = nome !== 'equipe' || document.getElementById('plPreencher').dataset.automaticadesativada==='true';
     const url = new URL(location.href);
     url.searchParams.set('aba', nome);
     if (nome !== 'equipe') url.searchParams.delete('dia');
     history.replaceState(null, '', url);
-    const grupo = nome === 'parametros' ? 'parametros' : nome === 'freteiros' ? 'freteiros' : nome === 'equipe' ? 'equipe' : 'operacoes';
-    if (iniciados.has(grupo)) return;
+    const grupo = operacao ? 'operacoes' : nome;
+    if (iniciados.has(grupo)) { if(['fretes','free','uber'].includes(nome)) await window.PainelAnunciados.abrir(nome==='fretes'?'frete':nome); else if(nome==='divergencias') await window.PainelServicos.abrir(nome);return; }
     iniciados.add(grupo);
     try {
       if (nome === 'parametros') {
         const ctx=await window.aguardarContexto();
-        await window.carregarParametrosEscala(document.getElementById('plModuloParametros'),ctx.empresa_id,{mostrarAutomatica:false,mostrarUber:true});
+        await window.carregarParametrosEscala(document.getElementById('plModuloParametros'),ctx.empresa_id,{mostrarAutomatica:false,mostrarUber:true,navegacaoPorCategorias:true});
       }
-      else if (nome === 'freteiros') {
-        // 15/11/2026: aprovação dos cadastros do App do Freteiro (antes ficava escondida no Cadastro de Fornecedores)
-        const quadro = document.getElementById('plFreteirosFrame');
-        window.addEventListener('message', e => {
-          if (e.origin !== location.origin || e.source !== quadro.contentWindow) return;
-          if (e.data?.tipo === 'fretes-cadastros-altura') quadro.style.height = Math.max(200, Number(e.data.altura) || 200) + 'px';
-        });
-        quadro.src = quadro.dataset.src;
-      }
+      else if (['fretes','free','uber'].includes(nome)) await window.PainelAnunciados.abrir(nome==='fretes'?'frete':nome);
+      else if (nome === 'divergencias') await window.PainelServicos.abrir(nome);
+      else if (nome === 'luisa') await window.PainelLuisa.iniciar();
       else if (nome === 'equipe') await window.PainelLogisticoEquipe.iniciar();
       else await window.EntregasColetas.iniciar();
     } catch (erro) {
       iniciados.delete(grupo);
-      const aviso = document.getElementById(nome === 'parametros' ? 'plModuloParametros' : nome === 'equipe' ? 'plErro' : 'ecMensagem');
+      const aviso = document.getElementById(nome === 'parametros' ? 'plModuloParametros' : nome === 'luisa' ? 'plModuloLuisa' : nome === 'equipe' ? 'plErro' : nome==='divergencias'?'plServicosErro-'+nome:['fretes','free','uber'].includes(nome)?'plErro':'ecMensagem');
       aviso.hidden = false;
       aviso.textContent = erro.message || 'Não foi possível carregar esta área.';
     }
@@ -75,7 +71,7 @@
   async function iniciar() {
     const permissoes = window.EasyLocPermissions;
     if (permissoes) await permissoes.load();
-    const chaves = {equipe: 'logistica.planejamento.visualizar', entrega: 'logistica.expedicao.visualizar', coleta: 'logistica.expedicao.visualizar', freteiros: 'logistica.planejamento.visualizar', parametros: 'logistica.planejamento.visualizar'};
+    const chaves = {equipe: 'logistica.planejamento.visualizar', entrega: 'logistica.expedicao.visualizar', coleta: 'logistica.expedicao.visualizar', fretes: 'logistica.planejamento.visualizar', free: 'logistica.planejamento.visualizar', uber: 'logistica.planejamento.visualizar', divergencias: 'logistica.planejamento.visualizar', luisa: 'logistica.planejamento.visualizar', parametros: 'logistica.planejamento.visualizar'};
     abas.forEach(aba => {
       const nome = aba.dataset.modulo;
       const pode = !permissoes || permissoes.hasPermission(chaves[nome]);
@@ -96,8 +92,10 @@
     });
     const params = new URLSearchParams(location.search);
     let solicitada = params.get('aba');
+    if (solicitada === 'freteiros') solicitada = 'fretes';
     if (solicitada === 'entregas') solicitada = params.get('etapa') === 'coleta' ? 'coleta' : 'entrega';
     await selecionar(permitidos.has(solicitada) ? solicitada : [...permitidos][0]);
+    if (permitidos.has('divergencias')) window.PainelServicos.contarDivergencias();
     if (permitidos.has('equipe') && !iniciados.has('equipe')) {
       iniciados.add('equipe');
       await window.PainelLogisticoEquipe.iniciar();

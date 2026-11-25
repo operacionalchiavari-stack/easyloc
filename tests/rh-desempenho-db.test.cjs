@@ -1,0 +1,61 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),{PGlite}=require('@electric-sql/pglite');
+test('RH: nota acumulada, pesos preservados, confirmação, vínculo, duplicidade e isolamento',async()=>{
+ const db=new PGlite(),emp='10000000-0000-0000-0000-000000000001',out='10000000-0000-0000-0000-000000000002',a='20000000-0000-0000-0000-000000000001',b='20000000-0000-0000-0000-000000000002',x='20000000-0000-0000-0000-000000000003';
+ try{
+  await db.exec(`create role anon;create role authenticated;create schema auth;
+  create function auth.uid() returns uuid language sql as $$select '${a}'::uuid$$;
+  create function seguranca_2fa_ok() returns boolean language sql as $$select current_setting('test.duplo',true) is distinct from 'nao'$$;
+  create function rh_pode(uuid,text) returns boolean language sql as $$select $1='${emp}'::uuid and current_setting('test.permissao',true) is distinct from 'nao'$$;
+  create function ocorrencias_sincronizar(uuid) returns void language sql as $$select$$;
+  create table empresas(id uuid primary key);insert into empresas values('${emp}'),('${out}');
+  create table funcionarios_acesso(id uuid primary key,empresa_id uuid,nome text,setor text,cargo text,ativo boolean default true);
+  insert into funcionarios_acesso(id,empresa_id,nome,setor) values('${a}','${emp}','Ana','Montagem'),('${b}','${emp}','Bruno','Logística'),('${x}','${out}','Outro','Produção');
+  create table controle_rh_ocorrencias(id uuid primary key default gen_random_uuid(),empresa_id uuid,funcionario_id uuid,tipo text,data_ocorrencia date,observacao text);
+  create table operacao_casos_automaticos(id uuid primary key default gen_random_uuid(),empresa_id uuid,dados jsonb,primeira_deteccao timestamptz default now());`);
+  await db.exec(fs.readFileSync('supabase/migrations/20261123000300_rh_avaliacao_desempenho.sql','utf8'));
+  const rpc=async(nome,args)=> (await db.query('select '+nome+'('+args.map((_,i)=>'$'+(i+1)).join(',')+') resultado',args)).rows[0].resultado;
+  const contexto=()=>rpc('rh_desempenho_contexto',[emp,null,'2026-11-30',true]);
+  const nota=async()=> (await contexto()).pessoas.find(p=>p.id===a).nota;
+  let cfg=await rpc('rh_desempenho_parametros',[emp]);assert.equal(cfg.regras.length,47);assert.equal(await nota(),10);
+  async function peso(origem,chave,pontos){cfg=await rpc('rh_desempenho_parametros',[emp]);const r=cfg.regras.find(r=>r.origem===origem&&r.chave===chave);return rpc('rh_desempenho_parametros_salvar',[emp,cfg.config,[{id:r.id,versao:r.versao,pontos,ativa:true}]]);}
+  await peso('rh','atraso',-0.5);await peso('rh','reconhecimento',1);await peso('automatica','uniforme_reprovado',-1);
+  const e1=(await db.query("insert into controle_rh_ocorrencias(empresa_id,funcionario_id,tipo,data_ocorrencia) values($1,$2,'Atraso','2026-11-20') returning id",[emp,a])).rows[0].id;
+  assert.equal(await nota(),9.5);
+  await peso('rh','atraso',-2);assert.equal(await nota(),9.5,'mudar peso não altera o histórico');
+  await db.query('update controle_rh_ocorrencias set observacao=$1 where id=$2',['Revisado',e1]);assert.equal(await nota(),9.5,'atualizar a fonte não duplica nem troca peso');
+  await db.query("insert into controle_rh_ocorrencias(empresa_id,funcionario_id,tipo,data_ocorrencia) values($1,$2,'Atraso','2026-11-21')",[emp,a]);assert.equal(await nota(),7.5);
+  await db.query("insert into controle_rh_ocorrencias(empresa_id,funcionario_id,tipo,data_ocorrencia) values($1,$2,'Reconhecimento','2026-11-22')",[emp,a]);assert.equal(await nota(),8.5);
+  const auto=(await db.query("insert into operacao_casos_automaticos(empresa_id,dados) values($1,$2) returning id",[emp,{tipo:'uniforme_reprovado',status:'aberta',data:'2026-11-22T12:00:00Z',funcionario_id:a}])).rows[0].id;
+  assert.equal(await nota(),8.5,'pendência em apuração não aplica desconto');
+  await db.query("update operacao_casos_automaticos set dados=jsonb_set(dados,'{status}','\"registrada\"') where id=$1",[auto]);assert.equal(await nota(),7.5);
+  const semPessoa=(await db.query("insert into operacao_casos_automaticos(empresa_id,dados) values($1,$2) returning id",[emp,{tipo:'uniforme_reprovado',status:'registrada',data:'2026-11-22T12:00:00Z'}])).rows[0].id;
+  const pendente=(await contexto()).sem_funcionario.find(e=>e.origem_id===semPessoa);assert.ok(pendente);assert.equal(await nota(),7.5);
+  await assert.rejects(()=>rpc('rh_desempenho_vincular',[emp,pendente.id,x]),/inválido/);
+  await rpc('rh_desempenho_vincular',[emp,pendente.id,a]);assert.equal(await nota(),6.5);
+  await db.query("update operacao_casos_automaticos set dados=dados||'{\"descricao\":\"Atualizada\"}' where id=$1",[semPessoa]);assert.equal(await nota(),6.5,'vínculo manual preservado na sincronização');
+  await assert.rejects(()=>rpc('rh_desempenho_vincular',[emp,pendente.id,b]),/vinculada/);
+  await db.query("update operacao_casos_automaticos set dados=jsonb_set(dados,'{status}','\"cancelada\"') where id=$1",[auto]);assert.equal(await nota(),7.5,'cancelamento restaura pontos');
+  const det=await rpc('rh_desempenho_detalhe',[emp,a,null,'2026-11-30',0]);assert.equal(det.total,5);assert.equal(det.itens.find(e=>e.origem_id===e1).pontos,-0.5);
+  assert.equal((await rpc('rh_desempenho_contexto',[emp,'2026-11-22','2026-11-30',false])).pessoas.find(p=>p.id===a).nota,7.5,'filtro do histórico não reinicia a nota acumulada');
+  assert.equal((await contexto()).pessoas.length,2);assert.equal((await contexto()).pessoas.find(p=>p.id===b).nota,10);
+  const notaB=async()=> (await contexto()).pessoas.find(p=>p.id===b).nota;
+  async function registrarB(tipo,dia){await db.query('insert into controle_rh_ocorrencias(empresa_id,funcionario_id,tipo,data_ocorrencia) values($1,$2,$3,$4)',[emp,b,tipo,'2026-11-'+dia]);}
+  await peso('rh','reconhecimento',10);await registrarB('Reconhecimento','01');assert.equal(await notaB(),10);
+  await registrarB('Atraso','02');assert.equal(await notaB(),8,'pontos positivos no teto não viram crédito futuro');
+  await peso('rh','atraso',-10);await registrarB('Atraso','03');assert.equal(await notaB(),0);
+  await registrarB('Atraso','04');assert.equal(await notaB(),0,'nota nunca negativa');
+  await peso('rh','reconhecimento',1);await registrarB('Reconhecimento','05');assert.equal(await notaB(),1,'pontos positivos recuperam a nota a partir de zero');
+  await registrarB('Reconhecimento','30');assert.equal((await rpc('rh_desempenho_contexto',[emp,null,'2026-11-29',true])).pessoas.find(p=>p.id===b).nota,1,'corte exclui registros futuros');
+  assert.equal((await rpc('rh_desempenho_contexto',[emp,null,'2026-12-31',true])).pessoas.find(p=>p.id===b).nota,2,'mudança de mês não reinicia a nota');
+  await assert.rejects(()=>rpc('rh_desempenho_contexto',[emp,'2026-12-01','2026-11-01',false]),/anterior/);
+  cfg=await rpc('rh_desempenho_parametros',[emp]);
+  await assert.rejects(()=>rpc('rh_desempenho_parametros_salvar',[emp,{...cfg.config,teto:11},[]]),/check constraint/);
+  await assert.rejects(()=>rpc('rh_desempenho_parametros_salvar',[emp,cfg.config,[{id:cfg.regras[0].id,pontos:-1,ativa:true}]]),/mudou/);
+  assert.equal((await rpc('rh_desempenho_parametros',[emp])).config.versao,cfg.config.versao,'falha reverte transação inteira');
+  await db.exec('set role authenticated');await assert.rejects(()=>db.query('select * from rh_desempenho_eventos'),/permission denied/);await db.exec('reset role');
+  await assert.rejects(()=>rpc('rh_desempenho_contexto',[out,null,null,true]),/permissão/);
+  await assert.rejects(()=>rpc('rh_desempenho_detalhe',[emp,x,null,null,0]),/inválido/);
+  await assert.rejects(()=>rpc('rh_desempenho_parametros_salvar',[emp,{...cfg.config,versao:0},[]]),/mudou/);
+  await db.exec("set test.permissao='nao'");await assert.rejects(()=>contexto(),/permissão/);await db.exec("set test.permissao='sim';set \"test.duplo\"='nao'");await assert.rejects(()=>contexto(),/permissão/);
+ }finally{await db.close();}
+});

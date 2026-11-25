@@ -1,3 +1,4 @@
+@import url("./agentes-avatares.css?v=20261121-retratos");
 /* Conversa com a especialista (solicitação de compra e de manutenção), nov/2026. js/ui/assistente-solicitacao.js */
 dialog.as-dialog{width:min(760px,calc(100vw - 24px));height:min(720px,calc(100vh - 32px));max-height:none;max-width:none;margin:auto;padding:0;border:1px solid #e3e7ec;border-radius:18px;background:#fff;box-sizing:border-box;overflow:hidden;font:400 14px Inter,system-ui,sans-serif;color:#1f2020;box-shadow:0 18px 48px rgba(15,23,42,.22)}
 dialog.as-dialog[open]{display:flex;flex-direction:column}

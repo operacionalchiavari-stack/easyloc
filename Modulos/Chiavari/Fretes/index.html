@@ -10,7 +10,6 @@
     (function () {
       var p = new URLSearchParams(location.search);
       var destino = "fretes.html";
-      if (["conciliacao"].indexOf(p.get("page")) >= 0) { destino = "conciliacao.html"; }
       location.replace(destino + location.search + location.hash);
     })();
   </script>

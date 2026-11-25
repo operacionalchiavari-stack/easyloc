@@ -643,11 +643,120 @@ html:root:is(#fin-prev#fin-prev#fin-prev,html) :is(body:not(.portal-shell), #mai
 /* Título "Financeiro" saiu da frente das abas (nov/2026, pedido do usuário): fica só para leitor de tela */
 html:root:is(#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp#fin-tp,html) body .fin-page > .header-list.fin-topo > h2:first-child{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0 0 0 0)!important;white-space:nowrap!important;border:0!important}
 html:root:is(#acervo-fin#acervo-fin,html) .fin-conta-linha>.fin-btn{height:36px;min-height:36px;white-space:nowrap}
-/* Contas a pagar (19/11/2026): a linha da fatura do cartão (e as compras dela, quando aberta) em lilás clarinho, no lugar do cinza */
-html:root #finConteudo .fin-tabela tr.fin-fat-linha>td{background:#f4f0fc !important}
-html:root #finConteudo .fin-tabela tr.fin-fat-linha:hover>td{background:#ece5fa !important}
-html:root #finConteudo .fin-tabela tr.fin-fat-linha.fin-fat-foco>td{background:#e4dbf8 !important}
-html:root #finConteudo tr.fin-fat-linha.is-aberta+tr.fin-fech-comp>td,
-html:root #finConteudo tr.fin-fat-linha.is-aberta+tr.fin-fech-comp .fin-fech-comp-tab,
-html:root #finConteudo tr.fin-fat-linha.is-aberta+tr.fin-fech-comp .fin-fech-comp-tab :is(thead, tbody, tfoot, tr, th, td){background:#f8f5fd !important}
-html:root #finConteudo tr.fin-fat-linha.is-aberta+tr.fin-fech-comp .fin-fech-comp-tab :is(th, td){border-color:#e6dff5 !important}
+/* Contas a pagar: faturas em azul acinzentado, com destaque nas compras expandidas. */
+html:root :is(#finConteudo,#purchasePayablesList) .fin-tabela tr.fin-fat-linha>td{background:#dce5ee !important}
+html:root :is(#finConteudo,#purchasePayablesList) .fin-tabela tr.fin-fat-linha:hover>td{background:#cfdce8 !important}
+html:root :is(#finConteudo,#purchasePayablesList) .fin-tabela tr.fin-fat-linha.fin-fat-foco>td{background:#c3d3e3 !important}
+html:root :is(#finConteudo,#purchasePayablesList) tr.fin-fat-linha.is-aberta+tr.fin-fech-comp>td,
+html:root :is(#finConteudo,#purchasePayablesList) tr.fin-fat-linha.is-aberta+tr.fin-fech-comp .fin-fech-comp-tab,
+html:root :is(#finConteudo,#purchasePayablesList) tr.fin-fat-linha.is-aberta+tr.fin-fech-comp .fin-fech-comp-tab :is(thead, tbody, tfoot, tr, th, td){background:#e7edf3 !important}
+html:root :is(#finConteudo,#purchasePayablesList) tr.fin-fat-linha.is-aberta+tr.fin-fech-comp .fin-fech-comp-tab :is(th, td){border-color:#c7d3df !important}
+
+/* Fechamentos de parceiros › Divergências de frete e Uber (22/11). */
+.fe-av.fe-av-div{background:#fdecea;color:#b42318;font-weight:700}
+.fe-div-n{color:#b42318}
+.fe-div-nota{margin:6px 0 12px;font-size:13px;color:#6b6b6b}
+.fe-div-rel{margin-bottom:14px}
+
+/* Navegação do parceiro antes do conteúdo: lançamentos, divergências, pagamentos e documentos. */
+.fe-parceiro-barra{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px 18px;border-bottom:1px solid #e3e7ec;margin-bottom:14px;padding-bottom:6px}
+.fe-parceiro-barra .fe-abas-forn{margin:0;border-bottom:0}
+.fe-periodo-acoes{display:flex;flex-wrap:wrap;gap:8px}
+.fe-periodo-topo{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:0 0 14px}
+.fe-periodo-topo h3{margin:0;font-size:18px}
+.fe-abas-forn{display:flex;flex-wrap:wrap;gap:4px 22px;border-bottom:1px solid #e3e7ec;margin:0 0 14px}
+.fe-abas-forn>button{display:inline-flex;align-items:center;gap:5px;flex-shrink:0}
+.fe-abas-forn button{border:0;background:none;padding:10px 2px;font:600 12.5px Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:#6b6b6b;border-bottom:2px solid transparent;cursor:pointer}
+.fe-abas-forn button.ativa{color:#1f2020;border-bottom-color:#123f86}
+.fe-abas-forn span{margin-left:4px;padding:1px 7px;border-radius:999px;background:#eef1f4;font-size:11px;letter-spacing:0}
+.fe-mov small{color:#6b6b6b}
+.fe-ped{display:inline-block;padding:1px 8px;border-radius:999px;background:#fdecea;color:#c4302b;font-weight:600;font-size:12px}
+.fe-tr{color:#a0a6ad}
+
+/* Fechamentos de parceiros · aguardando conciliar (22/11): cor própria para cada valor, foto do cliente, detalhe da situação. */
+html:root:is(#fe#fe#fe#fe,html) .fe-mov .fe-val{display:inline-block;padding:2px 8px;border-radius:8px;font-weight:600;white-space:nowrap}
+html:root:is(#fe#fe#fe#fe,html) .fe-mov .fe-val-sis{background:#eaf0fa;color:#123f86}
+html:root:is(#fe#fe#fe#fe,html) .fe-mov .fe-val-cob{background:#fdf1e4;color:#9a4d0b}
+html:root:is(#fe#fe#fe#fe,html) .fe-mov .fe-val-final{background:#e6f4ec;color:#226b43}
+.fe-final .fe-div-acoes{justify-content:flex-end;text-align:left}
+html:root:is(#fe#fe#fe#fe,html) .fe-mov :is(th,td).fe-final{border-left:2px solid #d6dde5}
+.fe-status{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap}
+html:root:is(#fe#fe#fe#fe,html) .fe-status.is-conforme{background:#e6f4ec;color:#226b43}
+html:root:is(#fe#fe#fe#fe,html) .fe-status.is-divergente{background:#fdebec;color:#b42318}
+html:root:is(#fe#fe#fe#fe,html) .fe-status.is-pendente{background:#eef1f5;color:#596679}
+.fe-mov .fe-dir{display:block;margin-top:2px;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#6b6b6b}
+.fe-cli{display:inline-flex;align-items:center;gap:8px}
+.fe-cli-foto{position:relative;flex:0 0 32px;width:32px;height:32px;border-radius:50%;overflow:hidden;background:#eef1f4;display:inline-flex;align-items:center;justify-content:center}
+.fe-cli-foto b{font:600 11px Inter,sans-serif;color:#4f4f4f}
+.fe-cli-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#fff}
+.fe-sit .fe-sit-det{display:block;margin-top:4px;font-size:12px;color:#4f4f4f;line-height:1.35}
+.fe-cli-nome{display:block}
+.fe-cli-local{display:block;margin-top:2px;font-size:12px;color:#6b6b6b}
+.fe-mov .fe-hora{display:block;margin-top:2px;font-size:12px;color:#6b6b6b}
+.fe-mov .fe-cam{font-size:13px;color:#1f2020}
+.fe-caminhoes{display:grid;gap:10px}
+.fe-caminhao{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.fe-caminhao-foto{width:60px;height:60px;object-fit:cover;border-radius:50%;flex-shrink:0}
+.fe-caminhao-miniatura{position:relative;display:inline-flex;flex:0 0 60px;border-radius:50%;overflow:hidden}
+html:root:is(#fe#fe#fe#fe,html) .fe-caminhao-miniatura>span{position:absolute;bottom:0;left:0;right:0;background:#263445d9;color:#fff;text-align:center;font-size:9px;line-height:14px}
+.fe-caminhao .fe-cam{overflow-wrap:anywhere;min-width:0;flex:1 1 80px}
+/* Aguardando conciliar agrupado por pedido/cliente, no visual de Fretes anunciados (22/11). */
+.fe-mov-grupos{margin:0 0 18px}
+.fe-mov-grupos .fe-sit .fin-status{white-space:normal;line-height:1.4}
+.fe-mov-grupos .pla-cli{overflow-wrap:anywhere}
+.fe-mov-div{margin-top:8px;font-size:12px}
+.fe-mov-div .dvt-lados{grid-template-columns:1fr}
+.fe-mov-div .dvt-lado p{overflow-wrap:anywhere;white-space:pre-wrap;line-height:1.45}
+.fe-mov-div .dvt-lado small{display:block;margin-top:4px}
+.fe-valor-justificado .fe-mov-div{text-align:left;white-space:normal}
+.fe-div-acoes{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.fe-div-historico>summary{cursor:pointer;font-weight:600;margin-bottom:12px}
+dialog.fe-div-dialogo{width:min(520px,calc(100vw - 32px));box-sizing:border-box;border:1px solid #dfe4ea;border-radius:16px;padding:24px;background:#fff;color:#1f2020}
+.fe-div-dialogo::backdrop{background:#14233288}
+.fe-div-dialogo h2{font-size:20px;margin:0 0 12px}
+.fe-div-dialogo label{display:grid;gap:8px;font-size:13px;margin-top:16px}
+.fe-div-dialogo input,.fe-div-dialogo textarea{width:100%;box-sizing:border-box;border:1px solid #dfe4ea;border-radius:8px;padding:10px;font:inherit}
+.fe-div-dialogo footer{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+html:root:is(#pla#pla#pla,html) .fe-pla-ped{cursor:default}
+.fe-cli-foto.fe-cli-foto-g{flex-basis:60px;width:60px;height:60px}
+.fe-mov .pla-num{text-align:right}
+.fe-mov td.num{text-align:right}
+html:root:is(#pla#pla#pla#pla,html) .pla-pedido.is-sem{background:#eef1f5;border-color:#e3e7ec;color:#6b6b6b;font-weight:500;cursor:default}
+html:root:is(#pla#pla#pla#pla,html) .fe-mov thead th.pla-num{text-align:right}
+/* Foto dos parceiros na lista de Fechamentos maior (22/11). */
+html:root:is(#fe#fe#fe,html) .fe-av{flex:0 0 60px;width:60px;height:60px;font-size:16px;background:#fff}
+html:root:is(#fe#fe#fe,html) .fe-av img{object-fit:contain}
+html:root:is(#fe#fe#fe,html) .fe-av.fe-av-div{background:#fdecea;font-size:22px}
+/* Divergências dentro do parceiro (23/11) */
+.fe-abas-forn span.fe-div-badge{background:#e60012;color:#fff}
+.fe-div-sub{display:flex;gap:8px;margin:0 0 10px}
+.fe-div-sub button{border:1px solid #dfe4ea;background:#fff;border-radius:999px;padding:6px 14px;font:500 12.5px Inter,sans-serif;cursor:pointer;color:#4f4f4f}
+.fe-div-sub button.ativa{background:#123f86;border-color:#123f86;color:#fff}
+.fe-forn .fe-div-aviso{color:#b42318}
+.fe-import-dialogo{width:min(1180px,calc(100vw - 32px));max-height:calc(100vh - 40px);box-sizing:border-box;border:1px solid #dfe5eb;border-radius:18px;padding:24px;color:#132535;background:#fff;font:14px Inter,Arial,sans-serif;box-shadow:0 20px 80px #102c4433}
+.fe-import-dialogo::backdrop{background:#102c4466}
+.fe-import-dialogo header,.fe-import-dialogo footer{display:flex;align-items:center;gap:12px;justify-content:space-between}
+.fe-import-dialogo h2{margin:0;font-size:20px}
+.fe-import-dialogo [data-fechar]{background:none;border:0;font-size:28px;cursor:pointer}
+.fe-import-dialogo .fin-rolar{max-height:55vh;overflow:auto}
+.fe-import-dialogo td{vertical-align:top}
+.fe-import-dialogo td small{display:block;white-space:normal}
+.fe-import-dialogo input:not([type=checkbox]),.fe-import-dialogo select{min-height:38px;max-width:100%;padding:8px;border:1px solid #dce3e9;border-radius:8px;font:inherit;color:inherit;background:#fff;box-sizing:border-box}
+.fe-import-dialogo [name=valor]{width:110px}
+.fe-import-dialogo select{width:310px}
+.fe-import-dialogo footer{margin-top:18px;flex-wrap:wrap;justify-content:flex-end}
+.fe-import-dialogo [data-total]{margin-right:auto;font-weight:600}
+#feRodape{display:grid;gap:16px;margin-top:18px;min-width:0}
+#feRodape>*{min-width:0}
+#feRodape .fe-parcelas{min-width:0;width:100%}
+#feRodape .fe-parcelas input{max-width:100%;box-sizing:border-box}
+#feHistorico{margin-top:18px}
+@media(max-width:700px){
+ .fe-import-dialogo{padding:16px}.fe-import-dialogo .fin-tabela{min-width:0;display:block}.fe-import-dialogo thead{display:none}
+ .fe-import-dialogo tbody{display:grid;gap:12px}.fe-import-dialogo tr{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);padding:10px;border:1px solid #e4e9ee;border-radius:10px}
+ .fe-import-dialogo td{display:block;border:0!important;padding:6px;min-width:0;white-space:normal}
+ .fe-import-dialogo td:nth-child(3),.fe-import-dialogo td:nth-child(5){grid-column:1/-1}
+ .fe-import-dialogo td::before{display:block;font-size:11px;color:#5f6b78;margin-bottom:5px}
+ .fe-import-dialogo td:nth-child(1)::before{content:'Importar'}.fe-import-dialogo td:nth-child(2)::before{content:'Data'}.fe-import-dialogo td:nth-child(3)::before{content:'Serviço no documento'}.fe-import-dialogo td:nth-child(4)::before{content:'Cobrado'}.fe-import-dialogo td:nth-child(5)::before{content:'Pedido ou solicitação interna'}
+ .fe-import-dialogo select,.fe-import-dialogo input:not([type=checkbox]){width:100%}.fe-import-dialogo footer .fin-btn{flex:1}
+}

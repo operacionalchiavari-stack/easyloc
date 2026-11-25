@@ -80,6 +80,7 @@ const missing = getMissingEls(els, [
   "listaVinculos",
   "inpObs",
   "inpDescCliente",
+  "inpDiasAntecedencia",
 
   // insumos
   "insumosContainer",
@@ -623,6 +624,7 @@ async function openModalEdit(id){
       els.inpVinculoNome.value = p.vinculo_nome || "";
       els.inpObs.value = p.observacoes || p.obs || "";
       if(els.inpDescCliente) els.inpDescCliente.value = p.descricao_cliente || "";
+      if(els.inpDiasAntecedencia) els.inpDiasAntecedencia.value = p.dias_antecedencia ?? "";
       window.__persVinculoId = p.vinculo_id || null;
       window.__persPintarFotoVinculo?.();
 
@@ -662,6 +664,7 @@ function resetModalFields(){
   els.inpVinculoNome.value = "";
   els.inpObs.value = "";
   if(els.inpDescCliente) els.inpDescCliente.value = "";
+  if(els.inpDiasAntecedencia) els.inpDiasAntecedencia.value = "";
 
   // limpa insumos
   els.insumosContainer.innerHTML = "";
@@ -972,6 +975,7 @@ async function salvarPersonalizacao(){
     vinculo_nome: ref.nome,
     observacoes: (els.inpObs.value || "").trim(),
     descricao_cliente: (els.inpDescCliente?.value || "").trim() || null,
+    dias_antecedencia: (() => { const v = String(els.inpDiasAntecedencia?.value ?? "").trim(); if (v === "") return null; const n = Math.trunc(Number(v)); return Number.isFinite(n) ? Math.min(365, Math.max(0, n)) : null; })(),
 
     tempo: toNum(els.inpTempo.value),
     custo_hora: toNum(els.inpCustoHora.value),
@@ -1187,6 +1191,7 @@ function getEls(root){
     listaVinculos: root.querySelector("#listaVinculos"),
     inpObs: root.querySelector("#inpObs"),
     inpDescCliente: root.querySelector("#inpDescCliente"),
+    inpDiasAntecedencia: root.querySelector("#inpDiasAntecedencia"),
 
     // ✅ NOVO: insumos
     insumosContainer: root.querySelector("#insumosContainer"),

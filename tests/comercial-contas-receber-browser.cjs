@@ -18,7 +18,7 @@ const {chromium}=require('playwright'),fs=require('fs'),path=require('path'),ass
    from:(t)=>q(t==='separacoes_pedidos'?[{id:'p9',cliente_id:'c9',local_nome:'Local C',tipo_evento:'Festa',data_evento:'2099-10-10'}]:[{id:'c9',catalogo_logo_url:null}])};
  });
  for(const file of ['styles/design-system.css','styles/abas-global.css','styles/tema-chiavari.css','Modulos/Financeiro/financeiro.css','Modulos/Comercial/ContasReceber/contas-receber.css'])await page.addStyleTag({content:fs.readFileSync(file,'utf8').replace(/@import[^;]+;/g,'')});
- for(const file of ['Modulos/Comercial/comercial-relatorios.js','Modulos/Comercial/ContasReceber/contas-receber.js'])await page.addScriptTag({url:BASE+file});
+ for(const file of ['js/ui/financeiro-comentarios.js','Modulos/Comercial/comercial-relatorios.js','Modulos/Comercial/ContasReceber/contas-receber.js'])await page.addScriptTag({url:BASE+file});
  await page.locator('#crConteudo article.fin-pedido').first().waitFor();
  // mesma tabela do Financeiro, agrupada por pedido
  assert.equal(await page.locator('#crConteudo article.fin-pedido').count(),2,'um bloco por pedido');

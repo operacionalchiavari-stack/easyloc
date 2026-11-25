@@ -11,23 +11,22 @@
   const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
   // Nomes e cores de cada agente/recurso (as cores dos agentes são as do app; as outras seguem a mesma paleta).
   const ORIGENS = {
-    helena: { foto: "helena", nome: "Helena", papel: "Catálogo e pedidos", cor: "#b4657a" },
+    helena: { foto: "helena", nome: "Helena", papel: "Catálogo, pedidos e renderizações 3D", cor: "#b4657a" },
     clara: { foto: "clara", nome: "Clara", papel: "Financeiro", cor: "#2a78d6" },
     miguel: { foto: "miguel", nome: "Miguel", papel: "Estoque e separação", cor: "#1baf7a" },
     carla: { foto: "carla", nome: "Carla", papel: "Compras", cor: "#eb6834" },
     marcos: { foto: "marcos", nome: "Marcos", papel: "Manutenção", cor: "#6250d6" },
-    ideia: { foto: "ideia", nome: "Ideia Premiada", papel: "Ideias de melhoria", cor: "#eda100" },
+    ideia: { foto: "ideia", nome: "Sofia", papel: "Recursos humanos", cor: "#857b69" },
     reunioes: { nome: "Reuniões", papel: "Transcrição e atas", cor: "#0f8a8a" },
     studio3d: { nome: "3D e renderizações", papel: "Fotos com IA e tecido", cor: "#8a5a2b" },
     compras: { nome: "Propostas de compra", papel: "Leitura dos orçamentos", cor: "#c2410c" },
-    montagem: { foto: "montagem", nome: "Assistente da montagem", papel: "App do Montador", cor: "#4b5563" },
+    montagem: { foto: "montagem", nome: "Luísa", papel: "Auxiliar de logística", cor: "#4b5563" },
     avaria: { nome: "Setor da avaria", papel: "Sugere o setor da O.S.", cor: "#9a3412" },
     planejador: { nome: "Planejador de eventos", papel: "", cor: "#64748b" },
     solicitacao: { nome: "Solicitações", papel: "", cor: "#64748b" },
   };
-  const origem = (k) => ORIGENS[k] || { nome: k || "Outro", papel: "", cor: "#94a3b8" };
-  const ACOES = { conversar: "conversa", transcrever: "áudio", ligacao: "ligação", ligacao_iniciar: "ligação", gerar_ata: "ata", transcrever_parte: "gravação", perguntar: "pergunta", relatorio: "relatório", organizar: "organizou o extrato", ler_extrato: "leu o extrato", classificar_dre: "organizou a DRE" };
-  const acaoNome = (a) => ACOES[a] || String(a || "").replace(/_/g, " ");
+  const agenteDaOrigem = (k) => ({ studio3d: "helena", rh: "ideia", sofia: "ideia", luisa: "montagem" })[k] || k;
+  const origem = (k) => ORIGENS[agenteDaOrigem(k)] || { nome: k || "Outro", papel: "", cor: "#94a3b8" };
   // Retrato do agente (assets/agentes/<nome>.jpg, os mesmos do app e das conversas); sem retrato, a inicial na cor dele.
   const bolinha = (k, cls = "") => {
     const g = origem(k);
@@ -101,8 +100,10 @@
         <p class="ia-hero-frase">${esc(frase)}</p>
       </section>`;
 
-    $("iaConteudo").innerHTML = hero + `
-      <section class="ia-time"><header><h2>Seu time de agentes</h2><small>O que cada um fez e quanto custou em ${esc(MESES[S.mes.getMonth()])}</small></header><div id="iaOrigens"></div></section>
+    // 22/11/2026: o time de agentes vem primeiro; a faixa dos créditos fica logo abaixo dele
+    $("iaConteudo").innerHTML = `
+      <section class="ia-time" aria-label="Time de agentes"><div id="iaOrigens"></div></section>
+      ` + hero + `
       <div class="ia-grade">
         <section class="ia-card"><header><h2>Equipe</h2><small>Quem da equipe mais usou os agentes</small></header><div id="iaPEquipe"></div></section>
         <section class="ia-card"><header><h2>Decoradores</h2><small>Uso dos agentes pelo catálogo</small></header><div id="iaPDecoradores"></div></section>
@@ -110,23 +111,28 @@
       <div class="ia-grade">
         <section class="ia-card"><header><h2>Por dia</h2><div class="ia-legenda"><span><i style="background:#2a78d6"></i>Equipe</span><span><i style="background:#eb6834"></i>Decoradores</span></div></header><div id="iaDias"></div></section>
         <section class="ia-card"><header><h2>Meses anteriores</h2><small>Uso e excedente de cada mês</small></header><div id="iaHistorico"></div></section>
-      </div>
-      <section class="ia-card"><header><h2>Últimos trabalhos</h2><small>Os 40 mais recentes do mês</small></header><div id="iaRecentes"></div></section>`;
-    pintarOrigens(); pintarDias(); pintarPessoas(); pintarHistorico(); pintarRecentes();
+      </div>`;
+    pintarOrigens(); pintarDias(); pintarPessoas(); pintarHistorico();
   }
 
   function vazio(texto) { return `<p class="ia-vazio">${esc(texto)}</p>`; }
 
-  // Os 6 agentes do time aparecem sempre (mesmo sem uso); as outras funções com IA vêm numa faixa menor embaixo.
-  const TIME = ["helena", "clara", "miguel", "carla", "marcos", "ideia"];
+  // Todos aparecem mesmo sem consumo. A atribuição preserva os registros e valores originais.
+  const TIME = ["helena", "clara", "miguel", "carla", "marcos", "ideia", "montagem"];
   function pintarOrigens() {
-    const d = S.dados, lista = d.por_origem, porK = new Map(lista.map((o) => [o.origem, o]));
+    const d = S.dados, porK = new Map();
+    for (const o of d.por_origem) {
+      const k = agenteDaOrigem(o.origem), soma = porK.get(k) || { origem: k, creditos: 0, chamadas: 0, equipe: 0, decoradores: 0 };
+      for (const campo of ["creditos", "chamadas", "equipe", "decoradores"]) soma[campo] += Number(o[campo]) || 0;
+      porK.set(k, soma);
+    }
+    const lista = [...porK.values()];
     const total = lista.reduce((t, o) => t + o.creditos, 0) || 1;
-    const time = TIME.concat(porK.has("montagem") ? ["montagem"] : []);
+    const time = TIME;
     const cracha = (k) => {
       const g = origem(k), o = porK.get(k) || { creditos: 0, chamadas: 0, equipe: 0, decoradores: 0 };
       const partes = [o.equipe > 0 ? `equipe ${num(o.equipe)}` : "", o.decoradores > 0 ? `decoradores ${num(o.decoradores)}` : ""].filter(Boolean).join(" · ");
-      return `<article class="ia-agente ${o.creditos > 0 ? "" : "is-parado"}" style="--ag:${g.cor}">
+      return `<article class="ia-agente ${o.creditos > 0 ? "" : "is-parado"}" data-agente="${k}" style="--ag:${g.cor}">
         <div class="ia-agente-foto">${esc(g.nome[0])}${g.foto ? `<img src="../../../assets/agentes/${g.foto}.jpg" alt="" loading="lazy" onerror="this.remove()">` : ""}</div>
         <h3>${esc(g.nome)}</h3><span class="ia-agente-papel">${esc(g.papel)}</span>
         ${o.creditos > 0 ? `<div class="ia-agente-num"><div><b>${num(o.chamadas)}</b><small>tarefas</small></div><div><b>${num(o.creditos)}</b><small>créditos</small></div><div><b>${brl(o.creditos * d.valor_excedente)}</b><small>no mês</small></div></div>
@@ -200,14 +206,6 @@
       const dt = new Date(m.mes + "T12:00:00");
       return `<tr><td>${esc(MESES[dt.getMonth()])} ${dt.getFullYear()}</td><td class="n">${num(m.usado)}</td><td class="n ${m.excedente > 0 ? "neg" : ""}">${m.excedente > 0 ? num(m.excedente) : "–"}</td><td class="n ${m.valor > 0 ? "neg" : ""}">${m.valor > 0 ? brl(m.valor) : "–"}</td></tr>`;
     }).join("")}</tbody></table><p class="ia-nota">O excedente usa a franquia e o preço de hoje.</p>`;
-  }
-
-  function pintarRecentes() {
-    const r = S.dados.recentes;
-    if (!r.length) { $("iaRecentes").innerHTML = vazio("Nenhum uso de IA neste mês."); return; }
-    const hora = (t) => new Date(t).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-    $("iaRecentes").innerHTML = `<ul class="ia-recentes">${r.map((u) => `<li>${bolinha(u.origem, "p")}
-      <div><b>${esc(origem(u.origem).nome)}</b>${u.acao ? ` <small>${esc(acaoNome(u.acao))}</small>` : ""}<small>${esc(u.nome)}${u.decorador ? " · decorador" : ""} · ${hora(u.criado_em)}</small></div><strong>${num(u.creditos)}</strong></li>`).join("")}</ul>`;
   }
 
   function abrirPlano() {

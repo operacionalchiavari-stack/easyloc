@@ -1,11 +1,8 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Compras</title><script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
-<script src="../../../js/core/themePrepaint.js"></script><link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30"><link rel="stylesheet" href="compras.css?v=20261023-sem-lotes-certificados"><link rel="stylesheet" href="compras-tables.css?v=20261116-creditos-modal"><link rel="stylesheet" href="compras-acervo.css?v=20261115-cartela"><script src="https://unpkg.com/lucide@1.66.0"></script><link rel="stylesheet" href="compras-registro.css?v=20261023-pagamento-chegada"><link rel="stylesheet" href="compras-predial.css?v=20261023-contratacao"><link rel="stylesheet" href="compras-sistema.css?v=20261116-fotos-maiores"><link rel="stylesheet" href="compras-cotacao.css?v=20261116"></head><body class="compras-page el-page">
+<script src="../../../js/core/themePrepaint.js"></script><link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30"><link rel="stylesheet" href="compras.css?v=20261023-sem-lotes-certificados"><link rel="stylesheet" href="compras-tables.css?v=20261116-creditos-modal"><link rel="stylesheet" href="compras-acervo.css?v=20261115-cartela"><script src="https://unpkg.com/lucide@1.66.0"></script><link rel="stylesheet" href="compras-registro.css?v=20261023-pagamento-chegada"><link rel="stylesheet" href="compras-predial.css?v=20261023-contratacao"><link rel="stylesheet" href="compras-sistema.css?v=20261122-visor"><link rel="stylesheet" href="compras-cotacao.css?v=20261116"><link rel="stylesheet" href="../../../styles/financeiro-comentarios.css?v=20261121-foto-autor"><link rel="stylesheet" href="../../Financeiro/financeiro.css?v=20261122-fatura-azul"><link rel="stylesheet" href="compras-contas-pagar.css?v=20261122-bordas"><link rel="stylesheet" href="compras-gerencial.css?v=20261122-filtros"></head><body class="compras-page el-page">
 <main class="compras-main" style="padding-top:10px!important">
-<header class="page-header compras-header"><div class="pv-tabs-tools">
-          <label class="pv-search-box"><i data-lucide="search"></i><input id="comprasSearch" type="search" placeholder="Buscar material, pedido, fornecedor ou número..."></label>
-
-        </div><h1>Compras</h1><div class="compras-header-actions"><button id="registrarCompraBtn" class="btn btn-primary" type="button" hidden style="display:none"><i data-lucide="plus"></i> Registrar compra</button>
-        </div></header><div class="pv-tabs-row">
+<header class="compras-header"><div class="pv-tabs-row compras-navigation-row">
+      <h1>Compras</h1>
       <nav class="pv-tabs" aria-label="Seções de Compras">
         <button class="pv-tab active" data-pv-tab="needs-op">Necessidades operacionais <b id="needsOpBadge" hidden>0</b></button>
         <button class="pv-tab" data-pv-tab="needs-avulsa">Solicitações de compra <b id="needsAvulsaBadge" hidden>0</b></button>
@@ -14,17 +11,23 @@
         <button class="pv-tab" data-pv-tab="orders">Pedidos <b id="ordersBadge" hidden>0</b></button>
         <button class="pv-tab" data-pv-tab="rnc">Divergências no recebimento <b id="purchaseRncBadge" hidden>0</b></button>
         <button class="pv-tab" data-pv-tab="creditos" title="Créditos com fornecedores (abater nas contas a pagar)">Créditos <b id="purchaseCreditsBadge" hidden>0</b></button>
-      </nav>
-          <select id="ordersStatusFilter" class="tw-field hidden" aria-label="Situação dos pedidos">
+      <button class="pv-tab" data-pv-tab="contas-pagar">Contas a pagar <b id="purchasePayablesBadge" hidden>0</b></button><button class="pv-tab" data-pv-tab="gerencial">Gerencial</button></nav>
+    </div>
+    <div class="compras-toolbar">
+      <div class="pv-tabs-tools"><label class="pv-search-box"><i data-lucide="search"></i><input id="comprasSearch" type="search" placeholder="Buscar material, pedido, fornecedor ou número..."></label></div>
+      <select id="ordersStatusFilter" class="tw-field hidden" aria-label="Situação dos pedidos">
             <option value="todos" selected>Todos os pedidos</option>
             <option value="abertos">Pedidos em aberto</option>
             <option value="recebidos">Recebidos</option>
             <option value="cancelados">Cancelados</option>
           </select>
 
-    </div>
+      <div class="compras-header-actions"><button id="registrarCompraBtn" class="btn btn-primary" type="button" hidden style="display:none"><i data-lucide="plus"></i> Registrar compra</button></div>
+    </div></header>
 
     <section class="pv-panel hidden" data-pv-panel="rnc"><div id="purchaseRncList" aria-live="polite"></div></section>
+    <section class="pv-panel hidden" data-pv-panel="gerencial"><div id="purchaseManager" aria-live="polite"></div></section>
+    <section class="pv-panel hidden fin-page" data-pv-panel="contas-pagar"><div id="purchasePayablesList" aria-live="polite"><p class="subtext">Carregando contas a pagar...</p></div></section>
     <section class="pv-panel hidden" data-pv-panel="creditos"><div id="purchaseCreditsList" aria-live="polite"><p class="subtext">Carregando créditos…</p></div></section>
 
     <div class="compras-filters-card hidden" id="quoteSelectionBar">
@@ -241,4 +244,4 @@
 
   <script type="module" src="compras-predial.mjs?v=20261116-servicos2"></script>
   <script src="https://unpkg.com/lucide@1.66.0"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/alerta.js"></script><script src="../../../js/core/context.js?v=20261026-limpeza"></script><script src="../../../js/core/permissions.js"></script><script src="../../../js/core/companyTheme.js"></script><script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.min.js"></script><script src="compras-api.js?v=20261116-telas2"></script><script src="compras-fotos.js?v=20261116-visor2"></script><script src="purchase-document.js?v=20261023-sem-lotes-certificados"></script><script src="nfe-xml-parser.js?v=20261023-sem-lotes"></script><script src="report-print.js"></script><script src="compras-listas.js?v=20261116-listas-sem-rolagem"></script><script src="compras-detalhes.js?v=20261116"></script><script src="compras.js?v=20261116-cotacao-visual"></script><script src="compras-rnc.js?v=20261116-sem-titulo"></script><script src="compras-creditos.js?v=20261116-modal"></script><script type="module" src="compras-registro.mjs?v=20261023-pagamento-chegada"></script></body></html>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/alerta.js"></script><script src="../../../js/core/context.js?v=20261026-limpeza"></script><script src="../../../js/core/permissions.js"></script><script src="../../../js/core/companyTheme.js"></script><script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.min.js"></script><script src="compras-api.js?v=20261116-telas2"></script><script src="compras-fotos.js?v=20261122-foto-op"></script><script src="purchase-document.js?v=20261023-sem-lotes-certificados"></script><script src="nfe-xml-parser.js?v=20261023-sem-lotes"></script><script src="report-print.js"></script><script src="compras-listas.js?v=20261116-listas-sem-rolagem"></script><script src="compras-detalhes.js?v=20261116"></script><script src="compras.js?v=20261122-op-cartela"></script><script src="compras-rnc.js?v=20261116-sem-titulo"></script><script src="compras-creditos.js?v=20261116-modal"></script><script type="module" src="compras-registro.mjs?v=20261023-pagamento-chegada"></script><script src="../../../js/ui/financeiro-comentarios.js?v=20261121-foto-autor"></script><script src="../../Financeiro/financeiro-pagar-lista.js?v=20261121-comentario-vencimento"></script><script src="compras-contas-pagar.js?v=20261121-comentarios"></script><script src="../../Comercial/comercial-relatorios.js?v=20261030"></script><script src="compras-gerencial-dados.js?v=20261122-diretoria"></script><script src="compras-gerencial.js?v=20261122-filtros"></script></body></html>

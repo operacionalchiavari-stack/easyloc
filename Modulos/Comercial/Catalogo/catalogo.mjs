@@ -5,7 +5,7 @@ import { initCatalogStudio3D, cenaEditor } from "./catalogo-studio3d.mjs?v=20261
 import {prepararImagemPersonalizacao} from './catalogo-personalizacao-imagem.mjs?v=20261118-personalizacao';
 import { initCatalogAssistente } from "./catalogo-assistente.mjs?v=20261121-pedido-helena";
 import { initCatalogBiblioteca, openCatalogBiblioteca, backCatalogBiblioteca } from "./catalogo-biblioteca.mjs?v=20261021-subpastas";
-import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos, personalizacoesDoItem, abrirPersonalizarItem, registrarPersonalizacaoGerada, adicionarPersonalizacaoAoProjeto, buscarPersonalizacoesGeradas } from "./catalogo-projetos.mjs?v=20261121-pedido-helena";
+import { definirProjetoComercialPedido, sincronizarProjetoComercialPedido, initCatalogProjetos, escolherProjetoNaEntrada, openCatalogProjetos, closeCatalogProjetos, setProjetoDockVisible, projetoAddMarkup as projetoAddMarkupOriginal, atualizarBotoes as atualizarBotoesProjeto, backCatalogProjetos, beforeLeaveProjetos, personalizacoesDoItem, abrirPersonalizarItem, registrarPersonalizacaoGerada, adicionarPersonalizacaoAoProjeto, buscarPersonalizacoesGeradas } from "./catalogo-projetos.mjs?v=20261122-itens";
 import { chaveEscolha } from './catalogo-personalizacao-modal.mjs?v=20261118-reuso';
 
 const supabase = window.supabaseClient;

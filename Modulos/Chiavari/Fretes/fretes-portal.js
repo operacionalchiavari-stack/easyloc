@@ -116,6 +116,7 @@
     e.preventDefault();
     const f = $("fpFormExtra"), dados = Object.fromEntries(new FormData(f).entries());
     $("fpErroExtra").textContent = "";
+    if(!String(dados.pedido||'').trim()){$("fpErroExtra").textContent='Informe o pedido. Fretes sem pedido precisam de uma solicitação interna criada pelo supervisor na Logística.';return;}
     try {
       await rpc("transp_extra", { p_token: S.token, p_dados: dados });
       $("fpModalExtra").close(); f.reset();

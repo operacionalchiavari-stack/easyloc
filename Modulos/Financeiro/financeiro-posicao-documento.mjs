@@ -1,4 +1,4 @@
-import { cabecalhoPedidoHtml, estilosImpressaoPedido, imprimirDocumento } from '../Comercial/Catalogo/projeto-apresentacao.mjs?v=20261118-fixo';
+import { cabecalhoPedidoHtml, estilosImpressaoPedido, imprimirDocumento } from '../Comercial/Catalogo/projeto-apresentacao.mjs?v=20261122-regras-formatadas';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const brl=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const data=d=>d?new Date(String(d).slice(0,10)+'T12:00:00').toLocaleDateString('pt-BR'):'\u2014';

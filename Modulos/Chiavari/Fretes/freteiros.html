@@ -4,28 +4,51 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Acervo - Freteiros</title>
+  <script>
+    // Definir o modo antes de qualquer conteúdo ser pintado dentro do painel.
+    const modoFreteiros = new URLSearchParams(location.search).get('integrado');
+    if (modoFreteiros) {
+      document.documentElement.classList.add('fr-integrado');
+      if (modoFreteiros !== 'painel') document.documentElement.classList.add('fr-sem-abas');
+    }
+  </script>
+  <style>
+    html:root.fr-integrado :is(#main-content,.cf-page) .cf-barra>a,
+    html:root.fr-sem-abas :is(#main-content,.cf-page) .fr-abas{display:none!important}
+    .fr-integrado .cf-page{padding:8px 12px!important}.fr-integrado .cf-barra{margin-bottom:6px}
+    .fr-integrado .cf-vazio{padding:16px}.fr-integrado body{min-height:0!important}
+  </style>
   <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
   <script src="../../../js/core/limpezaDados.js?v=20261026"></script><script src="../../../js/core/systemZoom.js?v=20261108"></script>
 <script src="../../../js/core/themePrepaint.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
   <link rel="stylesheet" href="conciliacao.css?v=20261029-banco">
-  <link rel="stylesheet" href="freteiros.css?v=20261029-freteiros">
+  <link rel="stylesheet" href="freteiros.css?v=20261121-divergencias">
 </head>
 <body>
 <!-- Freteiros (out/2026): cadastros feitos no App do Freteiro (aprovar, recusar, bloquear) e os fretes anunciados
      sozinhos pela escala (entrega ou coleta sem caminhão próprio livre). Quem aceita no app vira o caminhão programado
-     das etapas; o pagamento segue pela Conciliação de Fretes. -->
+     das etapas; o pagamento segue pelo relatório que ele envia no App do Freteiro (Meus fretes). -->
 <main class="el-page cf-page fr-page" data-module-root>
-  <header class="header-list">
+  <template id="frTituloAvulso"><header class="header-list">
     <h1>Freteiros</h1>
-  </header>
+  </header></template>
+  <script>
+    const tituloAvulso = document.getElementById('frTituloAvulso');
+    if (modoFreteiros) tituloAvulso.remove();
+    else tituloAvulso.replaceWith(tituloAvulso.content);
+  </script>
 
   <div class="cf-barra">
-    <nav class="el-tabs fr-abas" role="tablist" aria-label="Freteiros">
+    <nav class="el-tabs fr-abas" role="tablist" aria-label="Freteiros" style="display:none!important">
       <button type="button" role="tab" aria-selected="true" data-aba="cadastros">Cadastros <span class="tab-badge" id="frPendentes"></span></button>
       <button type="button" role="tab" aria-selected="false" data-aba="fretes">Fretes anunciados <span class="fr-conta" id="frAbertos"></span></button>
+      <button type="button" role="tab" aria-selected="false" data-aba="divergencias">Divergências <span class="tab-badge" id="frDivergencias"></span></button>
     </nav>
+    <script>
+      if (!modoFreteiros || modoFreteiros === 'painel') document.querySelector('.fr-abas').style.removeProperty('display');
+    </script>
     <span class="cf-esp"></span>
     <a class="btn" href="freteiro.html" target="_blank" rel="noopener">Abrir o App do Freteiro</a>
   </div>
@@ -40,7 +63,7 @@
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
 <script src="fretes-exemplos.js?v=20261103-sem-aviso"></script>
-<script src="freteiros.js?v=20261115-painel"></script>
+<script src="freteiros.js?v=20261122-sem-titulo"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
 </body>
 </html>

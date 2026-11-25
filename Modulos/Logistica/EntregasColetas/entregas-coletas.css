@@ -330,3 +330,23 @@ html:root .ec-documento-pedido .cpj-order-photo .ec-sem-foto-item{display:flex;a
  html:root #ecDetalhe#ecDetalhe .ec-documento-pedido .cpj-order-letterhead-side{flex-basis:100%;justify-content:flex-start}
  html:root #ecDetalhe#ecDetalhe .ec-documento-pedido .cpj-order-divider{display:none}
 }
+
+/* 22/11: responsável ao lado do decorador solicitante + equipe ao passar o mouse */
+.ec-doc-resp{position:relative;display:flex;align-items:center;gap:12px;margin-left:22px;padding-left:22px;border-left:1px solid rgba(255,255,255,.18);color:#fff;cursor:default;outline:none}
+.ec-doc-resp>div>span{display:block;font:600 10px/1.3 Inter,system-ui,sans-serif;letter-spacing:.18em;color:#c9ad84}
+.ec-doc-resp>div>strong{display:block;font:600 17px/1.3 Inter,system-ui,sans-serif;color:#fff;white-space:nowrap}
+.ec-dr-foto{position:relative;display:grid;place-items:center;flex:none;width:52px;height:52px;border-radius:50%;overflow:hidden;background:#e8edf3;color:#3b4b5e;font:600 15px Inter,system-ui,sans-serif;border:2px solid rgba(255,255,255,.75)}
+.ec-dr-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ec-dr-equipe{display:none;position:absolute;z-index:50;top:calc(100% + 10px);left:12px;min-width:250px;max-height:360px;overflow:auto;padding:12px;background:#fff;color:#1f2328;border:1px solid #e3e7ec;border-radius:14px;box-shadow:0 12px 32px rgba(15,23,42,.18)}
+.ec-doc-resp:is(:hover,:focus,:focus-within) .ec-dr-equipe{display:block}
+.ec-dr-equipe>b{display:block;margin:0 0 8px;font:600 12px Inter,system-ui,sans-serif;color:#6b7280;text-transform:uppercase;letter-spacing:.08em}
+.ec-dr-pessoa{display:flex;align-items:center;gap:10px;padding:6px 0}
+.ec-dr-pessoa+.ec-dr-pessoa{border-top:1px solid #f0f2f5}
+.ec-dr-pessoa .ec-dr-foto{width:36px;height:36px;font-size:12px;border:0}
+.ec-dr-pessoa strong{display:block;font:600 14px Inter,system-ui,sans-serif}
+.ec-dr-pessoa small{display:block;font:400 12px Inter,system-ui,sans-serif;color:#6b7280}
+/* quantidade da lista sempre numa linha (o "40" quebrava em 4 / 0) */
+#ecDetalhe :is(.cpj-order-qty,.pa-qtd,td.cpj-order-col-qty,.ec-documento-tabela td:first-child){white-space:nowrap!important;word-break:keep-all!important;overflow-wrap:normal!important;min-width:44px}
+@media print{.ec-dr-equipe{display:none!important}}
+html:root #ecDetalhe#ecDetalhe :is(.cpj-order-qty,.cpj-order-qty *){white-space:nowrap!important;word-break:keep-all!important;overflow-wrap:normal!important}
+html:root #ecDetalhe#ecDetalhe .cpj-order-col-qty{width:64px!important}

@@ -236,6 +236,16 @@ html:root #parametrosPagina .pr-painel-cards #logisticaManualParametros{margin-t
 .pr-pv-num input{width:90px;min-height:38px;padding:0 10px;border:1px solid #dfe4ea;border-radius:8px;font:14px Inter,sans-serif}
 .pr-pv-pergunta{margin-bottom:12px;padding:12px 14px;border:1px solid #e3e7ec;border-radius:12px;background:#fff}
 .pr-pv-pergunta-topo{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+/* Retratos dos agentes nos atalhos e no editor de instruções. */
+.ia-parametros nav button{display:flex;align-items:flex-start;gap:12px}
+.ia-parametros .ia-agente-texto{min-width:0;overflow-wrap:anywhere}
+.ia-parametros .ia-agente-foto{position:relative;display:grid;place-items:center;flex:none;width:44px;height:44px;overflow:hidden;border-radius:50%;background:#eeece8;color:#786b59;font:600 14px Inter,sans-serif}
+.ia-parametros .ia-agente-foto img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+.ia-agente-cabecalho{display:flex;align-items:center;gap:16px;margin-bottom:24px}
+.ia-parametros .ia-agente-cabecalho .ia-agente-foto{width:64px;height:64px;font-size:20px}
+.ia-agente-cabecalho h3{margin:0}
+.ia-agente-cabecalho .pr-ajuda{margin:6px 0 0}
+@media(max-width:760px){.ia-parametros nav button{gap:8px;padding:10px}.ia-parametros nav .ia-agente-foto{width:36px;height:36px}}
 .pr-pv-texto{flex:1;min-width:220px;min-height:38px;padding:0 10px;border:1px solid #dfe4ea;border-radius:8px;font:600 14px Inter,sans-serif}
 .pr-pv-pergunta-topo select{min-height:38px;border:1px solid #dfe4ea;border-radius:8px;padding:0 8px}
 .pr-pv-mini{display:flex;align-items:center;gap:6px;font-size:13px}
@@ -336,3 +346,8 @@ html:root:is(#prMenu#prMenu#prMenu,html) #parametrosPagina .pr-menu .pr-abas but
 .pr-sinal-regra input[type=number],.pr-sinal-regra select{width:100%;min-width:0;box-sizing:border-box;padding:10px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#24364e;font:inherit}
 .pr-sinal-regra input[type=checkbox]{width:18px;height:18px;vertical-align:middle;margin-right:8px}
 @media(max-width:700px){.pr-sinal-regra{grid-template-columns:1fr}.pr-sinal-regra>label{font-size:14px}}
+
+/* Período do relatório de fretes (21/11/2026) */
+.pr-frete-periodo .pr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,320px));gap:14px;margin:6px 0 10px}
+.pr-frete-periodo label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600}
+.pr-frete-periodo label[hidden]{display:none}

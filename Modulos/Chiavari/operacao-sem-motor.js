@@ -578,6 +578,17 @@
      PAINEL LOGÍSTICO (mesmas respostas do antigo Escala.js)
      ===================================================================== */
   function tipoRegra(t) { return t === "triagem_ida" || t === "triagem_volta" ? "triagem" : t; }
+  function confirmacaoDataComercial(e, pedido, confirmacao, indisponivel) {
+    if (!e.pedido_id || ["montagem", "desmontagem"].indexOf(e.tipo) < 0) { return null; }
+    if (indisponivel) { return { status: "indisponivel" }; }
+    if (!confirmacao) { return { status: "pendente" }; }
+    var dia = function(v) { return String(v || "").slice(0, 10); };
+    var valida = dia(confirmacao.data_entrega) === dia(pedido.data_entrega)
+      && dia(confirmacao.data_coleta) === dia(pedido.data_coleta)
+      && (!confirmacao.data_evento || dia(confirmacao.data_evento) === dia(pedido.data_evento));
+    var prevista = e.tipo === "montagem" ? pedido.data_entrega || pedido.data_evento : pedido.data_coleta || pedido.data_evento_fim || pedido.data_evento;
+    return { status: valida && dia(prevista) === dia(e.data) ? "confirmado" : "alterado", por: confirmacao.por || "", em: confirmacao.em || "" };
+  }
   L.ESC_painel = async function (inicio, dias, preencher) {
     var c = await sb(), emp = await empresa();
     if (!(await pode("logistica.planejamento.visualizar")) && !(await pode("logistica.cronograma.visualizar"))) { throw new Error("Sem permissão para o Painel Logístico."); }
@@ -613,6 +624,16 @@
       });
     });
     var conflitos = await rpc("operacao_conflitos", { p_empresa: emp, p_inicio: inicio, p_fim: fim });
+    var confirmacoesPorPedido = {}, confirmacaoIndisponivel = false;
+    try {
+      for (var pedidosConfirmacao of blocos(Array.from(new Set(etapas.map(function(e) { return e.pedido_id; }).filter(Boolean))), 150)) {
+        var confirmacoesDatas = await rpc("logistica_confirmacoes_datas", { p_empresa: emp, p_pedidos: pedidosConfirmacao });
+        (confirmacoesDatas || []).forEach(function(c) { confirmacoesPorPedido[c.pedido_id] = c; });
+      }
+    } catch (erroConfirmacao) {
+      confirmacaoIndisponivel = true;
+      console.warn("Não foi possível consultar a confirmação de datas do Comercial.", erroConfirmacao.message);
+    }
     var vagas = await emLote(etapas.filter(function(e){return !planejamento[e.pedido_id]?.somente_consulta;}).map(function (e) { return e.id; }), function (b) { return c.from("free_vagas").select("id,etapa_id").in("etapa_id", b).neq("status", "CANCELADA"); });
     var insc = await emLote(vagas.map(function (v) { return v.id; }), function (b) { return c.from("free_inscricoes").select("vaga_id,nome,status").in("vaga_id", b).eq("status", "CONFIRMADO"); });
     var vols = {}; for (var pid of Array.from(new Set(etapas.map(function (e) { return e.pedido_id; }).filter(Boolean)))) { vols[pid] = await rpc("operacao_volume_pedido", { p_pedido: pid }); }
@@ -648,6 +669,7 @@
             var p=detalhesPorId[e.pedido_id]||e.pedido||{}, obs=p.observacoes||{}, l=locaisPorId[p.local_id]||{}, info=acessosPorId[e.pedido_id]||{};
             return {local:p.local_nome||'',endereco:[l.endereco,l.numero_endereco].filter(Boolean).join(', '),referencia:l.ponto_referencia||'',particularidades:l.particularidades||'',data_evento:p.data_evento||'',data_entrega:p.data_entrega||'',data_coleta:p.data_coleta||'',horario_entrega:obs.horario_entrega||'',horario_coleta:obs.horario_coleta||'',observacoes_entrega:obs.observacoes_entrega||'',observacoes_coleta:obs.observacoes_coleta||'',observacao_etapa:e.observacao||'',acesso:info};
           })(),
+          confirmacao_comercial: confirmacaoDataComercial(e, detalhesPorId[e.pedido_id] || e.pedido || {}, confirmacoesPorPedido[e.pedido_id], confirmacaoIndisponivel),
           m3: m3, pecas: Number(v.pecas) || 0, volumeEstimado: estimado, sugerido: sug,
           freeConfirmados: insc.filter(function (i) { return i.vaga_id === vagaDe[e.id]; }).map(function (i) { return i.nome; }),
           conflitos: consulta?[]:Array.from(new Set(mConf[e.id] || [])), avisos: av, passada: e.data < hoje, somente_consulta:consulta };
@@ -887,6 +909,8 @@
   };
   L.RH_sair = function () { return true; };
   L.RH_carregarCiclo = async function (t, ini) { await exigirRh(); return rhCiclo(ini); };
+  // Nov/2026: divergências dos free (decididas pela Logística) — o RH acompanha e o pagamento só sai sem divergência aberta.
+  L.RH_divergencias = async function () { await exigirRh(); var emp = await empresa(); var d = await rpc("divergencias_acompanhar", { p_empresa: emp, p_origens: ["free"] }); d.empresa = emp; return d; };
   async function gravarPag(idIns, ini, campos) {
     var c = await sb(), ciclo = inicioCiclo(isoDeQualquer(ini) || "");
     if (ini === "tudo") {
@@ -1101,7 +1125,7 @@
   L.MONT_fotoEquipe = async function (d) {
     var foto = await subirFoto(d.foto, pastaMont());
     var r = await rpc("mont_equipe_foto", { p_token: d.token || tokMont(), p_etapa: d.idCronograma,
-      p_dados: { foto: foto, latitude: d.latitude, longitude: d.longitude, precisaoGPS: d.precisaoGPS } });
+      p_dados: { foto: foto } });
     return { sucesso: true, chegada: r.chegada || null, apontamento: r.apontamento || null };
   };
   L.MONT_solicitarTroca = async function (token, dados) {
@@ -1204,6 +1228,11 @@
   };
   L.FREE_appConfirmar = async function (t, idVaga) { await rpc("free_app_confirmar", { p_token: t, p_vaga: idVaga }); return L.FREE_appCarregar(t); };
   L.FREE_appCancelar = async function (t, idVaga, motivo) { await rpc("free_app_cancelar", { p_token: t, p_vaga: idVaga, p_motivo: motivo || "" }); return L.FREE_appCarregar(t); };
+  // Nov/2026: o free vê as divergências dele e explica; quem decide é a Logística.
+  L.FREE_appDivergencias = async function (t) { return rpc("free_app_divergencias", { p_token: t }); };
+  L.FREE_appDivExplicar = async function (t, chave, texto) { return rpc("free_app_div_explicar", { p_token: t, p_chave: chave, p_texto: texto }); };
+  L.UBER_appDivergencias = async function (t) { return rpc("uber_app_divergencias", { p_token: t }); };
+  L.UBER_appDivExplicar = async function (t, chave, texto) { return rpc("uber_app_div_explicar", { p_token: t, p_chave: chave, p_texto: texto }); };
   L.FREE_appCiente = async function (t, idVaga) { await rpc("free_app_ciente", { p_token: t, p_vaga: idVaga }); return L.FREE_appCarregar(t); };
   L.FREE_appSalvarPix = async function (t, pix) { await funcaoFree({ action: "pix", token: t, pix: pix }); return L.FREE_appCarregar(t); };
   L.FREE_appPresenca = async function (t, idVaga, codigo, gps) {

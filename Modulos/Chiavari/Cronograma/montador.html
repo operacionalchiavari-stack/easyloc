@@ -8,11 +8,11 @@
 <script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
 <script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
   <script src="../gas-cliente.js?v=20261120-sem-servidor" data-projeto="cronograma" data-sem-motor></script>
-  <script src="../operacao-sem-motor.js?v=20261120-bonus-supabase"></script>
+  <script src="../operacao-sem-motor.js?v=20261121-foto-sem-gps"></script>
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="format-detection" content="telephone=no">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
   <title>App do Montador</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -344,14 +344,15 @@
   <meta name="theme-color" content="#5a5a55" data-tema="menu">
   <link rel="stylesheet" href="../apps-equipe.css?v=20261120-app">
   <link rel="stylesheet" href="../../../styles/app-cartoes.css?v=20261120-cartoes3">
-  <link rel="stylesheet" href="montador-evento.css?v=20261120-usabilidade3">
-<link rel="stylesheet" href="../../../styles/assistente-solicitacao.css?v=20261108-montagem">
+  <link rel="stylesheet" href="montador-evento.css?v=20261121-sem-progresso">
+<link rel="stylesheet" href="../../../styles/assistente-solicitacao.css?v=20261121-retratos">
 <link rel="stylesheet" href="montador-ia.css?v=20261108-montagem">
-<script src="../../../js/ui/assistente-solicitacao.js?v=20261108-montagem"></script>
-<script src="../../../js/ui/montagem-assistente.js?v=20261108-montagem"></script>
+<link rel="stylesheet" href="montador-etapa.css?v=20261121-logistica-chat">
+<script src="../../../js/ui/assistente-solicitacao.js?v=20261121-ia-topo"></script>
+<script src="../../../js/ui/montagem-assistente.js?v=20261121-luisa-logistica"></script>
 <link rel="stylesheet" href="../../../styles/app-tema.css?v=20261121-tema">
 <script src="../../../js/app/tema-app.js?v=20261121-tema"></script>
-</head>
+<link rel="stylesheet" href="../../../styles/ia-chat-topo.css?v=20261122-chat-suave"></head>
 <body class="chiavari-equipe-app" data-app-equipe="montagem">
 
   <!-- CARREGANDO -->
@@ -420,7 +421,7 @@
 
   <div class="toast" id="toast"></div>
 
-<script src="montador-evento.js?v=20261120-usabilidade"></script>
+<script src="montador-evento.js?v=20261121-lista-exata"></script>
 <script src="montador-bonus.js?v=20261031-integrado"></script>
 <script>
   /* =========================================================
@@ -897,35 +898,50 @@
   const ABAS_ETAPA = [
     { chave: "equipe", rotulo: "Equipe", icone: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c.6-3.3 3-5 6-5s5.4 1.7 6 5"/><circle cx="17" cy="9" r="2.4"/><path d="M15.6 13.6c2.6-.3 4.7 1.2 5.4 4.4"/></svg>' },
     { chave: "lista", rotulo: "Lista", icone: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3.5 6 1.2 1.2L7 5M3.5 12l1.2 1.2L7 11M3.5 18l1.2 1.2L7 17"/></svg>' },
-    { chave: "info", rotulo: "Informações", icone: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>' }
+    { chave: "info", rotulo: "Assistente", icone: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>' }
   ];
   function montarAbasEtapa(){
     const tela = document.getElementById("telaEtapa");
     const el = function(id){ return document.getElementById(id); };
     function painel(chave){
       let p = el("etapaAba_" + chave);
-      if(!p){ p = document.createElement("div"); p.id = "etapaAba_" + chave; p.className = "etapa-aba-painel"; p.setAttribute("role", "tabpanel"); }
+      if(!p){ p = document.createElement("div"); p.id = "etapaAba_" + chave; p.className = "etapa-aba-painel"; p.setAttribute("role", "tabpanel"); p.setAttribute("aria-labelledby", "etapaTab_" + chave); }
       tela.append(p); return p;
     }
     const equipe = painel("equipe"), lista = painel("lista"), info = painel("info");
     let colunas = el("etapaColunas");
     if(!colunas){ colunas = document.createElement("div"); colunas.id = "etapaColunas"; colunas.className = "etapa-colunas"; }
     equipe.append(colunas);
+    let eqAbas = el("eqAbas");
+    if(!eqAbas){
+      eqAbas = document.createElement("div"); eqAbas.id = "eqAbas"; eqAbas.className = "eq-abas"; eqAbas.setAttribute("role", "tablist"); eqAbas.setAttribute("aria-label", "Equipe, caminhões e Uber");
+      eqAbas.innerHTML = [["equipe","Equipe"],["caminhoes","Caminhões"],["uber","Uber"]].map(function(a){ return '<button type="button" role="tab" data-eq-aba="' + a[0] + '">' + a[1] + '</button>'; }).join("");
+      eqAbas.addEventListener("click", function(ev){ const b = ev.target.closest("[data-eq-aba]"); if(b) trocarAbaEquipe(b.dataset.eqAba); });
+    }
     if(!el("etapaUber")){ const u = document.createElement("div"); u.id = "etapaUber"; colunas.append(u); }
     ["etapaEquipe", "etapaUber", "etapaFrete"].forEach(function(id){ if(el(id)) colunas.append(el(id)); });
     if(el("etapaFotoEquipe")) equipe.append(el("etapaFotoEquipe"));
     ["regProgresso", "etapaConferencia", "etapaRegistros"].forEach(function(id){ if(el(id)) lista.append(el(id)); });
+    if(window.MontadorEvento?.linear()) ["regProgresso","etapaRegistros"].forEach(function(id){if(el(id))equipe.append(el(id));});
     // Nov/2026: troca/reposição e sacolas saíram da aba Lista (ficam escondidas; vão para o chat do pedido).
-    if(el("etapaAssistenteIa")) info.append(el("etapaAssistenteIa"));
     ["etapaInfo", "etapaPedido"].forEach(function(id){ if(el(id)) info.append(el(id)); });
+    if(el("etapaAssistenteIa")) info.append(el("etapaAssistenteIa"));
     let nav = el("etapaAbas");
     if(!nav){
       nav = document.createElement("nav"); nav.id = "etapaAbas"; nav.className = "etapa-abas"; nav.setAttribute("role", "tablist"); nav.setAttribute("aria-label", "Partes da etapa");
-      nav.innerHTML = ABAS_ETAPA.map(function(a){ return '<button type="button" role="tab" data-etapa-aba="' + a.chave + '">' + a.icone + '<span>' + a.rotulo + '</span></button>'; }).join("");
+      nav.innerHTML = ABAS_ETAPA.map(function(a){ return '<button type="button" role="tab" id="etapaTab_' + a.chave + '" aria-controls="etapaAba_' + a.chave + '" data-etapa-aba="' + a.chave + '">' + a.icone + '<span>' + a.rotulo + '</span></button>'; }).join("");
       nav.addEventListener("click", function(ev){ const b = ev.target.closest("[data-etapa-aba]"); if(b){ trocarAbaEtapa(b.dataset.etapaAba); } });
+      nav.addEventListener("keydown", function(ev){
+        if(!['ArrowLeft','ArrowRight','Home','End'].includes(ev.key))return;
+        ev.preventDefault();const abas=[...nav.querySelectorAll('[data-etapa-aba]')],i=abas.indexOf(ev.target);
+        const destino=ev.key==='Home'?0:ev.key==='End'?abas.length-1:(i+(ev.key==='ArrowRight'?1:-1)+abas.length)%abas.length;
+        trocarAbaEtapa(abas[destino].dataset.etapaAba);abas[destino].focus();
+      });
     }
     tela.append(nav);
     tela.classList.add("com-abas-etapa");
+    colunas.prepend(eqAbas);
+    trocarAbaEquipe(estado.abaEquipe || "equipe");
     trocarAbaEtapa(estado.abaEtapa || "equipe", true);
   }
   function trocarAbaEtapa(chave, semRolar){
@@ -934,9 +950,10 @@
       const p = document.getElementById("etapaAba_" + a.chave); if(p) p.hidden = a.chave !== chave;
     });
     document.querySelectorAll("#etapaAbas [data-etapa-aba]").forEach(function(b){
-      const ativo = b.dataset.etapaAba === chave; b.setAttribute("aria-selected", ativo ? "true" : "false"); b.classList.toggle("ativa", ativo);
+      const ativo = b.dataset.etapaAba === chave; b.setAttribute("aria-selected", ativo ? "true" : "false"); b.tabIndex=ativo?0:-1; b.classList.toggle("ativa", ativo);
     });
     document.getElementById("telaEtapa").classList.toggle("aba-chat", chave === "info");
+    document.getElementById("telaEtapa").classList.toggle("aba-lista", chave === "lista");
     const navAbas = document.getElementById("etapaAbas");
     if(navAbas) document.documentElement.style.setProperty("--etapa-abas-h", navAbas.offsetHeight + "px");
     if(!semRolar) window.scrollTo({ top: 0, behavior: "auto" });
@@ -971,17 +988,35 @@
 
   function renderCabeca(e){
     const t = tipoInfo(e.etapa);
-    document.getElementById("etapaEtiquetas").innerHTML='<span class="tipo" style="background:'+t.fundo+';color:'+t.forte+'">'+esc(e.etapa)+'</span><span class="pedido" title="Pedido #'+esc(e.pedido)+'">Pedido <b>#'+esc(e.pedido)+'</b></span>';
+    /* 21/11/2026: tudo numa linha só, junto do Voltar: etapa · cliente · número do pedido. */
+    /* A etapa fica com a mesma cor forte do cartão da lista (montagem azul, desmontagem laranja, carregamento roxo). */
+    const corEtapa=({montagem:'#2563eb',desmontagem:'#c2410c',carregamento:'#6d28d9'})[String(e.operacao||'').toLowerCase()]||t.forte;
+    document.getElementById("etapaEtiquetas").innerHTML='<span class="tipo nav-etapa" style="--nav-etapa:'+corEtapa+'">'+esc(e.etapa)+'</span>'+fotoClienteCartao(e)+'<span class="nav-cliente" title="'+esc(e.cliente||'')+'">'+esc(e.cliente||'')+'</span><span class="pedido" title="Pedido '+esc(e.pedido)+'">'+esc(String(e.pedido||'').replace(/^#/,''))+'</span>';
     /* Nov/2026: cliente, data e endereço ficam só no cartão da lista; aqui a tela começa na Equipe.
        Fica só a orientação (observação) e o alerta, quando houver. */
     document.getElementById("etapaCabeca").innerHTML =
       (e.particularidades ? '<div class="evento-particularidades" role="note"><strong>Atenção neste local</strong><span>'+esc(e.particularidades)+'</span></div>' : '') +
       (e.observacao && !/^gerado pelo pedido\.?$/i.test(String(e.observacao).trim()) ? '<p class="evento-orientacao evento-orientacao-solta">'+esc(e.observacao)+'</p>' : '') +
       (e.alerta ? '<div class="alerta">' + I.alerta + '<div><strong>' + esc(e.alerta.problema) + '</strong>' + esc(e.alerta.observacao || "") + (e.alerta.enviadoPor ? ' — ' + esc(e.alerta.enviadoPor) : "") + '</div></div>' : "");
+    /* 21/11/2026: o bloco "Montagem do evento / cliente / local / data e hora" saiu (pedido: mais compacto). */
+    document.getElementById('etapaResumo')?.remove();
+    renderInfo(e);
   }
 
+  function dataEtapaTexto(v){const d=String(v||'').slice(0,10).split('-');return d.length===3?d[2]+'/'+d[1]+'/'+d[0]:'Data não informada';}
   function renderInfo(e){
-    document.getElementById("etapaInfo").innerHTML = "";
+    const detalhe=(nome,valor)=>'<div><dt>'+esc(nome)+'</dt><dd>'+esc(valor||'Não informado')+'</dd></div>';
+    const logistica=avisosLogistica(e,false);
+    document.getElementById("etapaInfo").innerHTML =
+      '<section class="etapa-info-card"><span class="etapa-resumo-rotulo">Pedido #'+esc(e.pedido)+'</span><h2>Informações do evento</h2><dl class="etapa-info-grade">'+
+      detalhe('Cliente',e.cliente)+detalhe('Local',e.localNome||e.local)+detalhe('Data do evento',e.dataEvento)+detalhe('Responsável pela etapa',e.responsavel)+
+      detalhe('Etapa programada',dataEtapaTexto(e.dataISO))+detalhe('Horário',e.horario)+'</dl>'+
+      '<div class="etapa-info-local"><h3>Endereço e acesso</h3><p>'+esc(e.endereco||'Endereço não informado')+'</p><button type="button" class="btn btn-claro" data-etapa-mapa>Abrir mapa e rota</button></div></section>'+
+      '<section class="etapa-info-card"><h2>Orientações para a equipe</h2>'+(logistica?'<div class="etapa-info-logistica">'+logistica+'</div>':'<p class="etapa-info-vazio">Condições de acesso ainda não informadas.</p>')+
+      (e.particularidades?'<div class="etapa-info-nota"><h3>Cuidados com o local</h3><p>'+esc(e.particularidades)+'</p></div>':'')+
+      (e.observacao&&!/^gerado pelo pedido\.?$/i.test(String(e.observacao).trim())?'<div class="etapa-info-nota"><h3>Observações da etapa</h3><p>'+esc(e.observacao)+'</p></div>':'')+
+      (!e.particularidades&&(!e.observacao||/^gerado pelo pedido\.?$/i.test(String(e.observacao).trim()))?'<p class="etapa-info-vazio">Nenhuma orientação adicional registrada.</p>':'')+'</section>';
+    document.querySelector('[data-etapa-mapa]').addEventListener('click',()=>abrirMapa(e.id));
   }
 
   function chipPresenca(p){
@@ -1034,10 +1069,9 @@
                 chipPresenca(p) + '</div>';
             }).join("") + '</div>'
           : '<div class="vazio" style="padding:14px">Nenhum free confirmou ainda.</div>') +
-        '<div class="acoes-linha">' +
-          '<button class="btn btn-pequeno" type="button" onclick="abrirQr(\'' + esc(e.id) + '\')">' + I.qr + 'QR code da equipe</button>' +
-        '</div>' +
-        '<div style="margin-top:8px;font-size:12.5px;color:var(--muted)">Encontro dos free: ' + esc(f.horario) + ' · ' + esc(f.pontoEncontro) + '</div>';
+        '<div class="eq-qr-caixa"><div class="eq-qr-img" id="eqQrEquipe" aria-label="QR code de presença dos freelancers"></div><div class="eq-qr-lado"><strong>QR de presença</strong><small>Os freelancers leem na chegada e na saída. Muda a cada minuto.</small><div class="qr-codigo" id="eqQrEquipeCodigo">······</div>' +
+          '<button class="btn btn-pequeno btn-claro" type="button" aria-label="QR code da equipe" onclick="abrirQr(\'' + esc(e.id) + '\')">' + I.qr + 'Ampliar</button></div></div>' +
+        '<div class="evento-encontro-free">Encontro dos freelancers: ' + esc([f.horario,f.pontoEncontro].filter(Boolean).join(' · ')||'Não informado') + '</div>';
     }
 
     /* Nov/2026: três colunas lado a lado (Equipe · Caminhões · Uber); o responsável fica na mesma lista da equipe. */
@@ -1053,13 +1087,50 @@
         (caminhoes.length ? '<div class="pessoas">'+caminhoes.map(c=>'<div class="pessoa">'+fotoCadastroHtml(c,true)+'<div class="pessoa-nome">'+esc(String(c.nome||'').length<=3?'Caminhão '+c.nome:c.nome)+'</div></div>').join('')+'</div>' : '<p class="evento-sem-transporte">Nenhum caminhão programado.</p>') +
       '</section>';
     if(!soFotos){pintarUberMontador(e);pintarFreteMontador(e);}
+    if(e.free)qrEquipeInline(e);
+    iniciarQrsFixos(e);
   }
 
+  /* 21/11/2026: QR codes fixos na tela (aba Equipe: presença dos freelancers; Caminhões: freteiro; Uber: motorista).
+     Desenhados direto na aba, sem abrir janela; o "Ampliar" continua abrindo o QR grande. Atualizam a cada minuto. */
+  function desenharQr(alvo, texto, tamanho){
+    if(!alvo || !window.QRCode || !texto) return;
+    if(alvo.dataset.qrTexto === texto) return;
+    alvo.dataset.qrTexto = texto; alvo.innerHTML = "";
+    new QRCode(alvo, { text: texto, width: tamanho || 360, height: tamanho || 360, colorDark: "#251e19", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+  }
+  function qrEquipeInline(e){
+    chamar("MONT_qrVaga", estado.token, e.id).then(function(d){
+      if(estado.etapaAberta !== e.id || !d) return;
+      desenharQr(document.getElementById("eqQrEquipe"), d.urlQr);
+      const c = document.getElementById("eqQrEquipeCodigo"); if(c) c.textContent = d.codigo || "";
+    }).catch(function(){ const c = document.getElementById("eqQrEquipeCodigo"); if(c) c.textContent = "Sem conexão"; });
+  }
+  function desenharQrsPendentes(area){
+    area.querySelectorAll("[data-qr-url]").forEach(function(box){ desenharQr(box, box.dataset.qrUrl); });
+  }
+  function iniciarQrsFixos(e){
+    clearInterval(estado.qrFixosTimer);
+    estado.qrFixosTimer = setInterval(function(){
+      const tela = document.getElementById("telaEtapa");
+      if(estado.etapaAberta !== e.id || !tela || !tela.classList.contains("ativa")){ clearInterval(estado.qrFixosTimer); return; }
+      if(document.hidden) return;
+      if(e.free) qrEquipeInline(e);
+      pintarUberMontador(e, true); pintarFreteMontador(e, true);
+    }, 45000);
+  }
+  function trocarAbaEquipe(chave){
+    estado.abaEquipe = chave;
+    const col = document.getElementById("etapaColunas"); if(col) col.dataset.eq = chave;
+    document.querySelectorAll("#eqAbas [data-eq-aba]").forEach(function(b){ const a = b.dataset.eqAba === chave; b.setAttribute("aria-selected", a ? "true" : "false"); b.tabIndex = a ? 0 : -1; b.classList.toggle("ativa", a); });
+  }
+  window.trocarAbaEquipe = trocarAbaEquipe;
+
   /* Frete da etapa (out/2026): freteiro autônomo que aceitou o frete no App do Freteiro + QR de check-in/check-out. */
-  function pintarFreteMontador(e){
+  function pintarFreteMontador(e, quieto){
     let area = document.getElementById("etapaFrete");
     if(!area){ area = document.createElement("div"); area.id = "etapaFrete"; (document.getElementById("etapaUber") || document.getElementById("etapaEquipe")).after(area); }
-    area.innerHTML = "";
+    if(!quieto) area.innerHTML = "";
     chamar("MONT_freteQr", estado.token, e.id).then(function(d){
       if(estado.etapaAberta !== e.id){ return; }
       const fretes = (d && d.fretes) || [];
@@ -1071,8 +1142,10 @@
           return '<div class="subtitulo">' + (v.direcao === "coleta" ? "Coleta" : "Entrega") + ' · ' + esc(v.ponto_encontro) + ' → ' + esc(v.destino) + (v.hora ? ' · ' + esc(v.hora) : '') + '</div>' +
             '<div class="pessoas"><div class="pessoa"><div class="pessoa-ini">' + esc(String(fr.nome || "?").charAt(0).toUpperCase()) + '</div><div class="pessoa-nome">' + esc(fr.nome || "-") +
             '<small>' + esc(fr.veiculo || "") + '</small>' + (n.length >= 10 ? '<small><a href="https://wa.me/55' + n + '" target="_blank" rel="noopener">' + esc(fr.telefone) + '</a></small>' : '') + '</div><span class="chip">' + sit + '</span></div></div>' +
-            '<div class="acoes-linha"><button class="btn btn-pequeno" type="button" onclick="abrirQrFrete(\'' + esc(e.id) + '\',\'' + esc(v.id) + '\')">' + I.qr + 'QR para o freteiro</button></div>';
+            '<div class="eq-qr-caixa"><div class="eq-qr-img" data-qr-url="' + esc(new URL("../Fretes/freteiro.html?c=" + encodeURIComponent(v.id + "." + v.codigo), location.href).href) + '"></div><div class="eq-qr-lado"><strong>QR do freteiro</strong><small>Check-in na chegada e check-out na liberação. Muda a cada minuto.</small><div class="qr-codigo">' + esc(v.codigo || "") + '</div>' +
+            '<button class="btn btn-pequeno btn-claro" type="button" aria-label="QR para o freteiro" onclick="abrirQrFrete(\'' + esc(e.id) + '\',\'' + esc(v.id) + '\')">' + I.qr + 'Ampliar</button></div></div>';
         }).join("") + '</section>';
+      desenharQrsPendentes(area);
     }).catch(function(){ area.innerHTML = ""; });
   }
   function abrirQrFrete(etapa, anuncio){
@@ -1101,10 +1174,10 @@
 
   /* Uber da etapa (out/2026): motoristas que aceitaram no App do Motorista + QR de check-in/check-out.
      O motorista lê o QR na chegada ao ponto de encontro e de novo quando a equipe é liberada. */
-  function pintarUberMontador(e){
+  function pintarUberMontador(e, quieto){
     let area = document.getElementById("etapaUber");
     if(!area){ area = document.createElement("div"); area.id = "etapaUber"; document.getElementById("etapaEquipe").after(area); }
-    area.innerHTML = '<section class="secao"><div class="secao-titulo"><h2>Uber</h2></div><p class="evento-sem-transporte" role="status">Consultando transporte…</p></section>';
+    if(!quieto || !area.innerHTML) area.innerHTML = '<section class="secao"><div class="secao-titulo"><h2>Uber</h2></div><p class="evento-sem-transporte" role="status">Consultando transporte…</p></section>';
     chamar("MONT_uberQr", estado.token, e.id).then(function(d){
       const vagas = (d && d.vagas) || [];
       if(estado.etapaAberta !== e.id){ return; }
@@ -1112,15 +1185,17 @@
       area.innerHTML = '<section class="secao secao-compacta evento-uber"><div class="secao-titulo"><h2>Uber</h2></div>' +
         vagas.map(function(v){
           const corr = v.corridas || [];
-          return '<div class="uber-vaga"><div class="uber-vaga-topo"><span>' + esc(v.quantidade) + ' carro(s) · ' + (v.ida_volta ? 'ida e volta' : 'só ida') + (v.hora ? ' · ' + esc(v.hora) : '') + '<small>' + esc(v.ponto_encontro) + ' → ' + esc(v.destino) + '</small></span>' +
-            '<button class="btn btn-pequeno" type="button" aria-label="QR para o motorista" onclick="abrirQrUber(\'' + esc(e.id) + '\',\'' + esc(v.id) + '\')">' + I.qr + 'QR</button></div>' +
+          return '<div class="uber-vaga"><div class="uber-vaga-topo"><span>' + esc(v.quantidade) + ' carro(s) · ' + (v.ida_volta ? 'ida e volta' : 'só ida') + (v.hora ? ' · ' + esc(v.hora) : '') + '<small>' + esc(v.ponto_encontro) + ' → ' + esc(v.destino) + '</small></span></div>' +
             (corr.length ? corr.map(function(c){
               const n = String(c.telefone || "").replace(/\D/g, "");
               const sit = c.checkout_em ? "Concluída" : c.checkin_em ? "Chegou" : "A caminho";
               return '<div class="uber-motorista"><span class="pessoa-ini">' + esc(String(c.motorista || "?").charAt(0).toUpperCase()) + '</span><span class="uber-motorista-nome">' + esc(c.motorista) +
                 (c.carro ? ' · <small>' + esc(c.carro) + '</small>' : '') + '</span>' + (n.length >= 10 ? '<a href="https://wa.me/55' + n + '" target="_blank" rel="noopener">WhatsApp</a>' : '') + '<span class="chip">' + sit + '</span></div>';
-            }).join("") : '<div class="uber-vazio">Nenhum motorista aceitou ainda.</div>') + '</div>';
+            }).join("") : '<div class="uber-vazio">Nenhum motorista aceitou ainda.</div>') +
+            '<div class="eq-qr-caixa"><div class="eq-qr-img" data-qr-url="' + esc(new URL("../Uber/motorista.html?c=" + encodeURIComponent(v.id + "." + v.codigo), location.href).href) + '"></div><div class="eq-qr-lado"><strong>QR do motorista</strong><small>Check-in no ponto de encontro e check-out na liberação. Muda a cada minuto.</small><div class="qr-codigo">' + esc(v.codigo || "") + '</div>' +
+            '<button class="btn btn-pequeno btn-claro" type="button" aria-label="QR para o motorista" onclick="abrirQrUber(\'' + esc(e.id) + '\',\'' + esc(v.id) + '\')">' + I.qr + 'Ampliar</button></div></div></div>';
         }).join("") + '</section>';
+      desenharQrsPendentes(area);
     }).catch(function(){
       if(estado.etapaAberta !== e.id){ return; }
       area.innerHTML = '<section class="secao"><div class="secao-titulo"><h2>Uber</h2></div><p class="evento-sem-transporte">Não foi possível consultar o transporte.</p><button class="btn btn-claro btn-pequeno" type="button" style="margin-top:12px">Consultar Uber novamente</button></section>';
@@ -1320,7 +1395,7 @@
       '<button class="btn" type="button" onclick="enviarEquipe(this)">' + I.enviar + 'Enviar foto da equipe</button>';
 
     const registro = e.chegadaEquipe;
-    const resumoChegada = registro ? '<div class="chegada-resumo"><strong>Chegada registrada</strong><span>'+esc(registro.data)+' às '+esc(registro.hora)+'</span><span>'+(registro.origemChegada === 'CHEGADA_V1' && registro.previsto ? (Number(registro.minutosAtraso)>0 ? esc(registro.minutosAtraso)+' min de atraso' : 'Envio no horário') : 'Horário antigo sem verificação automática')+'</span><span class="pendente">'+(registro.uniformizada === 'SIM' ? 'Uniforme aprovado pelo RH' : registro.uniformizada === 'NAO' ? 'RH: equipe sem uniforme' : 'Uniforme aguardando avaliação do RH')+'</span><span>'+(registro.localStatus === 'NO_LOCAL' ? 'Localização no evento' : 'Localização pendente de conferência')+'</span></div>' : '';
+    const resumoChegada = registro ? '<div class="chegada-resumo"><strong>Chegada registrada</strong><span>'+esc(registro.data)+' às '+esc(registro.hora)+'</span><span>'+(registro.origemChegada === 'CHEGADA_V1' && registro.previsto ? (Number(registro.minutosAtraso)>0 ? esc(registro.minutosAtraso)+' min de atraso' : 'Envio no horário') : 'Horário antigo sem verificação automática')+'</span><span class="pendente">'+(registro.uniformizada === 'SIM' ? 'Uniforme aprovado pelo RH' : registro.uniformizada === 'NAO' ? 'RH: equipe sem uniforme' : 'Uniforme aguardando avaliação do RH')+'</span></div>' : '';
     let passos = "";
 
     if(e.operacao === "montagem"){
@@ -1385,30 +1460,15 @@
     if(!reg.fotoEquipe){ toast("Tire a foto da equipe antes de enviar.", true); return; }
 
     ocupar(btn);
-    btn.textContent = 'Obtendo localização…';
-    localizarChegada().then(function(gps){
-      btn.textContent = 'Enviando foto e chegada…';
-      return chamar('MONT_fotoEquipe', {
-        token:estado.token, idCronograma:reg.id, foto:reg.fotoEquipe,
-        latitude:gps.latitude,longitude:gps.longitude,precisaoGPS:gps.accuracy
-      });
+    btn.textContent = 'Enviando foto…';
+    chamar('MONT_fotoEquipe', {
+      token:estado.token, idCronograma:reg.id, foto:reg.fotoEquipe
     }).then(function(r){
       if(r.apontamento){estado.apontamento=r.apontamento;estado.dados.apontamento=r.apontamento;renderApontamento();}
       marcarFeito('equipe');
       const c = r.chegada;
       toast(c && c.atraso > 0 ? 'Chegada registrada: '+c.atraso+' min após o previsto.' : 'Foto e chegada registradas.');
-      if(c && c.localStatus !== 'NO_LOCAL') toast(c.localStatus === 'FORA_DO_LOCAL' ? 'Localização fora do raio do evento. O RH poderá conferir o registro.' : 'Evento sem coordenadas. Localização registrada para conferência.',true);
     }).catch(function(e){ liberar(btn);btn.textContent='Enviar foto da equipe';toast(mensagemErro(e,'Não foi possível registrar a chegada.'),true); });
-  }
-
-  function localizarChegada(){
-    return new Promise(function(resolve,reject){
-      if(!navigator.geolocation){reject(new Error('Este aparelho não disponibilizou localização.'));return;}
-      navigator.geolocation.getCurrentPosition(function(p){
-        if(p.coords.accuracy>100){reject(new Error('GPS impreciso. Vá para uma área aberta e tente novamente.'));return;}
-        resolve(p.coords);
-      },function(e){reject(new Error(e.code===1 ? 'Permita o acesso à localização para registrar a chegada.' : 'Não foi possível obter o GPS. Verifique o sinal e tente novamente.'));}, {enableHighAccuracy:true,maximumAge:0,timeout:25000});
-    });
   }
 
   /* ---------- 2. Sacolas (montagem) ---------- */
@@ -1923,6 +1983,6 @@
 <script src="../apps-equipe.js?v=20261031-bonus-integrado"></script>
 <script src="../../../js/app/rastreamento-app.js?v=20261125-sempre"></script>
 <script src="../../../js/app/android-principal.js?v=20261125-atualizar"></script>
-<script src="../../../js/app/camera-barra.js?v=20261125-nativo"></script>
+<script src="../../../js/ui/ia-chat-fotos.js?v=20261121-fotos-msg"></script><script src="../../../js/app/camera-barra.js?v=20261125-nativo"></script>
 </body>
 </html>

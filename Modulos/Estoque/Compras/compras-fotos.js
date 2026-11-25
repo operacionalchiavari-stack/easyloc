@@ -130,6 +130,11 @@
     const fotos = extra.length ? extra : todas;
     abrirVisor(fotos, Math.max(0, fotos.indexOf(a.getAttribute("href"))));
   }, true);
+  // (22/11/2026) Necessidades operacionais: a foto do item personalizado abre grande no centro.
+  document.addEventListener("click", (e) => {
+    const f = e.target.closest?.("[data-cs-foto]"); if (!f || !f.dataset.csFoto) return;
+    e.preventDefault(); e.stopPropagation(); abrirVisor([f.dataset.csFoto], 0);
+  }, true);
   window.ComprasFoto = {
     fornecedor: (id, nome, tam) => circulo("fornecedor", id, nome, tam),
     pessoa: (id, nome, tam) => circulo("pessoa", id, nome, tam),

@@ -71,7 +71,7 @@
   window.ACERVO_LOCAL = Object.assign(window.ACERVO_LOCAL || {}, {
     iniciarSistemaRH: async () => true,
     validarSenhaRH: async () => true,
-    getFuncionarios: async () => (await funcionarios()).map(f => ({ nomeCompleto: f.nome.trim(), cpf: "", setor: f.setor || "", cargo: f.cargo || "" })),
+    getFuncionarios: async () => (await funcionarios()).map(f => ({ id: f.id, nomeCompleto: f.nome.trim(), cpf: "", setor: f.setor || "", cargo: f.cargo || "" })),
     salvarLoteRH: salvarLote,
     getHistoricoRH: historico
   });

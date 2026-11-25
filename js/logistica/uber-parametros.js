@@ -2,7 +2,7 @@
  'use strict';
  window.carregarParametrosUber=async function(host,empresa,pode){
   const sb=window.supabaseClient,esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const sec=document.createElement('section');sec.className='escala-parametros-card';host.prepend(sec);
+  const sec=document.createElement('section');sec.className='escala-parametros-card';sec.dataset.parametrosUber='';host.prepend(sec);
   const [config,frota]=await Promise.all([sb.from('uber_automacao_config').select('*').eq('empresa_id',empresa),sb.from('caminhoes').select('id,codigo,modelo,placa').eq('empresa_id',empresa).order('codigo')]);
   if(config.error||frota.error){sec.innerHTML='<h2>Uber automático</h2><p>Não foi possível carregar os parâmetros de Uber. Verifique se a atualização do banco foi aplicada.</p>';return;}
   const c=config.data?.[0]||{ativa:false,montagem:true,desmontagem:true,passageiros_carro:4,antecedencia_horas:24,ponto_encontro:'',ida_volta:false,lugares_caminhoes:{}};

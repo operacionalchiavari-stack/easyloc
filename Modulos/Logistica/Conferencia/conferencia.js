@@ -496,7 +496,7 @@
         box.querySelectorAll('.cf-escolha-item').forEach(item=>{item.hidden=!termos.every(t=>item.dataset.busca.includes(t));if(!item.hidden)visiveis++;});
         dlg.querySelector('.cf-escolha-vazio').hidden=visiveis>0||!lista.length;
       });
-      if (!lista.length) box.innerHTML = "<p>Nenhum caminhão cadastrado em Logística > Caminhões.</p>";
+      if (!lista.length) box.innerHTML = "<p>Nenhum caminhão cadastrado em Logística > Cadastros > Caminhões.</p>";
       lista.forEach((c) => {
         const l = document.createElement("label"); l.className = "cf-escolha-item" + (programados.has(String(c.id)) ? " is-programado" : "");
         l.dataset.busca=normalizar([c.codigo,c.placa,c.modelo].filter(Boolean).join(" "));
@@ -920,7 +920,7 @@
   // Foto (avatar público da conta, o mesmo do menu) e nome de quem fez a 2ª conferência; sem foto, as iniciais.
   function quemResolveu(o) {
     const nome = String(o.resolvido_por_nome || "").trim(); if (!nome) return "";
-    const iniciais = nome.split(/s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase();
+    const iniciais = nome.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join("").toUpperCase();
     let url = ""; try { if (o.resolvido_por) url = s.sb.storage.from("avatares").getPublicUrl(s.empresa + "/" + o.resolvido_por + ".jpg").data?.publicUrl || ""; } catch (_) {}
     return '<span class="cf-div-quem" title="2ª conferência por ' + esc(nome) + '"><span class="cf-div-avatar">' + esc(iniciais) +
       (url ? '<img src="' + esc(url) + '" alt="" loading="lazy" onerror="this.remove()">' : "") + "</span>" + esc(nome) + "</span>";

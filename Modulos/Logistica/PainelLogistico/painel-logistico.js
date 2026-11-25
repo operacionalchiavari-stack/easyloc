@@ -38,7 +38,7 @@
     if(preencher&&window.EasyLocPermissions?.hasPermission?.('logistica.planejamento.editar')===false)return;
     if(salvando||filaSalvamentos.length)return;
     mostrarErro("");
-    $("plPreencher").disabled = true;
+    if($("plPreencher")) $("plPreencher").disabled = true;
     try {
       if(preencher){const resultado=await chamar('ESC_painel',diaSelecionado||inicio,1,true);aviso(resultado.preenchidas?resultado.preenchidas+(resultado.preenchidas===1?' etapa preenchida':' etapas preenchidas'):'Nada vazio para preencher neste dia');}
       if(salvando||filaSalvamentos.length)return;
@@ -49,17 +49,24 @@
     } catch (e) {
       mostrarErro(e.message || "Não foi possível carregar o painel.");
       if (!dados) $("plDias").innerHTML = "";
-    } finally { $("plPreencher").disabled = dados?.regras.automatica===false || !dados?.etapas.some(e=>e.data===diaSelecionado&&!e.passada&&podeEditar(e)); }
+    } finally { if($("plPreencher")) $("plPreencher").disabled = dados?.regras.automatica===false || !dados?.etapas.some(e=>e.data===diaSelecionado&&!e.passada&&podeEditar(e)); }
   }
 
   async function buscarFaixa(de, n) {
-    const partes = await Promise.all(Array.from({length: Math.ceil(n / BLOCO)}, (_, k) => chamar("ESC_painel", somar(de, k * BLOCO), Math.min(BLOCO, n - k * BLOCO), false)));
+    const partes = await Promise.all(Array.from({length: Math.ceil(n / BLOCO)}, async (_, k) => {
+      const inicio= somar(de,k*BLOCO),quantos=Math.min(BLOCO,n-k*BLOCO),r=await chamar('ESC_painel',inicio,quantos,false);
+      if(window.supabaseClient?.rpc){
+        try{const q=await window.supabaseClient.rpc('rh_disponibilidade_logistica',{p_inicio:inicio,p_fim:somar(inicio,quantos-1)});if(q.error)throw Error(q.error.message);if(!Array.isArray(q.data))throw Error('Resposta de disponibilidade inválida');r.disponibilidade_rh=q.data;}
+        catch(err){r.rh_erro='Não foi possível verificar a disponibilidade do RH. Atualize antes de escalar pessoas. '+err.message;r.disponibilidade_rh=[];}
+      }
+      return r;
+    }));
     return partes.reduce((a, b) => juntar(a, b), null);
   }
   function juntar(a, b) {
     if (!a) return b;
     const ids = new Set(a.etapas.map(e => e.id));
-    return {...b, inicio: a.inicio, preenchidas: a.preenchidas, etapas: a.etapas.concat(b.etapas.filter(e => !ids.has(e.id))), ocupacoes: (a.ocupacoes || []).concat(b.ocupacoes || [])};
+    return {...b, inicio: a.inicio, preenchidas: a.preenchidas, etapas: a.etapas.concat(b.etapas.filter(e => !ids.has(e.id))), ocupacoes: (a.ocupacoes || []).concat(b.ocupacoes || []), disponibilidade_rh:[...(a.disponibilidade_rh||[]),...(b.disponibilidade_rh||[])],rh_erro:a.rh_erro||b.rh_erro};
   }
   async function carregarMais(direcao='depois') {
     if(carregandoMais||!dados||salvando||filaSalvamentos.length)return;
@@ -84,11 +91,12 @@
     const k = chave(nome);
     return (dados.pessoas || []).find(p => chave(p.nome) === k) || null;
   }
+  function impedimentoRH(e,nome){const p=pessoaInfo(nome);if(!p||p.free)return '';if(dados.rh_erro)return 'Disponibilidade do RH não verificada';return (dados.disponibilidade_rh||[]).find(r=>r.etapa_id===e.id&&r.funcionario_id===p.id)?.motivo||'';}
   function chave(n) { return String(n || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/\(.*?\)/g, " ").replace(/\s+/g, " ").trim(); }
   function caminhaoInfo(cod) { return (dados.caminhoes || []).find(c => chave(c.codigo) === chave(cod)) || null; }
 
   function equipeCompleta(e) {
-    return !e.somente_consulta && !!e.responsavel && new Set([e.responsavel,...e.equipe].map(chave)).size>=Math.max(1,Number(e.sugerido)||1) && !(e.conflitos||[]).length;
+    return !e.somente_consulta && !!e.responsavel && new Set([e.responsavel,...e.equipe].map(chave)).size>=Math.max(1,Number(e.sugerido)||1) && !(e.conflitos||[]).length && ![e.responsavel,...e.equipe].some(n=>impedimentoRH(e,n));
   }
   function escalaCompleta(e) {
     if(!equipeCompleta(e)||(e.avisos||[]).length)return false;
@@ -104,8 +112,9 @@
     diaSelecionado=diaSelecionado||window.PainelLogisticoDias.data||dados.hoje;
     const atual=planejamento.find(e=>e.id===etapaSelecionada)||planejamento.find(e=>e.data===diaSelecionado)||planejamento[0];etapaSelecionada=atual?.id||null;
     const doDia=dados.etapas.filter(e=>e.data===diaSelecionado);
-    $('plPreencher').dataset.automaticadesativada=String(dados.regras.automatica===false);$('plPreencher').hidden=dados.regras.automatica===false||$('plTabEquipe').getAttribute('aria-selected')!=='true';$('plPreencher').disabled=dados.regras.automatica===false||!doDia.some(e=>!e.passada&&podeEditar(e));
-    window.PainelCronogramaEquipe.render({etapas:planejamento,hoje:dados.hoje,pessoa:pessoaInfo,caminhao:caminhaoInfo,mais:carregarMais,opcoes:opcoesEscolha,podeEditar,podeLiberar:e=>e.passada&&!e.somente_consulta&&window.EasyLocPermissions?.hasPermission?.('logistica.planejamento.editar')!==false});
+    if($('plPreencher')){$('plPreencher').dataset.automaticadesativada=String(dados.regras.automatica===false);$('plPreencher').hidden=dados.regras.automatica===false||$('plTabEquipe').getAttribute('aria-selected')!=='true';$('plPreencher').disabled=dados.regras.automatica===false||!doDia.some(e=>!e.passada&&podeEditar(e));}
+    if(dados.rh_erro)mostrarErro(dados.rh_erro);
+    window.PainelCronogramaEquipe.render({etapas:planejamento,hoje:dados.hoje,pessoa:pessoaInfo,impedimento:impedimentoRH,caminhao:caminhaoInfo,mais:carregarMais,opcoes:opcoesEscolha,podeEditar,podeLiberar:e=>e.passada&&!e.somente_consulta&&window.EasyLocPermissions?.hasPermission?.('logistica.planejamento.editar')!==false});
     estadoSalvamento();pintarFotosServicos(planejamento).catch(()=>{});window.PainelUber?.definirPeriodo?.(dados.inicio,somar(dados.inicio,totalDias-1));
   }
 
@@ -157,8 +166,8 @@
     return (cam?dados.caminhoes:dados.pessoas).filter(p=>!usados.has(chave(cam?p.codigo:p.nome))&&(cam?!!p.codigo:papel!=='resp'||p.lider)).map(p=>{
       const valor=cam?p.codigo:p.nome;
       const alocacoes=unicas.filter(x=>(cam?x.caminhoes||[]:[x.responsavel,...(x.equipe||[])]).some(n=>chave(n)===chave(valor))).sort((a,b)=>String(a.hora||'').localeCompare(String(b.hora||''))).map(x=>({pedido:x.pedido||'',etapa:TIPO[x.tipo]||x.etapa||'Escala',hora:x.hora||'Sem horário',local:x.local||x.supervisor?.local||'',cliente:x.cliente||''}));
-      return {valor,nome:valor,foto:p.foto_url||p.fotoUrl||p.miniatura||'',detalhe:cam?[p.modelo,p.capacidade?p.capacidade+' m³':''].filter(Boolean).join(' · '):[p.free?'Free':EQUIPE[p.equipe]||'Equipe interna',p.lider?'Líder':''].filter(Boolean).join(' · '),ocupado:alocacoes.length>0,alocacoes};
-    }).sort((a,b)=>Number(a.ocupado)-Number(b.ocupado)||a.nome.localeCompare(b.nome,'pt-BR'));
+      return {valor,nome:valor,impedimento:cam?'':impedimentoRH(e,p.nome),categoria:cam?'cam':p.lider?'responsaveis':p.free?'free':'interna',foto:p.foto_url||p.fotoUrl||p.miniatura||'',detalhe:cam?[p.modelo,p.capacidade?p.capacidade+' m³':''].filter(Boolean).join(' · '):[p.free?'Free':EQUIPE[p.equipe]||'Equipe interna',p.lider?'Líder':''].filter(Boolean).join(' · '),ocupado:alocacoes.length>0,alocacoes,vinculo:cam?(p.vinculo==='Próprio'?'Próprio':'Terceirizado'+(p.empresa?' · '+p.empresa:'')):''};
+    }).sort((a,b)=>Number(!!a.impedimento)-Number(!!b.impedimento)||Number(a.ocupado)-Number(b.ocupado)||a.nome.localeCompare(b.nome,'pt-BR'));
   }
   const escala=e=>({responsavel:e.responsavel,equipe:e.equipe.slice(),caminhoes:e.caminhoes.slice()});
   function aplicarEscala(id,valor){
@@ -184,6 +193,8 @@
     if(!podeEditar(e))return;
     const anterior={...escala(e),avisos:[...(e.avisos||[])],conflitos:[...(e.conflitos||[])]};
     novo={responsavel:novo.responsavel,equipe:[...new Set(novo.equipe)],caminhoes:[...new Set(novo.caminhoes)]};
+    const indisponivel=[novo.responsavel,...novo.equipe].filter(Boolean).map(n=>({nome:n,motivo:impedimentoRH(e,n)})).find(p=>p.motivo);
+    if(indisponivel){mostrarErro(indisponivel.nome+': '+indisponivel.motivo+'. Escolha uma pessoa disponível.');return;}
     filaSalvamentos.push({id:e.id,anterior,novo});versaoEdicao++;
     aplicarEscala(e.id,novo);mostrarErro('');desenhar();processarSalvamentos();
   }
@@ -253,12 +264,15 @@
   });
 
   $('plDias').addEventListener('error',ev=>{if(ev.target.matches('.pl-avatar img,.pl-recurso-foto img,.pl-caminhao-icone img'))ev.target.remove();},true);
-  $("plPreencher").onclick = () => carregar(true);
-  $('plIrHoje').onclick=()=>{diaSelecionado=dados?.hoje;window.PainelCronogramaEquipe?.irPara(diaSelecionado);};
+  if($("plPreencher")) $("plPreencher").onclick = () => carregar(true);
+  if($('plIrHoje')) $('plIrHoje').onclick=()=>{diaSelecionado=dados?.hoje;window.PainelCronogramaEquipe?.irPara(diaSelecionado);};
 
 
   window.addEventListener('beforeunload',ev=>{if(!filaSalvamentos.length)return;ev.preventDefault();ev.returnValue='';});
   window.addEventListener('escala-parametros-alterados',()=>carregar(false));
+  window.addEventListener('rh-disponibilidade-alterada',()=>carregar(false));
+  window.addEventListener('storage',e=>{if(e.key==='rh-disponibilidade-atualizada')carregar(false);});
+  window.addEventListener('focus',()=>{if(dados&&!document.querySelector('#plEscolhaFlutuante[open]'))carregar(false);});
   window.PainelLogisticoEquipe = { infoEtapa:id=>{const e=dados?.etapas.find(e=>e.id===id);return e?{local:e.detalhes?.endereco||e.local,hora:e.hora}:null;}, iniciar: () => carregar(false), carregarMais, definirDia: dia => { diaSelecionado=dia||dados?.hoje;etapaSelecionada=null;if(dados)desenhar(); } };
   if (!document.getElementById("plModuloAbas")) carregar(false);
 })();

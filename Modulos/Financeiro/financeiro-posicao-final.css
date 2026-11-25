@@ -59,3 +59,19 @@
 .pf-cab-card{display:flex;flex-direction:column;gap:2px;padding:8px 14px;border:1px solid #e3e7ec;border-radius:10px;background:#fff;min-width:150px}
 .pf-cab-card small{font-size:11px;color:#6b6b6b}.pf-cab-card strong{font-size:16px;white-space:nowrap}
 .pf-cab-card.bv{border-left:3px solid #b9a5ea}.pf-cab-card.bv strong{color:#6d4fc2}
+
+/* 22/11/2026 (pedido do usuário): parcela quitada com a linha inteira verde; na lista, concluídos verdes e pendentes amarelos;
+   decisão do BV (Aprovar? Sim/Não, desconto e motivo) numa linha só. */
+html:root:is(#pf22#pf22#pf22#pf22,html) .pf-financeiro-unificado tr.pf-quitado>td{background:#e6f4ea!important}
+html:root:is(#pf22#pf22#pf22#pf22,html) .pf-financeiro-unificado tr.pf-quitado>td:first-child{box-shadow:inset 3px 0 0 #1f7a44}
+html:root:is(#pf22#pf22#pf22#pf22,html) .pf-pedido.is-concluido{background:#e6f4ea!important;border-color:#bfe0c9!important}
+html:root:is(#pf22#pf22#pf22#pf22,html) .pf-pedido.is-pendente{background:#fdf6dd!important;border-color:#f0dfa6!important}
+html:root:is(#pf22#pf22#pf22#pf22,html) .pf-pedido[aria-current="true"]{box-shadow:0 0 0 2px #123f86 inset!important}
+html:root:is(#pf22#pf22#pf22#pf22,html) .pf-bv-decisao{display:flex!important;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:12px 18px}
+html:root:is(#pf22#pf22#pf22#pf22,html) .pf-bv-decisao .pf-motivo-rotulo{margin:0;white-space:nowrap;font:600 14px Inter,system-ui,sans-serif;color:#1f2328;text-transform:none;letter-spacing:0}
+html:root:is(#pf22#pf22#pf22#pf22,html) .pf-bv-decisao .pf-bv-botoes{margin:0;flex:none}
+html:root:is(#pf22#pf22#pf22#pf22,html) .pf-bv-decisao .pf-bv-campo:not([hidden]){display:flex!important;align-items:center;gap:8px;margin:0}
+html:root:is(#pf22#pf22#pf22#pf22,html) .pf-bv-decisao .pf-bv-campo>span{white-space:nowrap;font:600 13px Inter,system-ui,sans-serif!important;color:#4b5563;text-transform:none!important;letter-spacing:0!important}
+html:root:is(#pf22#pf22#pf22#pf22,html) .pf-bv-decisao .pf-bv-campo input{width:150px;min-height:38px}
+html:root:is(#pf22#pf22#pf22#pf22,html) .pf-bv-decisao .pf-bv-motivo input{width:260px}
+html:root:is(#pf22#pf22#pf22#pf22,html) .pf-bv>.pf-nota{padding:0 18px 14px}

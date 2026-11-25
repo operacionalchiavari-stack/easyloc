@@ -1,0 +1,69 @@
+:root{--roxo:#87509c;--borda:#dce3ec;--texto:#182233;--muted:#6c788a;--fundo:#f5f7fa}.prest-page{padding:28px;min-height:100vh;background:var(--fundo);color:var(--texto);font-family:Inter,sans-serif}.prest-top{display:flex;justify-content:space-between;gap:24px;align-items:end}.prest-top h1{font-size:30px;margin:4px 0}.prest-top p{margin:0;color:var(--muted)}.prest-caminho{font-size:12px!important;font-weight:700;letter-spacing:.1em;color:var(--roxo)!important}.prest-busca{display:grid;gap:6px;font-size:12px;font-weight:700}.prest-busca input{width:320px;padding:12px 14px;border:1px solid var(--borda);border-radius:12px}.prest-abas{display:flex;gap:22px;border-bottom:1px solid var(--borda);margin:28px 0 20px}.prest-abas button{border:0;background:none;padding:12px 2px;font-weight:700;color:var(--muted);cursor:pointer}.prest-abas button.ativo{color:var(--roxo);border-bottom:3px solid var(--roxo)}.prest-layout{display:grid;grid-template-columns:340px 1fr;gap:18px}.prest-lista,.prest-ficha,.prest-parametros{background:#fff;border:1px solid var(--borda);border-radius:18px}.prest-lista{padding:10px;max-height:calc(100vh - 230px);overflow:auto}.prest-pessoa{width:100%;display:flex;align-items:center;gap:12px;padding:12px;border:0;border-radius:13px;background:none;text-align:left;cursor:pointer}.prest-pessoa:hover,.prest-pessoa.ativa{background:#f2eaf5}.prest-avatar{width:48px;height:48px;border-radius:50%;background:#e5edf8;color:#3b6395;display:grid;place-items:center;font-weight:700;object-fit:cover;flex:none}.prest-pessoa div{min-width:0;flex:1}.prest-pessoa strong,.prest-pessoa small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.prest-pessoa small,.prest-ficha-top p,.prest-evento p,.prest-evento small{color:var(--muted)}.prest-nota{font-weight:800;color:var(--roxo)}.prest-ficha{padding:24px;min-height:430px}.prest-ficha-top{display:flex;align-items:center;gap:18px;border-bottom:1px solid var(--borda);padding-bottom:22px}.prest-ficha-top .prest-avatar{width:82px;height:82px;font-size:24px}.prest-ficha-top h2{margin:0 0 7px}.prest-ficha-top p{margin:3px 0}.prest-score{margin-left:auto;text-align:center;background:#f2eaf5;border-radius:18px;padding:15px 22px}.prest-score strong{display:block;font-size:30px;color:var(--roxo)}.prest-acoes{display:flex;gap:10px;margin:18px 0}.prest-btn{border:0;border-radius:999px;background:var(--roxo);color:#fff;padding:11px 18px;font-weight:700;cursor:pointer}.prest-btn.claro{background:#fff;color:var(--texto);border:1px solid var(--borda)}.prest-evento{display:grid;grid-template-columns:1fr auto;gap:5px;border-top:1px solid var(--borda);padding:14px 0}.prest-evento p,.prest-evento small{margin:0}.prest-desconto{color:#b54444;font-weight:800}.prest-parametros{padding:24px}.prest-parametros>header{display:flex;justify-content:space-between;align-items:center}.prest-parametros h2{margin:0 0 6px}.prest-parametros p{margin:0;color:var(--muted)}.prest-regra{display:grid;grid-template-columns:1fr 140px 100px 100px;gap:12px;align-items:center;padding:14px 0;border-top:1px solid var(--borda)}.prest-regra input{padding:10px;border:1px solid var(--borda);border-radius:9px}.prest-vazio{padding:50px;text-align:center;color:var(--muted)}.prest-aviso{padding:12px;background:#fff0f0;color:#9e3333}.prest-modal{border:0;border-radius:18px;width:min(520px,90vw);padding:0}.prest-modal::backdrop{background:#17203399}.prest-modal form{padding:22px;display:grid;gap:15px}.prest-modal header,.prest-modal footer{display:flex;justify-content:space-between;align-items:center}.prest-modal header button{font-size:28px;border:0;background:none}.prest-modal label{display:grid;gap:7px;font-weight:700}.prest-modal input,.prest-modal select,.prest-modal textarea{padding:11px;border:1px solid var(--borda);border-radius:10px;font:inherit}.prest-modal footer{justify-content:flex-end;gap:10px}@media(max-width:800px){.prest-top{display:block}.prest-busca{margin-top:20px}.prest-busca input{width:100%}.prest-layout{grid-template-columns:1fr}.prest-lista{max-height:270px}.prest-regra{grid-template-columns:1fr 90px}}
+
+.prest-pend{margin-left:6px;padding:2px 9px;border-radius:999px;background:#e60012;color:#fff;font-size:11px}.prest-tag-pend{display:inline-block;margin-top:4px;padding:2px 9px;border-radius:999px;background:#fdf2c8;color:#8b671d;font-size:11.5px;font-weight:600}
+
+/* Topo numa linha só (22/11): abas à esquerda, título no centro, busca à direita. */
+html:root:is(#pt#pt#pt,html) .prest-page{padding:10px 28px 24px}
+html:root:is(#pt#pt#pt,html) .prest-topo{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;margin:0 0 14px;padding:6px 0 10px;border-bottom:1px solid var(--borda)}
+html:root:is(#pt#pt#pt,html) .prest-topo .prest-abas{justify-self:start;margin:0;border:0;gap:18px}
+html:root:is(#pt#pt#pt,html) .prest-topo .prest-abas button{padding:8px 2px;font:600 13.5px Inter,sans-serif;box-shadow:none;outline-offset:2px}
+html:root:is(#pt#pt#pt,html) .prest-titulo{margin:0;padding:0;font:500 clamp(19px,1.9vw,30px)/1.2 "Cormorant Garamond",serif;letter-spacing:.16em;text-transform:uppercase;text-align:center;white-space:nowrap;color:#1f2020}
+html:root:is(#pt#pt#pt,html) .prest-titulo::after,html:root:is(#pt#pt#pt,html) .prest-topo::after{content:none!important;display:none!important}
+html:root:is(#pt#pt#pt,html) .prest-busca-campo{justify-self:end;width:min(320px,100%);min-height:40px;padding:8px 14px;border:1px solid var(--borda);border-radius:10px;background:#fff;font:400 14px Inter,sans-serif;box-sizing:border-box}
+.prest-layout[hidden],.prest-parametros[hidden]{display:none!important}
+html:root:is(#pt#pt#pt,html) .prest-lista{max-height:calc(100vh - 130px)}
+@media(max-width:1000px){html:root:is(#pt#pt#pt,html) .prest-topo{grid-template-columns:1fr}html:root:is(#pt#pt#pt,html) .prest-titulo{order:-1}html:root:is(#pt#pt#pt,html) .prest-topo .prest-abas,html:root:is(#pt#pt#pt,html) .prest-busca-campo{justify-self:stretch;width:100%}}
+
+/* Ficha (22/11): topo com botões na mesma linha, abas Dados | Histórico. */
+html:root:is(#pf#pf#pf,html) .prest-ficha-top{display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding-bottom:16px}
+html:root:is(#pf#pf#pf,html) .prest-ficha-nome{min-width:0}
+html:root:is(#pf#pf#pf,html) .prest-ficha-top .prest-acoes{margin:0 0 0 auto;flex-wrap:wrap}
+html:root:is(#pf#pf#pf,html) .prest-ficha-top .prest-score{margin-left:0}
+html:root:is(#pf#pf#pf,html) .prest-ficha-abas{display:flex;gap:22px;border-bottom:1px solid var(--borda);margin:4px 0 18px}
+html:root:is(#pf#pf#pf,html) .prest-ficha-abas button{border:0;background:none;padding:12px 2px;font:600 13.5px Inter,sans-serif;color:var(--muted);cursor:pointer;box-shadow:none;border-bottom:3px solid transparent;text-transform:none;letter-spacing:0}
+html:root:is(#pf#pf#pf,html) .prest-ficha-abas button[aria-selected="true"]{color:var(--roxo);border-bottom-color:var(--roxo)}
+.prest-ficha-abas span{margin-left:4px;padding:1px 8px;border-radius:999px;background:#eef1f5;color:var(--muted);font-size:11.5px}
+.prest-campos{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.prest-campo{padding:12px 14px;border:1px solid var(--borda);border-radius:12px;background:#fbfcfd}
+.prest-campo span{display:block;font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.prest-campo strong{display:block;margin-top:4px;font-weight:500;font-size:14.5px;overflow-wrap:anywhere}
+.prest-link{display:inline-block;margin-top:4px;font-size:12.5px;color:#1f7a44}
+.prest-ver{margin-top:12px}
+.prest-obs{margin-top:12px;padding:12px 14px;border-radius:12px;background:#fdf6dd}.prest-obs span{font-size:11.5px;color:#8b671d;text-transform:uppercase;letter-spacing:.05em}.prest-obs p{margin:4px 0 0}
+.prest-sub{margin:22px 0 10px;font-size:15px}
+.prest-numeros{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.prest-numeros div{padding:12px 14px;border:1px solid var(--borda);border-radius:12px;background:#fff}
+.prest-numeros strong{display:block;font-size:22px}.prest-numeros span{font-size:12.5px;color:var(--muted)}
+.prest-numeros .ruim strong{color:#b42318}
+.prest-proximos{display:grid;gap:8px}.prest-proximos div{display:grid;gap:2px;padding:10px 14px;border:1px solid var(--borda);border-radius:12px}
+.prest-proximos span{font-size:13px}.prest-proximos small{color:var(--muted)}
+.prest-vazio.pequeno{padding:18px}
+
+/* 22/11: sem o bloco de foto/nome na ficha (já está na lista); abas na linha dos botões e da nota. */
+html:root:is(#pg#pg#pg#pg,html) .prest-ficha-top{align-items:flex-end;padding-bottom:0;margin-bottom:18px;border-bottom:1px solid var(--borda)}
+html:root:is(#pg#pg#pg#pg,html) .prest-ficha-top .prest-ficha-abas{margin:0;border:0;align-self:flex-end}
+html:root:is(#pg#pg#pg#pg,html) .prest-ficha-top .prest-acoes{align-self:center;margin:0 0 12px auto}
+html:root:is(#pg#pg#pg#pg,html) .prest-ficha-top .prest-score{padding:8px 16px;margin-bottom:12px}
+html:root:is(#pg#pg#pg#pg,html) .prest-ficha-top .prest-score strong{font-size:24px}
+
+/* 22/11: aba Dados compacta. */
+html:root:is(#pc#pc#pc#pc,html) .prest-campos{grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:6px}
+html:root:is(#pc#pc#pc#pc,html) .prest-campo{display:flex;flex-direction:column;justify-content:center;padding:6px 10px;border-radius:8px;min-height:0}
+html:root:is(#pc#pc#pc#pc,html) .prest-campo span{font-size:10.5px;letter-spacing:.04em}
+html:root:is(#pc#pc#pc#pc,html) .prest-campo strong{margin-top:1px;font-size:13px;line-height:1.35}
+html:root:is(#pc#pc#pc#pc,html) .prest-link{margin-top:1px;font-size:11.5px;align-self:flex-start}
+html:root:is(#pc#pc#pc#pc,html) button.prest-ver-link{padding:0;border:0;background:none;color:#123f86;text-decoration:underline;cursor:pointer;box-shadow:none;font:500 11.5px Inter,sans-serif;text-transform:none;letter-spacing:0;min-height:0}
+html:root:is(#pc#pc#pc#pc,html) .prest-obs{margin-top:6px;padding:6px 10px;border-radius:8px;display:flex;gap:8px;align-items:baseline}
+html:root:is(#pc#pc#pc#pc,html) .prest-obs span{font-size:10.5px;flex:none}
+html:root:is(#pc#pc#pc#pc,html) .prest-obs p{margin:0;font-size:13px}
+html:root:is(#pc#pc#pc#pc,html) .prest-sub{margin:12px 0 6px;font-size:13px;font-weight:600}
+html:root:is(#pc#pc#pc#pc,html) .prest-numeros{display:flex;flex-wrap:wrap;gap:6px}
+html:root:is(#pc#pc#pc#pc,html) .prest-numeros div{display:flex;align-items:baseline;gap:6px;padding:5px 10px;border-radius:999px}
+html:root:is(#pc#pc#pc#pc,html) .prest-numeros strong{font-size:14px}
+html:root:is(#pc#pc#pc#pc,html) .prest-numeros span{font-size:12px}
+html:root:is(#pc#pc#pc#pc,html) .prest-proximos{gap:4px}
+html:root:is(#pc#pc#pc#pc,html) .prest-proximos div{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;padding:6px 10px;border-radius:8px}
+html:root:is(#pc#pc#pc#pc,html) .prest-proximos strong{font-size:13px}
+html:root:is(#pc#pc#pc#pc,html) .prest-proximos small{font-size:12px}
+html:root:is(#pc#pc#pc#pc,html) .prest-vazio.pequeno{padding:8px 10px;text-align:left;font-size:12.5px}
+html:root:is(#pc#pc#pc#pc,html) .prest-ficha{min-height:0;padding:16px 20px}

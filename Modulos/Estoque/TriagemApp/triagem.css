@@ -72,3 +72,6 @@ body.ta-app.ta-na-fila .titulo-fila{display:none}
 .dano-setor{display:block;width:100%;margin-top:8px;background:#fff;border:1px dashed #c4302b;color:#c4302b;border-radius:10px;padding:10px;font:inherit;font-size:14px;font-weight:600}
 .dano-setor.escolhido{border:1px solid #123f86;color:#123f86;background:#eaf0fa}
 .dano-setor[hidden]{display:none}
+/* Enviar peça danificada achada no depósito (22/11/2026) */
+.ta-enviar-manutencao{display:block;width:100%;margin:4px 0 10px;padding:12px 14px;border:1px solid #f0c9c6;border-radius:12px;background:#fdf3f2;color:#b3261e;font:inherit;font-size:14px;font-weight:600;text-align:left;cursor:pointer}
+.ta-enviar-manutencao:active{background:#fbe3e1}

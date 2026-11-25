@@ -40,7 +40,7 @@
     return "<tr" + (S.sel.has(c.id) ? ' class="is-sel"' : "") + ">" +
       (aberta ? '<td class="cf-chk">' + (concl ? '<input type="checkbox" data-sel="' + c.id + '"' + (S.sel.has(c.id) ? " checked" : "") + ' aria-label="Selecionar">' : "") + "</td>" : "<td></td>") +
       "<td><b>" + dataBr(c.data) + "</b><small>" + esc(c.hora || "") + "</small></td>" +
-      "<td><b>" + (c.pedido ? "Pedido " + esc(c.pedido) : "-") + "</b><small>" + esc(c.cliente || "") + "</small><small>" + esc(c.etapa || "") + "</small></td>" +
+      "<td><b>" + (c.pedido ? "Pedido " + esc(c.pedido) : c.solicitacao_interna ? "Solicitação interna" : "Vínculo pendente") + "</b><small>" + esc(c.cliente || c.solicitacao_motivo || "") + "</small><small>" + esc(c.etapa || "") + "</small></td>" +
       "<td><small>" + esc(c.ponto_encontro) + " → " + esc(c.destino) + "</small><small>" + String(c.km).replace(".", ",") + " km · " + (c.ida_volta ? "ida e volta" : "só ida") + "</small></td>" +
       "<td><small>Chegou " + horaBr(c.checkin_em) + "</small><small>Saiu " + horaBr(c.checkout_em) + "</small></td>" +
       '<td class="num">' + brl(c.valor) + "</td><td>" + sit + '</td><td class="num">' + final + "</td><td>" + obs + "</td></tr>";

@@ -26,7 +26,7 @@
       <button type="submit" class="fp-btn">Entrar</button>
       <p class="fp-erro" id="fpErroLogin" role="alert"></p>
     </form>
-    <p class="fp-equipe" id="fpAvisoEquipe" hidden>Você está logado na equipe. Esta é a tela da transportadora: a comparação dos valores e o fechamento ficam em <a href="conciliacao.html">Conciliação de Fretes</a>.</p>
+    <p class="fp-equipe" id="fpAvisoEquipe" hidden>Você está logado na equipe. Esta é a tela da transportadora: os freteiros agora lançam os fretes pelo App do Freteiro, e as divergências ficam em Painel Logístico › Freteiros.</p>
   </section>
 
   <section class="fp-app" id="fpApp" hidden>
@@ -54,7 +54,7 @@
   <form method="dialog" id="fpFormExtra">
     <h2>Viagem que não está na lista</h2>
     <div class="fp-grade">
-      <label>Pedido nº<input name="pedido" inputmode="numeric" placeholder="se souber"></label>
+      <label>Pedido nº<input name="pedido" inputmode="numeric" placeholder="Obrigatório" required></label>
       <label>Tipo<select name="direcao" required><option value="entrega">Entrega</option><option value="coleta">Coleta</option></select></label>
       <label>Data<input name="data" type="date" required></label>
       <label>Caminhão<select name="caminhao_id" id="fpExtraCaminhao"></select></label>
@@ -74,6 +74,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="../../../js/core/supabase.js"></script>
-<script src="fretes-portal.js?v=20261029-portal"></script>
+<script src="fretes-portal.js?v=20261123-solicitacao-interna"></script>
 </body>
 </html>

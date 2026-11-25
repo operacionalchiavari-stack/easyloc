@@ -13,7 +13,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="os-visualizacao.js?v=20261115-titulo-os"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/context.js?v=20261026-limpeza"></script><script src="os-historico.js?v=20261024-1"></script><script src="os-operacao.js?v=20261116-solicitante"></script><script src="os-exemplos.js?v=20261024-solicitante-foto"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script><script src="../../../js/core/supabase.js"></script><script src="../../../js/core/context.js?v=20261026-limpeza"></script><script src="os-historico.js?v=20261024-1"></script><script src="os-operacao.js?v=20261122-preview2"></script><script src="os-exemplos.js?v=20261024-solicitante-foto"></script>
 <title>Ordens de serviço</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1284,7 +1284,7 @@ html:root:is(#osf#osf#osf,html) body .os-solicitante-info{flex:1 1 0;min-width:0
 html:root:is(#osf#osf#osf,html) body .os-solicitante-info strong,
 html:root:is(#osf#osf#osf,html) body .os-solicitante-info small{display:block;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 </style>
-<style id="os-fotos-menores">html:root:is(#osf#osf#osf,html) body .fluxo-passo:not(.sem-setor){display:inline-flex;align-items:center;gap:7px;max-width:none;padding:5px 12px 5px 10px!important;border-radius:8px;border:1px solid color-mix(in srgb,var(--cor,#87929b) 40%,#fff);background:linear-gradient(180deg,#fff 0%,var(--cor-suave,#f3f4f5) 100%);box-shadow:0 1px 2px rgba(15,23,42,.06);font-size:12.5px;font-weight:500!important;letter-spacing:.01em;line-height:1.3;white-space:nowrap}html:root:is(#osf#osf#osf,html) body .fluxo-passo:not(.sem-setor)::before{content:none;display:none}html:root:is(#osf#osf#osf,html) body .os-col-origem .os-pedido-origem{display:inline-block;margin:0;font-size:13px;color:#1f2020;white-space:nowrap}html:root:is(#osf#osf#osf,html) body .fluxo-passo.passado{opacity:.6}html:root:is(#osf#osf#osf,html) body .os-num-card{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:26px;padding:0 9px;border-radius:7px;background:#eaf0fa;border:1px solid #c9d6ec;color:#123f86!important;font-weight:600;font-size:13px;font-variant-numeric:tabular-nums}html:root:is(#osf#osf#osf,html) body .fluxo-passo{color:var(--cor-texto,var(--cor,#58636d))!important}.os-cabecalho-oculto[hidden]{display:none!important}/* 15/11/2026: fotos menores nas tabelas de O.S (poupar espaço) */html:root:is(#osf#osf#osf,html) body .col-foto{width:68px!important;min-width:0!important}html:root:is(#osf#osf#osf,html) body .os-abertas th.col-foto{width:68px!important}html:root:is(#osf#osf#osf,html) body .os-item-foto{width:52px!important;height:52px!important;border-radius:6px!important}html:root:is(#osf#osf#osf,html) body .os-solicitante-foto{width:36px!important;height:36px!important;flex-basis:36px!important;font-size:12px!important}</style>
+<style id="os-origem-setor">.os-origem-setor{display:block;font-size:13px;font-weight:500;color:#1f2020}.os-origem-onde{display:block;font-size:12px;color:#6b6b6b;margin-top:2px}</style><style id="os-fotos-menores">html:root:is(#osf#osf#osf,html) body .fluxo-passo:not(.sem-setor){display:inline-flex;align-items:center;gap:7px;max-width:none;padding:5px 12px 5px 10px!important;border-radius:8px;border:1px solid color-mix(in srgb,var(--cor,#87929b) 40%,#fff);background:linear-gradient(180deg,#fff 0%,var(--cor-suave,#f3f4f5) 100%);box-shadow:0 1px 2px rgba(15,23,42,.06);font-size:12.5px;font-weight:500!important;letter-spacing:.01em;line-height:1.3;white-space:nowrap}html:root:is(#osf#osf#osf,html) body .fluxo-passo:not(.sem-setor)::before{content:none;display:none}html:root:is(#osf#osf#osf,html) body .os-col-origem .os-pedido-origem{display:inline-block;margin:0;font-size:13px;color:#1f2020;white-space:nowrap}html:root:is(#osf#osf#osf,html) body .fluxo-passo.passado{opacity:.6}html:root:is(#osf#osf#osf,html) body .os-num-card{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:26px;padding:0 9px;border-radius:7px;background:#eaf0fa;border:1px solid #c9d6ec;color:#123f86!important;font-weight:600;font-size:13px;font-variant-numeric:tabular-nums}html:root:is(#osf#osf#osf,html) body .fluxo-passo{color:var(--cor-texto,var(--cor,#58636d))!important}.os-cabecalho-oculto[hidden]{display:none!important}/* 15/11/2026: fotos menores nas tabelas de O.S (poupar espaço) */html:root:is(#osf#osf#osf,html) body .col-foto{width:68px!important;min-width:0!important}html:root:is(#osf#osf#osf,html) body .os-abertas th.col-foto{width:68px!important}html:root:is(#osf#osf#osf,html) body .os-item-foto{width:52px!important;height:52px!important;border-radius:6px!important}html:root:is(#osf#osf#osf,html) body .os-solicitante-foto{width:36px!important;height:36px!important;flex-basis:36px!important;font-size:12px!important}</style>
 <link rel="stylesheet" href="../../Producao/ordens-navegacao.css?v=20261116-pagina-direta">
 </head>
 
@@ -1350,9 +1350,9 @@ html:root:is(#osf#osf#osf,html) body .os-solicitante-info small{display:block;ma
           <tr>
             <th class="col-check"><input type="checkbox" id="marcarTodas" onclick="marcarTodasVisiveis(this.checked)" title="Selecionar todas as visíveis"></th>
             <th class="col-solicitante">Envio</th>
+            <th class="m-oculta os-th-numero">O.S</th>
             <th class="col-foto">Foto</th>
             <th class="os-th-item">Item</th>
-            <th class="m-oculta os-th-numero">O.S</th>
             <th class="m-oculta os-th-qtd">Qtd</th>
             <th class="os-th-fluxo">Fluxo</th>
             <th class="m-oculta os-th-origem" style="width:160px">Origem</th>
@@ -1607,7 +1607,7 @@ html:root:is(#osf#osf#osf,html) body .os-solicitante-info small{display:block;ma
       <div class="cartao">
         <div class="tabela-rolagem">
           <table class="os-abertas os-concluidas-tabela">
-            <thead><tr><th class="col-solicitante">Envio</th><th class="col-foto">Foto</th><th class="os-th-item">Item</th><th class="os-th-numero">O.S</th><th class="os-th-qtd">Qtd</th><th class="os-th-fluxo">Fluxo</th><th class="os-th-origem" style="width:160px">Origem</th><th>Detalhes</th><th class="os-th-prazo" style="width:104px">Conclusão</th></tr></thead>
+            <thead><tr><th class="col-solicitante">Envio</th><th class="os-th-numero">O.S</th><th class="col-foto">Foto</th><th class="os-th-item">Item</th><th class="os-th-qtd">Qtd</th><th class="os-th-fluxo">Fluxo</th><th class="os-th-origem" style="width:160px">Origem</th><th>Detalhes</th><th class="os-th-prazo" style="width:104px">Conclusão</th></tr></thead>
             <tbody id="tabelaConcluidas"></tbody>
           </table>
         </div>
@@ -2050,6 +2050,13 @@ function htmlSolicitante(os){
   return '<div class="os-solicitante"><span class="os-solicitante-foto">'+foto+'</span><div class="os-solicitante-info"><strong title="'+escapar(nome)+'">'+escapar(nome)+'</strong><small>'+escapar(String(os.data||'').slice(0,10))+(os.horaEnvio?' \u00b7 '+escapar(os.horaEnvio):'')+'</small></div></div>';
 }
 
+function htmlOrigemOS(os){
+  /* 22/11/2026: sem pedido, mostra o setor que enviou (Triagem) e de onde veio (Depósito, Inventário, Separação) */
+  if(os.pedido)return '<span class="os-pedido-origem">Pedido '+escapar(os.pedido)+'</span>';
+  const onde=String(os.onde||'').trim();
+  return '<span class="os-origem-setor">Triagem</span>'+(onde&&onde!=='Retorno do evento'?'<small class="os-origem-onde">'+escapar(onde)+'</small>':'');
+}
+
 function htmlNomeItem(item){
   const texto=String(item||'');
   const inicio=texto.search(/\((?:L|A|P)\)\s*\d/i);
@@ -2097,6 +2104,7 @@ function render(){
         '<tr data-id="' + escapar(os.id) + '"' + (selecionada ? ' class="selecionada"' : "") + ">" +
           '<td class="col-check"><input type="checkbox" tabindex="-1"' + (selecionada ? " checked" : "") + (os.id ? "" : " disabled") + "></td>" +
           '<td class="col-solicitante">' + htmlSolicitante(os) + '</td>' +
+          '<td class="col-os m-oculta">' + (os.os ? '<span class="os-num-card">' + escapar(os.os) + '</span>' : '') + "</td>" +
           '<td class="col-foto">' + (/^https?:/.test(os.foto_url||'')?'<img class="os-item-foto" src="'+escapar(os.foto_url)+'" alt="'+escapar(os.item)+'" loading="lazy">':'<span class="os-foto-vazia">Sem foto</span>') + '</td>' +
           '<td class="col-item">' + htmlNomeItem(os.item) +
             /* No celular: O.S, quantidade e onde aconteceu embaixo do item */
@@ -2104,10 +2112,9 @@ function render(){
             '<span class="item-extra-tablet">' + escapar(os.nome) + (os.pedido ? " · Pedido " + escapar(os.pedido) : "") + "</span>" +
             '<span class="item-extra">O.S ' + escapar(os.os || "—") + " · " + escapar(os.qtd || 1) + " un." + (os.onde ? " · " + escapar(os.onde) : "") + "</span>" +
           "</td>" +
-          '<td class="col-os m-oculta">' + (os.os ? '<span class="os-num-card">' + escapar(os.os) + '</span>' : '') + "</td>" +
           '<td class="col-qtd m-oculta">' + escapar(os.qtd) + "</td>" +
           "<td>" + htmlFluxo(os.fluxo) + "</td>" +
-          '<td class="m-oculta os-col-origem">' + (os.pedido?'<span class="os-pedido-origem">Pedido '+escapar(os.pedido)+'</span>':'—') + '</td>' +
+          '<td class="m-oculta os-col-origem">' + htmlOrigemOS(os) + '</td>' +
           '<td class="col-detalhes m-oculta t1-oculta" title="' + escapar(os.detalhes) + '">' + escapar(os.detalhes) + "</td>" +
           "<td>" + htmlDataUrgencia(os) + "</td>" +
         "</tr>"
@@ -2742,7 +2749,7 @@ function carregarConcluidas(pagina){
 
       el("tabelaConcluidas").innerHTML = (res.dados || []).length
         ? res.dados.map(function(os){
-            return '<tr><td class="col-solicitante">'+htmlSolicitante(os)+'</td><td class="col-foto">'+(/^https?:/.test(os.foto_url||'')?'<img class="os-item-foto" src="'+escapar(os.foto_url)+'" alt="'+escapar(os.item)+'" loading="lazy">':'<span class="os-foto-vazia">Sem foto</span>')+'</td><td class="col-item">'+htmlNomeItem(os.item)+'</td><td class="col-os">'+(os.os?'<span class="os-num-card">'+escapar(os.os)+'</span>':'')+'</td><td class="col-qtd">'+escapar(os.qtd)+'</td><td>'+htmlFluxo(os.fluxo)+'</td><td class="os-col-origem">'+(os.pedido?'<span class="os-pedido-origem">Pedido '+escapar(os.pedido)+'</span>':'—')+'</td><td class="col-detalhes">'+escapar(os.detalhes)+'</td><td class="col-data">'+escapar(String(os.dataConclusao||'').slice(0,10))+'</td></tr>';
+            return '<tr><td class="col-solicitante">'+htmlSolicitante(os)+'</td><td class="col-os">'+(os.os?'<span class="os-num-card">'+escapar(os.os)+'</span>':'')+'</td><td class="col-foto">'+(/^https?:/.test(os.foto_url||'')?'<img class="os-item-foto" src="'+escapar(os.foto_url)+'" alt="'+escapar(os.item)+'" loading="lazy">':'<span class="os-foto-vazia">Sem foto</span>')+'</td><td class="col-item">'+htmlNomeItem(os.item)+'</td><td class="col-qtd">'+escapar(os.qtd)+'</td><td>'+htmlFluxo(os.fluxo)+'</td><td class="os-col-origem">'+htmlOrigemOS(os)+'</td><td class="col-detalhes">'+escapar(os.detalhes)+'</td><td class="col-data">'+escapar(String(os.dataConclusao||'').slice(0,10))+'</td></tr>';
           }).join("")
         : '<tr><td colspan="9"><div class="mensagem">Nenhuma O.S concluída encontrada.</div></td></tr>';
 

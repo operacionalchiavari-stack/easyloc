@@ -4,7 +4,7 @@
  let apresentacao;
  const estados=new WeakMap();
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- async function preparar(){return apresentacao||=await import(new URL('Modulos/Comercial/Catalogo/projeto-apresentacao.mjs?v=20261118-fixo',raiz));}
+ async function preparar(){return apresentacao||=await import(new URL('Modulos/Comercial/Catalogo/projeto-apresentacao.mjs?v=20261122-regras-formatadas',raiz));}
  async function carregar(sb,empresa,base,etapa='entrega'){
   const api=await preparar(),ids=[...new Set([base.pedido.id,...base.itens.map(p=>p.pedido_id)].filter(Boolean))];
   const [pedidos,linhas]=await Promise.all([
@@ -68,7 +68,7 @@
     model.ambientes.push(ambiente);
    }
    if(projeto.dados.plantas?.length){
-    const {plantasPedidoLeitura}=await import(new URL('Modulos/Comercial/Catalogo/catalogo-projetos.mjs?v=20261118-varios',raiz));
+    const {plantasPedidoLeitura}=await import(new URL('Modulos/Comercial/Catalogo/catalogo-projetos.mjs?v=20261121-pedido-helena',raiz));
     model.plantas.push(...await plantasPedidoLeitura(projeto,findItem));
    }
   }

@@ -5,23 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#ffffff">
   <title>Agente</title>
-  <!-- Conversa com os agentes de IA no app (20/11/2026): uma tela só para Clara, Cora, Carla, Marcos e Ideia Premiada
-       (?ag=clara|cora|carla|marcos|ideia). Lógica em js/app/agente-chat.js, visual em styles/app-agente.css. -->
+  <!-- Conversa com os agentes de IA no app: uma tela só para Clara, Miguel, Carla, Marcos e Ideia Premiada
+       (?ag=clara|miguel|carla|marcos|ideia). Lógica em js/app/agente-chat.js, visual em styles/app-agente.css. -->
   <link rel="icon" type="image/png" href="../../Comercial/Catalogo/app-icone-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="../../../styles/app-agente.css?v=20261121-suave">
+  <link rel="stylesheet" href="../../../styles/app-agente.css?v=20261122-chat-suave">
   <script src="../../../js/app/carregamento-app.js?v=20261106-abertura" data-auto></script>
   <script src="../../../js/core/limpezaDados.js?v=20261026"></script>
 <link rel="stylesheet" href="../../../styles/app-tema.css?v=20261121-tema">
 <script src="../../../js/app/tema-app.js?v=20261121-tema"></script>
-</head>
+<link rel="stylesheet" href="../../../styles/ia-chat-topo.css?v=20261122-chat-suave"></head>
 <body class="ag-pagina">
-  <header class="ag-cab">
-    <button type="button" class="ag-icone" id="agVoltar" aria-label="Voltar aos agentes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
-    <div class="ag-cab-quem"><span id="agCabAvatar"></span><div><strong id="agNome">Agente</strong><small><i class="ag-online" aria-hidden="true"></i><span id="agPapel"></span></small></div></div>
-    <button type="button" class="ag-icone" id="agRelatorios" aria-label="Relatórios que posso pedir" title="Relatórios"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg></button>
-    <button type="button" class="ag-icone" id="agNova" aria-label="Começar uma nova conversa" title="Nova conversa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg></button>
+  <header class="ag-cab ia-topo">
+    <button type="button" class="ag-icone ia-topo-btn is-icone" id="agVoltar" aria-label="Voltar aos agentes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <div class="ag-cab-quem"><span id="agCabAvatar"></span><div class="ia-topo-texto"><strong id="agNome">Agente</strong><small><i class="ag-online ia-topo-dot" aria-hidden="true"></i><span id="agPapel"></span></small></div></div>
+    <button type="button" class="ag-icone ia-topo-btn is-icone" id="agRelatorios" aria-label="Relatórios que posso pedir" title="Relatórios"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/></svg></button>
+    <button type="button" class="ag-icone ia-topo-btn is-icone" id="agNova" aria-label="Começar uma nova conversa" title="Nova conversa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg></button>
   </header>
 
   <main class="ag-msgs" id="agMsgs" aria-live="polite"></main>
@@ -35,9 +35,9 @@
     <div class="ag-campo-linha">
       <button type="button" class="ag-icone" id="agFoto" aria-label="Mandar foto"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></button>
       <input type="file" id="agFotoArq" accept="image/*" multiple hidden>
-      <textarea id="agTexto" rows="1" placeholder="Mensagem" aria-label="Mensagem"></textarea>
-      <button type="button" class="ag-redondo" id="agMic" aria-label="Gravar áudio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
-      <button type="submit" class="ag-redondo" id="agEnviar" aria-label="Enviar" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <textarea id="agTexto" rows="1" placeholder="Escreva sua mensagem…" aria-label="Mensagem"></textarea>
+      <button type="button" class="ag-icone" id="agMic" aria-label="Gravar áudio" title="Gravar áudio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+      <button type="submit" class="ag-redondo" id="agEnviar" aria-label="Enviar mensagem" title="Enviar mensagem" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
     </div>
   </form>
 
@@ -54,8 +54,8 @@
   <script src="../../../js/core/supabase.js?v=20261106-app"></script>
   <script src="../../../js/core/doisFatores.js?v=20261023-2fa"></script>
   <script src="../../Financeiro/relatorio-a4.js?v=20261119-cora"></script>
-  <script src="../../Estoque/Acervo/acervo-cora.js?v=20261120-agente"></script>
-  <script src="../../../js/app/agente-chat.js?v=20261120-agentes2"></script>
-<script src="../../../js/app/camera-barra.js?v=20261125-nativo"></script>
+  <script src="../../Estoque/Acervo/acervo-cora.js?v=20261121-ia-topo"></script>
+  <script src="../../../js/app/agente-chat.js?v=20261121-sofia-relatorios"></script>
+<script src="../../../js/ui/ia-chat-fotos.js?v=20261121-fotos-msg"></script><script src="../../../js/app/camera-barra.js?v=20261125-nativo"></script>
 </body>
 </html>

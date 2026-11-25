@@ -11,7 +11,7 @@ const fs=require('node:fs'),path=require('node:path'),http=require('node:http'),
    await page.route('https://**/*',r=>r.fulfill({body:''}));await page.route('**/gas-cliente.js*',r=>r.fulfill({body:''}));
    await page.addInitScript(()=>{
     localStorage.setItem('easyloc:limpeza-dados','20261026-zerado');localStorage.setItem('montadorToken','fixture');window.saved=[];window.savedAvarias=[];window.denyGps=false;window.gpsEncerrado=0;
-    Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition(ok,no){window.denyGps?no({code:1}):ok({coords:{latitude:-23,longitude:-46,accuracy:12}});},watchPosition(){return 7;},clearWatch(id){if(id===7)window.gpsEncerrado++;}}});
+    window.gpsPedidos=0;Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition(ok,no){window.gpsPedidos++;window.denyGps?no({code:1}):ok({coords:{latitude:-23,longitude:-46,accuracy:12}});},watchPosition(){return 7;},clearWatch(id){if(id===7)window.gpsEncerrado++;}}});
     const etapa={id:'etapa',pedido:'1234',cliente:'Evento de teste',local:'Local do evento',etapa:'montagem',operacao:'montagem',dataISO:new Date().toLocaleDateString('en-CA'),horario:'08:00',responsavel:'Ana Silva',equipe:['Ana Silva'],lat:-23,lng:-46,registros:0,free:{quantidade:2,horario:'08:00',pontoEncontro:'Local do evento',pessoas:[{nome:'Carlos Free',miniatura:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a1XQAAAAASUVORK5CYII=',telefone:'',fase:'CHECKIN',nota:5},{nome:'Free sem foto',telefone:'',nota:5}]},trocas:[],sacolasMontagem:[],info:{},outrasEtapas:[]};
     function result(fn,args){
      const atual=JSON.parse(localStorage.getItem('fixtureApontamento')||'null');
@@ -53,9 +53,10 @@ await page.locator('.etapa').first().click();
    await page.locator('#regFotoEquipe input').setInputFiles({name:'equipe.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a1XQAAAAASUVORK5CYII=','base64')});
    await page.waitForFunction(()=>document.querySelector('#regFotoEquipe').classList.contains('tem'));
    await page.locator('#btnVoltar').click();await page.locator('#telaInicio.ativa').waitFor();await page.locator('.etapa').first().click();assert.equal(await page.locator('#regFotoEquipe').evaluate(e=>e.classList.contains('tem')),true);
-   await page.evaluate(()=>denyGps=true);await button.click();await page.waitForFunction(()=>!document.querySelector('[onclick="enviarEquipe(this)"]').disabled);assert.equal(await page.evaluate(()=>saved.length),0);
-   await page.evaluate(()=>denyGps=false);await button.click();await page.waitForFunction(()=>saved.length===1);
-   const sent=await page.evaluate(()=>saved[0]);assert.equal('empresa' in sent,false);assert.equal('quantidade' in sent,false);assert.equal(sent.token,'fixture');assert.equal(sent.latitude,-23);assert.equal(sent.precisaoGPS,12);assert.ok(sent.foto.startsWith('data:image/'));assert.equal('uniformizada' in sent,false);
+   const gpsAntes=await page.evaluate(()=>gpsPedidos);
+   await page.evaluate(()=>denyGps=true);await button.click();await page.waitForFunction(()=>saved.length===1);
+   assert.equal(await page.evaluate(()=>gpsPedidos),gpsAntes,'envio não solicita GPS, mesmo com permissão negada');
+   const sent=await page.evaluate(()=>saved[0]);assert.equal('empresa' in sent,false);assert.equal('quantidade' in sent,false);assert.equal(sent.token,'fixture');for(const k of ['latitude','longitude','precisaoGPS'])assert.equal(k in sent,false);assert.ok(sent.foto.startsWith('data:image/'));assert.equal('uniformizada' in sent,false);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(errors,[]);
    await page.screenshot({path:path.join(os.tmpdir(),`montador-chegada-${width}.png`),fullPage:true});
    const inicio=await page.evaluate(()=>JSON.parse(localStorage.getItem('fixtureApontamento')).inicio);await page.reload();await page.waitForSelector('.etapa');await page.locator('.etapa').first().click();await page.waitForSelector('#etapaFotoEquipe:not([hidden])');assert.equal(await page.evaluate(()=>estado.apontamento.inicio),inicio);

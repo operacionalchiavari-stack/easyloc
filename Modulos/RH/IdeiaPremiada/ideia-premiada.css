@@ -55,7 +55,7 @@ html:root #ideiaPremiada .ideia-lista{max-height:none;overflow:visible}
 html:root #ideiaPremiada .ideia-tabs{margin-bottom:14px}
 html:root #ideiaPremiada .ideia-list-tools{margin-bottom:12px}
 html:root #ideiaPremiada .ideia-list-tools h2{margin:0}
-html.ideia-embutida:root #ideiaPremiada{padding-top:8px}
+html.ideia-embutida:root #ideiaPremiada{width:100%;max-width:none;margin:0;padding:16px 0 24px!important}
 html.ideia-embutida:root #ideiaPremiada #avisoIdeias:empty{display:none}
 /* Abas da coluna de ideias (nov/2026): Recebidas (bolinha vermelha) · Em espera · Aprovadas · Premiadas · Reprovadas. */
 .ideia-col-lista{display:grid;gap:10px;align-content:start;min-width:0}

@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@1.66.0"></script>
   <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
-  <link rel="stylesheet" href="estoque-personalizacoes.css?v=20261115-editar-refeito">
+  <link rel="stylesheet" href="estoque-personalizacoes.css?v=20261122-antecedencia">
   <link rel="stylesheet" href="estoque-cartelas.css?v=20261115-modal">
 <link rel="stylesheet" href="../../Producao/producao.css?v=20261022-ordens">
 </head>
@@ -200,6 +200,12 @@
   </div>
 
   <div class="form-row">
+    <label for="inpDiasAntecedencia">Começar com quantos dias de antecedência</label>
+    <input class="el-input" id="inpDiasAntecedencia" type="number" min="0" max="365" step="1" inputmode="numeric" placeholder="Ex.: 10" style="max-width:160px" />
+    <small class="pz-ajuda-dias">Contados antes do carregamento do pedido. É a data em que o material precisa estar no Almoxarifado (o "Necessário em" das compras).</small>
+  </div>
+
+  <div class="form-row">
     <label for="inpDescCliente">Descrição para o cliente</label>
     <textarea class="el-textarea" id="inpDescCliente" rows="2" placeholder="Aparece no pedido enviado ao cliente, junto do item personalizado. Ex.: forração em linho, acabamento com pesponto..."></textarea>
   </div>
@@ -324,7 +330,7 @@
 <script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
 <script src="../../../js/core/context.js?v=20261026-limpeza"></script>
 <script src="../../../js/core/permissions.js?v=20261019-painel-logistico"></script>
-<script type="module" src="../../../js/Estoque/estoque-personalizacoes.mjs?v=20261115-editar-refeito"></script>
+<script type="module" src="../../../js/Estoque/estoque-personalizacoes.mjs?v=20261122-antecedencia"></script>
 <script type="module" src="../../../js/Estoque/estoque-cartelas.mjs?v=20261115-sem-cor"></script>
 <script>lucide.createIcons();</script>
 <script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>

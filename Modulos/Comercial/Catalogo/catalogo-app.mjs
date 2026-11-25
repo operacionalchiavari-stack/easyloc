@@ -831,13 +831,13 @@ window.catalogAssistenteProjeto = {
     if(!abrir){ S.previaHelena?.close(); S.previaHelena = null; document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close()); return true; }
     if(!S.projeto) return false;
     const project = S.projeto;
-    await Promise.all(["catalogo-projetos.css?v=20261121-total-card", "projeto-apresentacao.css?v=20261121-total-card"].map(href => new Promise((resolve, reject) => {
+    await Promise.all(["catalogo-projetos.css?v=20261122-regras-formatadas", "projeto-apresentacao.css?v=20261121-total-card"].map(href => new Promise((resolve, reject) => {
       let l = document.querySelector(`link[data-previa="${href}"]`);
       if(l?.sheet){ resolve(); return; }
       if(!l){ l = document.createElement("link"); l.rel = "stylesheet"; l.href = href; l.dataset.previa = href; document.head.appendChild(l); }
       l.addEventListener("load", resolve, { once: true }); l.addEventListener("error", () => { l.remove(); reject(new Error("Não foi possível carregar o documento. Tente novamente.")); }, { once: true });
     })));
-    const m = await import("./projeto-apresentacao.mjs?v=20261118-fixo");
+    const m = await import("./projeto-apresentacao.mjs?v=20261122-regras-formatadas");
     if(S.projeto !== project) return false;
     S.previaHelena?.close();
     document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close());

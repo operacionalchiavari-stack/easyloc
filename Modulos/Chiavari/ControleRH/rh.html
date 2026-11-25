@@ -9,7 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
   <script src="../../../js/core/supabase.js"></script>
   <!-- nov/2026: Controle RH direto no Supabase (controle-rh-dados.js); nada vai mais para o servidor antigo -->
-  <script src="controle-rh-dados.js?v=20261120-supabase"></script>
+  <script src="controle-rh-dados.js?v=20261122-colunas"></script>
   <script src="../gas-cliente.js?v=20261120-sem-servidor" data-projeto="controlerh" data-sem-motor></script>
   <base target="_top">
 
@@ -1164,6 +1164,7 @@ body.painel-aberto{ overflow:hidden; }
   </style>
 <link rel="stylesheet" href="../../../styles/fundo-claro.css?v=20261024-abas-globais">
 <link rel="stylesheet" href="../../../styles/theme-compat.css?v=20261019-globais">
+<link rel="stylesheet" href="ocorrencias-colunas.css?v=20261122-cabecalho">
 </head>
 
 <body>
@@ -1179,12 +1180,6 @@ body.painel-aberto{ overflow:hidden; }
   <!-- FILTROS -->
   <div class="filtros" style="margin-bottom:0;">
 
-    <input
-      type="search"
-      id="pesquisa"
-      placeholder="Pesquisar..."
-      onkeyup="filtrarTabela()" autocomplete="off" data-lpignore="true" data-1p-ignore="true">
-
     <select
       id="filtroTipo"
       onchange="filtrarTabela()"
@@ -1199,6 +1194,7 @@ body.painel-aberto{ overflow:hidden; }
       <option>Falta</option>
       <option>Ausência de Jornada</option>
       <option>Advertência</option>
+      <option>Reconhecimento</option>
 
     </select>
 
@@ -1217,14 +1213,6 @@ body.painel-aberto{ overflow:hidden; }
     margin-left:auto;
   ">
 
-<button class="btnNovo contorno" onclick="PainelRH.abrir()">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 6-7"/></svg>Painel
-</button>
-
-<button class="btnNovo" onclick="abrirModalSenhaRH('ocorrencia')">
-  + Nova Ocorrência
-</button>
-
 <button class="btnNovo contorno" onclick="abrirModalSenhaRH('funcionario')">
   + Funcionário
 </button>
@@ -1233,13 +1221,20 @@ body.painel-aberto{ overflow:hidden; }
 
 </div>
 
-  <div class="tabelaBox">
+  <div class="rh-ocorrencias-layout">
+    <section class="rh-ocorrencias-pessoas" aria-labelledby="rhOcorFuncionariosTitulo">
+      <h2 id="rhOcorFuncionariosTitulo">Funcionários</h2>
+      <nav id="rhOcorFuncionarios" aria-label="Selecionar funcionário"></nav>
+    </section>
+    <section class="tabelaBox" id="rhOcorTabela" aria-labelledby="rhOcorPessoaTitulo">
+    <header class="rh-ocorrencias-cabecalho">
+      <h2 id="rhOcorPessoaTitulo">Todas as ocorrências</h2>
+      <label class="rh-ocorrencias-busca"><input type="search" id="pesquisa" placeholder="Pesquisar ocorrência..." aria-label="Pesquisar ocorrência" oninput="filtrarTabela()" autocomplete="off" data-lpignore="true" data-1p-ignore="true"></label>
+      <div class="rh-ocorrencias-acoes"><span id="rhContagem"></span><button type="button" class="btnNovo" id="rhNovaOcorrencia" onclick="abrirModalSenhaRH('ocorrencia')">+ Nova ocorrência</button></div>
+      <p id="rhOcorPessoaSetor"></p>
+    </header>
 
-    <div class="rh-cartao-cabecalho">
-      <h2>Ocorrências</h2>
-      <span id="rhContagem"></span>
-    </div>
-
+    <div class="rh-ocorrencias-rolar">
     <table>
 
       <thead>
@@ -1257,7 +1252,9 @@ body.painel-aberto{ overflow:hidden; }
       <tbody id="tbody"></tbody>
 
     </table>
-
+    </div>
+    <p class="rh-ocor-vazio" id="rhOcorVazio" role="status">Carregando ocorrências…</p>
+    </section>
   </div>
 
 </div>
@@ -1316,6 +1313,7 @@ body.painel-aberto{ overflow:hidden; }
       <button class="tipoBtn" onclick="selecionarTipo(this,'Falta')"> Falta</button>
             <button class="tipoBtn" onclick="selecionarTipo(this,'Ausência de Jornada')"> Ausência de Jornada</button>
       <button class="tipoBtn" onclick="selecionarTipo(this,'Advertência')">Advertência</button>
+      <button class="tipoBtn" onclick="selecionarTipo(this,'Reconhecimento')">Reconhecimento</button>
 
     </div>
 
@@ -1431,6 +1429,7 @@ select.innerHTML += `
 `;
     });
 
+    window.ControleRHColunas.atualizarFuncionarios(funcionarios);
   }).getFuncionarios();
 
 }
@@ -1582,132 +1581,16 @@ function enviarLote(){
 }
 
 function carregarHistorico(){
-
   google.script.run
-
     .withSuccessHandler(function(lista){
-
-      console.log(lista);
-
-      if(!Array.isArray(lista)){
-        lista = [];
-      }
-
-      // usado pelo Painel do RH
-      window.historicoRH = lista;
-      const contagemRH = document.getElementById("rhContagem");
-      if(contagemRH) contagemRH.textContent = lista.length + (lista.length === 1 ? " ocorrência" : " ocorrências");
-
-      const tbody =
-        document.getElementById("tbody");
-
-      tbody.innerHTML = "";
-
-      lista.forEach(function(item){
-
-        const tipo =
-          item.tipo || "";
-
-        const classe = tipo
-          .replaceAll(" ", "")
-          .replace("ê", "e");
-
-const dataExibicao = formatarDataExibicao(
-  item.dataOcorrencia || item.data
-);
-
-const horaExibicao =
-  item.horaOcorrencia || item.hora || "—";
-
-        tbody.innerHTML += `
-          <tr>
-
-<td>${dataExibicao}</td>
-<td>${horaExibicao}</td>
-
-            <td>${item.funcionario}</td>
-
-            <td>${item.setor}</td>
-
-            <td>
-              <span class="tag ${classe}">
-                ${tipo}
-              </span>
-            </td>
-
-            <td>${item.observacao}</td>
-
-            <td>${item.responsavel}</td>
-
-          </tr>
-        `;
-
-      });
-
+      window.historicoRH = Array.isArray(lista) ? lista : [];
+      window.ControleRHColunas.atualizarHistorico(window.historicoRH);
     })
-
-    .withFailureHandler(function(erro){
-
-      console.error(erro);
-
-    })
-
+    .withFailureHandler(function(erro){ console.error(erro); })
     .getHistoricoRH();
-
 }
 function filtrarTabela(){
-
-  const pesquisa =
-    document.getElementById("pesquisa")
-    .value
-    .toLowerCase();
-
-  const tipo =
-    document.getElementById("filtroTipo")
-    .value
-    .toLowerCase();
-
-  const mesSelecionado =
-    document.getElementById("filtroMes")
-    .value;
-
-  const linhas =
-    document.querySelectorAll("#tbody tr");
-
-  linhas.forEach(function(linha){
-
-    const texto =
-      linha.innerText.toLowerCase();
-
-    const dataTexto =
-      linha.children[0].innerText;
-
-    let passaMes = true;
-
-    if(mesSelecionado){
-
-      const partes =
-        dataTexto.split("/");
-
-      const dataFormatada =
-        partes[2] + "-" + partes[1];
-
-      passaMes =
-        dataFormatada === mesSelecionado;
-
-    }
-
-    const mostrar =
-
-      texto.includes(pesquisa) &&
-      texto.includes(tipo) &&
-      passaMes;
-
-    linha.style.display =
-      mostrar ? "" : "none";
-
-  });
-
+  window.ControleRHColunas.filtrar();
 }
 function abrirModalFuncionario(){const destino='/Modulos/RH/CadastroFuncionarios/cadastro-funcionarios.html';if(window.parent!==window)window.parent.location.href='/dashboard.html?page='+encodeURIComponent(destino);else location.href=destino;}
 
@@ -2269,5 +2152,6 @@ var PainelRH = (function(){
   return { abrir:abrir, fechar:fechar, periodo:periodo };
 })();
 </script>
+<script src="ocorrencias-colunas.js?v=20261122-colunas"></script>
 </body>
 </html>

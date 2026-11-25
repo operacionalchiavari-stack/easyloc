@@ -100,7 +100,7 @@
         const [cls, rot] = statusR(t);
         const numPed = t.pedido_id ? numeroPedidoCard(t.numero_pedido) : '<span class="fin-sem-pedido">' + esc(t.descricao || "Lançamento") + "</span>";
         const quem = esc(t.cliente_nome || "—") + (t.pedido_id ? '<small class="fin-linha-meta">' + esc(metaPedido(t).join(" · ")) + "</small>" : "");
-        return "<tr><td><b>" + dataBr(t.vencimento) + '</b><small class="fin-parcela-venc">Parcela ' + t.parcela + "/" + t.parcelas + "</small>" + alertaVenc(t) + '</td><td class="fin-num-ped">' + numPed + '</td><td class="fin-quem"><div class="fin-quem-foto">' + fotoCliente(t, "peq") + "<div>" + quem + '</div></div></td><td class="fin-local">' + esc(t.local_nome || "—") + '</td><td><span class="fin-chip ' + esc(t.componente) + '">' + esc(DIV[t.componente] || t.componente || "") + "</span></td><td>" + contaHtml(t) +
+        return "<tr><td>" + window.FinanceiroComentarios.botao(t, "receber") + "<b>" + dataBr(t.vencimento) + '</b><small class="fin-parcela-venc">Parcela ' + t.parcela + "/" + t.parcelas + "</small>" + alertaVenc(t) + '</td><td class="fin-num-ped">' + numPed + '</td><td class="fin-quem"><div class="fin-quem-foto">' + fotoCliente(t, "peq") + "<div>" + quem + '</div></div></td><td class="fin-local">' + esc(t.local_nome || "—") + '</td><td><span class="fin-chip ' + esc(t.componente) + '">' + esc(DIV[t.componente] || t.componente || "") + "</span></td><td>" + contaHtml(t) +
           '</td><td class="num">' + brl(t.valor) + (Number(t.recebido) > 0 && Number(t.recebido) < Number(t.valor) ? '<small class="fin-parcial">recebido ' + brl(t.recebido) + "</small>" : "") + "</td>" + '<td><span class="fin-status ' + cls + '">' + rot + "</span></td>" + faltaNoPedido(t) + acoes(t) + "</tr>";
       }).join("") + "</tbody></table></div></section>";
   }
@@ -125,7 +125,7 @@
         ts.map((t) => {
           const [cls, rot] = statusR(t);
           return "<tr><td>" + t.parcela + "/" + t.parcelas + '</td><td><span class="fin-chip ' + esc(t.componente) + '">' + esc(DIV[t.componente] || t.componente || "") + "</span></td><td>" + contaHtml(t) +
-            "</td><td>" + dataBr(t.vencimento) + alertaVenc(t) + '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.recebido) + "</td>" + '<td><span class="fin-status ' + cls + '">' + rot + "</span></td>" + faltaNoPedido(t) + "</tr>";
+            "</td><td>" + window.FinanceiroComentarios.botao(t, "receber") + dataBr(t.vencimento) + alertaVenc(t) + '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.recebido) + "</td>" + '<td><span class="fin-status ' + cls + '">' + rot + "</span></td>" + faltaNoPedido(t) + "</tr>";
         }).join("") + "</tbody></table></div></article>";
     }).join("");
     const contas = [...new Map(S.receber.filter((t) => t.conta_id).map((t) => [t.conta_id, t.conta_nome || "Conta"])).entries()];
@@ -180,6 +180,12 @@
     $("fpvIni").addEventListener("change", (e) => { f.ini = e.target.value; pintarPrevistos(); });
     $("fpvFim").addEventListener("change", (e) => { f.fim = e.target.value; pintarPrevistos(); });
   }
+
+  // Comentarios compartilham o id da conta do Financeiro, sem alterar valores pelo Comercial.
+  window.FinanceiroComentarios.ligar($('crConteudo'), {
+    contexto: async () => { const {sb, empresa} = await window.ComercialRelatorios.contexto(); return {sb, empresa}; },
+    obter: (tipo, id) => tipo === 'receber' ? S.receber.find(t => t.id === id) : null
+  });
 
   // ------------------------------------------------------------- abas e carga
   function contadores() {

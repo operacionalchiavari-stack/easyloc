@@ -1,5 +1,6 @@
 import { comUsoIA } from "../_shared/ia-uso.ts";
 import { instrucoesEmpresa } from '../_shared/ia-config.ts';
+import { sistemaRh } from '../_shared/rh-assistente.mjs';
 // Ideia Premiada (nov/2026): assistente que ouve a ideia do funcionário, faz perguntas até entender (o problema, a
 // solução, os benefícios) e devolve um resumo para a pessoa aprovar. Quem grava a ideia é o navegador, depois que a
 // pessoa aprova, pela RPC ideias_premiadas_enviar (cai em Recebidas, na Gestão de Pessoas).
@@ -34,10 +35,10 @@ async function autenticar(req: Request, empresaId: string) {
   const service = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const { data: f } = await service.from("funcionarios_acesso").select("nome").eq("id", user.id).maybeSingle();
   const { data: u } = await service.from("usuarios").select("nome").eq("id", user.id).maybeSingle();
-  return { nome: String(f?.nome || u?.nome || user.email || "").trim() };
+  return { nome: String(f?.nome || u?.nome || user.email || "").trim(), usuario };
 }
 
-const SISTEMA = (nome: string) => `Você é a assistente da Ideia Premiada da Chiavari (empresa de locação de móveis para eventos).
+const SISTEMA = (nome: string) => `Você é Sofia, assistente de RH da Chiavari (empresa de locação de móveis para eventos), ajudando com Ideia Premiada nesta conversa.
 Seu papel: ouvir com atenção a ideia de melhoria de um funcionário e entendê-la de verdade, para que o RH possa avaliá-la bem.
 Quem está falando: ${nome || "um funcionário"}. Use o primeiro nome com moderação, sem repetir a cada mensagem.
 
@@ -81,7 +82,7 @@ const ESQUEMA = {
   },
 };
 
-async function conversar(nome: string, body: any) {
+async function conversar(nome: string, body: any, sistema?: string) {
   const key = Deno.env.get("OPENAI_API_KEY");
   if (!key) return json({ erro: "A assistente está indisponível agora." }, 500);
   const lista = Array.isArray(body?.mensagens) ? body.mensagens : [];
@@ -94,7 +95,7 @@ async function conversar(nome: string, body: any) {
   const r = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: MODELO, temperature: 0.4, response_format: { type: "json_schema", json_schema: ESQUEMA }, messages: [{ role: "system", content: SISTEMA(nome)+await instrucoesEmpresa(body.empresa_id,"ideia") }, ...mensagens] }),
+    body: JSON.stringify({ model: MODELO, temperature: 0.4, response_format: { type: "json_schema", json_schema: ESQUEMA }, messages: [{ role: "system", content: sistema || SISTEMA(nome)+await instrucoesEmpresa(body.empresa_id,"ideia") }, ...mensagens] }),
     signal: AbortSignal.timeout(60000),
   });
   const d = await r.json().catch(() => ({}));
@@ -126,7 +127,7 @@ async function transcrever(body: any) {
     form.append("file", new Blob([bytes], { type: tipo }), `audio.${ext}`);
     form.append("model", modelo);
     form.append("language", "pt");
-    form.append("prompt", "Funcionário da Chiavari contando uma ideia de melhoria: eventos, montagem, triagem, estoque, logística, caminhão, cliente, decorador.");
+    form.append("prompt", body?.acao === "transcrever_rh" ? "Recursos humanos: funcionários, cargos, funções, férias, benefícios, exames, treinamentos, admissões, desligamentos, freelancers e ideias de melhoria." : "Funcionário da Chiavari contando uma ideia de melhoria: eventos, montagem, triagem, estoque, logística, caminhão, cliente, decorador.");
     form.append("response_format", "json");
     const r = await fetch("https://api.openai.com/v1/audio/transcriptions", { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: form, signal: AbortSignal.timeout(60000) });
     const d = await r.json().catch(() => ({}));
@@ -140,7 +141,7 @@ async function transcrever(body: any) {
   return json({ texto: texto.slice(0, 4000) });
 }
 
-Deno.serve(comUsoIA("ideia", async (req) => {
+Deno.serve(comUsoIA((b) => ["consultar_rh","transcrever_rh"].includes(b?.acao) ? "rh" : "ideia", async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ erro: "Método não permitido" }, 405);
   let body: any = {};
@@ -148,7 +149,12 @@ Deno.serve(comUsoIA("ideia", async (req) => {
   const quem = await autenticar(req, String(body?.empresa_id || ""));
   if ("erro" in quem) return json({ erro: quem.erro }, quem.status);
   try {
-    if (body?.acao === "transcrever") return await transcrever(body);
+    if (body?.acao === "consultar_rh") {
+      const { data, error } = await quem.usuario.rpc("rh_assistente_contexto", { p_empresa: body.empresa_id });
+      if (error) return json({ erro: "Não foi possível consultar os registros de RH com seu acesso. Tente novamente." }, error.code === "42501" ? 403 : 502);
+      return await conversar(quem.nome, body, sistemaRh(quem.nome, data)+await instrucoesEmpresa(body.empresa_id,"rh")+"\nÁreas para ideias: "+AREAS.join(", "));
+    }
+    if (["transcrever","transcrever_rh"].includes(body?.acao)) return await transcrever(body);
     if (body?.acao === "conversar") return await conversar(quem.nome, body);
     return json({ erro: "Ação desconhecida" }, 400);
   } catch (e) {

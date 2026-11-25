@@ -1,6 +1,6 @@
 /* Conversa com os agentes de IA no app (20/11/2026). Pedido do usuário: "refaça todos os chats de todos os agentes e deixe
    todos iguais… o chat quero um chat comum mesmo; os relatórios podem ser um botão discreto".
-   Uma tela só (Modulos/Gestao/AgentesApp/agente.html?ag=…) para Clara, Cora, Carla, Marcos e a assistente da Ideia
+   Uma tela só (Modulos/Gestao/AgentesApp/agente.html?ag=…) para Clara, Miguel, Carla, Marcos e a assistente da Ideia
    Premiada: cada agente só muda o servidor que responde (as mesmas Edge Functions das telas do computador) e o que acontece
    no fim (Carla/Marcos/Ideia mostram o resumo e registram pela mesma RPC do sistema). A Helena tem motor próprio (catálogo,
    pedido, 3D) e usa o mesmo visual por CSS (styles/app-agente.css, body.catalogo-equipe-helena).
@@ -10,6 +10,7 @@
   const $ = (id) => document.getElementById(id);
   const esc = (v) => String(v == null ? "" : v).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const sb = window.supabaseClient;
+  const fotosAgentes = new URL("../../assets/agentes/", document.currentScript.src);
   const S = { ag: null, ctx: {}, msgs: [], ocupado: "", gravador: null, pedacos: [], inicio: 0, relogio: 0, cancelada: false };
   const brl = (v) => "R$ " + (Number(v) || 0).toLocaleString("pt-BR", { maximumFractionDigits: 0 });
   const curto = (v) => { const a = Math.abs(Number(v) || 0), s = v < 0 ? "−" : ""; return s + (a >= 1e6 ? (a / 1e6).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + " mi" : a >= 1e3 ? Math.round(a / 1e3).toLocaleString("pt-BR") + " mil" : Math.round(a).toLocaleString("pt-BR")); };
@@ -53,8 +54,8 @@
         const r = await chamar("financeiro-assistente", { action: "conversar", mensagens: historico(30).map((m) => ({ role: m.papel === "ia" ? "assistant" : "user", content: m.texto || "" })) });
         return { texto: r.resposta, evidencias: r.evidencias || [] };
       } },
-    cora: { nome: "Cora", papel: "Estoque e acervo", inicial: "C", cor: "#1baf7a",
-      intro: "Cuido para que todo o material esteja pronto e em condições no dia de cada evento. Pergunte sobre as próximas saídas, manutenção, contagens e proteção.",
+    cora: { nome: "Miguel", foto: "miguel", artigo: "o", papel: "Estoque, acervo e separação", inicial: "M", cor: "#1baf7a",
+      intro: "Cuido de todo o estoque: separação, triagem, acervo, manutenção e inventário. Pergunte sobre disponibilidade, problemas dos pedidos e o que precisa ficar pronto para os eventos.",
       sugestoes: ["O que pode faltar no próximo sábado?", "Quais peças em manutenção fazem falta esta semana?", "O que a triagem deve priorizar hoje?", "Quais itens mais saem nos próximos 30 dias?"],
       relatorios: [
         { t: "Próximos 3 meses", d: 90, p: "Faça uma análise completa dos próximos 3 meses: em quais dias e com quais itens vamos ter falta ou pouca folga, o que depende de pré-reserva e o que precisa ser feito antes de cada evento." },
@@ -103,11 +104,23 @@
         await ligarFotos("manutencao", data?.id, fotos);
         return "Pronto! A solicitação de manutenção " + (data?.numero ? "#" + data.numero + " " : "") + "foi registrada. Você acompanha em Solicitação de manutenção, no sistema.";
       } },
-    ideia: { nome: "Assistente da Ideia Premiada", curto: "Ideia Premiada", papel: "Ideias de melhoria", inicial: "I", cor: "#eda100",
-      intro: "Que bom que você quer compartilhar uma ideia! Me conte o que você reparou que pode melhorar e como imagina a solução.",
-      sugestoes: ["Tenho uma ideia para a montagem", "Uma ideia para economizar", "Uma ideia para o atendimento"],
+    ideia: { nome: "Sofia", foto: "ideia", papel: "Recursos humanos · IA", inicial: "S", cor: "#857b69",
+      transcricao: { fn: "ideia-assistente", acao: "transcrever_rh" },
+      intro: "Ajudo com os módulos de RH: funcionários, cargos, férias, benefícios, exames, treinamentos, admissões, desligamentos, freelancers e ideias de melhoria. Consulto os registros que seu acesso permite.",
+      sugestoes: ["Quais férias estão programadas?", "Quais exames e treinamentos precisam de atenção?", "Quais cargos e funções estão cadastrados?", "Quero enviar uma ideia de melhoria"],
+      colunaRelatorios: true,
+      relatorios: [
+        { t: "Panorama do RH", descricao: "Equipe, cargos, setores e prioridades.", p: "Prepare um relatório geral do RH com os funcionários ativos por setor e cargo, afastamentos registrados e as principais pendências de férias, exames, treinamentos e checklists. Cite os módulos consultados e as datas relevantes. Use apenas os registros autorizados e indique limitações de acesso ou listas parciais." },
+        { t: "Férias programadas", descricao: "Programações e períodos em andamento.", p: "Prepare um relatório de férias em andamento e programadas para os próximos 90 dias, por funcionário e setor, com início, fim, dias e status cadastrado. Separe férias coletivas quando identificadas e não inclua canceladas como futuras. Não estime saldo ou direito a férias sem histórico completo. Cite a fonte Férias e avise se houver limitação de acesso ou dados parciais." },
+        { t: "Exames e treinamentos", descricao: "Vencidos, próximos vencimentos e certificados.", p: "Prepare um relatório dos exames e certificados de treinamento com validade vencida ou a vencer nos próximos 30 dias. Relacione as pessoas, datas e os treinamentos cadastrados; diferencie vencimentos registrados de ausência de informação. Organize por urgência, cite Exames e treinamentos e Documentos e não presuma aptidão médica." },
+        { t: "Benefícios da equipe", descricao: "Benefícios cadastrados e adesões registradas.", p: "Prepare um relatório dos benefícios ativos e das adesões registradas por funcionário, com nome do benefício, data de adesão e regras cadastradas. Diferencie benefício disponível de adesão efetiva e não presuma elegibilidade nem valores não registrados. Cite Benefícios e indique registros indisponíveis ou acesso restrito." },
+        { t: "Admissões e desligamentos", descricao: "Checklists em aberto e itens pendentes.", p: "Prepare um relatório dos checklists de admissão e desligamento em aberto, com funcionário, tipo e itens ainda pendentes. Separe os concluídos e experiências com término nos próximos 30 dias quando houver data registrada. Cite Admissão e desligamento e Funcionários; não conclua movimentações nem invente datas ausentes." },
+        { t: "Ocorrências do mês", descricao: "Registros por tipo, pessoa e setor.", p: "Prepare um relatório das ocorrências do mês atual, conforme a data de hoje do contexto, agrupadas por tipo e setor, com as pessoas e datas registradas. Cite Ocorrências e diferencie ausência de registros de falta de permissão ou contexto parcial. Não presuma causas nem recomende punições automáticas." },
+        { t: "Freelancers", descricao: "Cadastros, inscrições e pagamentos registrados.", p: "Prepare um relatório dos freelancers com cadastros aguardando aprovação, inscrições por status e pagamentos registrados por ciclo. Diferencie registros pagos dos marcados para não pagar; não trate ausência de pagamento como dívida confirmada e não presuma valores devidos. Cite Cadastro de Freelancer e Pagamento de Freelancer, indicando o que seu acesso não permite consultar." },
+        { t: "Ideias premiadas", descricao: "Ideias por status e retornos do RH.", p: "Prepare um relatório das ideias de melhoria registradas, agrupadas por status, com título, autor, área, data e retorno cadastrado do RH. Destaque as que estão em análise e as implementadas ou premiadas. Cite Ideia Premiada, respeite o escopo autorizado e não prometa aprovação ou prêmio." }
+      ],
       async conversar(){
-        const r = await chamar("ideia-assistente", { acao: "conversar", mensagens: historico().map((m) => ({ papel: m.papel, texto: m.texto || "" })) });
+        const r = await chamar("ideia-assistente", { acao: "consultar_rh", mensagens: historico().map((m) => ({ papel: m.papel, texto: m.texto || "" })) });
         return { texto: r.resposta, resumo: r.pronto && r.resumo ? r.resumo : null };
       },
       resumoHtml: (r) => '<h4>' + esc(r.titulo) + '</h4><small class="ag-res-sub">' + esc(r.area) + '</small><div class="ag-res-grade">' +
@@ -136,7 +149,7 @@
     fecha(); return html;
   }
   const hora = (iso) => { try{ return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }); }catch(_){ return ""; } };
-  const avatar = (grande) => '<span class="ag-avatar' + (grande ? " grande" : "") + '" aria-hidden="true" style="--ag-cor:' + S.ag.cor + '">' + esc(S.ag.inicial) + '</span>';
+  const avatar = (grande, cabecalho = false) => '<span' + (cabecalho ? ' id="agCabAvatar"' : '') + ' class="ag-avatar' + (grande ? " grande" : "") + (cabecalho ? " ia-topo-foto" : "") + '" aria-hidden="true" style="--ag-cor:' + S.ag.cor + '">' + '<img data-ia-foto width="512" height="512" loading="eager" src="' + new URL(S.ag.foto + '.jpg', fotosAgentes).href + '" alt="" decoding="sync">' + '</span>';
 
   // Cora: itens com foto
   const SIT = { falta: ["Falta", "ruim"], atencao: ["Atenção", "aviso"], ok: ["Em dia", "bom"] };
@@ -217,11 +230,16 @@
       (S.ocupado ? '<div class="ag-msg ia">' + avatar() + '<div class="ag-balao ag-digitando"><i></i><i></i><i></i>' + (S.ocupado !== true ? '<small>' + esc(S.ocupado) + '</small>' : "") + '</div></div>' : "");
     requestAnimationFrame(() => { host.scrollTop = host.scrollHeight; });
     const travado = !!S.ocupado;
-    $("agEnviar").disabled = travado; $("agMic").disabled = travado && !S.gravador; if($("agFoto")) $("agFoto").disabled = travado;
+    $("agMic").disabled = travado && !S.gravador; if($("agFoto")) $("agFoto").disabled = travado;
     $("agRelatorios") && ($("agRelatorios").disabled = travado);
+    document.querySelectorAll("#agRelatoriosLado button").forEach((b) => { b.disabled = travado; });
     atualizarBotao();
   }
-  function atualizarBotao(){ const vazio = !$("agTexto").value.trim(); $("agEnviar").hidden = vazio && !S.gravador; $("agMic").hidden = !vazio || !!S.gravador; }
+  function atualizarBotao(){
+    const vazio = !$("agTexto").value.trim();
+    $("agEnviar").disabled = vazio || !!S.ocupado || !!S.gravador;
+    $("agMic").hidden = !vazio || !!S.gravador;
+  }
   function guardar(){ try{ sessionStorage.setItem(S.chave, JSON.stringify(S.msgs.filter((m) => !m.provisorio).slice(-40))); }catch(_){ try{ sessionStorage.setItem(S.chave, JSON.stringify(S.msgs.slice(-20).map(({ evidencias, relatorio, ...m }) => m))); }catch(__){} } }
 
   /* ---------- conversa ---------- */
@@ -285,7 +303,7 @@
     S.ocupado = "ouvindo seu áudio…"; pintar();
     try{
       const url = await new Promise((ok, erro) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = erro; fr.readAsDataURL(blob); });
-      const r = await chamar("solicitacao-assistente", { acao: "transcrever", tipo: "compra", audio: String(url).replace(/^data:([^;,]+)[^,]*,/, (m, t) => "data:" + (t.startsWith("audio/") ? t : "audio/webm") + ";base64,") });
+      const r = await chamar(S.ag.transcricao?.fn || "solicitacao-assistente", { acao: S.ag.transcricao?.acao || "transcrever", ...(S.ag.transcricao ? {} : {tipo:"compra"}), audio: String(url).replace(/^data:([^;,]+)[^,]*,/, (m, t) => "data:" + (t.startsWith("audio/") ? t : "audio/webm") + ";base64,") });
       S.ocupado = ""; await enviar(r.texto, { audio: true });
     }catch(e){ S.ocupado = ""; aviso("Não consegui entender o áudio (" + (e.message || e) + "). Pode mandar de novo ou escrever?"); }
   }
@@ -318,6 +336,24 @@
   }
 
   /* ---------- relatórios (botão discreto) e foto ampliada ---------- */
+  function prepararColunaRelatorios(){
+    if(!S.ag.colunaRelatorios || !S.ag.relatorios?.length || $("agRelatoriosLado")) return;
+    const corpo = document.createElement("div"); corpo.className = "ag-rel-corpo";
+    const conversa = document.createElement("div"); conversa.className = "ag-rel-conversa";
+    $("agMsgs").before(corpo); conversa.append($("agMsgs"), $("agForm"));
+    const lado = document.createElement("aside"); lado.id = "agRelatoriosLado"; lado.className = "ag-rel-lado";
+    lado.setAttribute("aria-label", "Relatórios da " + S.ag.nome);
+    lado.innerHTML = '<p class="ag-rel-kicker">Relatórios da ' + esc(S.ag.nome) + '</p><h2>Relatórios prontos</h2>' +
+      '<p class="ag-rel-intro">Escolha um relatório para receber a análise aqui na conversa.</p><div class="ag-rel-lista">' +
+      S.ag.relatorios.map((r, i) => '<button type="button" class="ag-rel-atalho" data-ag-rel="' + i + '"><b>' + esc(r.t) + '</b><small>' + esc(r.descricao || r.p) + '</small></button>').join("") +
+      '</div><button type="button" class="ag-btn ag-rel-nova" data-ag-nova>Nova conversa</button>';
+    lado.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-ag-rel]");
+      if(b) return pedirRelatorio(S.ag.relatorios[+b.dataset.agRel]);
+      if(e.target.closest("[data-ag-nova]")) novaConversa();
+    });
+    corpo.append(conversa, lado);
+  }
   function abrirSheet(){
     const sh = $("agSheet");
     sh.querySelector("ul").innerHTML = S.ag.relatorios.map((r, i) => '<li><button type="button" data-ag-rel="' + i + '"><b>' + esc(r.t) + '</b><small>' + esc(r.p) + '</small></button></li>').join("");
@@ -328,7 +364,12 @@
   function ajustar(){ const t = $("agTexto"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 140) + "px"; atualizarBotao(); }
 
   function ligar(){
-    $("agForm").addEventListener("submit", (e) => { e.preventDefault(); const t = $("agTexto"), v = t.value; t.value = ""; ajustar(); enviar(v); });
+    $("agForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const t = $("agTexto"), v = t.value;
+      if(!v.trim() || S.ocupado || S.gravador) return;
+      t.value = ""; ajustar(); enviar(v);
+    });
     $("agTexto").addEventListener("input", ajustar);
     $("agTexto").addEventListener("keydown", (e) => { if(e.key === "Enter" && !e.shiftKey && !matchMedia("(pointer:coarse)").matches){ e.preventDefault(); $("agForm").requestSubmit(); } });
     $("agMic").addEventListener("click", gravar);
@@ -351,12 +392,14 @@
   }
 
   async function iniciar(){
-    const id = new URLSearchParams(location.search).get("ag");
+    const solicitado = new URLSearchParams(location.search).get("ag");
+    const id = solicitado === "miguel" ? "cora" : ["rh", "sofia"].includes(solicitado) ? "ideia" : solicitado;
     S.ag = AGENTES[id];
+    if(S.ag && !S.ag.foto) S.ag.foto = id;
     if(!S.ag){ location.replace("../../../app.html#agentes"); return; }
     document.title = S.ag.nome;
     $("agNome").textContent = S.ag.curto || S.ag.nome; $("agPapel").textContent = S.ag.papel;
-    $("agCabAvatar").outerHTML = avatar();
+    $("agCabAvatar").outerHTML = avatar(false, true);
     if(!S.ag.fotos) $("agFoto").remove();
     if(!S.ag.relatorios) $("agRelatorios").remove();
     const { data: { session } } = await sb.auth.getSession();
@@ -369,7 +412,7 @@
     if(!S.ctx.nome){ const { data } = await sb.from("usuarios").select("nome").eq("id", session.user.id).maybeSingle(); S.ctx.nome = data?.nome || ""; }
     S.chave = "agente_chat:" + id + ":" + empresa + ":" + session.user.id;
     try{ S.msgs = JSON.parse(sessionStorage.getItem(S.chave) || "[]"); }catch(_){ S.msgs = []; }
-    ligar(); pintar();
+    prepararColunaRelatorios(); ligar(); pintar();
     window.AppCarregamento?.pronto();
   }
   window.AgenteChat = { iniciar, AGENTES };

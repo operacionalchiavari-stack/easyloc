@@ -32,7 +32,7 @@ import { sinalizarDisponibilidade } from "./pedido-disponibilidade-comercial.mjs
 // mostra ou envia preço: o catálogo nunca teve valores.
 
 import { arquivosDoBucket } from "./catalogo-arquivos.mjs";
-import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, layoutPedido, layoutSeletorHtml, ligarSeletorLayout, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, transferirItens, bindOrdenacao, moverAmbiente, bindOrdenacaoAmbientes, definirPersonalizacoes, opcoesPersonalizacaoDoItem, textoEscolhas, definirAvisosStatus } from './projeto-apresentacao.mjs?v=20261118-fixo';
+import { dadosApresentacao, pedidoPreviewHtml, imprimirPedido, abrirVisualizacaoPedido, layoutPedido, layoutSeletorHtml, ligarSeletorLayout, geralHtml, apresentacaoHtml, imprimirApresentacao, reordenarItens, transferirItens, bindOrdenacao, moverAmbiente, bindOrdenacaoAmbientes, definirPersonalizacoes, opcoesPersonalizacaoDoItem, textoEscolhas, definirAvisosStatus } from './projeto-apresentacao.mjs?v=20261122-regras-formatadas';
 
 const temCena = render => Boolean(render?.cena?.url || render?.cena?.snapshot);
 const $ = (id) => document.getElementById(id);
@@ -553,7 +553,7 @@ async function garantirAmbiente(){
 }
 
 // Atalhos para criar (ou escolher) o ambiente com um clique (pedido do usuário: "opções rápidas pra criar o local").
-const AMBIENTES_RAPIDOS = ["Mesa de bolo", "Mesa da família", "Mesa de convidados", "Cerimônia", "Lounge", "Bar", "Bistrôs", "Recepção"];
+const AMBIENTES_RAPIDOS = ["Mesa de bolo", "Mesa da família", "Mesa de convidados", "Cerimônia", "Lounge", "Bar", "Bistrôs", "Recepção", "Itens"];
 const normalizarNome = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
 function escolherDestino({ titulo = "Escolha o projeto", confirmar = "Confirmar", moveis = null, imagem = "", sub = "" }){
@@ -4319,14 +4319,24 @@ const assistenteProjeto = {
     return { ambiente: amb.nome, novo };
   },
   // A Helena abre e fecha a VERSÃO FINAL do pedido (a mesma prévia do "Ver pedido e PDF": fotos, renderizações e valores).
-  verPedido(abrir){
-    if(!abrir){ S.previaHelena = null; document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close()); return true; }
+  async verPedido(abrir, { naConversa = false } = {}){
+    if(!abrir){ S.previaHelena?.close(); S.previaHelena = null; document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close()); return true; }
     const project = S.current;
     if(!project) return false;
     document.querySelectorAll("dialog.cpj-order-preview.is-flutuante[open]").forEach((d) => d.close());
     const d = ctx.pedidoComercial ? ctx.decoradoraPedido?.() : null;
-    S.previaHelena = abrirVisualizacaoPedido({ titulo: project.noivos || "Pedido", model: dadosApresentacao(project, ctx.findItem),
-      decorador: d?.nome ? { nome: d.nome, logo_url: d.foto || "" } : ctx.getDecorator?.(), empresa: ctx.getCompany?.(), flutuante: true });
+    const model = ctx.pedidoComercial ? modeloPedidoComercial(project) : dadosApresentacao(project, ctx.findItem);
+    model.plantas = await plantasDoPedido(project);
+    if(S.current !== project) return false;
+    if(ctx.pedidoComercial) model.pagamentoLink = await Promise.resolve(window.parent.__pedidoLinkPagamento?.()).catch(() => null);
+    const opc = opcoesPedidoImpresso();
+    if(!opc.planta) model.plantas = [];
+    if(!opc.renders) model.ambientes = model.ambientes.map(a => ({ ...a, imagens: [] }));
+    if(S.current !== project) return false;
+    S.previaHelena?.close();
+    S.previaHelena = abrirVisualizacaoPedido({ titulo: project.noivos || "Pedido", model,
+      decorador: d?.nome ? { nome: d.nome, logo_url: d.foto || "" } : ctx.getDecorator?.(), empresa: ctx.getCompany?.(), flutuante: !naConversa,
+      onMount: naConversa ? ({dialog}) => dialog.classList.add('cpj-order-helena') : null });
     return true;
   },
   async atualizarEvento({ data_evento, local_evento, evento, noivos }){

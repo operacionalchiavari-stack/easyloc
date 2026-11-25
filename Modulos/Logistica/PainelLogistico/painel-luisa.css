@@ -1,0 +1,8 @@
+/* Luísa · Logística no Painel Logístico (21/11/2026): mesmo visual da Clara do Financeiro
+   (financeiro-clara.css, classes ch-* e clp-*). Aqui só o encaixe na página e a mensagem de erro. */
+html:root:is(#pll#pll#pll,html) #plModuloLuisa{padding:12px 0 24px}
+html:root:is(#pll#pll#pll,html) #plModuloLuisa .ch-tela{height:calc(100vh - 150px)}
+html:root:is(#pll#pll#pll,html) #plModuloLuisa .ch-bubble.pll-erro{background:#fff4f3;border-color:#f1cfcb;color:#8f2b23}
+/* Foto da Luísa sempre dentro do círculo, mesmo se o CSS dos retratos não carregar. */
+html:root:is(#pll#pll#pll,html) #plModuloLuisa .ch-avatar{overflow:hidden}
+html:root:is(#pll#pll#pll,html) #plModuloLuisa .ch-avatar img{display:block;width:100%;height:100%;object-fit:cover;border-radius:50%}

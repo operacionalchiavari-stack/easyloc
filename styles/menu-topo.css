@@ -61,6 +61,7 @@
   #sidebar.portal-menu .flyout-painel .sub-item:hover{ background:rgba(255,255,255,.12); color:#fff; }
   #sidebar.portal-menu .flyout-painel::before{ top:-14px; bottom:auto; left:0; right:0; width:auto; height:14px; }
   #sidebar.portal-menu .flyout-painel .flyout-painel::before{ top:-12px; bottom:-12px; left:-16px; right:auto; width:16px; height:auto; }
+  #sidebar.portal-menu .flyout-painel .flyout-painel{ position:absolute; }
 
   /* usuário e Sair à direita */
   #sidebar.portal-menu .menu-rodape{ flex:none; display:flex; align-items:center; gap:4px; padding:0; border:0; }

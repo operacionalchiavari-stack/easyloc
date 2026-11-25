@@ -10,6 +10,75 @@
   const can = key => window.EasyLocPermissions.hasPermission(key, false);
   const initials = name => String(name || 'FT').trim().split(/\s+/).slice(0, 2).map(x => x[0]).join('').toUpperCase();
   const icons = () => window.lucide?.createIcons();
+  const resumoRh = window.FuncionariosResumo;
+  let resumo = null, versaoResumo = 0, consultandoResumo = false, colunasVisiveis = null;
+  const podeRh = () => can('rh.colaboradores.visualizar');
+  const colunas = [
+    {id:'pessoa',nome:'Funcionário',largura:240,fixa:true,padrao:true},
+    {id:'cargo',nome:'Cargo / Função',largura:150,padrao:true},
+    {id:'hoje',nome:'Situação hoje',largura:165,rh:true,padrao:true},
+    {id:'jornada',nome:'Jornada',largura:195,rh:true,padrao:true},
+    {id:'admissao',nome:'Admissão / Tempo de empresa',largura:170,padrao:true},
+    {id:'contato',nome:'WhatsApp',largura:155,padrao:true},
+    {id:'pendencias',nome:'Pendências',largura:215,padrao:true},
+    {id:'vinculo',nome:'Vínculo',largura:110,rh:true},
+    {id:'equipe',nome:'Equipe / Liderança',largura:170},
+    {id:'acesso',nome:'Acesso ao sistema',largura:195,padrao:true},
+    {id:'status',nome:'Status',largura:100,padrao:true},
+    {id:'ultimo',nome:'Último acesso',largura:160}
+  ];
+  const disponiveis = () => colunas.filter(c=>!c.rh||podeRh());
+  const chaveColunas = () => 'funcionarios-colunas:'+context.empresa_id+':'+context.usuario_id;
+  function lerColunas() {
+    const padrao=()=>colunas.filter(c=>c.padrao).map(c=>c.id);
+    try { const salvas=JSON.parse(localStorage.getItem(chaveColunas()));colunasVisiveis=new Set(Array.isArray(salvas)?salvas.filter(id=>colunas.some(c=>c.id===id)):padrao()); }
+    catch (_) { colunasVisiveis=new Set(padrao()); }
+    colunasVisiveis.add('pessoa');
+  }
+  function salvarColunas() { try { localStorage.setItem(chaveColunas(),JSON.stringify([...colunasVisiveis])); } catch (_) {} }
+  function opcoesColunas() {
+    $('funcColunasOpcoes').innerHTML=disponiveis().map(c=>'<label><input type="checkbox" data-coluna="'+c.id+'"'+(colunasVisiveis.has(c.id)?' checked':'')+(c.fixa?' disabled':'')+'><span>'+esc(c.nome)+(c.fixa?'<small>Sempre visível</small>':'')+'</span></label>').join('');
+  }
+  function abrirColunas() { if(!context||!colunasVisiveis)return;opcoesColunas();if(!$('funcColunasDialog').open)$('funcColunasDialog').showModal(); }
+  $('funcColunasBtn').addEventListener('click',abrirColunas);
+  $('funcColunasOpcoes').addEventListener('change',e=>{const id=e.target.dataset.coluna;if(!id||id==='pessoa')return;if(e.target.checked)colunasVisiveis.add(id);else colunasVisiveis.delete(id);salvarColunas();render();});
+  $('funcColunasPadrao').addEventListener('click',()=>{colunasVisiveis=new Set(colunas.filter(c=>c.padrao).map(c=>c.id));salvarColunas();opcoesColunas();render();});
+  async function carregarResumo() {
+    const v=++versaoResumo;
+    if(!podeRh()) { resumo=null;render();return; }
+    consultandoResumo=true;
+    try { const r=await resumoRh.carregar(client,context.empresa_id);if(v===versaoResumo)resumo=r; }
+    catch (_) { if(v===versaoResumo)resumo={data:resumoRh.hoje()}; }
+    finally { if(v===versaoResumo){consultandoResumo=false;render();} }
+  }
+  const duasLinhas = (texto,detalhe='') => esc(texto)+(detalhe?'<span class="subtext">'+esc(detalhe)+'</span>':'');
+  function celula(e,id) {
+    const p=resumoRh.pessoa(e,resumo);
+    if(id==='pessoa') return '<div class="funcionario-identidade"><span class="employee-table-photo"><span>'+esc(initials(e.nome))+'</span>'+(fotoDe(e)?'<img src="'+esc(fotoDe(e))+'" alt="" loading="lazy">':'')+'</span><span class="funcionario-identidade-texto"><strong>'+esc(e.nome)+'</strong>'+(e.email?'<span class="subtext">'+esc(e.email)+'</span>':'')+'</span></div>';
+    if(id==='cargo') return esc(e.cargo||'—');
+    if(id==='status') return '<span class="status-pill '+(e.ativo?'active':'inactive')+'">'+(e.ativo?'Ativo':'Inativo')+'</span>';
+    if(id==='acesso') return '<span class="funcionario-acesso">'+(e.acesso_sistema===false?'Sem login':esc(e.nivel_acesso||'Visualizador'))+'</span><span class="subtext">'+[e.acesso_sistema!==false?e.login:'',e.tem_pin?'PIN cadastrado':'PIN pendente'].filter(Boolean).map(esc).join(' · ')+'</span>';
+    if(id==='ultimo') return e.ultimo_acesso?esc(new Date(e.ultimo_acesso).toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})):'—';
+    if(id==='admissao') return e.gerenciado===false?'—':e.data_admissao?duasLinhas(resumoRh.dataBr(e.data_admissao),resumoRh.tempo(e,resumo)):'<span class="func-info-ausente">Não informada</span>';
+    if(id==='contato') {
+      const numero=String(e.dados_rh?.whatsapp||'').replace(/\D/g,'');
+      const internacional=numero.length===10||numero.length===11?'55'+numero:numero;
+      const texto=numero.length===10?'('+numero.slice(0,2)+') '+numero.slice(2,6)+'-'+numero.slice(6):numero.length===11?'('+numero.slice(0,2)+') '+numero.slice(2,7)+'-'+numero.slice(7):e.dados_rh?.whatsapp;
+      return numero.length>=10&&numero.length<=15?'<a class="func-whatsapp" href="https://wa.me/'+internacional+'" target="_blank" rel="noopener noreferrer" aria-label="Conversar com '+esc(e.nome)+' no WhatsApp">'+esc(texto)+'</a>':'<span class="func-info-ausente">Não informado</span>';
+    }
+    if(id==='equipe') { const equipes={triagem:'Triagem',carregamento:'Carregamento',montagem:'Montagem',producao:'Produção'};return duasLinhas(equipes[e.equipe_operacional]||e.equipe_operacional||'Não participa',e.lider_operacao?'Pode liderar etapas':''); }
+    if(id==='vinculo') return e.gerenciado===false?'—':!resumo?'Consultando…':resumo.pessoas?.some(r=>r.id===e.id)?esc(resumoRh.vinculo(p)):'Não disponível';
+    if(id==='hoje') { if(e.gerenciado===false)return '—';const s=resumoRh.situacao(e,resumo);return '<span class="func-selo '+s.cor+'">'+esc(s.texto)+'</span>'+(s.detalhe?'<span class="subtext">'+esc(s.detalhe)+'</span>':''); }
+    if(id==='jornada') { if(e.gerenciado===false||e.ativo===false||p.ficha?.status==='desligado')return '—';const j=resumoRh.jornada(e,resumo);return '<span'+(j.escopo?' title="'+esc(j.escopo)+'"':'')+'>'+duasLinhas(j.texto,j.detalhe)+'</span>'; }
+    if(id==='pendencias') {
+      const r=resumoRh.pendencias(e,resumo,podeRh());
+      if(e.gerenciado===false||r.inativo)return '—';
+      const aviso=!r.completo?'<span class="subtext">'+(consultandoResumo?'Consultando RH…':'Consulta do RH incompleta')+'</span>':'';
+      if(!r.itens.length) return (!r.completo?'<span class="func-selo neutro">'+(consultandoResumo?'Consultando…':'Não disponível')+'</span>':'<span class="func-selo ok">'+(r.cadastro?'Cadastro em dia':'Sem pendências')+'</span>')+aviso;
+      return '<details class="func-pendencias"><summary aria-label="Ver pendências de '+esc(e.nome)+'"><span class="func-selo '+(r.itens.some(i=>i.cor==='erro')?'erro':'atencao')+'">'+r.itens.length+' pendência'+(r.itens.length>1?'s':'')+'</span></summary><ul>'+r.itens.map(i=>'<li class="'+i.cor+'">'+esc(i.texto)+'</li>').join('')+'</ul></details>'+aviso;
+    }
+    return '—';
+  }
   function message(text, error = false) {
     $('funcMessage').textContent = text;
     $('funcMessage').hidden = !text;
@@ -53,27 +122,25 @@
       result.urls.forEach(item => { if (item.signedUrl) photoUrls.set(item.path, item.signedUrl); });
     }
     render();
+    await carregarResumo();
   }
   function render() {
-    $('funcTotal').textContent = employees.length;
-    $('funcAtivos').textContent = employees.filter(e => e.ativo).length;
-    $('funcInativos').textContent = employees.filter(e => !e.ativo).length;
-    $('funcAdmins').textContent = employees.filter(e => e.nivel_acesso === 'Administrador').length;
+    if(!colunasVisiveis) return;
+    const visiveis=disponiveis().filter(c=>colunasVisiveis.has(c.id));
+    $('funcColunasLarguras').innerHTML=visiveis.map(c=>'<col style="width:'+c.largura+'px">').join('');
+    $('funcionariosTabela').style.width=visiveis.reduce((n,c)=>n+c.largura,0)+'px';
+    $('funcTabelaCabecalho').innerHTML=visiveis.map(c=>'<th scope="col" data-coluna="'+c.id+'"'+(c.id==='hoje'?' title="Previsão da escala para '+resumoRh.dataBr(resumo?.data||resumoRh.hoje())+'"':'')+'>'+esc(c.id==='pendencias'&&!podeRh()?'Cadastro':c.nome)+'</th>').join('');
     const groups = new Map();
     const busca=$('funcBusca').value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
-    employees.filter(e=>[e.nome,e.setor,e.cargo,e.login,e.email].filter(Boolean).join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').includes(busca)).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).forEach(e => {
+    employees.filter(e=>[e.nome,e.setor,e.cargo,e.login,e.email,e.dados_rh?.whatsapp,e.equipe_operacional].filter(Boolean).join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').includes(busca)).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')).forEach(e => {
       const key = e.setor || 'Sem setor';
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(e);
     });
     $('funcionariosTableBody').innerHTML = [...groups].sort(([a], [b]) => a.localeCompare(b, 'pt-BR')).map(([sector, rows]) => `
-      <tr class="table-group-row"><td colspan="5">${esc(sector)}<span class="table-group-count">${rows.length}</span></td></tr>
+      <tr class="table-group-row"><td colspan="${visiveis.length}"><span class="func-grupo-nome">${esc(sector)}<span class="table-group-count">${rows.length}</span></span></td></tr>
       ${rows.map(e => `<tr class="funcionario-linha" data-funcionario-id="${esc(e.id)}" tabindex="0" aria-label="Abrir cadastro de ${esc(e.nome)}">
-      <td><div class="funcionario-identidade"><span class="employee-table-photo"><span>${esc(initials(e.nome))}</span>${fotoDe(e)?`<img src="${esc(fotoDe(e))}" alt="" loading="lazy">`:''}</span><span class="funcionario-identidade-texto"><strong>${esc(e.nome)}</strong>${e.email?`<span class="subtext">${esc(e.email)}</span>`:''}</span></div></td>
-      <td>${esc(e.cargo||'—')}</td>
-      <td><span class="funcionario-acesso">${e.acesso_sistema===false?'Sem login':esc(e.nivel_acesso||'Visualizador')}</span><span class="subtext">${[e.acesso_sistema!==false?e.login:'',e.tem_pin?'PIN cadastrado':'PIN pendente'].filter(Boolean).map(esc).join(' &#183; ')}</span></td>
-      <td><span class="status-pill ${e.ativo?'active':'inactive'}">${e.ativo?'Ativo':'Inativo'}</span></td>
-      <td class="funcionario-ultimo-acesso">${e.ultimo_acesso?esc(new Date(e.ultimo_acesso).toLocaleString('pt-BR')):'—'}</td></tr>`).join('')}`).join('') || '<tr><td colspan="5" class="empty-state">Nenhum funcionário encontrado.</td></tr>';
+      ${visiveis.map(c=>'<td data-coluna="'+c.id+'">'+celula(e,c.id)+'</td>').join('')}</tr>`).join('')}`).join('') || '<tr><td colspan="'+visiveis.length+'" class="empty-state">Nenhum funcionário encontrado.</td></tr>';
     $('newFuncionarioBtn').hidden = !can('rh.funcionarios.criar');
     icons();
   }
@@ -228,6 +295,7 @@
   $('newFuncionarioBtn').addEventListener('click', () => openForm('create'));
   ['closeFuncionarioForm', 'cancelFuncionarioBtn'].forEach(id => $(id).addEventListener('click', closeForm));
   function abrirLinhaFuncionario(evento){
+    if(evento.target.closest('a,button,summary,details,input,select'))return;
     const linha=evento.target.closest('[data-funcionario-id]');if(!linha)return;
     const id=linha.dataset.funcionarioId;linha.focus();openForm(can('rh.funcionarios.editar')||id===context.usuario_id?'edit':'view',id);
   }
@@ -283,6 +351,7 @@
     context = await window.aguardarContexto();
     await window.EasyLocPermissions.load();
     if (!can('rh.funcionarios.visualizar')) throw new Error('Sem permissão para visualizar funcionários.');
+    lerColunas();
     const result = await client.from('permissoes_catalogo').select('*').order('ordem');
     if (result.error) throw result.error;
     catalog = result.data;
@@ -293,4 +362,6 @@
     else if(new URLSearchParams(location.search).get('novo')==='1' && can('rh.funcionarios.criar')) await openForm('create');
   } catch (error) { $('newFuncionarioBtn').hidden = true; message(error.message || 'Não foi possível carregar o cadastro.', true); }
   icons();
+  window.FuncionariosTabela={abrirColunas,atualizar:loadEmployees};
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&context&&resumo?.data!==resumoRh.hoje())carregarResumo();});
 })();

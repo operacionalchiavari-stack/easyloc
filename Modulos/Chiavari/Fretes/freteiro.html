@@ -301,17 +301,9 @@ h1.titulo{ font-family:"Cormorant Garamond", Georgia, serif !important; font-wei
 <style id="motorista-banco">
 /* out/2026: o app voltou ao visual de sempre; só o cadastro (celular + senha) e o check-in/out pelo QR são novos */
 .duas-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.qr-caixa{position:fixed;inset:0;z-index:80;display:none;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.5)}
-.qr-caixa.aberto{display:flex}
-.qr-corpo{width:100%;max-width:480px;padding:18px 18px calc(18px + env(safe-area-inset-bottom));border-radius:22px 22px 0 0;background:#fff}
-.qr-corpo h2{margin:2px 0 4px;font-size:22px}
-.qr-corpo p{margin:0 0 12px;color:var(--texto2,#6b6b6b);font-size:14px}
-.qr-corpo video{display:block;width:100%;aspect-ratio:1/1;max-height:42vh;object-fit:cover;border-radius:16px;background:#111}
-.qr-corpo form{display:flex;gap:8px;margin-top:12px}
-.qr-corpo form .campo{flex:1;margin:0}
-.qr-corpo .botao{width:auto;margin:0;padding:0 18px}
-.qr-erro{min-height:18px;margin-top:8px;color:#b42318;font-size:13px}
+
 </style>
+<link rel="stylesheet" href="freteiro-lancamentos.css?v=20261123-avulso">
 </head>
 <body>
 
@@ -336,7 +328,10 @@ h1.titulo{ font-family:"Cormorant Garamond", Georgia, serif !important; font-wei
 <nav class="menu" id="menu" aria-label="Menu">
   <div class="menu-perfil"><span class="avatar" id="avatarMenu">?</span><div><strong id="nomeMenu">Freteiro</strong><span id="foneMenu"></span></div></div>
   <button type="button" onclick="App.ir('inicio')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Fretes disponíveis</button>
-  <button type="button" onclick="App.ir('minhas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Meus fretes</button>
+  <button type="button" onclick="App.ir('minhas')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M6 17l1.4-5.6A2 2 0 0 1 9.3 10h5.4a2 2 0 0 1 1.9 1.4L18 17"/><circle cx="8" cy="18" r="2"/><circle cx="16" cy="18" r="2"/></svg>Fretes aceitos</button>
+  <button type="button" onclick="App.ir('lancamentos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>Meus fretes</button>
+  <button type="button" onclick="App.ir('relatorios')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M9 15l2 2 4-4"/></svg>Relatórios enviados</button>
+  <button type="button" onclick="App.ir('veiculos')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="13" height="9" rx="1"/><path d="M15 10h4l3 3v3h-7"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>Meus veículos</button>
   <button type="button" onclick="App.ir('perfil')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Meus dados</button>
   <button type="button" onclick="App.sair()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M10 16l-4-4 4-4M6 12h10"/></svg>Sair</button>
   <div class="rodape-menu">Chiavari Eventos · App do Freteiro</div>
@@ -382,21 +377,12 @@ h1.titulo{ font-family:"Cormorant Garamond", Georgia, serif !important; font-wei
   </div>
 </div>
 
-<div class="qr-caixa" id="qrCaixa" role="dialog" aria-modal="true" aria-labelledby="qrTitulo">
-  <div class="qr-corpo">
-    <div style="display:flex;align-items:center;justify-content:space-between"><h2 id="qrTitulo">Check-in</h2><button type="button" class="botao-redondo" id="qrFechar" aria-label="Fechar" style="box-shadow:none;background:var(--fundo)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
-    <p>Aponte a câmera para o QR do responsável da etapa (App do Montador) ou digite o código de 6 números.</p>
-    <video id="qrVideo" playsinline muted></video>
-    <form id="qrForm"><label class="campo"><input id="qrCodigo" inputmode="numeric" maxlength="6" placeholder="Código de 6 números" autocomplete="one-time-code"></label><button type="submit" class="botao">Confirmar</button></form>
-    <div class="qr-erro" id="qrErro" role="alert"></div>
-  </div>
-</div>
+
 
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="../../../js/core/supabase.js"></script>
-<script src="../../../js/core/leitorQr.js?v=20261111-teclado-br"></script>
 <script>
 /* =========================================================
    APP DO MOTORISTA
@@ -409,7 +395,7 @@ var App = (function(){
   const CHAVE = "chiavariFreteiro";
 
   const estado = {
-    perfil:null, token:null, dados:null, tela:"", lista:[], listaAtivas:[], corrida:null, chaveRota:"", qr:null, leitor:null,
+    perfil:null, token:null, dados:null, tela:"", lista:[], listaAtivas:[], corrida:null, chaveRota:"",
     mapa:null, rota:null, marcadores:[], geocoder:null, direcoes:null, cacheRotas:{}
   };
 
@@ -583,6 +569,9 @@ var App = (function(){
     if (tela === "inicio"){ telaInicio(); return recarregar().then(function(){ if (estado.tela === "inicio") telaInicio(); }).catch(function(){}); }
     if (tela === "minhas"){ telaMinhas(); return recarregar().then(function(){ if (estado.tela === "minhas") telaMinhas(); }).catch(function(){}); }
     if (tela === "perfil") return telaCadastro(true);
+    if (tela === "lancamentos") return window.FreteiroLanc && window.FreteiroLanc.abrir();
+    if (tela === "relatorios") return window.FreteiroLanc && window.FreteiroLanc.relatorios();
+    if (tela === "veiculos") return window.FreteiroLanc && window.FreteiroLanc.veiculos();
   }
 
   function menu(abrir){
@@ -604,11 +593,10 @@ var App = (function(){
   }
 
   /* =========================================================
-     DADOS (out/2026): o app voltou ao visual de sempre (mapa, rota, navegação). Por trás, as corridas são as que a
-     logística pede no Painel Logístico (uber_app); o motorista tem cadastro próprio (celular + senha), aceita a
-     corrida (o primeiro leva), e faz check-in/check-out lendo o QR do responsável da etapa (App do Montador).
+     DADOS: fretes publicados pela Logística, aceitos no app.
+     A conferência do caminhão usa o carregamento registrado pela Expedição.
   ========================================================= */
-  const TOKEN = "frete_freteiro_token", PEND = "frete_freteiro_qr";
+  const TOKEN = "frete_freteiro_token";
   const guardar = function(k, v, area){ try { area = area || localStorage; v == null ? area.removeItem(k) : area.setItem(k, v); } catch (e) {} };
   const pegar = function(k, area){ try { return (area || localStorage).getItem(k); } catch (e) { return null; } };
   const dataBr = function(v){ return v ? new Date(String(v).slice(0, 10) + "T12:00:00").toLocaleDateString("pt-BR", { weekday:"short", day:"2-digit", month:"2-digit" }) : ""; };
@@ -670,8 +658,7 @@ var App = (function(){
     estado.token = sessao.token; guardar(TOKEN, sessao.token);
     await recarregar();
     avisar("Tudo pronto, " + primeiroNome(estado.perfil && estado.perfil.nome) + "!");
-    const pend = pegar(PEND, sessionStorage);
-    if (pend){ guardar(PEND, null, sessionStorage); return registrarPeloLink(pend); }
+
     telaInicio();
   }
 
@@ -765,7 +752,7 @@ var App = (function(){
     mostrar(
       '<div style="display:flex;align-items:center;gap:10px;margin:2px 0 6px"><button type="button" class="botao-redondo" style="box-shadow:none;background:var(--fundo)" onclick="App.ir(\'inicio\')" aria-label="Voltar">' + ICO.voltar + '</button>' +
         '<strong style="font-size:15px;color:var(--texto2)">' + esc(c.data) + (c.hora ? ' · ' + esc(c.hora) : '') + '</strong>' +
-        (aceita ? '<span class="status pendente" style="margin-left:auto">Aceita</span>' : andando ? '<span class="status conferido" style="margin-left:auto">Check-in ' + esc(horaDe(c.checkin)) + '</span>' : '') + '</div>' +
+        (aceita ? '<span class="status pendente" style="margin-left:auto">Aceita</span>' : andando ? '<span class="status conferido" style="margin-left:auto">Aceita</span>' : '') + '</div>' +
       '<div class="rota">' +
         '<span class="ponto"></span><div><strong>' + esc(c.ponto || "Ponto de encontro") + '</strong><span>Ponto de encontro' + (c.hora ? ' · ' + esc(c.hora) : '') + '</span></div>' +
         '<span class="traco"></span><span></span>' +
@@ -776,14 +763,11 @@ var App = (function(){
       '<div class="recibo"><div class="linha-calc total"><span>Valor total do frete</span><b>' + moeda(c.valor) + '</b></div></div>' +
       '<div class="barra-acao">' +
         '<button type="button" class="botao navegar" id="btnNavegar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l7 19-7-4-7 4z"/></svg>' + (andando ? "Navegar até o evento" : "Navegar até o ponto de encontro") + '</button>' +
-        (aceita ? '<button type="button" class="botao" id="btnCheck">Fazer check-in</button>'
-          : andando ? '<button type="button" class="botao" id="btnCheck">Fazer check-out</button>'
-          : '<button type="button" class="botao com-preco" id="btnAceitar"><span>Aceitar frete</span><span class="preco">' + moeda(c.valor) + '</span></button>') +
+        (!aceita && !andando ? '<button type="button" class="botao com-preco" id="btnAceitar"><span>Aceitar frete</span><span class="preco">' + moeda(c.valor) + '</span></button>' : '') +
       '</div>' +
       (aceita ? '<button type="button" class="botao claro" id="btnDesistir">Desistir do frete</button>' : ''), "medio");
     $("btnNavegar").onclick = function(){ nav.iniciar(alvoNav, rotuloNav); };
     if ($("btnAceitar")) $("btnAceitar").onclick = function(){ aceitar(c); };
-    if ($("btnCheck")) $("btnCheck").onclick = function(){ abrirQr(c, andando ? "checkout" : "checkin"); };
     if ($("btnDesistir")) $("btnDesistir").onclick = function(){
       if (!confirm("Desistir deste frete? Ele volta a ficar disponível para outros freteiros.")) return;
       rpc("frete_desistir", { p_token:estado.token, p_corrida:c.corridaId }).then(function(d){ estado.dados = d; avisar("Você desistiu do frete."); telaInicio(); }).catch(function(e){ avisar(e.message, true); });
@@ -819,80 +803,26 @@ var App = (function(){
         '<div class="linha-calc"><span>Frete</span><b>' + (c.idaVolta ? "Ida e volta" : "Só ida") + ' · ' + kmTotal(c) + '</b></div>' +
       '</div>' +
       '<button type="button" class="botao navegar" id="btnNavegarAceita"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l7 19-7-4-7 4z"/></svg>Navegar até o ponto de encontro</button>' +
-      '<button type="button" class="botao claro" onclick="App.ir(\'minhas\')">Ver meus fretes</button>' +
+      '<button type="button" class="botao claro" onclick="App.ir(\'minhas\')">Ver fretes aceitos</button>' +
       '<button type="button" class="botao claro" onclick="App.ir(\'inicio\')">Voltar aos fretes</button>', true);
     $("btnNavegarAceita").onclick = function(){ nav.iniciar(c.origemQuery, "Ponto de encontro · " + c.ponto); };
   }
 
   /* ---------- Minhas corridas ---------- */
+  /* Fretes aceitos (22/11): só o que ele confirmou e ainda vai fazer. O que já foi feito ele lança em "Meus fretes"
+     (sem "aguardando pagamento" aqui). Tocar no frete abre a navegação GPS até o local. */
   function telaMinhas(){
     estado.tela = "minhas";
-    const todas = (estado.dados && estado.dados.minhas) || [];
-    const ativas = ativasDe(), hist = todas.filter(function(c){ return ativas.indexOf(c) < 0; });
-    const mes = new Date().getMonth(), ano = new Date().getFullYear();
-    const aReceber = todas.filter(function(c){ return c.status === "concluida" && !c.pago; }).reduce(function(t, c){ return t + Number(c.valor || 0); }, 0);
-    const pagoMes = todas.filter(function(c){ const d = new Date(c.checkout_em || c.confirmado_em); return c.pago && d.getMonth() === mes && d.getFullYear() === ano; }).reduce(function(t, c){ return t + Number(c.valor || 0); }, 0);
-    estado.listaAtivas = ativas.map(function(c){ return paraCorrida(c.vaga, c); });
-    mostrar('<h1 class="titulo">Meus fretes</h1><p class="apoio">Acompanhe os fretes aceitos e o pagamento.</p>' +
-      '<div class="ganhos"><div class="ganho"><span>A receber</span><strong>' + moeda(aReceber) + '</strong></div><div class="ganho verde"><span>Pago no mês</span><strong>' + moeda(pagoMes) + '</strong></div></div>' +
-      (estado.listaAtivas.length ? estado.listaAtivas.map(function(c, i){ return cartaoCorrida(c, i, "a"); }).join("") : '') +
-      (hist.length ? '<span class="rotulo">Histórico</span>' + hist.map(function(c){
-        const v = c.vaga || {};
-        const canc = c.status === "cancelada" || v.status === "cancelada";
-        const st = canc ? ["recusado", "Cancelado"] : c.pago ? ["pago", "Pago"] : c.status === "concluida" ? ["conferido", "Aguardando pagamento"] : ["pendente", c.status];
-        return '<div class="corrida" style="cursor:default"><span class="corrida-ico">' + ICO.local + '</span>' +
-          '<span class="corrida-info"><strong>' + esc(v.destino || "—") + '</strong><span>' + esc(dataBr(v.data)) + ' · ' + kmTotal(v) + '</span></span>' +
-          '<span class="corrida-preco"><strong>' + moeda(c.valor) + '</strong><span class="status ' + st[0] + '">' + esc(st[1]) + '</span></span></div>';
-      }).join("") : (!estado.listaAtivas.length ? '<div class="vazio">' + ICO.vazio + 'Você ainda não aceitou fretes.</div>' : '')), true);
-    document.querySelectorAll("[data-a]").forEach(function(b){ b.onclick = function(){ telaDetalhe(estado.listaAtivas[Number(b.dataset.a)]); }; });
-  }
-
-  /* ---------- Check-in / check-out pelo QR do responsável ---------- */
-  function codigoDe(texto){
-    const t = String(texto || ""), m = /[?&]c=([^&#]+)/.exec(t);
-    const bruto = m ? decodeURIComponent(m[1]) : t, partes = bruto.split(".");
-    return { vaga:partes.length > 1 ? partes[0] : null, codigo:partes[partes.length - 1].replace(/\D/g, "") };
-  }
-  function gps(){
-    return new Promise(function(ok){
-      if (!navigator.geolocation) return ok({});
-      navigator.geolocation.getCurrentPosition(function(p){ ok({ lat:p.coords.latitude, lng:p.coords.longitude }); }, function(){ ok({}); }, { enableHighAccuracy:true, timeout:6000, maximumAge:60000 });
-    });
-  }
-  function abrirQr(c, tipo){
-    estado.qr = { corrida:c.corridaId };
-    $("qrTitulo").textContent = tipo === "checkout" ? "Check-out" : "Check-in";
-    $("qrErro").textContent = ""; $("qrCodigo").value = "";
-    $("qrCaixa").classList.add("aberto");
-    if (window.EasyLocLeitor){
-      estado.leitor = window.EasyLocLeitor.criar({ video:$("qrVideo"), aoLer:usarCodigo });
-      estado.leitor.ligar().catch(function(){ $("qrErro").textContent = "Não foi possível abrir a câmera. Digite o código."; });
-    }
-  }
-  function fecharQr(){ try { if (estado.leitor) estado.leitor.desligar(); } catch (e) {} estado.leitor = null; estado.qr = null; $("qrCaixa").classList.remove("aberto"); }
-  async function usarCodigo(texto){
-    if (!estado.qr || estado.qr.enviando) return;
-    const cod = codigoDe(texto).codigo;
-    if (cod.length !== 6){ $("qrErro").textContent = "Código inválido."; return; }
-    estado.qr.enviando = true;
-    try {
-      const d = await rpc("frete_presenca", { p_token:estado.token, p_corrida:estado.qr.corrida, p_codigo:cod, p_gps:await gps() });
-      estado.dados = d; fecharQr();
-      avisar(d.registro === "checkout" ? "Check-out feito. Frete concluído!" : "Check-in feito. Bom frete!");
-      telaMinhas();
-    } catch (e) { $("qrErro").textContent = e.message; if (estado.qr) estado.qr.enviando = false; }
-  }
-  // QR lido pela câmera do celular (fora do app): abre este endereço com ?c=<vaga>.<código>
-  async function registrarPeloLink(c){
-    const ref = codigoDe("?c=" + c);
-    history.replaceState(null, "", location.pathname);
-    const corrida = ((estado.dados && estado.dados.minhas) || []).filter(function(x){ return x.vaga_id === ref.vaga && ["confirmada", "em_andamento"].indexOf(x.status) >= 0; })[0];
-    if (!corrida){ telaMinhas(); return avisar("Você não tem frete aceito para este QR.", true); }
-    try {
-      const d = await rpc("frete_presenca", { p_token:estado.token, p_corrida:corrida.id, p_codigo:ref.codigo, p_gps:await gps() });
-      estado.dados = d; avisar(d.registro === "checkout" ? "Check-out feito. Frete concluído!" : "Check-in feito. Bom frete!");
-    } catch (e) { avisar(e.message, true); }
-    telaMinhas();
+    estado.listaAtivas = ativasDe().map(function(c){ return paraCorrida(c.vaga, c); });
+    mostrar('<h1 class="titulo">Fretes aceitos</h1><p class="apoio">Fretes que você confirmou e ainda vai fazer. Toque num frete para abrir o GPS até o local.</p>' +
+      (estado.listaAtivas.length ? estado.listaAtivas.map(function(c, i){ return cartaoCorrida(c, i, "a"); }).join("")
+        : '<div class="vazio">' + ICO.vazio + 'Nenhum frete aguardando você agora.</div>'), true);
+    document.querySelectorAll("[data-a]").forEach(function(b){ b.onclick = function(){
+      const c = estado.listaAtivas[Number(b.dataset.a)];
+      telaDetalhe(c);
+      const andando = c.status === "em_andamento";
+      nav.iniciar(andando ? c.destinoQuery : c.origemQuery, andando ? c.local : "Ponto de encontro · " + (c.ponto || c.local));
+    }; });
   }
 
   function sair(){
@@ -904,16 +834,12 @@ var App = (function(){
   /* ---------- Início ---------- */
   function iniciar(){
     atualizarTopo();
-    $("qrFechar").onclick = fecharQr;
-    $("qrForm").onsubmit = function(e){ e.preventDefault(); usarCodigo($("qrCodigo").value); };
-    const doLink = new URLSearchParams(location.search).get("c");
     estado.token = pegar(TOKEN);
     if (!estado.token){
-      if (doLink){ guardar(PEND, doLink, sessionStorage); setTimeout(function(){ avisar("Entre na sua conta para registrar o check-in."); }, 300); }
       return telaEntrar();
     }
     mostrar('<div class="esqueleto"></div><div class="esqueleto"></div>');
-    recarregar().then(function(){ if (doLink) registrarPeloLink(doLink); else telaInicio(); }).catch(function(){ telaEntrar(); });
+    recarregar().then(function(){ telaInicio(); }).catch(function(){ telaEntrar(); });
     // corridas novas aparecem sozinhas (sem atrapalhar quem está em outra tela)
     setInterval(function(){
       if (!estado.token || document.hidden || ["inicio", "minhas"].indexOf(estado.tela) < 0 || document.body.classList.contains("navegando")) return;
@@ -1179,6 +1105,7 @@ var App = (function(){
     return { iniciar:iniciar, sair:sair, passo:passo, recentrar:recentrar, som:som, opcoes:opcoes, externo:externo, voltarBase:voltarBase, _estado:n };
   })();
 
+  window.FreteiroBase = { estado:estado, rpc:rpc, mostrar:mostrar, esc:esc, moeda:moeda, avisar:avisar, ir:ir };
   return { iniciar:iniciar, iniciarMapa:iniciarMapa, ir:ir, menu:menu, sair:sair, nav:nav };
 })();
 
@@ -1186,5 +1113,6 @@ function iniciarMapaGoogle(){ App.iniciarMapa(); }
 document.addEventListener("DOMContentLoaded", App.iniciar);
 </script>
 <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBRTnhpv3S0kqV9G56x0npaxd6YABj8dnI&libraries=geometry&language=pt-BR&region=BR&callback=iniciarMapaGoogle&loading=async"></script>
+<script src="freteiro-lancamentos.js?v=20261123-solicitacao-interna"></script>
 </body>
 </html>

@@ -230,7 +230,25 @@ let avisosStatus = { ...AVISOS_PADRAO };
 export function definirAvisosStatus(textos){ avisosStatus = { ...AVISOS_PADRAO }; for(const k of Object.keys(AVISOS_PADRAO)) if(textos && String(textos[k] || "").trim()) avisosStatus[k] = String(textos[k]).trim();  regrasPedido = String(textos?.regras || "").trim(); }
 // Regras do pedido (18/11/2026): texto fixo de Comercial > Contratos > "Regras do pedido", no fim de todo pedido.
 let regrasPedido = "";
-function regrasPedidoHtml(model){ if(!regrasPedido || model?.semRegras) return ""; return '<section class="cpj-order-regras"><h2>Regras do pedido</h2><div>' + esc(regrasPedido) + '</div></section>'; }
+// 22/11/2026: as regras podem vir formatadas (negrito, itálico e cor, editor de Contratos › Regras do pedido).
+// Só passam essas marcações; o resto vira texto. Texto sem marcação (regras antigas) mantém as quebras de linha.
+function regrasFormatadasHtml(txt){
+  const raw = String(txt || "");
+  if(!/<\/?(strong|b|em|i|span|br|div|p)\b/i.test(raw) || typeof document === "undefined") return esc(raw).replace(/\r?\n/g, "<br>");
+  const t = document.createElement("template"); t.innerHTML = raw;
+  const ok = { STRONG: "strong", B: "strong", EM: "em", I: "em", DIV: "div", P: "div", SPAN: "span" };
+  const no = (n) => {
+    if(n.nodeType === 3) return esc(n.nodeValue).replace(/\n/g, "<br>");
+    if(n.nodeType !== 1) return "";
+    if(n.tagName === "BR") return "<br>";
+    const dentro = Array.from(n.childNodes).map(no).join("");
+    const tag = ok[n.tagName]; if(!tag) return dentro;
+    if(tag === "span"){ const c = String(n.style?.color || ""); const hex = /^#[0-9a-f]{6}$/i.test(c) ? c : (c.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/) ? "#" + c.match(/\d+/g).map((x) => Number(x).toString(16).padStart(2, "0")).join("") : ""); return hex ? '<span style="color:' + hex + '">' + dentro + "</span>" : dentro; }
+    return "<" + tag + ">" + dentro + "</" + tag + ">";
+  };
+  return Array.from(t.content.childNodes).map(no).join("");
+}
+function regrasPedidoHtml(model){ if(!regrasPedido || model?.semRegras) return ""; return '<section class="cpj-order-regras"><h2>Regras do pedido</h2><div>' + regrasFormatadasHtml(regrasPedido) + '</div></section>'; }
 function avisoStatusHtml(st){
   if(!st || !["orcamento", "pre_reserva"].includes(st.chave)) return "";
   const data = st.ate ? String(st.ate).slice(0, 10).split("-").reverse().join("/") : "a data combinada";
@@ -381,7 +399,7 @@ export function estilosImpressaoPedido(horizontal=false){
   return `${identidade}@page{size:A4 portrait;margin:0 0 12mm}.cpj-order-table thead.pa-sr{position:static;width:auto;height:auto;overflow:visible;clip-path:none}.cpj-order-table thead.pa-sr th{height:10mm;padding:0;border:0;font-size:0;line-height:0}.cpj-order-render-group,.cpj-order-financeiro{padding-top:6mm}${estilosPlanta}body{margin:0;font-family:Arial,sans-serif;color:#34352f}.cpj-order-paper{padding:0 14mm;box-shadow:none}.cpj-order-paper .cpj-order-letterhead{margin:0 -14mm;padding:9mm 14mm}.cpj-order-notes{padding:0 14mm}.cpj-order-table thead{display:table-header-group}.cpj-order-table tr,figure,.cpj-order-requester{break-inside:avoid}.cpj-order-render-group{break-inside:auto}.cpj-order-render-group>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4mm}.cpj-order-render-group figure{margin:0}.cpj-order-render-group figure:first-child{grid-column:auto}.cpj-order-renders{break-before:auto}.cpj-order-renders>h2,.cpj-order-render-group h3{break-after:avoid}.cpj-order-notes{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:24px;font-size:12px;line-height:1.6}.pa-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}*{print-color-adjust:exact}${estilosHorizontal}`;
 }
 export async function imprimirPedido(model, { decorador = null, empresa = null, observacao = '', layout = null } = {}){
-  const css = new URL('./catalogo-projetos.css?v=20261121-total-card',import.meta.url).href;
+  const css = new URL('./catalogo-projetos.css?v=20261122-regras-formatadas',import.meta.url).href;
   // Decorador com os valores ocultos (botão do olho no catálogo): o PDF sai sem as colunas de valores.
   const semValores = document.documentElement.classList.contains('catalogo-sem-valores');
   const horizontal = (layout || layoutPedido()) === 'horizontal';

@@ -109,6 +109,25 @@
       return '<div class="ec-responsavel"><span class="ec-responsavel-foto">'+esc(iniciais)+(/^https?:\/\//i.test(url)?'<img src="'+esc(url)+'" alt="" loading="lazy">':'')+'</span><div><small>Responsável · '+esc(r.etapa)+'</small><strong>'+esc(r.nome)+'</strong></div></div>';
     }).join('')+'</div>';
   }
+  /* 22/11: responsável da etapa ao lado do decorador solicitante, no cabeçalho escuro do documento; ao passar o mouse
+     (ou focar) aparece a equipe inteira da etapa, com foto. */
+  function fotoPessoa(r){
+    let url=r.foto_url||'';
+    if(!url&&r.funcionario_id&&s.sb.storage)url=s.sb.storage.from('avatares').getPublicUrl(s.empresa+'/'+r.funcionario_id+'.jpg').data.publicUrl;
+    const iniciais=String(r.nome||'').trim().split(/\s+/).slice(0,2).map(n=>n[0]||'').join('').toUpperCase();
+    return '<span class="ec-dr-foto">'+esc(iniciais)+(/^https?:\/\//i.test(url)?'<img src="'+esc(url)+'" alt="" loading="lazy" onerror="this.remove()">':'')+'</span>';
+  }
+  function marcarResponsavel(){
+    const alvo=$('ecDetalhe')?.querySelector('.cpj-order-requester');if(!alvo)return;
+    alvo.parentElement.querySelector('.ec-doc-resp')?.remove();
+    const r=s.responsaveis[0];if(!r)return;
+    const equipe=[];const vistos=new Set();
+    s.responsaveis.forEach(x=>(x.equipe||[]).forEach(q=>{const k=(q.funcionario_id||'')+q.nome;if(!vistos.has(k)){vistos.add(k);equipe.push(q);}}));
+    const el=document.createElement('div');el.className='ec-doc-resp';el.tabIndex=0;
+    el.innerHTML=fotoPessoa(r)+'<div><span>RESPONSÁVEL · '+esc(String(r.etapa||'').toUpperCase())+'</span><strong>'+esc(r.nome)+'</strong></div>'+
+      (equipe.length?'<div class="ec-dr-equipe" role="tooltip"><b>Equipe'+(r.etapa?' · '+esc(r.etapa):'')+'</b>'+equipe.map(q=>'<div class="ec-dr-pessoa">'+fotoPessoa(q)+'<span><strong>'+esc(q.nome)+'</strong><small>'+(q.papel==='responsavel'?'Responsável':q.free?'Freelancer':'Equipe')+'</small></span></div>').join('')+'</div>':'');
+    alvo.after(el);
+  }
   function detalhe(){
     const b=s.base,p=b.pedido,entrega=s.etapa==='entrega',atual=b.atual;
     if(b.somente_consulta)mensagem(b.bloqueio);
@@ -119,6 +138,7 @@
     if(s.documento)$('ecDetalhe').querySelector('.ec-pedido-identificacao')?.remove();
     const cabecalho=$('ecDetalhe').querySelector('.ec-cab');if(cabecalho&&!cabecalho.children.length)cabecalho.remove();
     if(s.documento)window.PedidoConferencia.montar($('ecForm').querySelector('.ec-tabela-wrap'),s.documento,entrega);
+    marcarResponsavel();
     if(window.MontagemRegistros){
       const host=document.createElement('section');host.className='ec-montagem-registros';
       $('ecDetalhe').querySelector('.ec-conteudo').prepend(host);
@@ -131,7 +151,7 @@
       evento.preventDefault();abrirFoto(link);
     };
     $('ecForm').onchange=async evento=>{const el=evento.target.closest('[data-evidencia]');if(!el)return;const i=Number(el.dataset.evidencia),seq=s.sequencia;try{if(!el.files[0])return;if(s.novas.filter(e=>e.chave===s.base.itens[i].chave).length>=8)throw Error('Limite de oito fotos por item neste registro');const foto=await window.EvidenciasOperacao.preparar(el.files[0],s.base.itens[i].chave);if(seq!==s.sequencia)return;foto.descricao=el.dataset.fotoTipo||foto.descricao||'';s.novas.push(foto);s.sujo=true;galerias();}catch(e){mensagem(e.message);}finally{el.value='';}};galerias();
-    $('ecForm').addEventListener('pedido-conferencia:layout',()=>{galerias();resumo();});
+    $('ecForm').addEventListener('pedido-conferencia:layout',()=>{galerias();resumo();marcarResponsavel();});
     $('ecForm').oninput=()=>{s.sujo=true;resumo();};$('ecForm').onsubmit=salvar;resumo();
   }
   function abrirFoto(link){

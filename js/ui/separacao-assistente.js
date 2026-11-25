@@ -10,9 +10,9 @@
   const token=()=>{let t=sessionStorage.getItem(tokenKey);if(!t){t=crypto.randomUUID();sessionStorage.setItem(tokenKey,t);}return t;};
   const campos={problema:'O que aconteceu',quando_identificado:'Quando foi identificado',porque_agora:'Por que foi identificado agora',verificacoes:'Verificações realizadas',solucao_sugerida:'Solução sugerida pela equipe',pendencias:'Pendências para decisão'};
   return window.EasyLocAssistenteSolicitacao.abrir({
-   tipo:'separacao',titulo:'Reportar problema · '+(nome||contexto.item),assistente:'Auxiliar de estoque · IA',ctx,chave,
+   tipo:'separacao',titulo:'Reportar problema · '+(nome||contexto.item),assistente:'Miguel · Estoque',ctx,chave,
    dados:{pedido_id:pedido,linha_id:linha,item_id:item},
-   saudacao:()=>`Vamos entender o que aconteceu com ${nome||contexto.item}. Vou reunir as informações para a Gestão do Acervo, e você revisa tudo antes do envio. O que vocês encontraram e quantas unidades foram afetadas?`,
+   saudacao:()=>`Sou o Miguel, do estoque. Vamos entender o que aconteceu com ${nome||contexto.item}. Vou reunir as informações para a Gestão do Acervo, e você revisa tudo antes do envio. O que vocês encontraram e quantas unidades foram afetadas?`,
    resumoHtml:(v,esc)=>`<h3>Ocorrência para Gestão do Acervo</h3><p><strong>${esc(contexto.motivos.find(m=>m.id===v.motivo_id)?.nome||'Problema')} · ${esc(v.quantidade)} unidade(s)</strong></p>`+Object.entries(campos).map(([k,label])=>`<p><strong>${label}</strong><br>${esc(v[k])}</p>`).join('')+(v.sem_foto_motivo?`<p><strong>Foto pendente</strong><br>${esc(v.sem_foto_motivo)}</p>`:''),
    enviarFoto:async(blob,path)=>{const bucket=sb.storage.from('separacao-ocorrencias');const u=await bucket.upload(path,blob,{contentType:'image/jpeg',upsert:false});if(u.error)throw u.error;const f=await bucket.createSignedUrl(path,86400);if(f.error)throw f.error;return f.data.signedUrl;},
    aoRecomecar:()=>sessionStorage.removeItem(tokenKey),

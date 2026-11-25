@@ -37,7 +37,10 @@ async function fixture(){
   if ($4->>'precisaoGPS')::numeric>100 or $4->>'latitude' is null or $4->>'longitude' is null then raise exception 'GPS impreciso';end if;
   insert into operacao_registros values($2,$3,$4) on conflict(etapa_id,tipo) do nothing;
   return $4||jsonb_build_object('enviado',true,'chegada',jsonb_build_object('localStatus','NO_LOCAL'));end$$;`);
- await db.exec(fs.readFileSync('supabase/migrations/20261031004000_montador_cpf_checkin.sql','utf8'));return db;
+ await db.exec(fs.readFileSync('supabase/migrations/20261031004000_montador_cpf_checkin.sql','utf8'));
+ await db.exec(`alter table operacao_etapas add column data date default current_date,add column hora time default '08:00';
+  alter table operacao_registros add column id uuid default gen_random_uuid(),add column empresa_id uuid,add column autor text,add column atualizado_em timestamptz default now();`);
+ await db.exec(fs.readFileSync('supabase/migrations/20261121000200_montador_foto_sem_gps.sql','utf8'));return db;
 }
 test('CPF cifrado e legado: PIN atual, erros genéricos, contador de erros persistente e RPC restrita',async()=>{
  const db=await fixture();try{
@@ -61,14 +64,22 @@ test('check-in inicia automaticamente com horário original; abrir sem check-in 
  await db.exec("update operacao_apontamentos set status='ENCERRADO',fim=now()");assert.equal(await sincronizar(),null);assert.equal((await db.query('select count(*)::int n from operacao_apontamentos')).rows[0].n,1);
  }finally{await db.close();}
 });
-test('foto sozinha registra chegada; GPS inválido não cria início; empresa e quantidade não são gravadas',async()=>{
+test('foto sem GPS registra chegada e início; dados de localização são descartados e encerramento continua protegido',async()=>{
  const db=await fixture();try{
  const foto=async(d)=>(await db.query('select mont_equipe_foto($1,$2,$3) r',['ana',etapa,d])).rows[0].r;
- const d={foto:'https://teste.local/foto.jpg',latitude:-23,longitude:-46,precisaoGPS:10,empresa:'Ignorar',quantidade:99};
- await assert.rejects(foto({...d,precisaoGPS:500}),/GPS/);assert.equal((await db.query('select count(*)::int n from operacao_apontamentos')).rows[0].n,0);
+ const d={foto:'https://teste.local/foto.jpg',empresa:'Ignorar',quantidade:99};
+ await assert.rejects(foto({}),/foto/);assert.equal((await db.query('select count(*)::int n from operacao_apontamentos')).rows[0].n,0);
+ await assert.rejects(db.query('select mont_equipe_foto($1,$2,$3)',['outro',etapa,d]),/acesso/);
  const r=await foto(d);assert.equal(r.apontamento.idEtapa,etapa);assert.equal(r.apontamento.status,'ATIVO');assert.equal(r.enviado,true);
  const salvo=(await db.query('select dados from operacao_registros')).rows[0].dados;assert.equal('empresa' in salvo,false);assert.equal('quantidade' in salvo,false);
+ for(const k of ['latitude','longitude','precisaoGPS'])assert.equal(k in salvo,false);
+ assert.equal(salvo.chegada.localStatus,'NAO_COLETADA');assert.ok(salvo.chegada.em);assert.ok(salvo.chegada.previsto);assert.equal('distancia' in salvo.chegada,false);
+ const legado=(await db.query('select mont_registro_salvar($1,$2,$3,$4) r',['ana',etapa2,'equipe',d]).catch(e=>e));assert.match(legado.message,/Inicie este evento/);
  const outroRegistro=await foto(d);assert.equal(outroRegistro.apontamento.id,r.apontamento.id);
+ await db.exec('delete from operacao_registros');
+ await foto({...d,latitude:'inválida',longitude:99,precisaoGPS:500});
+ const antigo=(await db.query('select dados from operacao_registros')).rows[0].dados;
+ for(const k of ['latitude','longitude','precisaoGPS'])assert.equal(k in antigo,false,'cliente antigo não grava GPS');
  await db.exec("update operacao_apontamentos set status='ENCERRADO'");await assert.rejects(foto(d),/encerrado/);assert.equal((await db.query('select count(*)::int n from operacao_apontamentos')).rows[0].n,1);
  }finally{await db.close();}
 });

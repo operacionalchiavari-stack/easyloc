@@ -14,6 +14,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.93.3";
 import { segundaEtapaPendente, MENSAGEM_2FA } from "../_shared/dois-fatores.ts";
 // @ts-ignore módulo JS puro, compartilhado com os testes em node
 import * as L from "./leitura.mjs";
+import { esquemaCobranca, instrucoesCobranca, normalizarCobranca } from "./cobranca.mjs";
 
 const cors = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type", "Access-Control-Allow-Methods": "POST, OPTIONS" };
 const url = Deno.env.get("SUPABASE_URL")!;
@@ -121,6 +122,20 @@ async function lerPdf(base64: string, nome: string, empresa: string) {
 function limparGrade(g: any): any[][] {
   if (!Array.isArray(g)) return [];
   return g.slice(0, 8000).map((l: any) => (Array.isArray(l) ? l.slice(0, 40).map((c: any) => (typeof c === "number" ? c : String(c ?? "").slice(0, 200))) : []));
+}
+
+async function lerCobranca(ctx:any,body:any){
+  const arq=body.arquivo||{},nome=String(arq.nome||'cobranca').slice(0,200);let conteudo:any;
+  if(arq.formato==='pdf'){
+    if(typeof arq.pdf_base64!=='string'||!arq.pdf_base64.length||arq.pdf_base64.length>14*1024*1024)throw Error('Envie um PDF de até 10 MB.');
+    conteudo=[{type:'file',file:{filename:/\.pdf$/i.test(nome)?nome:nome+'.pdf',file_data:'data:application/pdf;base64,'+arq.pdf_base64}},{type:'text',text:'Leia os serviços desta cobrança.'}];
+  }else if(arq.formato==='grade'){
+    if(!Array.isArray(arq.grade)||arq.grade.length>8000||arq.grade.some((x:any)=>!Array.isArray(x)||x.length>40))throw Error('Planilha muito grande. Envie até 8.000 linhas e 40 colunas.');
+    const grade=limparGrade(arq.grade);if(!grade.length)throw Error('A planilha está vazia.');
+    conteudo=JSON.stringify(grade);if(conteudo.length>300000)throw Error('Divida a planilha em arquivos menores para conferir todos os serviços.');
+  }else throw Error('Envie uma cobrança em PDF, Excel ou CSV.');
+  const r=await openaiJson([{role:'system',content:instrucoesCobranca},{role:'user',content:conteudo}], 'cobranca_servicos',esquemaCobranca,140000,ctx.empresa);
+  return {arquivo:nome,linhas:normalizarCobranca(r,L.lerData)};
 }
 
 // ------------------------------------------------------------------ fatura do cartão (2026-11-13)
@@ -710,7 +725,8 @@ Deno.serve(comUsoIA("clara", async (req) => {
     const db = createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false }, global: { headers: { Authorization: authorization } } });
     const ctx = { empresa, user, db };
     const editar = ["ler_extrato", "organizar"].includes(body.action);
-    if (!await pode(editar ? "financeiro.fluxo.editar" : "financeiro.fluxo.visualizar")) return resposta({ error: "Você não tem permissão para isso no Financeiro." }, 403);
+    if (!await pode(body.action==='ler_cobranca' ? 'financeiro.contas_pagar.editar' : editar ? "financeiro.fluxo.editar" : "financeiro.fluxo.visualizar")) return resposta({ error: "Você não tem permissão para isso no Financeiro." }, 403);
+    if (body.action === 'ler_cobranca') return resposta(await lerCobranca(ctx,body));
     if (body.action === "ler_extrato") return resposta(await lerExtrato(ctx, body));
     if (body.action === "organizar") return resposta(await organizar(ctx, body));
     if (body.action === "cartao_sugerir") return resposta(await cartaoSugerir(ctx, body));

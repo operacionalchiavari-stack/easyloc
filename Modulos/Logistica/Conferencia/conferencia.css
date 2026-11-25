@@ -508,3 +508,23 @@ html:root:is(#cf#cf#cf#cf,html) .cf-setor-dano{display:block;margin-top:6px;back
 html:root:is(#cf#cf#cf#cf,html) .cf-setor-dano.escolhido{border:1px solid #123f86;color:#123f86;background:#eaf0fa}
 html:root:is(#cf#cf#cf#cf,html) .cf-setor-dano[hidden]{display:none}
 .cf-dano-setor-feito{display:block;font-size:11.5px;color:#123f86;margin-top:2px}
+/* 22/11/2026: janela da segunda contagem mais bonita (pedido do usuário) — sem a moldura escura em volta da lista,
+   cartões leves com a 1ª contagem numa caixa, aviso em âmbar no topo e o botão na cor principal da empresa. */
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) dialog.cf-segunda{padding:0;border:0;border-radius:22px;overflow:hidden;box-shadow:0 24px 60px rgba(15,23,42,.28)}
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) dialog.cf-segunda form{display:flex;flex-direction:column;max-height:min(88vh,820px)}
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) dialog.cf-segunda header{display:flex;gap:16px;padding:26px 28px 18px;margin:0;background:linear-gradient(180deg,#fff8eb,#fff);border-bottom:1px solid #f1e7d2}
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) .cf-seg-badge{width:56px;height:56px;border-radius:50%;background:#fbbf24;color:#5b3a00;box-shadow:0 0 0 6px #fdecc8;font-size:24px}
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) dialog.cf-segunda header small{font:600 12px Inter,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#9a7b3c}
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) dialog.cf-segunda header h2{margin:2px 0 0;font:700 24px/1.2 Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important;color:#1f2328}
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) dialog.cf-segunda .cf-confirmacao-corpo{padding:18px 28px 6px;overflow:auto;flex:1;min-height:0}
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) .cf-seg-lista{max-height:none;overflow:visible;gap:10px;border:0!important;outline:0!important}
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) .cf-seg-lista li{grid-template-columns:60px minmax(0,1fr) auto;padding:12px 14px;border:1px solid #edf0f4;border-left:1px solid #edf0f4;border-radius:16px;background:#fafbfc}
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) .cf-seg-foto{width:60px;height:60px;border-radius:12px;background:#fff;border:1px solid #edf0f4}
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) .cf-seg-qtd{align-items:center;min-width:86px;padding:8px 12px;border-radius:12px;background:#fff;border:1px solid #edf0f4}
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) .cf-seg-qtd small{font-size:10px;letter-spacing:.08em}
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) .cf-seg-qtd b{font-size:24px}
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) .cf-seg-passos{margin:18px 0 4px;gap:8px}
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) .cf-seg-passos li{background:#f4f7fb;border-radius:12px;padding:10px 12px}
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) .cf-seg-passos li::before{background:var(--el-button-primary-bg,#123f86)}
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) dialog.cf-segunda footer{display:flex;justify-content:flex-end;padding:16px 28px 22px;margin:0;border-top:1px solid #eef1f4;background:#fff}
+html:root:is(#cfseg#cfseg#cfseg#cfseg,html) dialog.cf-segunda footer .btn{min-height:48px;padding:0 26px!important;border:0!important;border-radius:999px!important;background:var(--el-button-primary-bg,#123f86)!important;color:#fff!important;font:600 15px Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important}

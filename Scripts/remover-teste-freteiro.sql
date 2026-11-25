@@ -1,0 +1,21 @@
+-- Apaga o freteiro de teste criado por Scripts/teste-freteiro.sql (celular 24997770001) e tudo o que nasceu dele.
+set role postgres;
+create temp table _f on commit drop as select id, fornecedor_id, caminhao_id from frete_freteiros where telefone = '24997770001';
+create temp table _p on commit drop as select pagar_id id from frete_lancamentos where freteiro_id in (select id from _f) and pagar_id is not null;
+create temp table _fe on commit drop as select distinct fechamento_id id from frete_relatorios where freteiro_id in (select id from _f) and fechamento_id is not null;
+delete from fin_fechamento_linhas where titulo_id in (select id from _p) or fechamento_id in (select id from _fe);
+delete from fin_fechamentos where id in (select id from _fe) and not exists (select 1 from fin_fechamento_linhas l where l.fechamento_id = fin_fechamentos.id);
+delete from fin_custos_evento where pagar_id in (select id from _p);
+update frete_lancamentos set pagar_id = null where freteiro_id in (select id from _f);
+delete from fin_pagar where id in (select id from _p);
+delete from frete_lancamentos where freteiro_id in (select id from _f);
+       delete from frete_veiculos where freteiro_id in (select id from _f);
+delete from frete_relatorios where freteiro_id in (select id from _f);
+delete from frete_anuncios where freteiro_id in (select id from _f);
+delete from frete_viagens where caminhao_id in (select caminhao_id from _f);
+delete from operacao_etapa_caminhoes where caminhao_id in (select caminhao_id from _f);
+delete from app_sessoes where freteiro_id in (select id from _f);
+update frete_freteiros set caminhao_id = null, fornecedor_id = null where id in (select id from _f);
+delete from caminhoes where id in (select caminhao_id from _f);
+delete from fornecedores where id in (select fornecedor_id from _f);
+delete from frete_freteiros where id in (select id from _f);

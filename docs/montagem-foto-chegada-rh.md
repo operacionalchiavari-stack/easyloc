@@ -1,3 +1,11 @@
+# Foto da equipe sem GPS — 21/11/2026
+
+O envio da foto da equipe não solicita nem armazena localização. A foto continua registrando horário de chegada, atraso e apontamento da etapa. A migração `20261121000200_montador_foto_sem_gps.sql` remove a exigência no servidor e descarta coordenadas recebidas de versões antigas do app. Novos registros usam `chegada.localStatus = NAO_COLETADA`; esse valor não significa presença confirmada por GPS. Registros anteriores são preservados.
+
+Validação: `node --test tests/montador-cpf-checkin.test.cjs` e `node tests/montador-chegada-browser.cjs` (envio com GPS negado e nenhuma chamada de localização).
+
+As notas abaixo documentam o comportamento anterior. As regras de GPS descritas nelas foram substituídas pela atualização acima.
+
 # Foto da equipe e indicadores de Montagem
 
 O responsável pela etapa envia a foto pelo `Cronograma/montador.html`. O envio exige sessão do responsável (ou supervisor), foto e GPS atual com precisão de até 100 metros. A chegada usa o instante em que o servidor recebe a chamada, antes do upload da foto, e o horário da etapa em São Paulo. O primeiro envio permanece registrado; repetição não substitui a chegada.

@@ -1534,3 +1534,5 @@ html:is(#cpj-render-menor,html) .cpj-order-paper.is-horizontal .cpj-order-amb.ha
    Reposição fica mais apagada para não ser confundida com o valor cobrado. Vale na tela e no PDF. */
 .cpj-order-table .pa-valor-total b{display:inline-block;padding:5px 10px;border-radius:8px;background:#f5f2ec;font-weight:700;color:#1f1d1a;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .cpj-order-table td.cpj-order-valor:has(+td.cpj-order-valor+td.pa-valor-total){color:#9a968c;font-size:.92em}
+/* 22/11/2026: regras formatadas (negrito/itálico/cor) */
+.cpj-order-regras div strong{font-weight:700;color:inherit}.cpj-order-regras div em{font-style:italic}.cpj-order-regras div div{white-space:inherit}

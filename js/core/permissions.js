@@ -200,6 +200,7 @@
     [/Rastreamento/i, 'logistica.planejamento.visualizar'],
     [/Logistica\/Cameras\//i, 'logistica.planejamento.visualizar'], // Câmeras ao vivo (CameraApp é o app do celular)
     [/PainelLogistico/i, 'logistica.planejamento.visualizar'],
+    [/Logistica\/cadastro-prestadores/i, 'logistica.planejamento.visualizar'], // Cadastros › Free e Uber (aprovação dos free saiu do RH)
     [/Cronograma/i, 'logistica.cronograma.visualizar'],
     [/Expedicao|EntregasColetas/i, 'logistica.expedicao.visualizar'],
     [/Planejamento|Roteirizacao|EquipeRotas|cadastro-caminhoes/i, 'logistica.planejamento.visualizar'],

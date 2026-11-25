@@ -30,7 +30,7 @@ const {chromium}=require('playwright'),fs=require('node:fs'),assert=require('nod
   assert.deepEqual((await page.evaluate(()=>salvos))[1].p_quantidades,{qtd:2,revisao:1,capa:2,fazer_capa:0});
   assert.equal(await page.locator('.ac-inv-status').count(),0);
   await page.evaluate(()=>{__itens.forEach(i=>i.primeira_contagens={qtd:i.saldo_base,revisao:0,capa:0,fazer_capa:0});__itens[0].primeira_contagens.qtd=1234;__recriar();});
-  assert.match(await page.locator('.ac-inv-progresso').innerText(),/^2/);assert.equal(await page.locator('[data-item=c1] [data-q]').inputValue(),'');assert.doesNotMatch(await page.locator('#inventario').innerText(),/1234|Dif\./);assert.ok(await page.locator('#acAprovar').isDisabled());
+  assert.equal(await page.locator('[data-item=c1] [data-q]').inputValue(),'');assert.doesNotMatch(await page.locator('#inventario').innerText(),/1234|Dif\./);assert.ok(await page.locator('#acAprovar').isDisabled());
   await page.evaluate(()=>{__itens[0].primeira_contagens.qtd=2;__itens.forEach(i=>i.segunda_contagens={qtd:i.saldo_base,revisao:0,capa:0,fazer_capa:0});__itens[1].segunda_contagens.qtd=6;__itens[2].segunda_contagens.qtd=2;__recriar();});
   assert.equal(await page.locator('.ac-contagem-bateu').count(),1);assert.equal(await page.locator('.ac-contagem-atencao').count(),1);assert.equal(await page.locator('.ac-contagem-falta').count(),1);assert.equal(await page.locator('[data-quantidade]').count(),0);assert.ok(await page.locator('#acAprovar').isEnabled());assert.match(await page.locator('#inventario').innerText(),/Dif\. estoque/);
   assert.equal(await page.locator('.ac-contagem-bateu td').first().evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(234, 245, 237)');

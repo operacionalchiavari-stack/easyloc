@@ -42,6 +42,7 @@
       await window.carregarMotivosLogistica(host, state.empresaId);
       await window.carregarQualidadeAcervo(host, state.empresaId);
       await window.carregarParametrosUber?.(host, state.empresaId);
+      await window.carregarParametrosFretePeriodo?.(host, state.empresaId);
       await window.carregarParametrosDivergencias?.(host, state.empresaId);
       await window.carregarParametrosCarregamento?.(host, state.empresaId);
       await window.carregarParametrosAppMontador?.(host, state.empresaId);
@@ -147,6 +148,11 @@
       if (!empresa) throw Error('Dados da empresa não encontrados.');
       Object.assign(state, { empresa, config: config || {}, financeiro, identidadeVisual, dashboard: dashboard || {} });
       await carregarSecao('dados'); pronto = true; salvar.disabled = !podeEditar(); status.textContent = '';
+      const abaInicial = new URLSearchParams(location.search).get('aba');
+      if (abas.some(aba => aba.dataset.parametroAba === abaInicial)) {
+        if (document.readyState === 'loading') await new Promise(resolve => document.addEventListener('DOMContentLoaded', resolve, { once: true }));
+        await selecionar(abaInicial);
+      }
     } catch (erro) { status.textContent = 'Não foi possível carregar os parâmetros: ' + erro.message; }
   })();
 })();

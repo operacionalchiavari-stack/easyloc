@@ -537,7 +537,7 @@
         const numPed = ped ? numeroPedidoCard(ped.numero_pedido || t.pedido_numero) : '<span class="fin-sem-pedido">' + esc(t.descricao || "Lançamento") + "</span>";
         const quem = esc((ped && ped.cliente_nome) || t.cliente_nome || "—") + (ped ? '<small class="fin-linha-meta">' + esc(metaPedido(ped).filter((x) => x !== ped.local_nome).join(" · ")) + "</small>" : "");
         // Nov/2026: parcela embaixo do vencimento e sem a coluna "Recebido" (linha mais fina, mais espaço para pedido · cliente).
-        return "<tr><td><b>" + dataBr(t.vencimento) + '</b><small class="fin-parcela-venc">Parcela ' + t.parcela + "/" + t.parcelas + "</small>" + alertaVenc(t) + '</td><td class="fin-num-ped">' + numPed + '</td><td class="fin-quem"><div class="fin-quem-foto">' + fotoCliente(ped, t, "peq") + "<div>" + quem + '</div></div></td><td class="fin-local">' + esc((ped && ped.local_nome) || "—") + '</td><td><span class="fin-chip ' + t.componente + '">' + DIV[t.componente] + "</span></td><td>" + contaHtml(t.conta_id) +
+        return "<tr><td>" + window.FinanceiroComentarios.botao(t, "receber") + "<b>" + dataBr(t.vencimento) + '</b><small class="fin-parcela-venc">Parcela ' + t.parcela + "/" + t.parcelas + "</small>" + alertaVenc(t) + '</td><td class="fin-num-ped">' + numPed + '</td><td class="fin-quem"><div class="fin-quem-foto">' + fotoCliente(ped, t, "peq") + "<div>" + quem + '</div></div></td><td class="fin-local">' + esc((ped && ped.local_nome) || "—") + '</td><td><span class="fin-chip ' + t.componente + '">' + DIV[t.componente] + "</span></td><td>" + contaHtml(t.conta_id) +
           '</td><td class="num">' + brl(t.valor) + (Number(t.recebido) > 0 && Number(t.recebido) < Number(t.valor) ? '<small class="fin-parcial">recebido ' + brl(t.recebido) + "</small>" : "") + "</td>" + '<td><span class="fin-status ' + cls + '">' + rot + "</span></td>" + faltaNoPedido(t) + acoesR(t) + "</tr>";
       }).join("") + "</tbody></table></div></section>";
   }
@@ -574,11 +574,11 @@
         (dif ? '<span class="fin-alerta-dif" title="As parcelas somam ' + brl(total) + " e o pedido está em " + brl(ped.valor_total) + '">As parcelas somam ' + brl(total) + " e o pedido está em " + brl(ped.valor_total) + "</span>" : "") +
         '</div>' + (ped && aberto > 0.005 ? '<button type="button" class="fin-btn peq claro fin-link-pag" data-link-pag="' + t0.pedido_id + '" title="Pedido digital: o cliente vê o pedido e paga pelo mesmo link">Link do pedido</button>' : "") +
         '<div class="fin-pedido-tot">Total <b>' + brl(total) + "</b></div></div>" +
-        '<div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Parcela</th><th>Divisão</th><th>Conta (CNPJ · PIX)</th><th>Vencimento</th><th class="num">Valor</th><th class="num">Recebido</th><th>Status</th><th class="num">Falta no pedido</th><th></th></tr></thead><tbody>' +
+        '<div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Vencimento</th><th>Parcela</th><th>Divisão</th><th>Conta (CNPJ · PIX)</th><th class="num">Valor</th><th class="num">Recebido</th><th>Status</th><th class="num">Falta no pedido</th><th></th></tr></thead><tbody>' +
         ts.map((t) => {
           const [cls, rot] = statusR(t);
-          return "<tr><td>" + t.parcela + "/" + t.parcelas + '</td><td><span class="fin-chip ' + t.componente + '">' + DIV[t.componente] + "</span></td><td>" + contaHtml(t.conta_id) +
-            "</td><td>" + dataBr(t.vencimento) + alertaVenc(t) + '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.recebido) + "</td>" + '<td><span class="fin-status ' + cls + '">' + rot + "</span></td>" +
+          return "<tr><td>" + window.FinanceiroComentarios.botao(t, "receber") + dataBr(t.vencimento) + alertaVenc(t) + "</td><td>" + t.parcela + "/" + t.parcelas + '</td><td><span class="fin-chip ' + t.componente + '">' + DIV[t.componente] + "</span></td><td>" + contaHtml(t.conta_id) +
+            '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.recebido) + "</td>" + '<td><span class="fin-status ' + cls + '">' + rot + "</span></td>" +
             faltaNoPedido(t) + acoesR(t) + "</tr>";
         }).join("") + "</tbody></table></div></article>";
     }).join("");
@@ -605,107 +605,7 @@
 
   // ---------------------------------------------------------------- a pagar
   function pintarPagar() {
-    const f = S.filtroP, b = f.busca.trim().toLowerCase();
-    const lista = S.pagar.filter((t) => {
-      if (f.prazo && !noPrazoP(t, f.prazo)) return false;
-      if (f.cat && t.categoria_id !== f.cat) return false;
-      if (f.conta && t.conta_id !== f.conta) return false;
-      if (f.status === "abertos" && ["pago", "cancelado"].includes(t.status)) return false;
-      if (f.status === "aprovar" && !(t.requer_aprovacao && t.aprovacao === "pendente" && t.status !== "cancelado")) return false;
-      if (f.status === "vencidos" && !vencido(t)) return false;
-      if (f.status === "pagos" && t.status !== "pago") return false;
-      if (f.status === "cancelados" && t.status !== "cancelado") return false;
-      if (f.status !== "cancelados" && f.status !== "todos" && t.status === "cancelado") return false;
-      if (b && ![t.fornecedor_nome, t.descricao, t.documento].join(" ").toLowerCase().includes(b)) return false;
-      return true;
-    });
-    { const g = new Map(), out = [];
-      lista.forEach((t) => {
-        if (t.fatura_id && !t.fechamento_parcela_id) {
-          let x = g.get("fat:" + t.fatura_id);
-          if (!x) {
-            const fa = (S.faturas || []).find((y) => y.id === t.fatura_id) || {}, ct = (S.cartoes || []).find((y) => y.id === (fa.cartao_id || t.cartao_id)) || {};
-            x = { sintetico: true, fatura: true, id: "fat:" + t.fatura_id, fa, cartao: ct, fornecedor_nome: ct.nome || "Cartão de crédito", descricao: "Fatura " + (ct.nome || "do cartão"),
-              vencimento: fa.vencimento || t.vencimento, programado_para: null, valor: 0, aberto: 0, pago: 0, parcela: 1, parcelas: 1, conta_id: ct.conta_id || t.conta_id, status: "pago", comp: [] };
-            g.set("fat:" + t.fatura_id, x); out.push(x);
-          }
-          x.comp.push(t); x.valor += Number(t.valor || 0); x.aberto += Number(t.aberto || 0); x.pago += Number(t.pago || 0);
-          if (!["pago", "cancelado"].includes(t.status)) x.status = x.pago > 0 ? "parcial" : "aberto";
-          return;
-        }
-        if (!t.fechamento_parcela_id) { out.push(t); return; }
-        let x = g.get(t.fechamento_parcela_id);
-        if (!x) {
-          const fp = (S.fechParcelas || []).find((y) => y.id === t.fechamento_parcela_id) || {};
-          x = { sintetico: true, id: "fp:" + t.fechamento_parcela_id, fp, fornecedor_nome: t.fornecedor_nome, fornecedor_id: t.fornecedor_id, descricao: "Fechamento " + (fp.referencia || ""),
-            vencimento: t.vencimento, programado_para: null, valor: 0, aberto: 0, pago: 0, parcela: fp.numero || 1, parcelas: fp.total || 1, conta_id: t.conta_id, status: "pago", comp: [] };
-          g.set(t.fechamento_parcela_id, x); out.push(x);
-        }
-        x.comp.push(t); x.valor += Number(t.valor || 0); x.aberto += Number(t.aberto || 0); x.pago += Number(t.pago || 0);
-        if (!["pago", "cancelado"].includes(t.status)) x.status = x.pago > 0 ? "parcial" : "aberto";
-      });
-      lista.length = 0; out.forEach((t) => lista.push(t));
-      lista.sort((a, c) => String(a.vencimento || "9999").localeCompare(String(c.vencimento || "9999"))); }
-    const linhaAgrupada = (t) => {
-      const [cls, rot] = statusP(t), fa = t.fa || {}, fp = t.fp || {};
-      const sub = t.fatura ? t.comp.length + " compra(s)" + (fa.virada ? " · virou em " + dataBr(fa.virada) : "") + (fa.conferida_em ? " · conferida" : "")
-        : t.comp.length + " conta(s)" + (fp.nf_numero ? " · NF " + fp.nf_numero : "");
-      return '<tr class="fin-fech-linha fin-fat-linha" ' + (t.fatura ? 'data-fat-linha="' + esc(t.id.slice(4)) + '" title="Ver as compras desta fatura"' : 'data-fech-linha="' + esc(t.id.slice(3)) + '" data-fech-fech="' + esc(fp.fechamento_id || "") + '" title="Ver as contas desta parcela"') + ' tabindex="0" aria-expanded="false"><td>' +
-        '<span class="fin-fat-ic" aria-hidden="true">▸</span>' + dataBr(t.vencimento) + alertaPagar(t) + "</td><td>" + esc(t.fornecedor_nome || "-") + (t.fatura && t.cartao.final ? " <small>final " + esc(t.cartao.final) + "</small>" : "") + "</td><td>" +
-        '<div class="fin-pag-descricao">' + esc(t.descricao) + (t.parcelas > 1 ? " <small>(" + t.parcela + "/" + t.parcelas + ")</small>" : "") + "</div><small>" + esc(sub) + "</small></td><td>Várias</td><td>" + contaHtml(t.conta_id) +
-        '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.aberto) + '</td><td><span class="fin-status ' + cls + '">' + esc(rot) + '</span></td><td><small class="fin-sub-acao">' + (t.fatura ? "paga pela fatura" : "paga pelo fechamento") + "</small></td></tr>";
-    };
-    $("finConteudo").innerHTML =
-      '<div class="fin-barra-ferr"><input type="search" id="fpBusca" placeholder="Buscar fornecedor, descrição, documento" value="' + esc(f.busca) + '">' +
-      '<select id="fpStatus">' + [["abertos", "Em aberto"], ["aprovar", "Aguardando aprovação"], ["vencidos", "Vencidos"], ["pagos", "Pagos"], ["cancelados", "Cancelados"], ["todos", "Todos"]].map(([v, r]) => '<option value="' + v + '"' + (f.status === v ? " selected" : "") + ">" + r + "</option>").join("") + "</select>" +
-      '<select id="fpCat"><option value="">Todas as categorias</option>' + S.cats.filter((c) => c.tipo === "saida" && (c.ativo !== false || c.id === f.cat)).map((c) => '<option value="' + c.id + '"' + (f.cat === c.id ? " selected" : "") + ">" + esc(c.nome) + "</option>").join("") + "</select>" +
-      '<div class="fin-prazos" role="group" aria-label="Filtrar por vencimento">' + PRAZOS.map(([k, r]) => { const n = S.pagar.filter((t) => noPrazoP(t, k)).length; return '<button type="button" class="fin-prazo' + (f.prazo === k ? " ativa" : "") + '" data-prazo-p="' + k + '" aria-pressed="' + (f.prazo === k) + '">' + r + (n ? '<span class="fin-prazo-n">' + n + "</span>" : "") + "</button>"; }).join("") + "</div>" +
-      // "Pagas": atalho para ver só o que já foi pago (é o filtro de status "Pagos"); clicar de novo volta.
-      '<span class="fin-esp"></span><button type="button" class="fin-recebidas-btn" id="fpPagas" aria-pressed="' + (f.status === "pagos") + '">Pagas</button>' +
-      '<button class="fin-btn" id="fpNovo">+ Novo pagamento</button></div>' +
-      (lista.length ? '<section class="fin-bloco"><div class="fin-rolar"><table class="fin-tabela"><thead><tr><th>Vencimento</th><th>Fornecedor</th><th>Descrição</th><th>Categoria</th><th>Conta</th><th class="num">Valor</th><th class="num">Em aberto</th><th>Status</th><th></th></tr></thead><tbody>' +
-        lista.map((t) => {
-          if (t.sintetico) return linhaAgrupada(t);
-          const [cls, rot] = statusP(t), c = cat(t.categoria_id);
-          const bloqueadoServico = t.manutencao_confirmada === false;
-          const aberto = !["pago", "cancelado"].includes(t.status), aguard = t.requer_aprovacao && t.aprovacao === "pendente";
-          return '<tr class="fin-linha-click" data-p-linha="' + t.id + '" tabindex="0" title="Ver detalhes"><td>' + dataBr(t.vencimento) + alertaPagar(t) + '</td><td class="fin-quem"><div class="fin-quem-foto">' + fotoFavorecido(t) + "<span>" + esc(t.fornecedor_nome || "-") + "</span></div>" + "</td><td>" + esc(t.descricao) + (bloqueadoServico ? '<small class="text-danger" style="display:block;margin-top:5px">Pagar somente após confirmação do serviço em Compras → Serviços.</small>' : t.manutencao_confirmada === true ? '<small style="display:block;margin-top:5px">Serviço confirmado em Compras.</small>' : '') + (t.parcelas > 1 ? " <small>(" + t.parcela + "/" + t.parcelas + ")</small>" : "") + cartaoTag(t) + (t.aguardando_fechamento ? '<small class="fin-fech-tag" title="Parceiro com fechamento (mensal ou semanal): entra no próximo fechamento dele (aba Fechamentos de parceiros)">Vai no fechamento do parceiro</small>' : "") + "</td><td>" + esc(c?.nome || "-") +
-            "</td><td>" + contaHtml(t.conta_id) + '</td><td class="num">' + brl(t.valor) + '</td><td class="num">' + brl(t.aberto) + '</td><td><span class="fin-status ' + cls + '">' + esc(rot) + "</span></td>" +
-            '<td><div class="acoes">' + (aguard ? '<button class="fin-btn peq" data-p-aprovar="' + t.id + '">Aprovar</button><button class="fin-btn peq verm" data-p-reprovar="' + t.id + '">Reprovar</button>' : "") +
-            (S.baixaManual?.baixa_manual_pagar && aberto && !aguard && !bloqueadoServico && !t.fatura_id && !t.aguardando_fechamento && t.aprovacao !== "reprovada" && Number(t.aberto) > 0.005 ? '<button class="fin-btn peq verde" data-p-baixar="' + t.id + '">Pago</button>' : "") +
-            "</div></td></tr>";
-        }).join("") + "</tbody></table></div></section>" : '<div class="fin-vazio">Nenhuma conta a pagar com esses filtros.</div>');
-    // linhas agrupadas (fatura do cartão / parcela de fechamento): clique abre embaixo as contas que a compõem
-    $("finConteudo").querySelectorAll("[data-fat-linha],[data-fech-linha]").forEach((tr) => {
-      const alternar = (e) => {
-        if (e.target.closest("button,a,select,input")) return;
-        if (tr.nextElementSibling?.classList.contains("fin-fech-comp")) { tr.nextElementSibling.remove(); tr.setAttribute("aria-expanded", "false"); tr.classList.remove("is-aberta"); return; }
-        const fat = tr.dataset.fatLinha;
-        const comp = S.pagar.filter((x) => (fat ? x.fatura_id === fat : x.fechamento_parcela_id === tr.dataset.fechLinha) && x.status !== "cancelado")
-          .sort((a, c) => String(a.cartao_compra_em || a.emissao || "").localeCompare(String(c.cartao_compra_em || c.emissao || "")));
-        const ex = document.createElement("tr"); ex.className = "fin-fech-comp";
-        ex.innerHTML = '<td colspan="' + tr.children.length + '"><table class="fin-tabela fin-fech-comp-tab"><thead><tr><th>' + (fat ? "Compra em" : "Data") + "</th><th>Favorecido</th><th>Descrição</th><th>Categoria</th><th>Status</th><th class=\"num\">Valor</th></tr></thead><tbody>" +
-          comp.map((x) => { const [c2, r2] = statusP(x); return '<tr class="fin-linha-click" data-p-linha="' + x.id + '"><td>' + dataBr(x.cartao_compra_em || x.emissao) + "</td><td>" + esc(x.fornecedor_nome || "-") + "</td><td>" + esc(x.descricao || "") + (x.parcelas > 1 ? " <small>(" + x.parcela + "/" + x.parcelas + ")</small>" : "") +
-            "</td><td>" + esc(cat(x.categoria_id)?.nome || "-") + '</td><td><span class="fin-status ' + c2 + '">' + esc(r2) + '</span></td><td class="num">' + brl(x.valor) + "</td></tr>"; }).join("") +
-          '</tbody><tfoot><tr><td colspan="5">' + (fat ? "Total da fatura" : "Total da parcela") + '</td><td class="num">' + brl(comp.reduce((a, x) => a + Number(x.valor || 0), 0)) + "</td></tr></tfoot></table></td>";
-        tr.after(ex); tr.setAttribute("aria-expanded", "true"); tr.classList.add("is-aberta");
-      };
-      tr.addEventListener("click", alternar);
-      tr.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target === tr) { e.preventDefault(); alternar(e); } });
-    });
-    if (S.focoFat || S.focoFech) {
-      const sel = S.focoFat ? '[data-fat-linha="' + S.focoFat + '"]' : '[data-fech-fech="' + S.focoFech + '"]'; S.focoFat = S.focoFech = null;
-      const alvos = [...$("finConteudo").querySelectorAll(sel)];
-      if (alvos.length) { alvos.forEach((a) => a.classList.add("fin-fat-foco")); alvos[0].click(); requestAnimationFrame(() => alvos[0].scrollIntoView({ block: "center", behavior: "smooth" })); setTimeout(() => alvos.forEach((a) => a.classList.remove("fin-fat-foco")), 4000); }
-    }
-    $("finConteudo").querySelectorAll("[data-p-linha]").forEach((tr) => tr.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target === tr) { e.preventDefault(); detalhesPagar(tr.dataset.pLinha); } }));
-    const at = () => { const status = $("fpStatus").value; S.filtroP = { busca: $("fpBusca").value, status, cat: $("fpCat").value, conta: "", prazo: status === "abertos" ? S.filtroP.prazo : "" }; pintarPagar(); };
-    buscaAoDigitar("fpBusca", at);
-    ["fpStatus", "fpCat"].forEach((id) => $(id).addEventListener("change", at));
-    // clicar de novo no atalho escolhido volta a mostrar tudo em aberto
-    $("finConteudo").querySelectorAll("[data-prazo-p]").forEach((b) => b.addEventListener("click", () => { S.filtroP = { ...S.filtroP, status: "abertos", prazo: S.filtroP.prazo === b.dataset.prazoP ? "" : b.dataset.prazoP }; pintarPagar(); }));
-    $("fpPagas").addEventListener("click", () => { S.filtroP = { ...S.filtroP, prazo: "", status: S.filtroP.status === "pagos" ? "abertos" : "pagos" }; pintarPagar(); });
-    $("fpNovo").addEventListener("click", () => novoTitulo("pagar"));
+    window.FinanceiroPagarLista.render({host: $('finConteudo'), S, esc, brl, dataBr, PRAZOS, noPrazoP, vencido, statusP, cat, contaHtml, fotoFavorecido, cartaoTag, alertaPagar, buscaAoDigitar, detalhesPagar, novoTitulo});
   }
 
   // ---------------------------------------------------------------- títulos: novo, editar, baixar, detalhes
@@ -1283,12 +1183,16 @@
 
   // ---------------------------------------------------------------- eventos
   function ligar() {
+    window.FinanceiroComentarios.ligar($('finConteudo'), {
+      contexto: async () => ({sb: S.sb, empresa: S.emp}),
+      obter: (tipo, id) => (tipo === 'receber' ? S.receber : S.pagar).find(t => t.id === id)
+    });
     $("finAbas").addEventListener("click", (e) => { const b = e.target.closest("[data-aba]"); if (!b) return; S.aba = b.dataset.aba; pintar(); });
     $("finSubAbas")?.addEventListener("click", (e) => { const b = e.target.closest("[data-subaba]"); if (!b || b.dataset.subaba === S.aba) return; S.aba = b.dataset.subaba; pintar(); });
     $("finModalRodape").addEventListener("click", (e) => { const b = e.target.closest("[data-bt]"); if (!b) return; aoConfirmar?.[Number(b.dataset.bt)]?.acao(); });
     $("finModal").addEventListener("click", (e) => { if (e.target.closest("[data-fechar]")) fecharModal(); });
     $("finConteudo").addEventListener("click", async (e) => {
-      const linhaP = !e.target.closest("button, a, input, select, label") && e.target.closest("[data-p-linha]");
+      const linhaP = !e.target.closest("button, a, input, select, textarea, label, .fin-com-ed") && e.target.closest("[data-p-linha]");
       if (linhaP) { detalhesPagar(linhaP.dataset.pLinha); return; }
       const b = e.target.closest("button"); if (!b) return;
       const d = b.dataset;
@@ -1315,7 +1219,7 @@
   function colorirValores(raiz) {
     if (!raiz) return;
     raiz.querySelectorAll("td, th, strong, b, span, small, div, p").forEach((el) => {
-      if (el.children.length || el.closest("button, select, option, .fin-chip, .fin-status, .fin-ped-nums, .fin-falta")) return;
+      if (el.children.length || el.closest("button, select, option, .fin-chip, .fin-status, .fin-ped-nums, .fin-falta, .fe-val, .pla-total")) return;
       const t = el.textContent.replace(/ /g, " ").trim();
       if (!VALOR_BRL.test(t)) { el.classList.remove("fin-valor-pos", "fin-valor-neg"); return; }
       const negativo = /[-−–]/.test(t), zero = !/[1-9]/.test(t);

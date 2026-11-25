@@ -633,3 +633,45 @@ html:root #funcionariosView th:nth-child(1){width:32%}html:root #funcionariosVie
 .func-voz-campo{grid-column:1/-1;display:grid;gap:8px}
 .func-voz-rotulo{font-size:13px;font-weight:600;color:#1f2020}
 .func-voz-aviso{margin:0;font-size:13px;color:#6b6b6b;border:1px dashed #d5dbe3;border-radius:12px;padding:12px 14px}
+
+/* Visão diária: identidade fixa e demais informações com rolagem interna. */
+html:root #funcionariosView>#funcCabecalho.section-head>#funcCabecalhoAcoes{grid-column:3;grid-row:1;display:flex;justify-content:flex-end;gap:8px;align-items:center}
+#funcionariosView .table-card,#funcionariosView .table-wrap{max-width:100%;min-width:0}
+html:root #funcionariosView #funcionariosTabela{table-layout:fixed;min-width:100%;border-collapse:separate;border-spacing:0}
+html:root #funcionariosView #funcionariosTabela th{width:auto;white-space:normal}
+#funcionariosTabela [data-coluna]{vertical-align:middle;line-height:1.45}
+#funcionariosTabela [data-coluna=pessoa]{position:sticky;left:0;z-index:1;background:#fff;box-shadow:3px 0 6px #2734440a}
+#funcionariosTabela thead [data-coluna=pessoa]{background:#f1f5f9;z-index:2}
+#funcionariosTabela .table-group-row td{background:#f0f5f2;border-top:1px solid #dfe8e1}
+.func-grupo-nome{position:sticky;left:10px;display:inline-block}
+#funcionariosTabela .subtext{font-size:11px;line-height:1.5;color:#738293}
+.func-info-ausente{color:#87919e;font-size:12px}
+.func-selo{display:inline-flex;align-items:center;border-radius:7px;padding:4px 7px;font-size:11px;font-weight:600;line-height:1.4}
+.func-selo.ok{color:#28704b;background:#eaf6ee}
+.func-selo.atencao{color:#916416;background:#fff5dd}
+.func-selo.ausente,.func-selo.erro{color:#a34545;background:#fcecec}
+.func-selo.neutro{color:#657282;background:#f0f2f5}
+.func-whatsapp{display:inline-block;color:#28704b;text-decoration:none;font-size:12px;white-space:nowrap;border-bottom:1px solid #b4d8c1}
+.func-whatsapp:hover,.func-whatsapp:focus-visible{text-decoration:underline}
+.func-pendencias{font-size:12px}
+.func-pendencias summary{display:flex;align-items:center;gap:6px;cursor:pointer;list-style:none}
+.func-pendencias summary::-webkit-details-marker{display:none}
+.func-pendencias summary::after{content:'▾';color:#738293}
+.func-pendencias[open] summary::after{content:'▴'}
+.func-pendencias ul{padding-left:16px;margin:10px 0 0;display:grid;gap:7px;line-height:1.5}
+.func-pendencias li.erro{color:#a34545}
+.func-pendencias li.atencao{color:#916416}
+#funcColunasDialog{width:min(430px,calc(100vw - 32px));max-height:calc(100vh - 32px);padding:22px;border:1px solid #dfe5ec;border-radius:16px;box-shadow:0 16px 60px #17222f30;font:13px Inter,system-ui;color:#263344}
+#funcColunasDialog::backdrop{background:#17222f42}
+#funcColunasDialog header,#funcColunasDialog footer{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#funcColunasDialog h3{margin:0;font-size:18px}
+#funcColunasDialog p{color:#738293;line-height:1.5}
+#funcColunasDialog header button{padding:6px 10px;min-height:30px}
+#funcColunasDialog footer{margin-top:20px;padding-top:16px;border-top:1px solid #e5e9ee}
+#funcColunasOpcoes{display:grid;gap:3px}
+#funcColunasOpcoes label{display:flex;gap:10px;align-items:center;padding:8px;border-radius:8px;cursor:pointer}
+#funcColunasOpcoes label:hover{background:#f3f6f4}
+#funcColunasOpcoes input{width:16px;height:16px;accent-color:#28704b}
+#funcColunasOpcoes small{display:block;font-size:11px;color:#87919e;margin-top:2px}
+@media(max-width:1000px){html:root #funcionariosView>#funcCabecalho.section-head>#funcCabecalhoAcoes{grid-column:2;grid-row:2}}
+@media(max-width:540px){html:root #funcionariosView>#funcCabecalho.section-head>#funcCabecalhoAcoes{grid-column:1/-1;grid-row:3;justify-content:flex-start}html:root #funcionariosView>#funcCabecalho.section-head .func-pesquisa{grid-column:1/-1;width:100%}}

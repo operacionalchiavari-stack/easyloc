@@ -4,6 +4,7 @@
  const estados={acervo:'Aguardando Gestão do Acervo',comercial:'Aguardando Comercial',triagem:'Solução disponível · confirmar na Triagem',resolvida:'Resolvida'};
  const fotosChat=new Map();
  const raizChat=document.currentScript?.src?new URL('../../',document.currentScript.src):null;
+ const fotoMiguel=raizChat?new URL('assets/agentes/miguel.jpg',raizChat).href:'/assets/agentes/miguel.jpg';
  let recursosChat;
  async function rpc(sb,n,args){const r=await sb.rpc(n,args);if(r.error)throw Error(r.error.message);return r.data;}
  function dialogo(titulo){
@@ -28,7 +29,7 @@
  function caminhosFotos(o){return [...new Set([o.foto_path,...(o.fotos_paths||[])].filter(Boolean))];}
  function anexosChat(o,empresa){return '<div class="so-chat-anexos">'+caminhosFotos(o).map(path=>{const u=fotosChat.get(`${empresa}:${o.id}:${path}`);return u?`<figure><button type="button" data-chat-foto aria-label="Ampliar foto"><img src="${esc(u)}" alt="Foto do problema" loading="lazy"></button></figure>`:'';}).join('')+'</div>';}
  function conversa(o,sb,empresa,fotosNoChat=false){
-  const historico=[...(o.conversa_ia||[]).map(m=>({texto:m.texto,em:m.em,equipe:m.papel==='ia'?'Assistente de estoque (IA)':'Triagem',por:m.papel==='pessoa'?o.criado_por:null})),...(o.historico?.length?o.historico:[{acao:'reportar',texto:o.observacao,em:o.criado_em,por:o.criado_por}])];
+  const historico=[...(o.conversa_ia||[]).map(m=>({texto:m.texto,em:m.em,nome:m.papel==='ia'?'Miguel':null,foto_url:m.papel==='ia'?fotoMiguel:null,equipe:m.papel==='ia'?'Estoque · IA':'Triagem',por:m.papel==='pessoa'?o.criado_por:null})),...(o.historico?.length?o.historico:[{acao:'reportar',texto:o.observacao,em:o.criado_em,por:o.criado_por}])];
   return historico.map(h=>{
    const equipe=h.equipe||(h.acao==='reportar'||h.anterior==='triagem'?'Triagem':h.anterior==='comercial'?'Comercial':'Estoque');
    const nome=h.nome||equipe,iniciais=nome.split(/\s+/).slice(0,2).map(n=>n[0]).join('');
@@ -173,8 +174,8 @@
   try{
    if(!window.EasyLocAssistenteSolicitacao){
     recursosChat||=new Promise((ok,erro)=>{
-     const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('styles/assistente-solicitacao.css?v=20261117-chat-unico',raizChat);document.head.append(css);
-     const script=document.createElement('script');script.src=new URL('js/ui/assistente-solicitacao.js?v=20261117-chat-unico',raizChat);script.onload=ok;script.onerror=()=>erro(Error('N?o foi poss?vel abrir o chat.'));document.head.append(script);
+     const css=document.createElement('link');css.rel='stylesheet';css.href=new URL('styles/assistente-solicitacao.css?v=20261121-retratos',raizChat);document.head.append(css);
+     const script=document.createElement('script');script.src=new URL('js/ui/assistente-solicitacao.js?v=20261121-miguel',raizChat);script.onload=ok;script.onerror=()=>erro(Error('N?o foi poss?vel abrir o chat.'));document.head.append(script);
     });await recursosChat;
    }
    const {sb,empresa,pedido,item,ocorrencia}=opcoes,fila=opcoes.fila||'triagem';
@@ -184,7 +185,7 @@
    let ativa=true,d,timer;
    const mensagens=async o=>{
     await Promise.allSettled(caminhosFotos(o).map(async path=>{const r=await sb.storage.from('separacao-ocorrencias').createSignedUrl(path,3600);if(r.error)throw r.error;fotosChat.set(`${empresa}:${o.id}:${path}`,r.data.signedUrl);}));
-    const ia=(o.conversa_ia||[]).filter(m=>m.texto||m.fotos?.length).map(m=>({papel:m.papel,texto:m.texto||'',em:m.em,autor:m.papel==='ia'?'Auxiliar de estoque ? IA':'Triagem',fotos:m.fotos}));
+    const ia=(o.conversa_ia||[]).filter(m=>m.texto||m.fotos?.length).map(m=>({papel:m.papel,texto:m.texto||'',em:m.em,autor:m.papel==='ia'?'Miguel · Estoque':'Triagem',fotos:m.fotos}));
     const hist=(o.historico?.length?o.historico:[{acao:'reportar',texto:o.observacao,em:o.criado_em}]).map(h=>{
      const equipe=h.equipe||(h.acao==='reportar'||h.anterior==='triagem'?'Triagem':h.anterior==='comercial'?'Comercial':'Estoque');
      return {papel:equipe.toLowerCase()===fila||(fila==='acervo'&&equipe==='Estoque')?'pessoa':'ia',autor:[h.nome,equipe].filter(Boolean).join(' ? '),texto:h.texto||'',em:h.em,...(h.acao==='reportar'?{fotos:caminhosFotos(o).map(path=>fotosChat.get(`${empresa}:${o.id}:${path}`)).filter(Boolean)}:{})};
@@ -193,7 +194,7 @@
    const barra=()=>`${lista.length>1?`<select aria-label="Ocorr?ncia" data-chat-ocorrencia>${lista.map(o=>`<option value="${esc(o.id)}" ${o.id===atual.id?'selected':''}>${esc(o.item_nome)} ? ${esc(o.motivo_nome)}</option>`).join('')}</select>`:''}<span class="so-estado" data-estado="${esc(atual.estado)}">${esc(estados[atual.estado]||atual.estado)}</span><div class="so-acoes">${acoes(atual,fila)}</div>`;
    const atualizar=async()=>{const novas=await listar(sb,empresa,pedido||null);atual=novas.find(o=>o.id===atual.id)||atual;return mensagens(atual);};
    d=await window.EasyLocAssistenteSolicitacao.abrir({
-    tipo:'separacao',titulo:'Reportar problema ? '+atual.item_nome,assistente:'Auxiliar de estoque ? IA',ctx:opcoes.ctx||await window.aguardarContexto(),
+    tipo:'separacao',titulo:'Reportar problema ? '+atual.item_nome,assistente:'Miguel · Estoque',ctx:opcoes.ctx||await window.aguardarContexto(),
     dados:{pedido_id:atual.pedido_id||pedido,linha_id:atual.linha_id,item_id:atual.item_id},
     chave:'ocorrencia:'+atual.id,persistir:false,recomecar:false,anexos:false,somenteLeitura:atual.estado==='resolvida',
     mensagens:await mensagens(atual),acoesHtml:barra(),
