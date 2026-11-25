@@ -59,9 +59,25 @@ public final class CameraStreamService extends Service {
  private AudioSource audioSource;
  private AudioTrack audioTrack;
  private int capW=640,capH=480,capFps=15;
+ private boolean compatibilidade;
+ private volatile String codecUsado="",encoderUsado="";
+ private volatile int luz=-1;
+ private volatile long amostrarEm;
  private volatile int frames,fpsMedido,largura,altura;
  private volatile long ultimoQuadro;
- private final VideoSink contador=f->{frames++;largura=f.getRotatedWidth();altura=f.getRotatedHeight();ultimoQuadro=SystemClock.elapsedRealtime();};
+ private final VideoSink contador=f->{
+  frames++;largura=f.getRotatedWidth();altura=f.getRotatedHeight();long agora=SystemClock.elapsedRealtime();ultimoQuadro=agora;
+  if(agora>=amostrarEm){amostrarEm=agora+15000;luz=brilho(f);} // diagnóstico: imagem escura na origem (lente tapada, câmera com defeito)
+ };
+ private static int brilho(VideoFrame f){
+  VideoFrame.I420Buffer b=null;
+  try{
+   b=f.getBuffer().toI420();if(b==null)return -1;
+   java.nio.ByteBuffer y=b.getDataY();int w=b.getWidth(),h=b.getHeight(),s=b.getStrideY();long soma=0;int n=0;
+   for(int r=0;r<h;r+=16)for(int c=0;c<w;c+=16){soma+=y.get(r*s+c)&0xff;n++;}
+   return n==0?-1:(int)(soma/n);
+  }catch(Exception e){return -1;}finally{if(b!=null)b.release();}
+ }
 
  // energia e rede
  private PowerManager.WakeLock wake;
@@ -105,8 +121,12 @@ public final class CameraStreamService extends Service {
    ouvirRede();ouvirCalor();
    if(egl==null)egl=EglBase.create();
    PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions.builder(getApplicationContext()).createInitializationOptions());
+   // Galaxy A57 (Exynos): VP8 por hardware mandava imagem preta. Automático = hardware com H.264 na frente (preferirCodec);
+   // compatibilidade (Parâmetros › Qualidade) = VP8 pelo processador, funciona em qualquer aparelho.
+   compatibilidade="compatibilidade".equals(config.optString("codificador","automatico"));
+   VideoEncoderFactory codificador=compatibilidade?new SoftwareVideoEncoderFactory():new DefaultVideoEncoderFactory(egl.getEglBaseContext(),false,false);
    PeerConnectionFactory.Builder b=PeerConnectionFactory.builder()
-    .setVideoEncoderFactory(new DefaultVideoEncoderFactory(egl.getEglBaseContext(),true,true))
+    .setVideoEncoderFactory(codificador)
     .setVideoDecoderFactory(new DefaultVideoDecoderFactory(egl.getEglBaseContext()));
    if(som)b.setAudioDeviceModule(org.webrtc.audio.JavaAudioDeviceModule.builder(getApplicationContext()).createAudioDeviceModule());
    factory=b.createPeerConnectionFactory();
@@ -237,13 +257,39 @@ public final class CameraStreamService extends Service {
   pc.addTrack(videoTrack,Collections.singletonList("s0"));
   if(audioTrack!=null)pc.addTrack(audioTrack,Collections.singletonList("s0"));
   pc.createOffer(new Sdp(){
-   @Override public void onCreateSuccess(SessionDescription sdp){
+   @Override public void onCreateSuccess(SessionDescription original){
+    SessionDescription sdp=new SessionDescription(original.type,preferirCodec(original.description,compatibilidade?"VP8":"H264"));
     pc.setLocalDescription(new Sdp(){
      @Override public void onSetSuccess(){try{enviar(quem,"oferta",new JSONObject().put("type","offer").put("sdp",sdp.description));}catch(Exception ignored){}}
+     @Override public void onSetFailure(String e){
+      // se o aparelho recusar a oferta reordenada, manda a original
+      pc.setLocalDescription(new Sdp(){@Override public void onSetSuccess(){try{enviar(quem,"oferta",new JSONObject().put("type","offer").put("sdp",original.description));}catch(Exception ignored){}}},original);
+     }
     },sdp);
    }
   },new MediaConstraints());
   aplicarQualidade();
+ }
+ /** Põe os formatos do codec escolhido (e os rtx deles) no começo da linha m=video: quem assiste usa o primeiro que entende. */
+ static String preferirCodec(String sdp,String codec){
+  try{
+   String[] l=sdp.split("\r\n");List<String> pts=new ArrayList<>();
+   for(String x:l)if(x.startsWith("a=rtpmap:")&&x.toUpperCase(Locale.ROOT).contains(" "+codec+"/90000"))pts.add(x.substring(9,x.indexOf(' ')));
+   if(pts.isEmpty())return sdp;
+   List<String> rtx=new ArrayList<>();
+   for(String x:l)if(x.startsWith("a=fmtp:")&&x.contains("apt=")){String pt=x.substring(7,x.indexOf(' '));String apt=x.substring(x.indexOf("apt=")+4).split(";")[0].trim();if(pts.contains(apt))rtx.add(pt);}
+   StringBuilder out=new StringBuilder();
+   for(int i=0;i<l.length;i++){
+    String x=l[i];
+    if(x.startsWith("m=video ")){
+     String[] p=x.split(" ");List<String> cab=new ArrayList<>(Arrays.asList(p).subList(0,3));List<String> resto=new ArrayList<>(Arrays.asList(p).subList(3,p.length));
+     List<String> nova=new ArrayList<>();for(String pt:pts)if(resto.remove(pt))nova.add(pt);for(String pt:rtx)if(resto.remove(pt))nova.add(pt);nova.addAll(resto);
+     cab.addAll(nova);x=String.join(" ",cab);
+    }
+    out.append(x);if(i<l.length-1||sdp.endsWith("\r\n"))out.append("\r\n");
+   }
+   return out.toString();
+  }catch(Exception e){return sdp;}
  }
  private void mudouConexao(String quem,PeerConnection.PeerConnectionState st){
   ScheduledFuture<?> q=quedas.remove(quem);if(q!=null)q.cancel(false);
@@ -270,7 +316,7 @@ public final class CameraStreamService extends Service {
     JSONObject t=new JSONObject().put("bateria",bateria()).put("carregando",carregando()).put("temperatura",temperatura())
      .put("rede",tipoRede()).put("rede_qualidade",qualidadeRede()).put("rtt_ms",rttMs<0?JSONObject.NULL:Math.round(rttMs))
      .put("resolucao",largura>0?largura+"x"+altura:null).put("fps",fpsMedido).put("tela_ligada",telaLigada())
-     .put("termico",termico).put("assistindo",assistindo).put("som",som).put("motivo",detalhe).put("app",BuildConfig.VERSION_NAME)
+     .put("termico",termico).put("assistindo",assistindo).put("luz",luz).put("codec",codecUsado).put("codificador",encoderUsado).put("compatibilidade",compatibilidade).put("som",som).put("motivo",detalhe).put("app",BuildConfig.VERSION_NAME)
      .put("android",Build.VERSION.RELEASE).put("aparelho",Build.MANUFACTURER+" "+Build.MODEL);
     CameraApi.Resposta r=CameraApi.call("camera_disp_ping",new JSONObject().put("p_token",token).put("p_estado",estado).put("p_telemetria",t));
     if(CameraApi.autorizacaoEncerrada(r)){encerrar("central",false);return;}
@@ -294,6 +340,13 @@ public final class CameraStreamService extends Service {
   if(pc==null){rttMs=-1;return;}
   CountDownLatch l=new CountDownLatch(1);
   pc.getStats(rep->{
+   for(RTCStats s:rep.getStatsMap().values()){
+    if("outbound-rtp".equals(s.getType())&&"video".equals(String.valueOf(s.getMembers().get("kind")))){
+     Object e=s.getMembers().get("encoderImplementation");if(e!=null)encoderUsado=String.valueOf(e);
+     Object cid=s.getMembers().get("codecId");RTCStats c=cid==null?null:rep.getStatsMap().get(String.valueOf(cid));
+     if(c!=null){Object m=c.getMembers().get("mimeType");if(m!=null)codecUsado=String.valueOf(m).replace("video/","");}
+    }
+   }
    for(RTCStats s:rep.getStatsMap().values())if("candidate-pair".equals(s.getType())&&"succeeded".equals(String.valueOf(s.getMembers().get("state")))&&Boolean.TRUE.equals(s.getMembers().get("nominated"))){
     Object v=s.getMembers().get("currentRoundTripTime");if(v instanceof Number)rttMs=((Number)v).doubleValue()*1000;
    }

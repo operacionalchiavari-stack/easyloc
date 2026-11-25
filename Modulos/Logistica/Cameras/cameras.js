@@ -152,6 +152,8 @@
       if (t.rede) p.push(({ wifi: "Wi-Fi", celular: "Rede móvel", cabo: "Cabo", sem: "Sem rede" }[t.rede] || t.rede) + (t.rede_qualidade && t.rede_qualidade !== "sem" ? " " + t.rede_qualidade : ""));
       if (t.resolucao) p.push(t.resolucao.replace("x", "×") + (t.fps ? " · " + t.fps + " fps" : ""));
       if (t.tela_ligada === false) p.push("tela apagada"); else if (t.tela_ligada) p.push("tela ligada");
+      if (t.codec) p.push(t.codec + (t.compatibilidade ? " (compatibilidade)" : ""));
+      if (t.luz >= 0 && t.luz < 12) p.push("imagem muito escura na câmera");
     } else p.push("Pelo navegador");
     const s = Math.max(0, Math.round((Date.now() - new Date(c.visto_em)) / 1000));
     p.push("sinal há " + (s < 60 ? s + " s" : Math.round(s / 60) + " min"));
@@ -212,17 +214,18 @@
     let d = $("plcQualidadeDlg");
     if (!d) { d = document.createElement("dialog"); d.id = "plcQualidadeDlg"; d.className = "plc-dlg"; document.body.appendChild(d); }
     const op = (v, lista) => lista.map(([k, n]) => '<option value="' + k + '"' + (String(k) === String(v) ? " selected" : "") + ">" + n + "</option>").join("");
-    d.innerHTML = '<form method="dialog"><h2>Qualidade da transmissão</h2><p>Vale para o app Android. Menos qualidade gasta menos bateria e internet.</p>' +
+    d.innerHTML = '<form method="dialog"><h2>Qualidade da transmissão</h2><p>Vale para o app Android, na próxima vez que a câmera for ligada. Menos qualidade gasta menos bateria e internet.</p>' +
       '<label>Resolução<select name="resolucao">' + op(c.resolucao || "480p", [["360p", "360p (econômica)"], ["480p", "480p (padrão)"], ["720p", "720p (mais nítida)"]]) + "</select></label>" +
       '<label>Quadros por segundo<select name="fps">' + op(c.fps || 15, [[10, "10"], [15, "15 (padrão)"], [20, "20"], [30, "30"]]) + "</select></label>" +
       '<label>Limite de internet por pessoa assistindo<select name="bitrate_max">' + op(c.bitrate_max || 900, [[400, "0,4 Mbps"], [600, "0,6 Mbps"], [900, "0,9 Mbps (padrão)"], [1500, "1,5 Mbps"], [2500, "2,5 Mbps"]]) + "</select></label>" +
+      '<label>Codificação do vídeo<select name="codificador">' + op(c.codificador || "automatico", [["automatico", "Automática (hardware, gasta menos bateria)"], ["compatibilidade", "Compatibilidade (se a imagem chegar preta)"]]) + "</select></label>" +
       '<label class="plc-chk"><input type="checkbox" name="som_permitido"' + (c.som_permitido !== false ? " checked" : "") + "> Permitir enviar o som</label>" +
       '<p class="plc-dlg-erro" hidden></p><div class="plc-dlg-acoes"><button value="cancelar" class="plc-btn">Cancelar</button><button value="salvar" class="plc-btn plc-btn-pri">Salvar</button></div></form>';
     d.showModal();
     d.querySelector('[value="salvar"]').onclick = async (e) => {
       e.preventDefault();
       const f = d.querySelector("form");
-      const r = await sb().rpc("camera_config_salvar", { p_empresa: S.empresa, p_config: { resolucao: f.resolucao.value, fps: +f.fps.value, bitrate_max: +f.bitrate_max.value, som_permitido: f.som_permitido.checked } });
+      const r = await sb().rpc("camera_config_salvar", { p_empresa: S.empresa, p_config: { resolucao: f.resolucao.value, fps: +f.fps.value, bitrate_max: +f.bitrate_max.value, som_permitido: f.som_permitido.checked, codificador: f.codificador.value } });
       if (r.error) { const x = d.querySelector(".plc-dlg-erro"); x.hidden = false; x.textContent = r.error.message; return; }
       S.config = r.data; d.close();
     };
