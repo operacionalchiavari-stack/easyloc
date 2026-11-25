@@ -4,7 +4,7 @@
  let empresa, usuario, watch = null, consulta = null, geracao = 0, enviando = false, ultimo = 0, painel;
  const sb = () => window.supabaseClient;
  const android = () => Boolean(window.AcervoAndroid?.postMessage);
- let tokenPendente=null, nativoAtivo=false, registrando=false;
+ let tokenPendente=null, nativoAtivo=false, registrando=false, avisos={}, relogioStatus=null;
  const enviarAndroid = dados => window.AcervoAndroid.postMessage(JSON.stringify(dados));
  const chave = () => `rastreamento:${empresa}:${usuario}`;
  function mensagem(texto) { painel?.querySelector('[role="status"]') && (painel.querySelector('[role="status"]').textContent = texto); }
@@ -24,8 +24,10 @@
   const on=ligada(), status=painel.querySelector('[role="status"]')?.textContent||'';
   const texto=on?'Ligada. Sua posição é compartilhada com a Logística.':android()?'Compartilhe sua posição com a Logística, mesmo com a tela apagada.':'Compartilhe sua posição com a Logística enquanto o app estiver aberto.';
   painel.innerHTML='<div class="ap-cfg-linha"><span class="ap-cfg-icone" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span><div class="ap-cfg-texto"><b>Localização</b><p>'+texto+'</p></div><button type="button" class="ap-switch" role="switch" aria-checked="'+on+'" aria-label="Localização" data-local="'+(on?'parar':'ativar')+'"><span></span></button></div>'+
+   (android()&&on&&(avisos.sempre===false||avisos.bateria===false)?'<button type="button" class="ap-cfg-alerta" data-reforcar><b>Para a localização nunca parar</b>'+(avisos.sempre===false?'<span>Permita a localização “o tempo todo”.</span>':'')+(avisos.bateria===false?'<span>Tire o app da economia de bateria.</span>':'')+'<em>Ajustar agora</em></button>':'')+
    (!android()&&/android/i.test(navigator.userAgent||'')?'<a class="ap-cfg-link" href="https://easyloc-zeta.vercel.app/instalar.html">Instalar o aplicativo para Android (funciona com a tela apagada)</a>':'')+'<small class="ap-cfg-msg" role="status"></small>';
   painel.querySelector('[role="status"]').textContent=status;
+  const ref=painel.querySelector('[data-reforcar]');if(ref)ref.onclick=()=>enviarAndroid({action:'localizacao:reforcar'});
   painel.querySelector('[data-local]').onclick=async e=>{const b=e.currentTarget;b.disabled=true;try{if(b.dataset.local==='ativar')await ativar();else await parar();}finally{pintar();}};
  }
  function montar() {
@@ -76,6 +78,7 @@
  window.addEventListener('acervo:android',async event=>{
   if(!android()||!painel)return;
   const {type,message}=event.detail||{};
+  if(typeof event.detail?.sempre==='boolean')avisos={sempre:event.detail.sempre,bateria:event.detail.bateria};
   if(type==='started'){nativoAtivo=true;tokenPendente=null;localStorage.setItem(chave(),'1');pintar();mensagem(message);}
   else if(type==='stopped'){nativoAtivo=false;localStorage.removeItem(chave());pintar();mensagem('Compartilhamento pausado.');}
   else if(type==='error'){
@@ -101,7 +104,7 @@
   if(empresa===id && usuario===novoUsuario)return;
   limpar(); empresa=id; usuario=novoUsuario; montar();
   
-  if(android())enviarAndroid({action:'status'});
+  if(android()){enviarAndroid({action:'status'});clearInterval(relogioStatus);relogioStatus=setInterval(()=>{if(document.visibilityState==='visible'&&document.getElementById('apLocal'))enviarAndroid({action:'status'});},30000);}
   else if(localStorage.getItem(chave())==='1') ativar();
  }
  window.AppRastreador={iniciar};

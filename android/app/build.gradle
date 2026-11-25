@@ -6,7 +6,7 @@ android {
  def firebase = firebaseFile.exists() ? new groovy.json.JsonSlurper().parse(firebaseFile) : null
  def firebaseClient = firebase?.client?.find { it.client_info.android_client_info.package_name == 'br.com.chiavari.acervo' }
  defaultConfig {
-  applicationId 'br.com.chiavari.acervo'; minSdk 26; targetSdk 35; versionCode 10; versionName '1.1.7'
+  applicationId 'br.com.chiavari.acervo'; minSdk 26; targetSdk 35; versionCode 11; versionName '1.1.8'
   // só processadores de celular (ARM): o WebRTC traz bibliotecas para 4 tipos e o APK dobraria de tamanho
   ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' }
   buildConfigField 'boolean', 'FIREBASE_CONFIGURED', firebaseClient ? 'true' : 'false'

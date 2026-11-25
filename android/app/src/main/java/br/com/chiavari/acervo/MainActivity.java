@@ -112,6 +112,7 @@ public final class MainActivity extends Activity {
     if(push.handle(data))return;
     if(action.startsWith("camera:")){camera(action,data);return;}
     if("status".equals(action)){sendStatus();return;}
+    if("localizacao:reforcar".equals(action)){reforcarLocalizacao();return;}
     if("stop".equals(action)){pendingToken=null;if(consent!=null)consent.dismiss();startService(new Intent(this,TrackingService.class).setAction(TrackingService.STOP));send("stopped","Compartilhamento pausado.");return;}
     if(!"start".equals(action)||!visible)return;
     String token=data.getString("token");if(!token.matches("[A-Za-z0-9_-]{43}"))return;
@@ -137,6 +138,7 @@ public final class MainActivity extends Activity {
  @Override public void onRequestPermissionsResult(int request,String[] permissions,int[] grants){
   super.onRequestPermissionsResult(request,permissions,grants);if(request==7){if(visible)startTracking();else permissionResultReady=true;}
   if(request==11)push.enable();
+  if(request==16)pedirBateria();
   if(request==13){if(visible)iniciarCamera();else cameraPermissaoPronta=true;}
   if(request==12&&cameraRequest!=null){if(checkSelfPermission(Manifest.permission.CAMERA)==PackageManager.PERMISSION_GRANTED)cameraRequest.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE});else cameraRequest.deny();cameraRequest=null;}
   if(request==8&&geoCallback!=null){boolean ok=checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED||checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED;geoCallback.invoke(geoOrigin,ok,false);geoCallback=null;}
@@ -193,15 +195,49 @@ public final class MainActivity extends Activity {
   if(!visible||pendingToken==null||!location||!notifications){pendingToken=null;send("error","Permita localização e notificações nas configurações do Android para ativar.");return;}
   try{
    SecureStore.save(this,pendingToken);getSharedPreferences("rastreamento",0).edit().putBoolean("ativo",true).commit();
-   startForegroundService(new Intent(this,TrackingService.class));pendingToken=null;send("started","Rastreamento Android ativo, inclusive ao sair do app. Consulte a notificação para conferir o envio.");
+   startForegroundService(new Intent(this,TrackingService.class));pendingToken=null;send("started","Rastreamento Android ativo, inclusive ao sair do app. Consulte a notificação para conferir o envio.");reforcarLocalizacao();
   }catch(Exception e){getSharedPreferences("rastreamento",0).edit().putBoolean("ativo",false).commit();send("error","Não foi possível iniciar o serviço do Android.");}
  }
- private void sendStatus(){send(TrackingService.running&&getSharedPreferences("rastreamento",0).getBoolean("ativo",false)?"started":"stopped","Consulte a notificação do Acervo para acompanhar o envio em segundo plano.");}
+ private void sendStatus(){
+  boolean ativo=TrackingService.running&&getSharedPreferences("rastreamento",0).getBoolean("ativo",false);
+  String msg;
+  if(!ativo)msg=TrackingService.detalheAtual==null||TrackingService.detalheAtual.isEmpty()?"Compartilhamento pausado.":TrackingService.detalheAtual;
+  else if(TrackingService.ultimoEnvio>0)msg="Última posição enviada às "+new java.text.SimpleDateFormat("HH:mm",java.util.Locale.getDefault()).format(new java.util.Date(TrackingService.ultimoEnvio))+".";
+  else msg=TrackingService.detalheAtual==null||TrackingService.detalheAtual.isEmpty()?"Aguardando a primeira leitura do GPS…":TrackingService.detalheAtual;
+  send(ativo?"started":"stopped",msg);
+ }
+ private boolean localizacaoSempre(){return Build.VERSION.SDK_INT<29||checkSelfPermission(Manifest.permission.ACCESS_BACKGROUND_LOCATION)==PackageManager.PERMISSION_GRANTED;}
+ private boolean semEconomiaBateria(){try{PowerManager pm=getSystemService(PowerManager.class);return pm!=null&&pm.isIgnoringBatteryOptimizations(getPackageName());}catch(Exception e){return true;}}
+ /** Para a localização nunca parar: "Permitir o tempo todo" e o app fora da economia de bateria do Android. */
+ private void reforcarLocalizacao(){
+  if(!visible)return;
+  if(!localizacaoSempre()){
+   new AlertDialog.Builder(this).setTitle("Para a localização nunca parar").setMessage("Na próxima tela, toque em \"Permitir o tempo todo\". Assim o Android não interrompe a localização quando o app fica em segundo plano ou o celular reinicia.")
+    .setPositiveButton("Continuar",(d,w)->requestPermissions(new String[]{Manifest.permission.ACCESS_BACKGROUND_LOCATION},16)).setNegativeButton("Agora não",(d,w)->pedirBateria()).show();
+   return;
+  }
+  pedirBateria();
+ }
+ @android.annotation.SuppressLint("BatteryLife")
+ private void pedirBateria(){
+  if(!visible||semEconomiaBateria()){sendStatus();return;}
+  try{startActivity(new Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,Uri.parse("package:"+getPackageName())));}
+  catch(Exception e){try{startActivity(new Intent(android.provider.Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));}catch(Exception ignored){}}
+ }
+ // abriu o app com a localização ligada e o serviço parado (o Android matou): retoma sozinho
+ private void retomarLocalizacao(){
+  try{
+   if(TrackingService.running||!getSharedPreferences("rastreamento",0).getBoolean("ativo",false))return;
+   boolean local=checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED||checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION)==PackageManager.PERMISSION_GRANTED;
+   if(!local||SecureStore.read(this)==null)return;
+   startForegroundService(new Intent(this,TrackingService.class));
+  }catch(Exception ignored){}
+ }
  private void send(String type,String text){
   if(web==null||!ORIGIN.equals(Uri.parse(web.getUrl()==null?"":web.getUrl()).getScheme()+"://"+Uri.parse(web.getUrl()==null?"":web.getUrl()).getAuthority()))return;
-  try{JSONObject detail=new JSONObject().put("type",type).put("message",text);web.evaluateJavascript("window.dispatchEvent(new CustomEvent('acervo:android',{detail:"+detail+"}))",null);}catch(Exception ignored){}
+  try{JSONObject detail=new JSONObject().put("type",type).put("message",text).put("sempre",localizacaoSempre()).put("bateria",semEconomiaBateria());web.evaluateJavascript("window.dispatchEvent(new CustomEvent('acervo:android',{detail:"+detail+"}))",null);}catch(Exception ignored){}
  }
- @Override public void onResume(){super.onResume();visible=true;if(web!=null)web.onResume();if(permissionResultReady){permissionResultReady=false;startTracking();}if(cameraPermissaoPronta){cameraPermissaoPronta=false;iniciarCamera();}sendCamera(null);}
+ @Override public void onResume(){super.onResume();visible=true;retomarLocalizacao();if(web!=null)web.onResume();if(permissionResultReady){permissionResultReady=false;startTracking();}if(cameraPermissaoPronta){cameraPermissaoPronta=false;iniciarCamera();}sendCamera(null);}
  @Override public void onPause(){visible=false;if(web!=null)web.onPause();super.onPause();}
  private void back(){if(web.canGoBack())web.goBack();else moveTaskToBack(true);}
  @Override public void onBackPressed(){back();}

@@ -235,3 +235,6 @@ button.ap-linha:active{ background:#f7f4ee; }
 .ap-logo.is-quadrada{ width:124px; height:34px; }
 .ap-marca{ font-size:18px; }
 .ap-topo-voltar{ top:calc(env(safe-area-inset-top) + 3px); }
+.ap-cfg-alerta{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:calc(100% - 60px);margin:12px 0 0 60px;padding:12px 14px;border:1px solid #f1c6c3;border-radius:14px;background:#fdf1f0;color:#8f2420;text-align:left;font:500 13px/1.35 Manrope,sans-serif;cursor:pointer}
+.ap-cfg-alerta b{font-weight:800;font-size:13.5px}
+.ap-cfg-alerta em{margin-top:4px;font-style:normal;font-weight:800;color:#c4302b;text-decoration:underline;text-underline-offset:3px}
