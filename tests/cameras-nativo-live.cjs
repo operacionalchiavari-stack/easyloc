@@ -164,6 +164,27 @@ const saida = path.join(root, 'outputs', 'cameras'); fs.mkdirSync(saida, { recur
     await cel.screenshot({ path: path.join(saida, '13-app-barra.png') });
     console.log('ok 8 - barra da transmissão aparece nas telas do app:', (await cel.textContent('.cam-barra')).trim());
 
+    // Android pelo navegador (sem o app): convite para baixar o aplicativo
+    const ctxAnd = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true,
+      userAgent: 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Mobile Safari/537.36' });
+    await ctxAnd.addInitScript(([s, e]) => { localStorage.setItem('easyloc-auth', JSON.stringify(s)); localStorage.setItem('acervo_ultima_empresa', e); sessionStorage.setItem('empresa_id', e); sessionStorage.setItem('versao_app', '1'); }, [sessao, empresa]);
+    const and = await ctxAnd.newPage(); and.on('pageerror', (e) => erros.push('android: ' + e.message));
+    await and.goto(BASE + 'Modulos/Logistica/CameraApp/camera.html?app=1');
+    await and.waitForSelector('#cmBaixarApp:not([hidden])', { timeout: 30000 });
+    assert.match(await and.getAttribute('#cmBaixarApp', 'href'), /instalar\.html$/);
+    await and.click('#cmBaixarApp');
+    await and.waitForSelector('#baixar:not([hidden])', { timeout: 15000 });
+    assert.match(await and.getAttribute('#baixar', 'href'), /downloads\/chiavari\.apk$/);
+    assert.match(await and.textContent('#versao'), /1\.1\.0/);
+    await and.screenshot({ path: path.join(saida, '14-instalar.png') });
+    const apk = await (await fetch(BASE + 'downloads/chiavari.apk')).arrayBuffer();
+    assert.ok(apk.byteLength > 5e6 && Buffer.from(apk).subarray(0, 2).toString() === 'PK', 'o APK é servido');
+    await and.goto(BASE + 'app.html#config');
+    await and.waitForSelector('#apBaixarAndroid:not([hidden])', { timeout: 30000 });
+    await and.screenshot({ path: path.join(saida, '15-ajustes-baixar.png') });
+    assert.equal(await cel.$('#apBaixarAndroid:not([hidden])'), null, 'dentro do app o convite não aparece');
+    console.log('ok 9 - Android pelo navegador: link para baixar o app na Câmera ao vivo e em Ajustes; página de instalação com o APK');
+
     // limpa a câmera criada pela tela do celular
     await admin.from('logistica_cameras').delete().eq('usuario_id', usuario);
     assert.deepEqual(erros, [], 'sem erros de JavaScript: ' + erros.join(' | '));

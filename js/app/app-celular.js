@@ -310,7 +310,10 @@
   const instalado = () => window.matchMedia?.("(display-mode: standalone)").matches || navigator.standalone === true || !!window.AcervoAndroid;
   function pintarInstalar(){
     const iphone = /iphone|ipad|ipod/i.test(navigator.userAgent);
-    $("apInstalar").hidden = instalado() || (!convite && !iphone);
+    // Android pelo navegador: oferece o aplicativo Chiavari (instalar.html) no lugar do atalho do navegador
+    const androidSemApp = /android/i.test(navigator.userAgent) && !window.AcervoAndroid;
+    $("apBaixarAndroid").hidden = !androidSemApp;
+    $("apInstalar").hidden = androidSemApp || instalado() || (!convite && !iphone);
     $("apInstalarTexto").textContent = iphone && !convite ? "No Safari: Compartilhar › Adicionar à Tela de Início." : "Abra o Acervo como um aplicativo, sem o navegador.";
   }
   window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); convite = e; pintarInstalar(); });

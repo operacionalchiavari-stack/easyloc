@@ -44,6 +44,8 @@
     }
     if (!empresa) throw Error("Seu usuário não está vinculado a uma empresa.");
     s.empresa = empresa;
+    // Android pelo navegador: oferece o aplicativo (transmite com a tela apagada)
+    $("cmBaixarApp").hidden = !(/android/i.test(navigator.userAgent) && !window.AcervoAndroid);
     tela("cmPermissao");
   }
 
