@@ -12953,3 +12953,14 @@ posição no banco era de 08/11 — o app dizia "ativo" logo ao ligar o serviço
   rastreamento_dispositivos d left join funcionarios_acesso f on f.id=d.usuario_id left join usuarios u on u.id=d.usuario_id`.
 - Limite: se o Android matar o app e ele não tiver "o tempo todo", o serviço não consegue voltar em segundo plano — volta ao
   abrir o app (avisa por notificação). Não testado no aparelho ainda.
+
+## Publicação de tudo o que estava pendente (25/11/2026)
+Pedido: "deploy de tudo, não quero nenhum M no projeto". Feito: commit único com os 337 arquivos pendentes de várias conversas,
+Vercel e GitHub Pages publicados, 8 Edge Functions publicadas (avaria-setor, central-metas, estoque-assistente,
+financeiro-assistente, freteiro-assistente, ideia-assistente, logistica-assistente, solicitacao-assistente).
+- Banco: as migrations do Almoxarifado `almox_saida_ordem_servico` e `almox_entrada_lote` (16/11) **nunca tinham sido
+  aplicadas** e a tela já as usava — aplicadas agora. Migrations com número repetido renumeradas (`…102001`, `…102101`,
+  `…102201`, `20261120000101`) e as três de frete de 23/11 registradas. `migration list` sem diferenças.
+- Testes desatualizados pelas telas novas foram ajustados (ordem das colunas da O.S, inventário sem o contador de progresso,
+  "Salvar fluxo" gravando também a Posição final). `npm test`: 61 de 61.
+- O GitHub Pages falha às vezes com "Fetching artifact metadata failed" (problema do GitHub): rodar o workflow de novo.
