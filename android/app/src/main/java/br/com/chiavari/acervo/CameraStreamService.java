@@ -62,6 +62,8 @@ public final class CameraStreamService extends Service {
  private boolean compatibilidade;
  private volatile String codecUsado="",encoderUsado="";
  private volatile int luz=-1;
+ private volatile long quadrosEnviados=-1,bytesEnviados=-1;
+ private volatile String larguraEnviada="";
  private volatile long amostrarEm;
  private volatile int frames,fpsMedido,largura,altura;
  private volatile long ultimoQuadro;
@@ -150,9 +152,7 @@ public final class CameraStreamService extends Service {
  private void abrirCamera(){
   try{
    if(capturer!=null){try{capturer.stopCapture();}catch(Exception ignored){}capturer.dispose();capturer=null;}
-   // Galaxy A57 (Android 17): a cópia da textura da câmera para a memória vinha preta (preview funcionava, a transmissão não).
-   // Camera1 com captureToTexture=false entrega os quadros já em memória (NV21), sem essa cópia.
-   Camera1Enumerator en=new Camera1Enumerator(false);
+   Camera2Enumerator en=new Camera2Enumerator(this);
    String escolhida=null;for(String n:en.getDeviceNames())if(en.isBackFacing(n)){escolhida=n;break;}
    if(escolhida==null&&en.getDeviceNames().length>0)escolhida=en.getDeviceNames()[0];
    if(escolhida==null){cameraIndisponivel("Este celular não tem câmera disponível.");return;}
@@ -164,7 +164,21 @@ public final class CameraStreamService extends Service {
     @Override public void onFirstFrameAvailable(){exec.execute(()->{cameraFalhou=false;falhasCamera=0;atualizarEstado();});}
     @Override public void onCameraClosed(){}
    });
-   capturer.initialize(helper,getApplicationContext(),videoSource.getCapturerObserver());
+   // Galaxy A57: o quadro em textura chegava preto na transmissão (Camera1 derrubava a câmera). Converte cada quadro
+   // para a memória aqui, na hora da captura (onde a medição de brilho provou que sai com imagem), antes do codificador.
+   final CapturerObserver destino=videoSource.getCapturerObserver();
+   CapturerObserver memoria=new CapturerObserver(){
+    @Override public void onCapturerStarted(boolean ok){destino.onCapturerStarted(ok);}
+    @Override public void onCapturerStopped(){destino.onCapturerStopped();}
+    @Override public void onFrameCaptured(VideoFrame f){
+     VideoFrame.I420Buffer b=null;
+     try{b=f.getBuffer().toI420();}catch(Exception ignored){}
+     if(b==null){destino.onFrameCaptured(f);return;}
+     VideoFrame n=new VideoFrame(b,f.getRotation(),f.getTimestampNs());
+     try{destino.onFrameCaptured(n);}finally{n.release();}
+    }
+   };
+   capturer.initialize(helper,getApplicationContext(),memoria);
    if(!pausada)capturer.startCapture(capW,capH,capFps);
   }catch(Exception e){cameraIndisponivel("Não foi possível abrir a câmera.");}
  }
@@ -330,7 +344,7 @@ public final class CameraStreamService extends Service {
     JSONObject t=new JSONObject().put("bateria",bateria()).put("carregando",carregando()).put("temperatura",temperatura())
      .put("rede",tipoRede()).put("rede_qualidade",qualidadeRede()).put("rtt_ms",rttMs<0?JSONObject.NULL:Math.round(rttMs))
      .put("resolucao",largura>0?largura+"x"+altura:null).put("fps",fpsMedido).put("tela_ligada",telaLigada())
-     .put("termico",termico).put("assistindo",assistindo).put("luz",luz).put("codec",codecUsado).put("codificador",encoderUsado).put("compatibilidade",compatibilidade).put("som",som).put("motivo",detalhe).put("app",BuildConfig.VERSION_NAME)
+     .put("termico",termico).put("assistindo",assistindo).put("luz",luz).put("quadros_enviados",quadrosEnviados).put("bytes_enviados",bytesEnviados).put("tamanho_enviado",larguraEnviada).put("codec",codecUsado).put("codificador",encoderUsado).put("compatibilidade",compatibilidade).put("som",som).put("motivo",detalhe).put("app",BuildConfig.VERSION_NAME)
      .put("android",Build.VERSION.RELEASE).put("aparelho",Build.MANUFACTURER+" "+Build.MODEL);
     CameraApi.Resposta r=CameraApi.call("camera_disp_ping",new JSONObject().put("p_token",token).put("p_estado",estado).put("p_telemetria",t));
     if(CameraApi.autorizacaoEncerrada(r)){encerrar("central",false);return;}
@@ -357,6 +371,9 @@ public final class CameraStreamService extends Service {
    for(RTCStats s:rep.getStatsMap().values()){
     if("outbound-rtp".equals(s.getType())&&"video".equals(String.valueOf(s.getMembers().get("kind")))){
      Object e=s.getMembers().get("encoderImplementation");if(e!=null)encoderUsado=String.valueOf(e);
+     Object fe=s.getMembers().get("framesEncoded");if(fe!=null)try{quadrosEnviados=Long.parseLong(String.valueOf(fe));}catch(Exception ignored){}
+     Object bs=s.getMembers().get("bytesSent");if(bs!=null)try{bytesEnviados=Long.parseLong(String.valueOf(bs));}catch(Exception ignored){}
+     Object fw=s.getMembers().get("frameWidth"),fh=s.getMembers().get("frameHeight");if(fw!=null)larguraEnviada=fw+"x"+fh;
      Object cid=s.getMembers().get("codecId");RTCStats c=cid==null?null:rep.getStatsMap().get(String.valueOf(cid));
      if(c!=null){Object m=c.getMembers().get("mimeType");if(m!=null)codecUsado=String.valueOf(m).replace("video/","");}
     }
