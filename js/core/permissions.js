@@ -198,6 +198,7 @@
     [/Estoque\/TriagemApp/i, 'logistica.separacao.visualizar'],
     [/SeparacaoMateriais/i, 'logistica.separacao.visualizar'],
     [/Rastreamento/i, 'logistica.planejamento.visualizar'],
+    [/Logistica\/Cameras\//i, 'logistica.planejamento.visualizar'], // Câmeras ao vivo (CameraApp é o app do celular)
     [/PainelLogistico/i, 'logistica.planejamento.visualizar'],
     [/Cronograma/i, 'logistica.cronograma.visualizar'],
     [/Expedicao|EntregasColetas/i, 'logistica.expedicao.visualizar'],

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#5a5a55">
+  <title>Câmera ao vivo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="camera.css?v=20261124-camera">
+  <script src="../../../js/app/carregamento-app.js?v=20261106-abertura" data-auto></script>
+  <script src="../../../js/core/limpezaDados.js?v=20261026"></script>
+  <link rel="stylesheet" href="../../../styles/app-tema.css?v=20261121-tema">
+  <script src="../../../js/app/tema-app.js?v=20261121-tema"></script>
+</head>
+<body>
+  <!-- Câmera ao vivo (nov/2026): o celular da equipe transmite a montagem para o Painel Logístico › Câmeras.
+       Lógica em camera.js; sinalização pelo banco (logistica_camera_sinais) e vídeo direto por WebRTC. -->
+  <header class="cm-topo">
+    <button type="button" class="cm-topo-btn" id="cmVoltar" aria-label="Voltar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <h1 id="cmTitulo">Câmera ao vivo</h1>
+    <button type="button" class="cm-topo-btn" id="cmAtualizar" aria-label="Atualizar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg></button>
+  </header>
+
+  <main>
+    <div id="cmMensagem" class="cm-mensagem" role="status" hidden></div>
+
+    <!-- 1. Escolher a montagem -->
+    <section id="cmLista" class="cm-tela" hidden>
+      <p class="cm-intro">Escolha a montagem que você vai filmar. A Logística acompanha ao vivo pelo sistema.</p>
+      <div id="cmEtapas" class="cm-etapas" aria-live="polite"></div>
+    </section>
+
+    <!-- 2. Permissão -->
+    <section id="cmPermissao" class="cm-tela" hidden>
+      <div class="cm-evento" id="cmEvento"></div>
+      <div class="cm-cartao">
+        <span class="cm-icone" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L17 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/></svg></span>
+        <h2>Permitir o acesso à câmera</h2>
+        <p>Ao tocar no botão, o celular vai perguntar se o Acervo pode usar a câmera. Toque em <b>Permitir</b>.</p>
+        <ul class="cm-dicas">
+          <li><b>Apoie o celular</b> num tripé ou num lugar firme, mostrando a montagem.</li>
+          <li><b>Deixe no carregador.</b> Transmitir gasta bastante bateria.</li>
+          <li><b>Não bloqueie a tela nem saia do app.</b> A tela fica acesa sozinha; se sair, a transmissão para.</li>
+          <li>Usa a internet do celular (cerca de 300 a 700 MB por hora).</li>
+        </ul>
+        <label class="cm-som"><input type="checkbox" id="cmSom"><span>Enviar o som também</span></label>
+        <button type="button" class="cm-botao" id="cmComecar">Permitir e começar a transmitir</button>
+        <button type="button" class="cm-botao cm-secundario" id="cmCancelar">Escolher outra montagem</button>
+      </div>
+    </section>
+
+    <!-- 3. Ao vivo -->
+    <section id="cmAoVivo" class="cm-aovivo" hidden>
+      <video id="cmVideo" autoplay muted playsinline></video>
+      <div class="cm-faixa-topo">
+        <span class="cm-ao-vivo"><i></i>AO VIVO</span>
+        <span class="cm-tempo" id="cmTempo">00:00</span>
+        <span class="cm-assistindo" id="cmAssistindo">Ninguém assistindo</span>
+      </div>
+      <div class="cm-faixa-info" id="cmInfo"></div>
+      <div class="cm-aviso" id="cmAviso" hidden></div>
+      <div class="cm-controles">
+        <button type="button" class="cm-ctl" id="cmTrocar" aria-label="Trocar câmera"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L17 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 12a3 3 0 0 1 5.2-2M15 14a3 3 0 0 1-5.2 2M14 8v2h-2M10 18v-2h2"/></svg><span>Trocar</span></button>
+        <button type="button" class="cm-ctl cm-encerrar" id="cmEncerrar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5"/></svg><span>Encerrar</span></button>
+        <button type="button" class="cm-ctl" id="cmMicro" aria-label="Som"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span id="cmMicroTxt">Som</span></button>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="cmConfirmar" class="cm-folha"><form method="dialog"><h2>Encerrar a transmissão?</h2><p>A Logística deixa de ver esta montagem.</p><div class="cm-acoes"><button value="nao" class="cm-botao cm-secundario">Continuar</button><button value="sim" class="cm-botao cm-perigo">Encerrar</button></div></form></dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+  <script src="../../../js/core/supabase.js?v=20261106-app"></script>
+  <script src="../../../js/core/doisFatores.js?v=20261023-2fa"></script>
+  <script src="../../../js/core/camera-ice.js?v=20261124-camera"></script>
+  <script src="camera.js?v=20261124-camera"></script>
+  <script src="../../../js/app/android-principal.js?v=20261107"></script>
+</body>
+</html>

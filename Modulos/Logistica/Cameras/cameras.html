@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Câmeras ao vivo · Logística</title>
+  <link rel="icon" type="image/png" href="../../../logo%20nova%20-%20com%20fundo%20branco.png">
+  <script src="../../../js/core/systemZoom.js?v=20261108"></script>
+  <script src="../../../js/core/themePrepaint.js"></script>
+  <script src="../../../js/core/companyTheme.js?v=20261108-zoom-padrao"></script>
+  <script src="../../../js/core/moduleTheme.js?v=20261114-autofill-email"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../../styles/global.css?v=20261107-titulos-30">
+  <link rel="stylesheet" href="cameras.css?v=20261124-tela">
+</head>
+<body>
+<!-- Logística › Câmeras ao vivo (nov/2026): mosaico das câmeras que a equipe liga pelo app do celular (Modulos/Logistica/CameraApp).
+     Lógica em cameras.js; regras no banco (logistica_cameras, logistica_camera_sinais, camera_*). -->
+<section class="el-page cam-page" data-module-root>
+  <header class="page-header"><h1>Câmeras ao vivo</h1></header>
+  <div id="camHost"><p>Carregando câmeras…</p></div>
+</section>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="../../../js/core/supabase.js"></script>
+<script src="../../../js/core/alerta.js?v=20261103-topo"></script>
+<script src="../../../js/core/context.js?v=20261026-limpeza"></script>
+<script src="../../../js/core/permissions.js?v=20261124-cameras"></script>
+<script src="../../../js/core/camera-ice.js?v=20261124-camera"></script>
+<script src="cameras.js?v=20261124-tela"></script>
+</body>
+</html>
