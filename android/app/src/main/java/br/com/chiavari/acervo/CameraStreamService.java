@@ -150,7 +150,9 @@ public final class CameraStreamService extends Service {
  private void abrirCamera(){
   try{
    if(capturer!=null){try{capturer.stopCapture();}catch(Exception ignored){}capturer.dispose();capturer=null;}
-   Camera2Enumerator en=new Camera2Enumerator(this);
+   // Galaxy A57 (Android 17): a cópia da textura da câmera para a memória vinha preta (preview funcionava, a transmissão não).
+   // Camera1 com captureToTexture=false entrega os quadros já em memória (NV21), sem essa cópia.
+   Camera1Enumerator en=new Camera1Enumerator(false);
    String escolhida=null;for(String n:en.getDeviceNames())if(en.isBackFacing(n)){escolhida=n;break;}
    if(escolhida==null&&en.getDeviceNames().length>0)escolhida=en.getDeviceNames()[0];
    if(escolhida==null){cameraIndisponivel("Este celular não tem câmera disponível.");return;}
