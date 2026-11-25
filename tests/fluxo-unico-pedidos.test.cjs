@@ -64,13 +64,13 @@ test('parâmetros: salvar visibilidade das pré-reservas e modo de retorno pela 
  try{
   app.use(express.json());app.get('/__fluxo',(_req,res)=>res.send('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/Modulos/Configuracoes/Parametros/parametros.css"></head><body style="font-family:Arial;background:#f3f5f6"><div id="parametrosPagina"><div id="host" class="pr-card"></div></div><script src="/Modulos/Configuracoes/Parametros/parametros-fluxo-pedidos.js"></script></body></html>'));
   app.post('/__fluxo',async(req,res)=>{try{
-   const a=req.body;let data;if(a.read)data=(await db.query('select * from empresa_fluxo_pedidos where empresa_id=$1',[empresa])).rows[0]||null;
+   const a=req.body;let data;if(a.nome==='pedido_posicao_divergencia_salvar')return res.json({data:null,error:null});if(a.read)data=(await db.query('select * from empresa_fluxo_pedidos where empresa_id=$1',[empresa])).rows[0]||null;
    else await db.query('select pedido_fluxo_configurar($1,$2,$3)',[a.p_empresa,a.p_pre_reservas,a.p_retorno_simultaneo]);res.json({data,error:null});
   }catch(e){res.json({data:null,error:{message:e.message}});}});app.use(express.static(process.cwd()));
   server=app.listen(0,'127.0.0.1');await new Promise(r=>server.on('listening',r));browser=await chromium.launch({channel:'msedge',headless:true});const page=await browser.newPage({viewport:{width:1400,height:900}});
   await page.goto('http://127.0.0.1:'+server.address().port+'/__fluxo');await page.evaluate(async empresa=>{
    const send=async body=>(await fetch('/__fluxo',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})).json();
-   window.supabaseClient={rpc:(_nome,args)=>send(args),from:()=>{const q={select:()=>q,eq:()=>q,maybeSingle:()=>send({read:true})};return q;}};
+   window.supabaseClient={rpc:(nome,args)=>send({...args,nome}),from:()=>{const q={select:()=>q,eq:()=>q,maybeSingle:()=>send({read:true})};return q;}};
    await carregarFluxoPedidos(document.getElementById('host'),empresa);
   },empresa);
   assert.equal(await page.locator('[name=pre]').isChecked(),false);await page.locator('[name=pre]').check();await page.locator('[name=retorno]').selectOption('sequencial');await page.getByRole('button',{name:'Salvar fluxo'}).click();await page.getByText('Fluxo salvo. As filas passam a seguir estas regras.').count();

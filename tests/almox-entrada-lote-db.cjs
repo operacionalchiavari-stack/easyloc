@@ -27,7 +27,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{PGlite}=requir
   const original=fs.readFileSync('supabase/migrations/20261116100100_almoxarifado_tecnoweld_funcoes.sql','utf8');
   const start=original.indexOf('create or replace function public.register_warehouse_manual_movement('),end=original.indexOf('end $$;',start)+7;
   await db.exec(original.slice(start,end));
-  await db.exec(fs.readFileSync('supabase/migrations/20261116102100_almox_entrada_lote.sql','utf8'));
+  await db.exec(fs.readFileSync('supabase/migrations/20261116102101_almox_entrada_lote.sql','utf8'));
   const second='20000000-0000-0000-0000-000000000002';
   await db.query("insert into warehouse_materials(id,empresa_id,nome,quantidade_disponivel,status,estoque_minimo,valor_unitario,unidade) values($1,$2,'Outro',10,'disponivel',0,5,'UN')",[second,company]);
   const run=(key,items,op=null)=>db.query('select register_warehouse_entry_batch($1::jsonb,$2,$3,$4,$5) data',[JSON.stringify(items),'Estoque inicial',op,'Teste',key]);

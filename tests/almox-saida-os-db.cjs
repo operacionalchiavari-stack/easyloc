@@ -23,7 +23,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),{PGlite}=requir
   const original=fs.readFileSync('supabase/migrations/20261116100100_almoxarifado_tecnoweld_funcoes.sql','utf8');
   const start=original.indexOf('create or replace function public.process_warehouse_exit_cart('),end=original.indexOf('end $$;',start)+7;
   await db.exec(original.slice(start,end));
-  await db.exec(fs.readFileSync('supabase/migrations/20261116102000_almox_saida_ordem_servico.sql','utf8'));
+  await db.exec(fs.readFileSync('supabase/migrations/20261116102001_almox_saida_ordem_servico.sql','utf8'));
   const list=(await db.query('select almox_ordens_servico_abertas() data')).rows[0].data;
   assert.equal(list.length,2);assert.equal(list.some(o=>o.id===foreign),false);
   const run=(key,id=os,source='acervo',destination='os',order=null,pin='1234',items=[{material_id:material,quantity:2}])=>db.query('select process_warehouse_exit_cart($1,$2::jsonb,$3,$4,$5,$6,$7::uuid,$8) data',[pin,JSON.stringify(items),destination,order,'Registro',key,id,source]);

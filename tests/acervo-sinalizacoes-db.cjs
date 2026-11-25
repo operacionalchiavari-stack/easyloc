@@ -5,7 +5,7 @@ const fs=require('node:fs'),assert=require('node:assert/strict'),{PGlite}=requir
  create function seguranca_2fa_ok() returns boolean language sql as $$select current_setting('test.segundo_fator',true)='sim'$$;
  create function operacao_pode(uuid,text) returns boolean language sql as $$select current_setting('test.editar',true)='sim' and $2='configuracoes.empresa.editar'$$;
  grant usage on schema public to authenticated;`);
- await db.exec(fs.readFileSync('supabase/migrations/20261116102200_acervo_sinalizacoes.sql','utf8'));
+ await db.exec(fs.readFileSync('supabase/migrations/20261116102201_acervo_sinalizacoes.sql','utf8'));
  await db.exec(`set role authenticated;set test.empresa='${a}';set test.segundo_fator='sim';set test.editar='sim';`);
  await db.query('insert into acervo_sinalizacoes_config(empresa_id,regras) values($1,$2)',[a,JSON.stringify({manutencao:{mostrar:true,dias:7}})]);
  await assert.rejects(db.query('insert into acervo_sinalizacoes_config(empresa_id) values($1)',[b]),/row-level security/);

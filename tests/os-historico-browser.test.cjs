@@ -12,7 +12,7 @@ test('historico de manutencao: mesmas colunas, fotos do cadastro, origem e sem t
   await page.route('https://example.com/**',r=>r.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="84" height="84"><rect width="84" height="84" fill="#e6edf4"/></svg>'}));
   await page.goto('http://127.0.0.1:'+server.address().port+'/Modulos/Chiavari/CentralMetas/itens-danificados.html?concluidas=1');
   await page.locator('#tabelaConcluidas .os-item-foto').waitFor();
-  assert.deepEqual(await page.locator('.os-concluidas-tabela th').allTextContents(),['Envio','Foto','Item','O.S','Qtd','Fluxo','Origem','Detalhes','Conclusão']);
+  assert.deepEqual(await page.locator('.os-concluidas-tabela th').allTextContents(),['Envio','O.S','Foto','Item','Qtd','Fluxo','Origem','Detalhes','Conclusão']);
   assert.equal(await page.locator('#modalConcluidas .modal-topo').count(),0);assert.equal(await page.locator('#contadorConcluidas').isVisible(),false);
   assert.equal(await page.locator('#tabelaConcluidas .os-col-origem').innerText(),'Pedido 2401');assert.match(await page.locator('#tabelaConcluidas').innerText(),/Pedido 2401/);
   assert.equal(await page.locator('#tabelaConcluidas .os-solicitante-foto img').count(),1);assert.match(await page.locator('#tabelaConcluidas .os-item-medidas').innerText(),/0.5 m/);
